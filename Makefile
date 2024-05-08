@@ -5,7 +5,7 @@ CFLAGS = -Wall -g
 TINY_NAME = tiny_cat
 TINY_NAME_BIN = $(TINY_NAME)
 
-$(TINY_NAME_BIN) : misc.o network.o interlock.o train_cmd.o sparcs.o train_ctrl.o beginning.o
+$(TINY_NAME_BIN) : misc.o network.o interlock.o train_cmd.o sparcs.o train_ctrl.o main.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 train_info.h : sparcs_def.h
@@ -24,7 +24,7 @@ train_cmd.o : generic.h misc.h train_cmd.h train_cmd.c
 sparcs.o : generic.h misc.h sparcs.h sparcs.c
 train_ctrl.o : generic.h misc.h sparcs.h train_ctrl.h train_ctrl.c
 interlock.o : generic.h misc.h srv.h interlock.h interlock.c
-beginning.o : generic.h misc.h network.h srv.h interlock.h sparcs.h beginning.c
+main.o : generic.h misc.h network.h srv.h interlock.h sparcs.h main.c
 
 .PHONY : clean
 clean:
