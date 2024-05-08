@@ -30,7 +30,7 @@ static unsigned char *sock_attach_buf( struct tiny_sock_entry es[], TINY_SOCK_DE
   
   pPrev = es[td].pbuf;
   es[td].pbuf = pbuf;
-  es[td].size = size;
+  es[td].buf_size = size;
   
   return pPrev;
 }
@@ -40,14 +40,14 @@ static unsigned char *sock_buf_attached( struct tiny_sock_entry es[], TINY_SOCK_
   assert( td >= 0 );
 
   if( psize )
-    *psize = es[td].size;
+    *psize = es[td].buf_size;
   if( plen )
-    *plen = es[td].len;
+    *plen = es[td].wrote_len;
   
   return es[td].pbuf;
 }
 
-unsigned char *sock_recv_attach_buf( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size ) {
+unsigned char *sock_attach_recv_buf( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size ) {
   assert( pS );
   assert( td >= 0 );
 
@@ -62,7 +62,7 @@ unsigned char *sock_recv_buf_attached( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, int
   return sock_buf_attached( pS->recv, td, NULL, plen );
 }
 
-unsigned char *sock_send_attach_buf( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size ) {
+unsigned char *sock_attach_send_buf( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size ) {
   assert( pS );
   assert( td >= 0 );
 
@@ -97,7 +97,7 @@ int creat_sock_bcast_recv1 ( TINY_SOCK_PTR1 pS, unsigned short udp_bcast_recv_po
   int r = 1;
   
   r = TINY_SOCK_RECV_AVAIL( pS );
-  if( r > 0 ) {
+  if( r > -1 ) {
     pS->recv[r].addr.sin_family = AF_INET;
     pS->recv[r].addr.sin_port = htons( udp_bcast_recv_port );
     pS->recv[r].addr.sin_addr.s_addr = INADDR_ANY;
@@ -113,7 +113,7 @@ int creat_sock_bcast_recv1 ( TINY_SOCK_PTR1 pS, unsigned short udp_bcast_recv_po
 	} else
 	  pS->recv[r].sock = s;
       pS->recv[r].pbuf = NULL;
-      pS->recv[r].size = -1;
+      pS->recv[r].buf_size = -1;
     }
   }
   return r;
@@ -137,7 +137,7 @@ int creat_sock_bcast_send1 ( TINY_SOCK_PTR1 pS, unsigned short udp_bcast_dest_po
   int r = -1;
   
   r = TINY_SOCK_SEND_AVAIL( pS );
-  if( r > 0 ) {
+  if( r > -1 ) {
     pS->send[r].addr.sin_family = AF_INET;
     pS->send[r].addr.sin_port = htons( udp_bcast_dest_port );
     pS->send[r].addr.sin_addr.s_addr = inet_addr( dest_host_ipaddr );
@@ -150,7 +150,7 @@ int creat_sock_bcast_send1 ( TINY_SOCK_PTR1 pS, unsigned short udp_bcast_dest_po
 	pS->send[r].sock = s;
     }
     pS->send[r].pbuf = NULL;
-    pS->send[r].size = -1;
+    pS->send[r].buf_size = -1;
   }
   return r;
 }
@@ -168,15 +168,14 @@ int recv_bcast1 ( TINY_SOCK_PTR1 pS ) {
   assert( pS );
   int r = -1;
   
-  struct candidate {
+  struct candidate_recv {
     BOOL trigg;
     TINY_SOCK_DESC sd;
     int sock;
     unsigned char *pbuf;
     int buf_size;
     int wrote_len;
-  };
-  struct candidate valid[MAX_RECV_SOCK_NUM];
+  } valid[MAX_RECV_SOCK_NUM];
   int num_valids = 0;
   
   int i, j;
@@ -186,13 +185,13 @@ int recv_bcast1 ( TINY_SOCK_PTR1 pS ) {
       valid[j].sd = i;
       valid[j].sock = pS->recv[i].sock;
       valid[j].pbuf = pS->recv[i].pbuf;
-      valid[j].buf_size = pS->recv[i].size;
+      valid[j].buf_size = pS->recv[i].buf_size;
       valid[j].wrote_len = 0;
       j++;
     }
   assert( j <= i );
   num_valids = j;
-
+  
   r = 0;
   {
     fd_set readfds;
@@ -213,37 +212,38 @@ int recv_bcast1 ( TINY_SOCK_PTR1 pS ) {
     if( n < 0 )
       r = -1;
     else if( n > 0 ) { 
-      for( k = 0; k < num_valids; k++ )
-	if( FD_ISSET( valid[k].sock, &readfds ) )
-	  valid[k].trigg = TRUE;
+      int l;
+      for( l = 0; l < num_valids; l++ )
+	if( FD_ISSET( valid[l].sock, &readfds ) )
+	  valid[l].trigg = TRUE;
       {
 	BOOL err = FALSE;
-	k = 0;
-	while( (k < num_valids) && valid[k].trigg ) {
+	l = 0;
+	while( (l < num_valids) && valid[l].trigg ) {
 	  int m = -1;
-	  m = recv( valid[k].sock, valid[k].pbuf, valid[k].buf_size, 0 );
+	  m = recv( valid[l].sock, valid[l].pbuf, valid[l].buf_size, 0 );
 	  if( m < 0 )
 	    err = TRUE;
 	  else {
-	    valid[k].wrote_len = m;
+	    valid[l].wrote_len = m;
 	    r++;
 	  }
-	  k++;
+	  l++;
 	}
-	assert( k <= num_valids );
+	assert( l <= num_valids );
 	r = err ? (r * -1) : r;
       }
       
-      k = 0;
-      while( (k < num_valids) && valid[k].trigg ) {
-	int sd = valid[k].sd;
-	pS->recv[sd].len = valid[k].wrote_len;
+      l = 0;
+      while( (l < num_valids) && valid[l].trigg ) {
+	int sd = valid[l].sd;
+	pS->recv[sd].wrote_len = valid[l].wrote_len;
 	pS->recv[sd].dirty = TRUE;
-	k++;
+	l++;
       }
-      assert( k <= num_valids );
+      assert( l <= num_valids );
     } else
-      assert( n == 0 );
+      assert( n == 0 );  // for the case of TIMEOUT, and do nothing.
   }
   return r;
 }
@@ -256,11 +256,44 @@ int send_bcast ( TINY_SOCK_PTR pS, unsigned char *pbuf, int len ) {
   n = sendto( pS->sock, pbuf, len, 0, (struct sockaddr *)&(pS->addr), sizeof(pS->addr) );
   return n;
 }
-#endif
 int send_bcast1 ( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC sd ) {
   assert( pS );
   assert( sd >= 0 );
   int n = -1;
-  n = sendto( pS->send[sd].sock, pS->send[sd].pbuf, pS->send[sd].len, 0, (struct sockaddr *)&(pS->send[sd].addr), sizeof(pS->send[sd].addr) );
+  n = sendto( pS->send[sd].sock, pS->send[sd].pbuf, pS->send[sd].wrote_len, 0, (struct sockaddr *)&(pS->send[sd].addr), sizeof(pS->send[sd].addr) );
   return n;
+}
+#endif
+int sock_send_buf_ready ( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC sd, int len ) {
+  assert( pS );
+  assert( sd >= 0 );
+  assert( pS->send[sd].sock > 0 );
+  assert( pS->send[sd].pbuf );
+  assert( (len >= 0) && (len <= pS->send[sd].buf_size) );
+  
+  pS->send[sd].wrote_len = len;
+  pS->send[sd].dirty = TRUE;
+  return pS->send[sd].wrote_len;
+}
+
+int send_bcast2 ( TINY_SOCK_PTR1 pS ) {
+  assert( pS );
+  BOOL err = FALSE;
+  int r = 0;
+  int i;
+  
+  for( i = 0; i < MAX_SEND_SOCK_NUM; i++ ) {
+    if( pS->send[i].sock > 0 )
+      if( pS->send[i].dirty ) {
+	int n = -1;
+	n = sendto( pS->send[i].sock, pS->send[i].pbuf, pS->send[i].wrote_len, 0, (struct sockaddr *)&(pS->send[i].addr), sizeof(pS->send[i].addr) );
+	if( n < 0 )
+	  err = FALSE;
+	else
+	  r++;
+	pS->send[i].dirty = FALSE;
+      }
+  }
+  r = err ? (r * -1) : r;
+  return r;
 }

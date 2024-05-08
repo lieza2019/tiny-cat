@@ -31,32 +31,32 @@ int main (void) {
     errorF( "failed to create the socket to receive msgServerStatus.\n" );
     exit( 1 );
   } else
-    sock_recv_attach_buf( &socks, sd_recv, recv_buf_msgServerStatus, sizeof(recv_buf_msgServerStatus) );
+    sock_attach_recv_buf( &socks, sd_recv, recv_buf_msgServerStatus, sizeof(recv_buf_msgServerStatus) );
   
   if( (sd_send = creat_sock_bcast_send1 ( &socks, UDP_BCAST_RECV_PORT_msgServerStatus, LOOPBACK_IPADDR )) < 0 ) {
     errorF( "failed to create the socket to send msgServerStatus.\n" );
     exit( 1 );
   } else
-    sock_send_attach_buf( &socks, sd_send, send_buf_msgServerStatus, sizeof(send_buf_msgServerStatus) );
+    sock_attach_send_buf( &socks, sd_send, send_buf_msgServerStatus, sizeof(send_buf_msgServerStatus) );
   
   { 
     const useconds_t interval = 1000 * 1000 * 3;
-    MSG_SERVER_STATUS_PTR pRecv_msg_srv_stat = NULL;
     MSG_SERVER_STATUS msg_srv_stat;
     
     msg_srv_stat.n = 1;
     while( TRUE ) {
+      MSG_SERVER_STATUS_PTR pRecv_msg_srv_stat = NULL;
+      assert( recv_buf_msgServerStatus == (unsigned char *)memset( recv_buf_msgServerStatus, 0, RECV_BUFSIZ_msgServerStatus ) );
       if( recv_bcast1( &socks ) < 0 ) {
 	errorF( "error on receiving msgServerStatus, detected.\n" );
 	exit( 1 );
       } else {
-	int len = 0;
+	int len = -1;
 	pRecv_msg_srv_stat = (MSG_SERVER_STATUS_PTR)sock_recv_buf_attached( &socks, sd_recv, &len );
 	assert( pRecv_msg_srv_stat );
-	if( len < sizeof(msg_srv_stat) ) {
-	  errorF( "incomplete msgServerStatus received.\n" );
-	  exit( 1 );
-	} else {
+	if( len < sizeof(msg_srv_stat) )
+	  errorF( "failed to receive msgServerStatus.\n" );
+	else {
 	  printf( "msgServerStatus.n = %d.\n", pRecv_msg_srv_stat->n );
 	  msg_srv_stat.n = pRecv_msg_srv_stat->n + 1;
 	}
@@ -69,13 +69,14 @@ int main (void) {
 	assert( pbuf );
 	assert( size >= sizeof(msg_srv_stat) );
 	memcpy( pbuf, &msg_srv_stat, sizeof(msg_srv_stat) );
-	if( send_bcast1( &socks, sd_send ) < sizeof(msg_srv_stat) ) {
-	  errorF( "incomplete msgServerStatus sent detected.\n" );
+	assert( sock_send_buf_ready( &socks, sd_send, sizeof(msg_srv_stat) ) == sizeof(msg_srv_stat) );
+	if( send_bcast2( &socks ) < 1 ) {
+	  errorF( "failed to send msgServerStatus.\n" );
 	  exit( 1 );
 	}
       }
       assert( ! usleep( interval ) );
-    }
+    } /* while( TRUE ) */
   }
   
   return 0;

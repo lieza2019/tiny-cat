@@ -10,8 +10,8 @@ struct tiny_sock_entry {
   int sock;
   struct sockaddr_in addr;
   unsigned char *pbuf;
-  int size;
-  int len;
+  int buf_size;
+  int wrote_len;
   BOOL dirty;
 };
 typedef struct _tiny_sock {
@@ -50,10 +50,11 @@ extern int TINY_SOCK_AVAIL ( struct tiny_sock_entry es[], int max_entries );
 #define TINY_SOCK_SEND_AVAIL( pS ) ( (assert( (pS) )), TINY_SOCK_AVAIL( (pS)->send,  MAX_SEND_SOCK_NUM ) )
 
 
-extern unsigned char *sock_recv_attach_buf( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size );
+extern unsigned char *sock_attach_recv_buf( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size );
 extern unsigned char *sock_recv_buf_attached( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, int *psize );
-extern unsigned char *sock_send_attach_buf( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size );
+extern unsigned char *sock_attach_send_buf( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size );
 extern unsigned char *sock_send_buf_attached( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC td, int *psize );
+extern int sock_send_buf_ready( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC sd, int len );
 
 extern int creat_sock_bcast_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_port );
 extern int creat_sock_bcast_recv1 ( TINY_SOCK_PTR1 pS, unsigned short udp_bcast_recv_port );
@@ -66,3 +67,4 @@ extern int recv_bcast1 ( TINY_SOCK_PTR1 pS );
 
 extern int send_bcast ( TINY_SOCK_PTR pS, unsigned char *pbuf, int len );
 extern int send_bcast1 ( TINY_SOCK_PTR1 pS, TINY_SOCK_DESC sd );
+extern int send_bcast2 ( TINY_SOCK_PTR1 pS );
