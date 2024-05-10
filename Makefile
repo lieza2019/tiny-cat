@@ -28,6 +28,7 @@ main.o : generic.h misc.h network.h srv.h interlock.h sparcs.h main.c
 
 .PHONY : clean
 clean:
+	$(RM) -f ./a.out
 	$(RM) -f ./*.o
 	$(RM) -f ./*~
 	$(RM) -f ./#*#

@@ -22,7 +22,7 @@ static unsigned char send_buf_msgServerStatus[SEND_BUFSIZ_msgServerStatus];
 
 int main (void) {
   TINY_SOCK_DESC sd_recv, sd_send;
-  TINY_SOCK1 socks;
+  TINY_SOCK socks;
   
   // msgServerStatusを、UDPにて送受信できるようになる。
   TINY_SOCK_CREAT( socks );
