@@ -42,7 +42,7 @@ static TINY_TRAIN_STATE_PTR update_train_state( TRAIN_INFO_ENTRY_PTR pI ) {
 void update_train_tracking( void ) {
   int i;
   for( i = 0; i < END_OF_SCs; i++ ) {
-    FROM_SC_DATASET_PTR pSC = NULL;
+    SC_STAT_INFOSET_PTR pSC = NULL;
     pSC = sniff_train_info( (SC_ID)i );
     if( pSC ) {
       int j;

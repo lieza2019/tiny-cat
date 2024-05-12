@@ -18,16 +18,18 @@ typedef enum SC_ID {
   SC805,
   SC806,
   SC807,
+  SC808,
+  SC809,
   END_OF_SCs
 } SC_ID;
 
-typedef struct toward_SC_cmdset {
+typedef struct SC_ctrl_cmdset {
   TRAIN_COMMAND train_cmd;
-} TOWARD_SC_CMDSET, *TOWARD_SC_CMDSET_PTR;
+} SC_CTRL_CMDSET, *SC_CTRL_CMDSET_PTR;
 
-typedef struct from_SC_dataset {
+typedef struct SC_stat_infoset {
   TRAIN_INFO train_info;
-} FROM_SC_DATASET, *FROM_SC_DATASET_PTR;
+} SC_STAT_INFOSET, *SC_STAT_INFOSET_PTR;
 
 typedef struct block {
   BLOCK_ID id;
@@ -37,4 +39,4 @@ typedef struct block {
 } BLOCK, *BLOCK_PTR;
 
 extern int alloc_train_cmd_entries( TRAIN_COMMAND_ENTRY_PTR es[], int rakeID, int front_blk, int back_blk );
-extern FROM_SC_DATASET_PTR sniff_train_info( SC_ID sc_id );
+extern SC_STAT_INFOSET_PTR sniff_train_info( SC_ID sc_id );
