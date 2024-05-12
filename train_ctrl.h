@@ -21,8 +21,10 @@ typedef struct tiny_train_state {
     unsigned char cmd_args[OCC_REMOTE_CMD_ARGS_SIZE];
   } occ_remote_cmd;
   TRAIN_COMMAND_ENTRY_PTR pTC[2];
+   
   TRAIN_INFO_ENTRY_PTR  pTI;
   BOOL expired;
+  struct tiny_train_state *pNext;
 } TINY_TRAIN_STATE, *TINY_TRAIN_STATE_PTR;
 
-extern void update_train_tracking( void );
+extern void reveal_train_tracking( void );

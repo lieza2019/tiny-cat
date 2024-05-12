@@ -8,7 +8,35 @@
 static TINY_TRAIN_STATE tracking_trains[MAX_TRAIN_TRACKINGS];
 static int frontier;
 
-static void retrieve_state( TINY_TRAIN_STATE_PTR pE, TRAIN_INFO_ENTRY_PTR pI ) {
+static void flash_all_train_state ( void ) {
+  int i;
+  for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
+    tracking_trains[i].expired = TRUE;
+}
+
+static TINY_TRAIN_STATE_PTR enum_orphant_trains ( void ) {
+  TINY_TRAIN_STATE_PTR r = NULL;
+  {
+    TINY_TRAIN_STATE_PTR *pp = &r;
+    int i;
+    for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
+      if( tracking_trains[i].expired ) {
+	*pp = &tracking_trains[i];
+	tracking_trains[i].pNext = NULL;
+	pp = &tracking_trains[i].pNext;
+      }
+    assert( *pp == NULL );
+  }
+  return r;
+}
+
+static BOOL exam_consistency_with_train_info ( TINY_TRAIN_STATE_PTR pE, TRAIN_INFO_ENTRY_PTR pI ) {
+  assert( pE );
+  assert( pI );
+  return TRUE;
+}
+
+static void retrieve_from_train_info ( TINY_TRAIN_STATE_PTR pE, TRAIN_INFO_ENTRY_PTR pI ) {
   assert( pE );
   assert( pI );
   pE->skip_next_stop = TRAIN_INFO_SKIP_NEXT_STOP( *pI );
@@ -19,28 +47,38 @@ static TINY_TRAIN_STATE_PTR update_train_state( TRAIN_INFO_ENTRY_PTR pI ) {
   assert( pI );
   TINY_TRAIN_STATE_PTR pE = NULL;
   unsigned short rID = 0;
+  
   rID = TRAIN_INFO_RAKEID( *pI );
+  assert( rID > 0 );
   {
     int i;
     assert( frontier < MAX_TRAIN_TRACKINGS );
     for( i = 0; i < frontier; i++ )
       if( tracking_trains[i].rakeID == rID ) {
 	pE = &tracking_trains[i];
+	if( ! exam_consistency_with_train_info( pE, pI ) ) {
+	  errorF( "%ed: inconsistency detected in comparing with the train info from the SC.\n" );
+	}
 	break;
       }
     if( !pE ) {
+      assert( frontier < MAX_TRAIN_TRACKINGS );
       assert( i == frontier );
-      frontier = i;
       pE = &tracking_trains[frontier];
-      retrieve_state( pE, pI );
+      retrieve_from_train_info( pE, pI );
+      frontier++;
     }
-    pE->expired = TRUE;
+    assert( pE );
+    pE->pTI = pI;
+    pE->expired = FALSE;
   }
   return pE;
 }
 
-void update_train_tracking( void ) {
+void reveal_train_tracking( void ) {
   int i;
+  
+  flash_all_train_state();
   for( i = 0; i < END_OF_SCs; i++ ) {
     SC_STAT_INFOSET_PTR pSC = NULL;
     pSC = sniff_train_info( (SC_ID)i );
@@ -51,6 +89,15 @@ void update_train_tracking( void ) {
 	  update_train_state( &pSC->train_info.entries[j] );
     }
   }
+  
+  {
+    TINY_TRAIN_STATE_PTR pOph = NULL;
+    pOph = enum_orphant_trains();
+    while( pOph ) {
+      ;
+    }
+  }
+      
 }
 
 static void construct_cmd( TINY_TRAIN_STATE_PTR pTs ) {
