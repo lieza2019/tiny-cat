@@ -3,7 +3,17 @@
 #include "sparcs.h"
 
 SC_CTRL_CMDSET SC_ctrl_cmds[END_OF_SCs];
-SC_STAT_INFOSET SC_stat_infos[END_OF_SCs];
+SC_STAT_INFOSET SC_stat_infos[END_OF_SCs] = {
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC801_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC802_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC803_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC804_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC805_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC806_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC807_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC808_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC809_Train_information}}
+};
 
 static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {  
   assert( zones );

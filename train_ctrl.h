@@ -27,4 +27,8 @@ typedef struct tiny_train_state {
   struct tiny_train_state *pNext;
 } TINY_TRAIN_STATE, *TINY_TRAIN_STATE_PTR;
 
+#define MAX_TRAIN_TRACKINGS 1024
+extern TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
+
 extern void reveal_train_tracking( void );
+extern BOOL establish_SC_comm ( TINY_SOCK_PTR pS );

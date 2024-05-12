@@ -3,4 +3,12 @@
 #include <assert.h>
 #include "generic.h"
 
-extern void errorF (const char *errmsg );
+#define ERRORF_OUTSTREAM stdout
+#define errorF( fmt, ... ) (				\
+  {							\
+    assert( fmt );					\
+    fprintf( ERRORF_OUTSTREAM, (fmt), __VA_ARGS__ );	\
+  }							\
+)
+  
+

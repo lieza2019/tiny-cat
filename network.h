@@ -6,6 +6,8 @@
 #include <arpa/inet.h>
 #include "generic.h"
 
+#ifndef NETWORK_H_INCLUDED
+#define NETWORK_H_INCLUDED
 #define MAX_RECV_BUFSIZ (16 * 1024) // in bytes
 #define MAX_SEND_BUFSIZ (16 * 1024) // in bytes
 struct tiny_sock_entry {
@@ -16,20 +18,12 @@ struct tiny_sock_entry {
   int wrote_len;
   BOOL dirty;
 };
-
-#if 0
-typedef struct tiny_sock {
-  int sock;
-  struct sockaddr_in addr;
-} TINY_SOCK, *TINY_SOCK_PTR;
-#else
-#define MAX_RECV_SOCK_NUM 8
-#define MAX_SEND_SOCK_NUM 8
+#define MAX_RECV_SOCK_NUM 256
+#define MAX_SEND_SOCK_NUM 256
 typedef struct _tiny_sock {
   struct tiny_sock_entry recv[MAX_RECV_SOCK_NUM];
   struct tiny_sock_entry send[MAX_SEND_SOCK_NUM];
 } TINY_SOCK, *TINY_SOCK_PTR;
-#endif
 
 typedef int TINY_SOCK_DESC;
 
@@ -109,7 +103,7 @@ extern void NX_HEADER_CREAT(NX_HEADER NX_hdr );
 #define NX_HEADER_M_CTL_ONE( H ) (((H).M_CTL_flgs_1 & NX_HEADER_FLG1_M_CTL_ONE) >> 6)
 #define NX_HEADER_M_CTL_MLT( H ) (((H).M_CTL_flgs_1 & NX_HEADER_FLG1_M_CTL_MLT) >> 7)
 
-#define NX_HEADER_CREAT( N ) (				\
+#define NX_HEADER_CREAT( N ) (					\
   {								\
     (N).H_TYPE_headerType[0] = 'N';				\
     (N).H_TYPE_headerType[1] = 'U';				\
@@ -182,3 +176,5 @@ typedef struct NX_NS_header {
 } NXNS_HEADER, *NXNS_HEADER_PTR;
 
 #define NXNS_USR_DATA( pG ) ((unsigned char *)(pG) + sizeof(NXNS_HEADER))
+
+#endif // NETWORK_H_INCLUDED
