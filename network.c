@@ -225,21 +225,21 @@ int recv_bcast ( TINY_SOCK_PTR pS ) {
   return r;
 }
 
-static size_t envelop_with_the_header ( NX_NS_HEADER_PTR phdr, unsigned char *prawdata, int rawdata_len, int sendto_bufsiz ) {
+static size_t envelop_with_the_header ( NXNS_HEADER_PTR phdr, unsigned char *prawdata, int rawdata_len, int sendto_bufsiz ) {
   assert( phdr );
   assert( prawdata );
   assert( rawdata_len >= 0 );
-  assert( sendto_bufsiz >= sizeof(NX_NS_HEADER) );
-  assert( (sizeof(NX_NS_HEADER) + rawdata_len) <= sendto_bufsiz );
+  assert( sendto_bufsiz >= sizeof(NXNS_HEADER) );
+  assert( (sizeof(NXNS_HEADER) + rawdata_len) <= sendto_bufsiz );
   
   unsigned char buf[MAX_SEND_BUFSIZ];
   unsigned char *pbuf = NULL;
   int n = 0;
   
-  assert( pbuf = memcpy( buf, phdr, sizeof(NX_NS_HEADER) ) );
-  n += sizeof( NX_NS_HEADER );
+  assert( pbuf = memcpy( buf, phdr, sizeof(NXNS_HEADER) ) );
+  n += sizeof( NXNS_HEADER );
   if( rawdata_len > 0 ) {
-    assert( n == sizeof(NX_NS_HEADER) );
+    assert( n == sizeof(NXNS_HEADER) );
     assert( pbuf == buf );
     assert( pbuf = memcpy( (pbuf + n), prawdata, rawdata_len ) );
     n += rawdata_len;
@@ -247,10 +247,10 @@ static size_t envelop_with_the_header ( NX_NS_HEADER_PTR phdr, unsigned char *pr
   
   assert( prawdata == memcpy( prawdata, buf, n ) );
 #if 1
-    assert( NEXUS_HDR(*(NX_NS_HEADER_PTR)prawdata).H_TYPE_headerType[0] == 'N' );
-    assert( NEXUS_HDR(*(NX_NS_HEADER_PTR)prawdata).H_TYPE_headerType[1] == 'U' );
-    assert( NEXUS_HDR(*(NX_NS_HEADER_PTR)prawdata).H_TYPE_headerType[2] == 'X' );
-    assert( NEXUS_HDR(*(NX_NS_HEADER_PTR)prawdata).H_TYPE_headerType[3] == 'M' );
+    assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[0] == 'N' );
+    assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[1] == 'U' );
+    assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[2] == 'X' );
+    assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[3] == 'M' );
 #endif
   return n;
 }
@@ -264,8 +264,8 @@ int send_bcast ( TINY_SOCK_PTR pS ) {
   for( i = 0; i < MAX_SEND_SOCK_NUM; i++ ) {
     if( pS->send[i].sock > 0 )
       if( pS->send[i].dirty ) {
-	NX_NS_HEADER nx_ns_hdr;
-	NEXUS_HEADER_CREAT( NEXUS_HDR( nx_ns_hdr ) );
+	NXNS_HEADER nx_ns_hdr;
+	NX_HEADER_CREAT( NEXUS_HDR( nx_ns_hdr ) );
 #if 1
 	assert( NEXUS_HDR(nx_ns_hdr).H_TYPE_headerType[0] == 'N' );
 	assert( NEXUS_HDR(nx_ns_hdr).H_TYPE_headerType[1] == 'U' );
@@ -274,20 +274,16 @@ int send_bcast ( TINY_SOCK_PTR pS ) {
 #endif
 	{
 	  int n = -1;
-#if 0
-	  n = sendto( pS->send[i].sock, pS->send[i].pbuf, pS->send[i].wrote_len, 0, (struct sockaddr *)&(pS->send[i].addr), sizeof(pS->send[i].addr) );
-#else	  
 	  int wrote_with_hdr_len = -1;
 	  wrote_with_hdr_len = envelop_with_the_header( &nx_ns_hdr, pS->send[i].pbuf, pS->send[i].wrote_len, MAX_SEND_BUFSIZ );
-	  assert( wrote_with_hdr_len == (sizeof(NX_NS_HEADER) + pS->send[i].wrote_len) );
+	  assert( wrote_with_hdr_len == (sizeof(NXNS_HEADER) + pS->send[i].wrote_len) );
 #if 1
-	  assert( NEXUS_HDR( *(NX_NS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[0] == 'N' );
-	  assert( NEXUS_HDR( *(NX_NS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[1] == 'U' );
-	  assert( NEXUS_HDR( *(NX_NS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[2] == 'X' );
-	  assert( NEXUS_HDR( *(NX_NS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[3] == 'M' );
+	  assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[0] == 'N' );
+	  assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[1] == 'U' );
+	  assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[2] == 'X' );
+	  assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[3] == 'M' );
 #endif	  
 	  n = sendto( pS->send[i].sock, pS->send[i].pbuf, wrote_with_hdr_len, 0, (struct sockaddr *)&(pS->send[i].addr), sizeof(pS->send[i].addr) );
-#endif
 	  if( n < 0 )
 	    err = FALSE;
 	  else

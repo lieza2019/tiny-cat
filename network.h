@@ -61,50 +61,95 @@ extern int creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcast_de
 extern int recv_bcast ( TINY_SOCK_PTR pS );
 extern int send_bcast ( TINY_SOCK_PTR pS );
 
-#define NS_NXHDR_FLG1_M_CTL_MLT 1
-#define NS_NXHDR_FLG1_M_CTL_ONE 2
-#define NS_NXHDR_FLG1_M_CTL_INQ 4
-#define NS_NXHDR_FLG1_M_CTL_RPL 8
-
 typedef struct NEXUS_header {
-  char H_TYPE_headerType[4]; // = "NUXM";
-  uint32_t ML_messageLength; //= 200;
+  char H_TYPE_headerType[4]; // set the NEXUS signature constant of "NUXM".
+  uint32_t ML_messageLength;
   
-  uint8_t SA_DMN_srcAddrDomainNum; // = 104;
-  uint8_t SA_DFN_srcAddrDataFieldNum; // = 105;
-  uint16_t SA_LNN_srcAddrLogicNodeNum; // = 106;
+  uint8_t SA_DMN_srcAddrDomainNum;
+  uint8_t SA_DFN_srcAddrDataFieldNum;
+  uint16_t SA_LNN_srcAddrLogicNodeNum;
   
-  uint8_t DA_DMN_dstAdderDomainNum; // = 106;
-  uint8_t DA_DFN_dstAdderDataFieldNum; // = 107;
-  uint16_t DA_MGN_dstAdderMulticastGroupNum; // = 109;
+  uint8_t DA_DMN_dstAdderDomainNum;
+  uint8_t DA_DFN_dstAdderDataFieldNum;
+  uint16_t DA_MGN_dstAdderMulticastGroupNum;
   
-  uint32_t V_SEQ_versionSequenceNum; // = 100;
-  uint32_t SEQ_sequenceNum; // = 200;
+  uint32_t V_SEQ_versionSequenceNum;
+  uint32_t SEQ_sequenceNum;
   
-  uint8_t M_CTL_flgs_1; // appRPL = True, appINQ = True, appONE = True, appMLT = True
+  uint8_t M_CTL_flgs_1; // constantly, 0x80 as only MLT is set.
   uint8_t M_CTL_flgs_2; // constantly, 0 filled.
   uint8_t M_CTL_flgs_3; // constantly, 0 filled.
   uint8_t M_CTL_flgs_4; // constantly, 0 filled.
   
   unsigned char INQ_ID[12]; // constantly, 0 filled.
-  uint16_t TCD_transactionCode; // = 100;
-  uint16_t VER_versionNum; // = 200;
+  uint16_t TCD_transactionCode;
+  uint16_t VER_versionNum; // constantly, 0 filled.
   unsigned char GTID_gtID[8]; // constantly, 0 filled.
-  uint16_t MODE; // = 104;
-  uint8_t PVER_nxProtocolVersion; // = 105;
-  uint8_t PRI_messagePriorityLevel; // = 106;
-  uint8_t CBN_currentFlagmentBlockNumber; // constantly, 1 fixed.
-  uint8_t TBN_totalFlagmentBlockNumber; // constantly, 1 fixed.
-  uint16_t BSIZE_blockSize; // = 100;
-  uint32_t FUI_forFuture; // constantly, 0 filled.
+  uint16_t MODE;
+  uint8_t PVER_nxProtocolVersion; // constantly, 0 filled.
+  uint8_t PRI_messagePriorityLevel; // constantly, 0 filled.
+  uint8_t CBN_currentFlagmentBlockNumber; // constantly, 0 filled.
+  uint8_t TBN_totalFlagmentBlockNumber; // constantly, 0 filled.
+  uint16_t BSIZE_blockSize; // constantly, 0 filled.
+  uint8_t FUI_forFuture[4]; // constantly, 0 filled.
 } NX_HEADER, *NX_HEADER_PTR;
 
-#define NEXUS_HEADER_CREAT( N ) (				\
+extern BOOL NX_HEADER_M_CTL_RPL( NX_HEADER NX_hdr );
+extern BOOL NX_HEADER_M_CTL_INQ( NX_HEADER NX_hdr );
+extern BOOL NX_HEADER_M_CTL_ONE( NX_HEADER NX_hdr );
+extern BOOL NX_HEADER_M_CTL_MLT( NX_HEADER NX_hdr );
+extern void NX_HEADER_CREAT(NX_HEADER NX_hdr );
+
+#define NX_HEADER_FLG1_M_CTL_RPL 16
+#define NX_HEADER_FLG1_M_CTL_INQ 32
+#define NX_HEADER_FLG1_M_CTL_ONE 64
+#define NX_HEADER_FLG1_M_CTL_MLT 128
+#define NX_HEADER_M_CTL_RPL( H ) (((H).M_CTL_flgs_1 & NX_HEADER_FLG1_M_CTL_RPL) >> 4)
+#define NX_HEADER_M_CTL_INQ( H ) (((H).M_CTL_flgs_1 & NX_HEADER_FLG1_M_CTL_INQ) >> 5)
+#define NX_HEADER_M_CTL_ONE( H ) (((H).M_CTL_flgs_1 & NX_HEADER_FLG1_M_CTL_ONE) >> 6)
+#define NX_HEADER_M_CTL_MLT( H ) (((H).M_CTL_flgs_1 & NX_HEADER_FLG1_M_CTL_MLT) >> 7)
+
+#define NX_HEADER_CREAT( N ) (				\
   {								\
     (N).H_TYPE_headerType[0] = 'N';				\
     (N).H_TYPE_headerType[1] = 'U';				\
     (N).H_TYPE_headerType[2] = 'X';				\
     (N).H_TYPE_headerType[3] = 'M';				\
+    (N).M_CTL_flgs_1 = 0;					\
+    (N).M_CTL_flgs_1 |= (uint8_t)NX_HEADER_FLG1_M_CTL_MLT;	\
+    (N).M_CTL_flgs_2 = 0;					\
+    (N).M_CTL_flgs_3 = 0;					\
+    (N).M_CTL_flgs_4 = 0;					\
+    (N).INQ_ID[0] = 0;						\
+    (N).INQ_ID[1] = 0;						\
+    (N).INQ_ID[2] = 0;						\
+    (N).INQ_ID[3] = 0;						\
+    (N).INQ_ID[4] = 0;						\
+    (N).INQ_ID[5] = 0;						\
+    (N).INQ_ID[6] = 0;						\
+    (N).INQ_ID[7] = 0;						\
+    (N).INQ_ID[8] = 0;						\
+    (N).INQ_ID[9] = 0;						\
+    (N).INQ_ID[10] = 0;						\
+    (N).INQ_ID[11] = 0;						\
+    (N).VER_versionNum = 0;					\
+    (N).GTID_gtID[0] = 0;					\
+    (N).GTID_gtID[1] = 0;					\
+    (N).GTID_gtID[2] = 0;					\
+    (N).GTID_gtID[3] = 0;					\
+    (N).GTID_gtID[4] = 0;					\
+    (N).GTID_gtID[5] = 0;					\
+    (N).GTID_gtID[6] = 0;					\
+    (N).GTID_gtID[7] = 0;					\
+    (N).PVER_nxProtocolVersion = 0;				\
+    (N).PRI_messagePriorityLevel = 0;				\
+    (N).CBN_currentFlagmentBlockNumber = 0;			\
+    (N).TBN_totalFlagmentBlockNumber = 0;			\
+    (N).BSIZE_blockSize = 0;					\
+    (N).FUI_forFuture[0] = 0;					\
+    (N).FUI_forFuture[1] = 0;					\
+    (N).FUI_forFuture[2] = 0;					\
+    (N).FUI_forFuture[3] = 0;					\
   }								\
 )
 
@@ -124,8 +169,8 @@ typedef struct NS_user_header {
   uint8_t flgs_1;
   uint8_t ackEM; // = 105;
   uint16_t dataLength; // = 106;
-  uint8_t flgs_2;
-  uint8_t networkTime[3];
+  uint8_t flgs_2; // constantly, 0 filled.
+  uint8_t networkTime[3]; // constantly, 0 filled.
 } NS_USRHDR, *NS_USRHDR_PTR;
 
 #define NEXUS_HDR( H ) ((H).nx_hdr)
@@ -134,4 +179,6 @@ typedef struct NS_user_header {
 typedef struct NX_NS_header {
   NX_HEADER nx_hdr;
   NS_USRHDR ns_usr_hdr;
-} NX_NS_HEADER, *NX_NS_HEADER_PTR;
+} NXNS_HEADER, *NXNS_HEADER_PTR;
+
+#define NXNS_USR_DATA( pG ) ((unsigned char *)(pG) + sizeof(NXNS_HEADER))
