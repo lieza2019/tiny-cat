@@ -23,4 +23,3 @@ typedef struct msgServerStatus {
   ;
   int n;
 } MSG_SERVER_STATUS, *MSG_SERVER_STATUS_PTR;
-

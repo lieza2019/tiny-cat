@@ -24,6 +24,26 @@ int TINY_SOCK_AVAIL ( struct tiny_sock_entry es[], int max_entries ) {
   return r;
 }
 
+int  sock_recv_socket_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC td ) {
+  assert( pS );
+  assert( td >= 0 );
+  int s = -1;
+  
+  s = pS->recv[td].sock;
+  assert( s > 0 );
+  return s;
+}
+
+int  sock_send_socket_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC td ) {
+  assert( pS );
+  assert( td >= 0 );
+  int s = -1;
+  
+  s = pS->send[td].sock;
+  assert( s > 0 );
+  return s;
+}
+
 static unsigned char *sock_attach_buf( struct tiny_sock_entry es[], TINY_SOCK_DESC td, unsigned char *pbuf, int size ) {
   assert( es );
   assert( td >= 0 );
@@ -51,7 +71,7 @@ static unsigned char *sock_buf_attached( struct tiny_sock_entry es[], TINY_SOCK_
 unsigned char *sock_attach_recv_buf( TINY_SOCK_PTR pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size ) {
   assert( pS );
   assert( td >= 0 );
-
+  
   return sock_attach_buf( pS->recv, td, pbuf, size );
 }
 
@@ -188,11 +208,15 @@ int recv_bcast ( TINY_SOCK_PTR pS ) {
     n = select( (nfds + 1), &readfds, NULL, NULL, &timeout );
     if( n < 0 )
       r = -1;
-    else if( n > 0 ) { 
+    else if( n > 0 ) {
+      int cnt_trigg = 0;
       int l;
       for( l = 0; l < num_valids; l++ )
-	if( FD_ISSET( valid[l].sock, &readfds ) )
+	if( FD_ISSET( valid[l].sock, &readfds ) ) {
 	  valid[l].trigg = TRUE;
+	  cnt_trigg++;
+	}
+      printf( "triggered sockets: %d.\n", cnt_trigg );  // ***** for debugging.
       {
 	BOOL err = FALSE;
 	l = 0;
@@ -202,6 +226,7 @@ int recv_bcast ( TINY_SOCK_PTR pS ) {
 	  if( m < 0 )
 	    err = TRUE;
 	  else {
+	    printf( "received data length: %d.\n", m );  // ***** for debugging.
 	    valid[l].wrote_len = m;
 	    r++;
 	  }
@@ -219,9 +244,12 @@ int recv_bcast ( TINY_SOCK_PTR pS ) {
 	l++;
       }
       assert( l <= num_valids );
-    } else
+    } else {
       assert( n == 0 );  // for the case of TIMEOUT, and do nothing.
+      printf( "no received, in this turn in recv_bcast.\n" );  // ***** for debugging.
+    }
   }
+  printf( "result of recv_bcast r: %d.\n", r );  // ***** for debugging.
   return r;
 }
 

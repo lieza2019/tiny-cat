@@ -7,22 +7,17 @@
 TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 static int frontier;
 
-static void flash_all_train_state ( void ) {
-  int i;
-  for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
-    trains_tracking[i].expired = TRUE;
-}
-
 static TINY_TRAIN_STATE_PTR enum_orphant_trains ( void ) {
   TINY_TRAIN_STATE_PTR r = NULL;
   {
     TINY_TRAIN_STATE_PTR *pp = &r;
     int i;
     for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
-      if( trains_tracking[i].expired ) {
+      if( ! (trains_tracking[i].expired || trains_tracking[i].updated) ) {
 	*pp = &trains_tracking[i];
 	trains_tracking[i].pNext = NULL;
 	pp = &trains_tracking[i].pNext;
+	trains_tracking[i].expired = TRUE;
       }
     assert( *pp == NULL );
   }
@@ -69,23 +64,38 @@ static TINY_TRAIN_STATE_PTR update_train_state( TRAIN_INFO_ENTRY_PTR pI ) {
     }
     assert( pE );
     pE->pTI = pI;
+    pE->updated = TRUE;
     pE->expired = FALSE;
   }
   return pE;
 }
 
-void reveal_train_tracking( void ) {
+static void invalidate_all_train_state ( void ) {
+  int i;
+  for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
+    trains_tracking[i].updated = FALSE;
+}
+
+void reveal_train_tracking( TINY_SOCK_PTR pS ) {
+  assert( pS );
   int i;
   
-  flash_all_train_state();
-  for( i = 0; i < END_OF_SCs; i++ ) {
+  invalidate_all_train_state();
+  for( i = (int)SC801; i < END_OF_SCs; i++ ) {
     SC_STAT_INFOSET_PTR pSC = NULL;
-    pSC = sniff_train_info( (SC_ID)i );
+    pSC = snif_train_info( pS, (SC_ID)i );
     if( pSC ) {
       int j;
-      for( j = 0; j < MAX_TRAIN_INFO_ENTRIES; j++ )
-	if( pSC->train_information.train_info.entries[j].rakeID > 0 )
-	  update_train_state( &pSC->train_information.train_info.entries[j] );
+      for( j = 0; j < MAX_TRAIN_INFO_ENTRIES; j++ ) {
+	TINY_TRAIN_STATE_PTR pE = NULL;
+	unsigned short rakeID = TRAIN_INFO_RAKEID(pSC->train_information.recv.train_info.entries[j]);
+	if( rakeID > 0 ) {
+	  printf( "received rakeID in the %2d th Train info.: %3d.\n", (i + 1), rakeID );  // ***** for debugging.
+	  pE = update_train_state( &pSC->train_information.recv.train_info.entries[j] );
+	  assert( pE );
+	  pSC->train_information.pTrain_stat[i] = pE;
+	}
+      }
     }
   }
   
@@ -97,10 +107,9 @@ void reveal_train_tracking( void ) {
       pOph = pOph->pNext;
     }
   }
-      
 }
 
-static SC_STAT_INFOSET_PTR willing_to_receive_train_information ( TINY_SOCK_PTR pS, SC_ID sc_id ) {
+static SC_STAT_INFOSET_PTR willing_to_recv_train_info ( TINY_SOCK_PTR pS, SC_ID sc_id ) {
   assert( pS );
   assert( (sc_id >= 0) && (sc_id < END_OF_SCs) );
   SC_STAT_INFOSET_PTR r = NULL;
@@ -116,11 +125,18 @@ static SC_STAT_INFOSET_PTR willing_to_receive_train_information ( TINY_SOCK_PTR 
       goto exit;
     }
     pSC->train_information.d_recv_train_info = d;
+    sock_attach_recv_buf( pS, d, (unsigned char *)&(pSC->train_information.recv), sizeof(pSC->train_information.recv) );
     r = pSC;
   }
   
  exit:
   return r;
+}
+
+static void expire_all_train_state ( void ) {
+  int i;
+  for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
+    trains_tracking[i].expired = TRUE;
 }
 
 static BOOL establish_SC_statinfo_recv ( TINY_SOCK_PTR pS ) {
@@ -130,7 +146,8 @@ static BOOL establish_SC_statinfo_recv ( TINY_SOCK_PTR pS ) {
   int i = (int)SC801;
   while( i < (int)END_OF_SCs ) {
     SC_STAT_INFOSET_PTR p = NULL;
-    if( ! (p = willing_to_receive_train_information( pS, (SC_ID)i )) )
+    expire_all_train_state();
+    if( ! (p = willing_to_recv_train_info( pS, (SC_ID)i )) )
       goto exit;
     assert( p );
     assert( p->train_information.d_recv_train_info >= 0 );

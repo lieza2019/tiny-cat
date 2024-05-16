@@ -43,6 +43,9 @@ extern int TINY_SOCK_AVAIL ( struct tiny_sock_entry es[], int max_entries );
 #define TINY_SOCK_RECV_AVAIL( pS ) ( (assert( (pS) )), TINY_SOCK_AVAIL( (pS)->recv,  MAX_RECV_SOCK_NUM ) )
 #define TINY_SOCK_SEND_AVAIL( pS ) ( (assert( (pS) )), TINY_SOCK_AVAIL( (pS)->send,  MAX_SEND_SOCK_NUM ) )
 
+extern int sock_recv_socket_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC td );
+extern int sock_send_socket_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC td );
+
 extern unsigned char *sock_attach_recv_buf( TINY_SOCK_PTR pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size );
 extern unsigned char *sock_recv_buf_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC td, int *psize );
 extern unsigned char *sock_attach_send_buf( TINY_SOCK_PTR pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size );

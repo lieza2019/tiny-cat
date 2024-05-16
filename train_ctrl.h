@@ -23,12 +23,13 @@ typedef struct tiny_train_state {
   TRAIN_COMMAND_ENTRY_PTR pTC[2];
    
   TRAIN_INFO_ENTRY_PTR  pTI;
+  BOOL updated;
   BOOL expired;
   struct tiny_train_state *pNext;
 } TINY_TRAIN_STATE, *TINY_TRAIN_STATE_PTR;
 
 #define MAX_TRAIN_TRACKINGS 1024
-extern TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 
-extern void reveal_train_tracking( void );
+extern TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
+extern void reveal_train_tracking( TINY_SOCK_PTR pS );
 extern BOOL establish_SC_comm ( TINY_SOCK_PTR pS );

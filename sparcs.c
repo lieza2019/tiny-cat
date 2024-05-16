@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "generic.h"
 #include "misc.h"
 #include "sparcs.h"
@@ -12,7 +13,19 @@ SC_STAT_INFOSET SC_stat_infos[END_OF_SCs] = {
   {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC806_Train_information}},
   {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC807_Train_information}},
   {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC808_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC809_Train_information}}
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC809_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC810_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC811_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC812_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC813_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC814_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC815_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC816_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC817_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC818_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC819_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC820_Train_information}},
+  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC821_Train_information}}
 };
 
 static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {  
@@ -81,10 +94,38 @@ int alloc_train_cmd_entries( TRAIN_COMMAND_ENTRY_PTR es[], int rakeID, int front
   return r;
 }
 
-SC_CTRL_CMDSET_PTR emit_train_cmd( SC_ID sc_id ) {
+SC_CTRL_CMDSET_PTR emit_train_cmd( TINY_SOCK_PTR pS, SC_ID sc_id ) {
+  assert( pS );
   return NULL;
 }
 
-SC_STAT_INFOSET_PTR sniff_train_info( SC_ID sc_id ) {
-  return NULL;
+SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id ) {
+  assert( pS );
+  assert( (sc_id >= SC801) && (sc_id < END_OF_SCs) );
+  SC_STAT_INFOSET_PTR pSC = NULL;
+
+  pSC = &SC_stat_infos[sc_id];
+  assert( pSC );
+  {
+    int i;
+    for( i = 0; i < MAX_TRAIN_INFO_ENTRIES; i++ )
+      pSC->train_information.pTrain_stat[i] = NULL;
+  }
+  
+  {
+    TINY_SOCK_DESC d = -1;
+    int len = -1;
+    d = pSC->train_information.d_recv_train_info;
+    assert( d > -1 );
+    assert( sock_recv_socket_attached( pS, d ) > 0 );
+    {
+      NXNS_HEADER_PTR p = NULL;
+      p = (NXNS_HEADER_PTR)sock_recv_buf_attached( pS, d, &len );
+      printf( "len is %d.\n", len );  // ***** for debugging.
+      assert( p );
+      assert( p == (NXNS_HEADER_PTR)(&pSC->train_information.recv) );
+    }
+    assert( len > 0 ? len >= sizeof(NXNS_HEADER) : len > -1 );
+  }
+  return pSC;
 }
