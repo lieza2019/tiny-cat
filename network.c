@@ -161,8 +161,6 @@ int creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port
   return r;
 }
 
-extern void phony_raw_recvbuf_traininfo( void *pbuf );  // ***** for debugging.
-extern void dump_raw_recvbuf_traininfo( void *pbuf );  // ***** for debugging.
 int recv_bcast ( TINY_SOCK_PTR pS ) {
   assert( pS );
   int r = -1;
@@ -218,11 +216,10 @@ int recv_bcast ( TINY_SOCK_PTR pS ) {
 	  valid[l].trigg = TRUE;
 	  cnt_trigg++;
 	}
-      printf( "triggered sockets: %d.\n", cnt_trigg );  // ***** for debugging.
+      //printf( "triggered sockets: %d.\n", cnt_trigg );  // ***** for debugging.
       {
 	BOOL err = FALSE;
 	l = 0;
-	//while( (l < num_valids) && valid[l].trigg ) {
 	while( l < num_valids ) {
 	  struct sockaddr_in from;
 	  socklen_t sockaddr_in_size = sizeof(struct sockaddr_in);
@@ -231,15 +228,14 @@ int recv_bcast ( TINY_SOCK_PTR pS ) {
 	    l++;
 	    continue;
 	  }
-	  phony_raw_recvbuf_traininfo( valid[l].pbuf );  // ***** for debugging.
+	  //phony_raw_recvbuf_traininfo( valid[l].pbuf );  // ***** for debugging.
 	  m = recvfrom( valid[l].sock, valid[l].pbuf, valid[l].buf_siz, MSG_WAITALL, (struct sockaddr *)&from, &sockaddr_in_size );
-	  
-	  dump_raw_recvbuf_traininfo( valid[l].pbuf );  // ***** for debugging.
-	  if( m < 0 )
-	    assert( FALSE );
-	    //err = TRUE;
-	  else {
-	    printf( "received data length: %d.\n", m );  // ***** for debugging.
+	  //dump_raw_recvbuf_traininfo( valid[l].pbuf );  // ***** for debugging.
+	  if( m < 0 ) {
+	    err = TRUE;
+	    assert( FALSE );  // ***** for debugging.
+	  } else {
+	    //printf( "received data length: %d.\n", m );  // ***** for debugging.
 	    valid[l].wrote_len = m;
 	    r++;
 	  }
@@ -250,7 +246,6 @@ int recv_bcast ( TINY_SOCK_PTR pS ) {
       }
       
       l = 0;
-      //while( (l < num_valids) && valid[l].trigg ) {
       while( l < num_valids ) {
 	if( ! valid[l].trigg ) {
 	  l++;
@@ -265,10 +260,10 @@ int recv_bcast ( TINY_SOCK_PTR pS ) {
       assert( l == num_valids );
     } else {
       assert( n == 0 );  // for the case of TIMEOUT, and do nothing.
-      printf( "no received, in this turn in recv_bcast.\n" );  // ***** for debugging.
+      //printf( "no received, in this turn in recv_bcast.\n" );  // ***** for debugging.
     }
   }
-  printf( "result of recv_bcast r: %d.\n", r );  // ***** for debugging.
+  //printf( "result of recv_bcast r: %d.\n", r );  // ***** for debugging.
   return r;
 }
 

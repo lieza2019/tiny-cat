@@ -20,7 +20,7 @@ static int diag_tracking_trains ( FILE *fp_out ) {
   
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
-    if( trains_tracking[i].rakeID > 0 ) {
+    if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
       assert( trains_tracking[i].rakeID == (int)(trains_tracking[i].pTI->rakeID) );
       fprintf( fp_out, "%-3d: rakeID\n", trains_tracking[i].rakeID );
       r++;
@@ -70,7 +70,7 @@ int main ( void ) {
   }
   
   {
-    const useconds_t interval = 1000 * 1000 * 3;
+    const useconds_t interval = 1000 * 1000 * 0.1;
     int nrecv = -1;
     while( TRUE ) {
       errorF( "%s", "waken up.\n" );

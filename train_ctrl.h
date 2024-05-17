@@ -24,7 +24,7 @@ typedef struct tiny_train_state {
    
   TRAIN_INFO_ENTRY_PTR  pTI;
   BOOL updated;
-  BOOL expired;
+  BOOL omit;
   struct tiny_train_state *pNext;
 } TINY_TRAIN_STATE, *TINY_TRAIN_STATE_PTR;
 

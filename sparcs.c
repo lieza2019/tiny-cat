@@ -121,7 +121,7 @@ SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id ) {
     {
       NXNS_HEADER_PTR p = NULL;
       p = (NXNS_HEADER_PTR)sock_recv_buf_attached( pS, d, &len );
-      printf( "len is %d.\n", len );  // ***** for debugging.
+      //printf( "len is %d.\n", len );  // ***** for debugging.
       assert( p );
       assert( p == (NXNS_HEADER_PTR)(&pSC->train_information.recv) );
     }
@@ -130,12 +130,12 @@ SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id ) {
   return pSC;
 }
 
-void phony_raw_recvbuf_traininfo( void *pbuf ) {
+void phony_raw_recvbuf_traininfo( void *pbuf ) {  // ***** for debugging.
   int i;
   for( i = 0; i < MAX_TRAIN_INFO_ENTRIES; i++ )
     ((struct recv_buf_traininfo *)pbuf)->train_info.entries[i].rakeID = (uint8_t)(i + 20);
 }  
-void dump_raw_recvbuf_traininfo( void *pbuf ) {
+void dump_raw_recvbuf_traininfo( void *pbuf ) {  // ***** for debugging.
   assert( pbuf );
   int i;
   for( i = 0; i < MAX_TRAIN_INFO_ENTRIES; i++ ) {

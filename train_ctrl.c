@@ -13,11 +13,11 @@ static TINY_TRAIN_STATE_PTR enum_orphant_trains ( void ) {
     TINY_TRAIN_STATE_PTR *pp = &r;
     int i;
     for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
-      if( ! (trains_tracking[i].expired || trains_tracking[i].updated) ) {
+      if( ! (trains_tracking[i].omit || trains_tracking[i].updated) ) {
 	*pp = &trains_tracking[i];
 	trains_tracking[i].pNext = NULL;
 	pp = &trains_tracking[i].pNext;
-	trains_tracking[i].expired = TRUE;
+	trains_tracking[i].omit = TRUE;
       }
     assert( *pp == NULL );
   }
@@ -30,11 +30,12 @@ static BOOL exam_consistency_with_train_info ( TINY_TRAIN_STATE_PTR pE, TRAIN_IN
   return TRUE;
 }
 
-static void retrieve_from_train_info ( TINY_TRAIN_STATE_PTR pE, TRAIN_INFO_ENTRY_PTR pI ) {
-  assert( pE );
+static void retrieve_from_train_info ( TINY_TRAIN_STATE_PTR pS, TRAIN_INFO_ENTRY_PTR pI ) {
+  assert( pS );
   assert( pI );
-  pE->skip_next_stop = TRAIN_INFO_SKIP_NEXT_STOP( *pI );
-  pE->perf_regime_cmd = TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( *pI );
+  pS->rakeID = TRAIN_INFO_RAKEID( *pI );
+  pS->skip_next_stop = TRAIN_INFO_SKIP_NEXT_STOP( *pI );
+  pS->perf_regime_cmd = TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( *pI );
 }
 
 static TINY_TRAIN_STATE_PTR update_train_state( TRAIN_INFO_ENTRY_PTR pI ) {
@@ -65,12 +66,12 @@ static TINY_TRAIN_STATE_PTR update_train_state( TRAIN_INFO_ENTRY_PTR pI ) {
     assert( pE );
     pE->pTI = pI;
     pE->updated = TRUE;
-    pE->expired = FALSE;
+    pE->omit = FALSE;
   }
   return pE;
 }
 
-static void invalidate_all_train_state ( void ) {
+static void expire_train_state ( void ) {
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
     trains_tracking[i].updated = FALSE;
@@ -80,7 +81,7 @@ void reveal_train_tracking( TINY_SOCK_PTR pS ) {
   assert( pS );
   int i;
   
-  invalidate_all_train_state();
+  expire_train_state();
   for( i = (int)SC801; i < END_OF_SCs; i++ ) {
     SC_STAT_INFOSET_PTR pSC = NULL;
     pSC = snif_train_info( pS, (SC_ID)i );
@@ -90,7 +91,7 @@ void reveal_train_tracking( TINY_SOCK_PTR pS ) {
 	TINY_TRAIN_STATE_PTR pE = NULL;
 	unsigned short rakeID = TRAIN_INFO_RAKEID(pSC->train_information.recv.train_info.entries[j]);
 	if( rakeID != 0 ) {
-	  printf( "received rakeID in the %2d th Train info.: %3d.\n", (i + 1), rakeID );  // ***** for debugging.
+	  //printf( "received rakeID in the %2d th Train info.: %3d.\n", (i + 1), rakeID );  // ***** for debugging.
 	  pE = update_train_state( &pSC->train_information.recv.train_info.entries[j] );
 	  assert( pE );
 	  pSC->train_information.pTrain_stat[i] = pE;
@@ -136,7 +137,7 @@ static SC_STAT_INFOSET_PTR willing_to_recv_train_info ( TINY_SOCK_PTR pS, SC_ID 
 static void expire_all_train_state ( void ) {
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
-    trains_tracking[i].expired = TRUE;
+    trains_tracking[i].omit = TRUE;
 }
 
 static BOOL establish_SC_statinfo_recv ( TINY_SOCK_PTR pS ) {
@@ -206,7 +207,7 @@ int charge_train_command( void ) {
     TINY_TRAIN_STATE_PTR pstat = NULL;
     pstat = &trains_tracking[i];
     assert( pstat );
-    if( (pstat->rakeID > 0) && (! pstat->expired) ) {
+    if( (pstat->rakeID > 0) && (! pstat->omit) ) {
       TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
       int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
       int back_blk = TRAIN_INFO_OCCUPIED_BLK_BACK( *(pstat->pTI) );
