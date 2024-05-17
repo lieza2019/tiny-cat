@@ -89,7 +89,7 @@ void reveal_train_tracking( TINY_SOCK_PTR pS ) {
       for( j = 0; j < MAX_TRAIN_INFO_ENTRIES; j++ ) {
 	TINY_TRAIN_STATE_PTR pE = NULL;
 	unsigned short rakeID = TRAIN_INFO_RAKEID(pSC->train_information.recv.train_info.entries[j]);
-	if( rakeID > 0 ) {
+	if( rakeID != 0 ) {
 	  printf( "received rakeID in the %2d th Train info.: %3d.\n", (i + 1), rakeID );  // ***** for debugging.
 	  pE = update_train_state( &pSC->train_information.recv.train_info.entries[j] );
 	  assert( pE );

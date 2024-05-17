@@ -43,6 +43,22 @@ int main ( void ) {
   TINY_SOCK_DESC sd_msg_srv_stat = -1;
   TINY_SOCK socks;
   TINY_SOCK_CREAT( socks );
+#if 0
+  printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
+  printf( "sizeof TRAIN_INFO: %d.\n", (int)sizeof(TRAIN_INFO) );
+  {
+    struct _recv_buf_train_info {
+      NXNS_HEADER header;
+      uint8_t flgs_1;
+      uint8_t spare_1;
+      uint8_t spare_2;
+      uint8_t spare_3;
+      TRAIN_INFO train_info;
+    };
+    printf( "sizof RECV_BUF_TRAININFO: %d.\n", (int)sizeof(struct _recv_buf_train_info) );
+  }
+  exit( 0 );
+#endif
   
   if( ! establish_SC_comm( &socks ) ) {
     errorF("%s", "failed to create the recv ports for Train information.\n");

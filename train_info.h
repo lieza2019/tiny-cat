@@ -54,12 +54,8 @@
 #define FLG10_RESCUE_TRAIN 8
 #define FLG10_STATE_OF_TRAIN_DOOR 48
 #define FLG10_TRAIN_PERFORMANCE_REGIME 192
-
+ 
 typedef struct train_info_entry {
-  uint8_t flgs_1;
-  uint8_t spare_1;
-  uint8_t spare_2;
-  uint8_t spare_3;
   uint8_t flgs_2;
   uint8_t rakeID;
   uint8_t flgs_3;

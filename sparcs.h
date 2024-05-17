@@ -63,6 +63,15 @@ typedef struct SC_ctrl_cmdset {
 #define UDP_BCAST_RECV_PORT_SC820_Train_information 57035
 #define UDP_BCAST_RECV_PORT_SC821_Train_information 57135
 
+struct recv_buf_traininfo {
+  NXNS_HEADER header;
+  uint8_t flgs_1;
+  uint8_t spare_1;
+  uint8_t spare_2;
+  uint8_t spare_3;
+  TRAIN_INFO train_info;
+};
+
 typedef struct SC_stat_infoset {
   struct {
     unsigned char oct_1st;
@@ -73,10 +82,7 @@ typedef struct SC_stat_infoset {
   struct {
     const unsigned short dst_port;
     TINY_SOCK_DESC d_recv_train_info;
-    struct {
-      NXNS_HEADER header;
-      TRAIN_INFO train_info;
-    } recv;
+    struct recv_buf_traininfo recv;
     TINY_TRAIN_STATE_PTR pTrain_stat[MAX_TRAIN_INFO_ENTRIES];
   } train_information;
 } SC_STAT_INFOSET, *SC_STAT_INFOSET_PTR;

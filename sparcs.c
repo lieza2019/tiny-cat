@@ -129,3 +129,18 @@ SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id ) {
   }
   return pSC;
 }
+
+void phony_raw_recvbuf_traininfo( void *pbuf ) {
+  int i;
+  for( i = 0; i < MAX_TRAIN_INFO_ENTRIES; i++ )
+    ((struct recv_buf_traininfo *)pbuf)->train_info.entries[i].rakeID = (uint8_t)(i + 20);
+}  
+void dump_raw_recvbuf_traininfo( void *pbuf ) {
+  assert( pbuf );
+  int i;
+  for( i = 0; i < MAX_TRAIN_INFO_ENTRIES; i++ ) {
+    unsigned short rakeID =  TRAIN_INFO_RAKEID( ((struct recv_buf_traininfo *)pbuf)->train_info.entries[i] );
+    if( rakeID > 0 )
+      printf( "received rakeID: %03d.\n", rakeID );
+  }
+}

@@ -161,6 +161,8 @@ int creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port
   return r;
 }
 
+extern void phony_raw_recvbuf_traininfo( void *pbuf );  // ***** for debugging.
+extern void dump_raw_recvbuf_traininfo( void *pbuf );  // ***** for debugging.
 int recv_bcast ( TINY_SOCK_PTR pS ) {
   assert( pS );
   int r = -1;
@@ -220,11 +222,22 @@ int recv_bcast ( TINY_SOCK_PTR pS ) {
       {
 	BOOL err = FALSE;
 	l = 0;
-	while( (l < num_valids) && valid[l].trigg ) {
+	//while( (l < num_valids) && valid[l].trigg ) {
+	while( l < num_valids ) {
+	  struct sockaddr_in from;
+	  socklen_t sockaddr_in_size = sizeof(struct sockaddr_in);
 	  int m = -1;
-	  m = recv( valid[l].sock, valid[l].pbuf, valid[l].buf_siz, 0 );
+	  if( ! valid[l].trigg ) {
+	    l++;
+	    continue;
+	  }
+	  phony_raw_recvbuf_traininfo( valid[l].pbuf );  // ***** for debugging.
+	  m = recvfrom( valid[l].sock, valid[l].pbuf, valid[l].buf_siz, MSG_WAITALL, (struct sockaddr *)&from, &sockaddr_in_size );
+	  
+	  dump_raw_recvbuf_traininfo( valid[l].pbuf );  // ***** for debugging.
 	  if( m < 0 )
-	    err = TRUE;
+	    assert( FALSE );
+	    //err = TRUE;
 	  else {
 	    printf( "received data length: %d.\n", m );  // ***** for debugging.
 	    valid[l].wrote_len = m;
@@ -232,18 +245,24 @@ int recv_bcast ( TINY_SOCK_PTR pS ) {
 	  }
 	  l++;
 	}
-	assert( l <= num_valids );
+	assert( l == num_valids );
 	r = err ? (r * -1) : r;
       }
       
       l = 0;
-      while( (l < num_valids) && valid[l].trigg ) {
-	int sd = valid[l].sd;
-	pS->recv[sd].wrote_len = valid[l].wrote_len;
-	pS->recv[sd].dirty = TRUE;
-	l++;
+      //while( (l < num_valids) && valid[l].trigg ) {
+      while( l < num_valids ) {
+	if( ! valid[l].trigg ) {
+	  l++;
+	  continue;
+	} else {
+	  int sd = valid[l].sd;
+	  pS->recv[sd].wrote_len = valid[l].wrote_len;
+	  pS->recv[sd].dirty = TRUE;
+	  l++;
+	}
       }
-      assert( l <= num_valids );
+      assert( l == num_valids );
     } else {
       assert( n == 0 );  // for the case of TIMEOUT, and do nothing.
       printf( "no received, in this turn in recv_bcast.\n" );  // ***** for debugging.
