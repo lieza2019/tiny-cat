@@ -74,7 +74,7 @@ int main ( void ) {
     int nrecv = -1;
     while( TRUE ) {
       errorF( "%s", "waken up.\n" );
-      if( (nrecv = recv_bcast( &socks )) < 0 ) {
+      if( (nrecv = sock_recv( &socks )) < 0 ) {
 	errorF( "%s", "error on receiving CBTC status information from SCs.\n" );
 	continue;
       }
@@ -89,8 +89,8 @@ int main ( void ) {
 	pmsg_buf = (MSG_SERVER_STATUS_PTR)sock_send_buf_attached( &socks, sd_msg_srv_stat, &size );
 	assert( pmsg_buf );
 	pmsg_buf->n = cnt;
-	assert( sock_send_buf_ready( &socks, sd_msg_srv_stat, sizeof(MSG_SERVER_STATUS) ) == sizeof(send_buf_MsgServerStatus) );
-	if( send_bcast( &socks) < 1 ) {
+	assert( sock_send_ready( &socks, sd_msg_srv_stat, sizeof(MSG_SERVER_STATUS) ) == sizeof(send_buf_MsgServerStatus) );
+	if( sock_send( &socks) < 1 ) {
 	  errorF( "%s", "failed to send msgServerStatus.\n" );
 	  exit( 1 );
 	}
@@ -162,8 +162,8 @@ int main (void) {
 	assert( pbuf );
 	assert( size >= (sizeof(NXNS_HEADER) + sizeof(MSG_SERVER_STATUS)) );
 	memcpy( pbuf, &msg_srv_stat, sizeof(msg_srv_stat) );
-	assert( sock_send_buf_ready( &socks, sd_send, sizeof(msg_srv_stat) ) == sizeof(msg_srv_stat) );
-	if( send_bcast( &socks ) < 1 ) {
+	assert( sock_send_ready( &socks, sd_send, sizeof(msg_srv_stat) ) == sizeof(msg_srv_stat) );
+	if( sock_send( &socks ) < 1 ) {
 	  errorF( "%s", "failed to send msgServerStatus.\n" );
 	  exit( 1 );
 	}

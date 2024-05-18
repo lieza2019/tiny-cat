@@ -50,13 +50,13 @@ extern unsigned char *sock_attach_recv_buf( TINY_SOCK_PTR pS, TINY_SOCK_DESC td,
 extern unsigned char *sock_recv_buf_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC td, int *psize );
 extern unsigned char *sock_attach_send_buf( TINY_SOCK_PTR pS, TINY_SOCK_DESC td, unsigned char *pbuf, int size );
 extern unsigned char *sock_send_buf_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC td, int *psize );
-extern int sock_send_buf_ready( TINY_SOCK_PTR pS, TINY_SOCK_DESC sd, int len );
+extern int sock_send_ready ( TINY_SOCK_PTR pS, TINY_SOCK_DESC sd, int len );
 
 extern int creat_sock_bcast_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_port );
 extern int creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port, const char *dest_host_ipaddr );
 
-extern int recv_bcast ( TINY_SOCK_PTR pS );
-extern int send_bcast ( TINY_SOCK_PTR pS );
+extern int sock_recv ( TINY_SOCK_PTR pS );
+extern int sock_send ( TINY_SOCK_PTR pS );
 
 typedef struct NEXUS_header {
   char H_TYPE_headerType[4]; // set the NEXUS signature constant of "NUXM".

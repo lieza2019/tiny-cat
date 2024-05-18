@@ -98,7 +98,7 @@ unsigned char *sock_send_buf_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC td, int 
   return sock_buf_attached( pS->send, td, psize, NULL );
 }
 
-int sock_send_buf_ready ( TINY_SOCK_PTR pS, TINY_SOCK_DESC sd, int len ) {
+int sock_send_ready ( TINY_SOCK_PTR pS, TINY_SOCK_DESC sd, int len ) {
   assert( pS );
   assert( sd >= 0 );
   assert( pS->send[sd].sock > 0 );
@@ -161,7 +161,7 @@ int creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port
   return r;
 }
 
-int recv_bcast ( TINY_SOCK_PTR pS ) {
+int sock_recv ( TINY_SOCK_PTR pS ) {
   assert( pS );
   int r = -1;
   
@@ -297,7 +297,7 @@ static size_t envelop_with_the_header ( NXNS_HEADER_PTR phdr, unsigned char *pra
   return n;
 }
 
-int send_bcast ( TINY_SOCK_PTR pS ) {
+int sock_send ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL err = FALSE;
   int r = 0;
