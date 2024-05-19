@@ -11,6 +11,8 @@
   }							\
 )
 
+extern int nbits_sft ( int m );
+  
 // below are use for debugging.
 extern void phony_raw_recvbuf_traininfo( void *pbuf );  // ***** for debugging.
 extern void dump_raw_recvbuf_traininfo( void *pbuf );  // ***** for debugging.

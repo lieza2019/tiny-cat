@@ -14,6 +14,7 @@
 #include "srv.h"
 #include "interlock.h"
 
+#if 1
 static int diag_tracking_trains ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
@@ -28,19 +29,19 @@ static int diag_tracking_trains ( FILE *fp_out ) {
   return r;
 }
 
-#define BROADCAST_DSTIPADDR LOOPBACK_IPADDR
-MSG_SERVER_STATUS send_buf_MsgServerStatus;
+#define BUFSIZ_msgServerStatus MAX_SEND_BUFSIZ // must be greater than / equal to MAX_SEND_BUFSIZ
+static unsigned char buf_msgServerStatus[BUFSIZ_msgServerStatus];
 TINY_SOCK_DESC launch_msg_srv_stat ( TINY_SOCK_PTR pS ) {
   assert( pS );
   TINY_SOCK_DESC d = -1;
   
-  if( (d = creat_sock_bcast_send ( pS, UDP_BCAST_RECV_PORT_msgServerStatus, BROADCAST_DSTIPADDR )) >= 0 )
-    sock_attach_send_buf( pS, d, (unsigned char *)&send_buf_MsgServerStatus, sizeof(send_buf_MsgServerStatus) );
+  if( (d = creat_sock_bcast_send ( pS, UDP_BCAST_SEND_PORT_msgServerStatus, BROADCAST_DST_IPADDR )) >= 0 )
+    sock_attach_send_buf( pS, d, (unsigned char *)&buf_msgServerStatus, sizeof(buf_msgServerStatus) );
   return d;
 }
 
 int main ( void ) {
-  TINY_SOCK_DESC sd_msg_srv_stat = -1;
+  TINY_SOCK_DESC sd_msg_srvstat = -1;
   TINY_SOCK socks;
   TINY_SOCK_CREAT( socks );
 #if 0
@@ -60,18 +61,19 @@ int main ( void ) {
   exit( 0 );
 #endif
   
+  if( (sd_msg_srvstat = launch_msg_srv_stat( &socks )) < 0 ) {
+    errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
+    exit( 1 );
+  }
   if( ! establish_SC_comm( &socks ) ) {
     errorF("%s", "failed to create the recv ports for Train information.\n");
     exit( 1 );
   }
-  if( (sd_msg_srv_stat = launch_msg_srv_stat( &socks )) < 0 ) {
-    errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
-    exit( 1 );
-  }
   
   {
-    const useconds_t interval = 1000 * 1000 * 0.1;
+    const useconds_t interval = 1000 * 1000 * 1;
     int nrecv = -1;
+    int cnt = 0;
     while( TRUE ) {
       errorF( "%s", "waken up.\n" );
       if( (nrecv = sock_recv( &socks )) < 0 ) {
@@ -81,27 +83,30 @@ int main ( void ) {
       reveal_train_tracking( &socks );
       if( diag_tracking_trains( stdout ) > 0 )
 	fprintf( stdout, "\n" );
-#if 0
+      
       {
-	MSG_SERVER_STATUS_PTR pmsg_buf = NULL;
+	static MSG_TINY_SERVER_STATUS msg_srv_stat;
+	unsigned char *pmsg_buf = NULL;
 	int size = -1;
-	int cnt = 0;
-	pmsg_buf = (MSG_SERVER_STATUS_PTR)sock_send_buf_attached( &socks, sd_msg_srv_stat, &size );
+	pmsg_buf = sock_send_buf_attached( &socks, sd_msg_srvstat, &size );
 	assert( pmsg_buf );
-	pmsg_buf->n = cnt;
-	assert( sock_send_ready( &socks, sd_msg_srv_stat, sizeof(MSG_SERVER_STATUS) ) == sizeof(send_buf_MsgServerStatus) );
-	if( sock_send( &socks) < 1 ) {
+	assert( size >= (sizeof(NXNS_HEADER) + sizeof(MSG_TINY_SERVER_STATUS)) );
+	memset( &msg_srv_stat, 0xFF, sizeof(msg_srv_stat) );
+	msg_srv_stat.n = cnt;
+	memcpy( pmsg_buf, &msg_srv_stat, sizeof(msg_srv_stat) );
+	assert( sock_send_ready(&socks, sd_msg_srvstat, sizeof(msg_srv_stat)) == sizeof(MSG_TINY_SERVER_STATUS) );
+	if( sock_send(&socks) < 1 ) {
 	  errorF( "%s", "failed to send msgServerStatus.\n" );
 	  exit( 1 );
 	}
 	cnt++;
       }
-#endif 
       assert( ! usleep( interval ) );
     }
   }
   return 0;
 }
+#endif
 
 #if 0
 #define RECV_BUFSIZ_msgServerStatus MAX_RECV_BUFSIZ // must be greater than / equal to MAX_RECV_BUFSIZ
@@ -116,13 +121,13 @@ int main (void) {
   
   // msgServerStatusを、UDPにて送受信できるようになる。
   TINY_SOCK_CREAT( socks );
-  if( (sd_recv = creat_sock_bcast_recv ( &socks, UDP_BCAST_RECV_PORT_msgServerStatus )) < 0 ) {
+  if( (sd_recv = creat_sock_bcast_recv ( &socks, UDP_BCAST_SEND_PORT_msgServerStatus )) < 0 ) {
     errorF( "%s", "failed to create the socket to receive msgServerStatus.\n" );
     exit( 1 );
   } else
     sock_attach_recv_buf( &socks, sd_recv, recv_buf_msgServerStatus, sizeof(recv_buf_msgServerStatus) );
   
-  if( (sd_send = creat_sock_bcast_send ( &socks, UDP_BCAST_RECV_PORT_msgServerStatus, LOOPBACK_IPADDR )) < 0 ) {
+  if( (sd_send = creat_sock_bcast_send ( &socks, UDP_BCAST_SEND_PORT_msgServerStatus, LOOPBACK_IPADDR )) < 0 ) {
     errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
     exit( 1 );
   } else
@@ -130,16 +135,16 @@ int main (void) {
   
   // Workstation commandを、TCPにて受信できるように、なる。
   ;
-
+  
   { 
-    const useconds_t interval = 1000 * 1000 * 3;
+    const useconds_t interval = 1000 * 1000 * 1;
     MSG_SERVER_STATUS msg_srv_stat;
     
     msg_srv_stat.n = 1;
     while( TRUE ) {
       NXNS_HEADER_PTR pRecv_msg_srv_stat = NULL;
       assert( recv_buf_msgServerStatus == (unsigned char *)memset( recv_buf_msgServerStatus, 0, RECV_BUFSIZ_msgServerStatus ) );
-      if( recv_bcast( &socks ) < 0 ) {
+      if( sock_recv( &socks ) < 0 ) {
 	errorF( "%s", "error on receiving msgServerStatus, detected.\n" );
 	exit( 1 );
       } else {
@@ -157,7 +162,7 @@ int main (void) {
       
       {
 	unsigned char *pbuf = NULL;
-	int size = -1
+	int size = -1;
 	pbuf = sock_send_buf_attached( &socks, sd_send, &size );
 	assert( pbuf );
 	assert( size >= (sizeof(NXNS_HEADER) + sizeof(MSG_SERVER_STATUS)) );
