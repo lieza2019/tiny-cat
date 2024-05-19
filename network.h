@@ -17,6 +17,7 @@ struct tiny_sock_entry {
   int buf_siz;
   int wrote_len;
   BOOL dirty;
+  BOOL is_nx;
 };
 #define MAX_RECV_SOCK_NUM 256
 #define MAX_SEND_SOCK_NUM 256
@@ -53,7 +54,8 @@ extern unsigned char *sock_send_buf_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC t
 extern int sock_send_ready ( TINY_SOCK_PTR pS, TINY_SOCK_DESC sd, int len );
 
 extern int creat_sock_bcast_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_port );
-extern int creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port, const char *dest_host_ipaddr );
+extern TINY_SOCK_DESC creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port, const char *dest_host_ipaddr );
+extern TINY_SOCK_DESC creat_sock_bcast_sendnx ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port, const char *dest_host_ipaddr );
 
 extern int sock_recv ( TINY_SOCK_PTR pS );
 extern int sock_send ( TINY_SOCK_PTR pS );

@@ -125,7 +125,7 @@ SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id ) {
       assert( p );
       assert( p == (NXNS_HEADER_PTR)(&pSC->train_information.recv) );
     }
-    assert( len > 0 ? len >= sizeof(NXNS_HEADER) : len > -1 );
+    assert( len > 0 ? len >= sizeof(NXNS_HEADER) : TRUE );
   }
   return pSC;
 }

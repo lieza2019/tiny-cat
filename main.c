@@ -36,12 +36,13 @@ TINY_SOCK_DESC launch_msg_srv_stat ( TINY_SOCK_PTR pS ) {
   TINY_SOCK_DESC d = -1;
   
   if( (d = creat_sock_bcast_send ( pS, UDP_BCAST_SEND_PORT_msgServerStatus, BROADCAST_DST_IPADDR )) >= 0 )
-    sock_attach_send_buf( pS, d, (unsigned char *)&buf_msgServerStatus, sizeof(buf_msgServerStatus) );
+    sock_attach_send_buf( pS, d, buf_msgServerStatus, sizeof(buf_msgServerStatus) );
   return d;
 }
 
 int main ( void ) {
-  TINY_SOCK_DESC sd_msg_srvstat = -1;
+  TINY_SOCK_DESC sd_send_srvstat = -1;
+  TINY_SOCK_DESC sd_recv_srvstat = -1;
   TINY_SOCK socks;
   TINY_SOCK_CREAT( socks );
 #if 0
@@ -61,10 +62,21 @@ int main ( void ) {
   exit( 0 );
 #endif
   
-  if( (sd_msg_srvstat = launch_msg_srv_stat( &socks )) < 0 ) {
+  if( (sd_send_srvstat = launch_msg_srv_stat( &socks )) < 0 ) {
     errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
     exit( 1 );
   }
+  assert( sd_send_srvstat > -1 );
+#if 1
+  if( (sd_recv_srvstat = creat_sock_bcast_recv ( &socks, UDP_BCAST_SEND_PORT_msgServerStatus )) < 0 ) {
+    errorF( "%s", "failed to create the socket to self-receive msgServerStatus.\n" );
+    exit( 1 );
+  } else {
+    assert( sd_recv_srvstat > -1 );
+    sock_attach_recv_buf( &socks, sd_recv_srvstat, buf_msgServerStatus, sizeof(buf_msgServerStatus) );
+  }
+#endif
+  
   if( ! establish_SC_comm( &socks ) ) {
     errorF("%s", "failed to create the recv ports for Train information.\n");
     exit( 1 );
@@ -74,6 +86,10 @@ int main ( void ) {
     const useconds_t interval = 1000 * 1000 * 1;
     int nrecv = -1;
     int cnt = 0;
+    
+    static MSG_TINY_SERVER_STATUS msg_srv_stat;
+    assert( memcpy(buf_msgServerStatus, &msg_srv_stat, sizeof(msg_srv_stat)) == buf_msgServerStatus );
+    
     while( TRUE ) {
       errorF( "%s", "waken up.\n" );
       if( (nrecv = sock_recv( &socks )) < 0 ) {
@@ -85,16 +101,25 @@ int main ( void ) {
 	fprintf( stdout, "\n" );
       
       {
-	static MSG_TINY_SERVER_STATUS msg_srv_stat;
+	int msglen = -1;
+	assert( sock_recv_buf_attached(&socks, sd_recv_srvstat, &msglen) == buf_msgServerStatus );
+	assert( (msglen > 0) ? (msglen == sizeof(MSG_TINY_SERVER_STATUS)) : TRUE );
+      }
+      
+      {
 	unsigned char *pmsg_buf = NULL;
 	int size = -1;
-	pmsg_buf = sock_send_buf_attached( &socks, sd_msg_srvstat, &size );
+	pmsg_buf = sock_send_buf_attached( &socks, sd_send_srvstat, &size );
 	assert( pmsg_buf );
 	assert( size >= (sizeof(NXNS_HEADER) + sizeof(MSG_TINY_SERVER_STATUS)) );
+#if 0
 	memset( &msg_srv_stat, 0xFF, sizeof(msg_srv_stat) );
 	msg_srv_stat.n = cnt;
 	memcpy( pmsg_buf, &msg_srv_stat, sizeof(msg_srv_stat) );
-	assert( sock_send_ready(&socks, sd_msg_srvstat, sizeof(msg_srv_stat)) == sizeof(MSG_TINY_SERVER_STATUS) );
+#else
+	((MSG_TINY_SERVER_STATUS_PTR)pmsg_buf)->n++;
+#endif
+	assert( sock_send_ready(&socks, sd_send_srvstat, sizeof(msg_srv_stat)) == sizeof(MSG_TINY_SERVER_STATUS) );
 	if( sock_send(&socks) < 1 ) {
 	  errorF( "%s", "failed to send msgServerStatus.\n" );
 	  exit( 1 );
@@ -127,7 +152,7 @@ int main (void) {
   } else
     sock_attach_recv_buf( &socks, sd_recv, recv_buf_msgServerStatus, sizeof(recv_buf_msgServerStatus) );
   
-  if( (sd_send = creat_sock_bcast_send ( &socks, UDP_BCAST_SEND_PORT_msgServerStatus, LOOPBACK_IPADDR )) < 0 ) {
+  if( (sd_send = creat_sock_bcast_sendnx ( &socks, UDP_BCAST_SEND_PORT_msgServerStatus, LOOPBACK_IPADDR )) < 0 ) {
     errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
     exit( 1 );
   } else
