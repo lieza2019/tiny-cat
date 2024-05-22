@@ -134,7 +134,7 @@ int creat_sock_bcast_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_port
       pS->recv[r].buf_siz = -1;
       pS->recv[r].wrote_len = -1;
       pS->recv[r].dirty = FALSE;
-      pS->recv[r].is_nx = FALSE;
+      pS->recv[r].is_nx = FALSE;	  
     }
   }
   return r;
@@ -149,20 +149,30 @@ TINY_SOCK_DESC creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcas
   if( r > -1 ) {
     pS->send[r].addr.sin_family = AF_INET;
     pS->send[r].addr.sin_port = htons( udp_bcast_dest_port );
+#if 0
     pS->send[r].addr.sin_addr.s_addr = inet_addr( dest_host_ipaddr );
+#else
+    inet_pton( AF_INET, "172.21.255.255", &(pS->send[r].addr.sin_addr.s_addr) );
+#endif
     {
       int s = -1;
       s = socket( AF_INET, SOCK_DGRAM, 0 );
       if( s < 0 )
 	r = -1;
-      else
-	pS->send[r].sock = s;
+      else {
+	BOOL yes = TRUE;
+	if( setsockopt( s, SOL_SOCKET, SO_BROADCAST, (char *)&yes, sizeof(yes) ) < 0 ) {
+	  close( s );
+	  r = -1;
+	} else
+	  pS->send[r].sock = s;
+      }
+      pS->send[r].pbuf = NULL;
+      pS->send[r].buf_siz = -1;
+      pS->send[r].wrote_len = -1;
+      pS->send[r].dirty = FALSE;
+      pS->send[r].is_nx = FALSE;
     }
-    pS->send[r].pbuf = NULL;
-    pS->send[r].buf_siz = -1;
-    pS->send[r].wrote_len = -1;
-    pS->send[r].dirty = FALSE;
-    pS->send[r].is_nx = FALSE;
   }
   return r;
 }

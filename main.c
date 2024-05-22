@@ -35,7 +35,7 @@ TINY_SOCK_DESC launch_msg_srv_stat ( TINY_SOCK_PTR pS ) {
   assert( pS );
   TINY_SOCK_DESC d = -1;
   
-  if( (d = creat_sock_bcast_send ( pS, UDP_BCAST_SEND_PORT_msgServerStatus, BROADCAST_DST_IPADDR )) >= 0 )
+  if( (d = creat_sock_bcast_sendnx( pS, UDP_BCAST_SEND_PORT_msgServerStatus, BROADCAST_DST_IPADDR )) >= 0 )
     sock_attach_send_buf( pS, d, buf_msgServerStatus, sizeof(buf_msgServerStatus) );
   return d;
 }
@@ -59,6 +59,14 @@ int main ( void ) {
     };
     printf( "sizof RECV_BUF_TRAININFO: %d.\n", (int)sizeof(struct _recv_buf_train_info) );
   }
+  printf( "sizeof MSG_TINY_SERVER_STATUS: %d.\n", (int)sizeof(MSG_TINY_SERVER_STATUS) );
+  {
+    struct _tny_srv_stat_NXNS {
+      NXNS_HEADER hdr;
+      MSG_TINY_SERVER_STATUS load;
+    };
+    printf( "sizeof TinyMsgServerStatus on NX-NS header: %d.\n", (int)sizeof(struct _tny_srv_stat_NXNS) );
+  }
   exit( 0 );
 #endif
   
@@ -68,7 +76,7 @@ int main ( void ) {
   }
   assert( sd_send_srvstat > -1 );
 #if 1
-  if( (sd_recv_srvstat = creat_sock_bcast_recv ( &socks, UDP_BCAST_SEND_PORT_msgServerStatus )) < 0 ) {
+  if( (sd_recv_srvstat = creat_sock_bcast_recv( &socks, UDP_BCAST_SEND_PORT_msgServerStatus )) < 0 ) {
     errorF( "%s", "failed to create the socket to self-receive msgServerStatus.\n" );
     exit( 1 );
   } else {
@@ -83,12 +91,33 @@ int main ( void ) {
   }
   
   {
-    const useconds_t interval = 1000 * 1000 * 1;
+    const useconds_t interval = 1000 * 1000 * 0.1;
     int nrecv = -1;
     int cnt = 0;
     
     static MSG_TINY_SERVER_STATUS msg_srv_stat;
-    assert( memcpy(buf_msgServerStatus, &msg_srv_stat, sizeof(msg_srv_stat)) == buf_msgServerStatus );
+    TINY_SRVSTAT_MSG_SERVERID( msg_srv_stat, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_JPW,  1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_IGDA, 1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_RKPM, 1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_IWNR, 1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_JLA,  1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_BCGN, 1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_KIKD, 1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_RKAM, 1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_MKPR, 1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_NPPR, 1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_DPCK, 1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_PAGI, 1, 1 );
+    TINY_SRVSTAT_CURRENT_ACR( msg_srv_stat, ACR_MKPD, 1, 1 );
+    TINY_SRVSTAT_REGURATION_MODE( msg_srv_stat, 1 );
+    TINY_SRVSTAT_MSG_COMM_PA( msg_srv_stat, TRUE );
+    TINY_SRVSTAT_MSG_COMM_TRAINRADIO( msg_srv_stat, TRUE );
+    TINY_SRVSTAT_MSG_COMM_TVS( msg_srv_stat, TRUE );
+    TINY_SRVSTAT_MSG_COMM_SCADA( msg_srv_stat, TRUE );
+    TINY_SRVSTAT_MSG_COMM_LOGGER1( msg_srv_stat, TRUE );
+    TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
+    //assert( memcpy(NXNS_USR_DATA(buf_msgServerStatus), &msg_srv_stat, sizeof(msg_srv_stat)) == NXNS_USR_DATA(buf_msgServerStatus) );
     
     while( TRUE ) {
       errorF( "%s", "waken up.\n" );
@@ -103,11 +132,12 @@ int main ( void ) {
       {
 	int msglen = -1;
 	assert( sock_recv_buf_attached(&socks, sd_recv_srvstat, &msglen) == buf_msgServerStatus );
-	assert( (msglen > 0) ? (msglen == sizeof(MSG_TINY_SERVER_STATUS)) : TRUE );
+	//assert( (msglen > 0) ? (msglen == sizeof(MSG_TINY_SERVER_STATUS)) : TRUE );
       }
       
       {
 	unsigned char *pmsg_buf = NULL;
+	//NXNS_HEADER_PTR pmsg_buf = NULL;
 	int size = -1;
 	pmsg_buf = sock_send_buf_attached( &socks, sd_send_srvstat, &size );
 	assert( pmsg_buf );
@@ -116,9 +146,11 @@ int main ( void ) {
 	memset( &msg_srv_stat, 0xFF, sizeof(msg_srv_stat) );
 	msg_srv_stat.n = cnt;
 	memcpy( pmsg_buf, &msg_srv_stat, sizeof(msg_srv_stat) );
-#else
-	((MSG_TINY_SERVER_STATUS_PTR)pmsg_buf)->n++;
+	//((MSG_TINY_SERVER_STATUS_PTR)pmsg_buf)->n++;
+	//((MSG_TINY_SERVER_STATUS_PTR)(NXNS_USR_DATA(pmsg_buf)))->n++;
 #endif
+	//assert( memcpy( pmsg_buf, &msg_srv_stat, sizeof(msg_srv_stat) ) == pmsg_buf );
+	memset( pmsg_buf, 0xFF, sizeof(MSG_TINY_SERVER_STATUS) );
 	assert( sock_send_ready(&socks, sd_send_srvstat, sizeof(msg_srv_stat)) == sizeof(MSG_TINY_SERVER_STATUS) );
 	if( sock_send(&socks) < 1 ) {
 	  errorF( "%s", "failed to send msgServerStatus.\n" );

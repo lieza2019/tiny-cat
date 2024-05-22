@@ -6,10 +6,11 @@ typedef enum _ars_rejected_reason {
   ARS_WELL_CONDITION
 } ARS_REJECTED_REASON;
 
-#define UDP_BCAST_SEND_PORT_msgServerStatus 60004
+#define UDP_BCAST_SEND_PORT_msgServerStatus 61001
+#define BROADCAST_DST_IPADDR "255.255.255.255"
 #define LOOPBACK_IPADDR "127.0.0.1"
-#define BROADCAST_DST_IPADDR LOOPBACK_IPADDR
-
+//#define BROADCAST_DST_IPADDR LOOPBACK_IPADDR
+//#define BROADCAST_DST_IPADDR "172.21.102.99"
 typedef struct msgServerStatus {
   uint16_t msgServerID;
   struct {
@@ -42,7 +43,7 @@ typedef enum IXL_of_Line8 {
   ACR_RKAM,
   ACR_MKPR,
   ACR_NPPR,
-  ACR_DPcK,
+  ACR_DPCK,
   ACR_PAGI,
   ACR_MKPD,
 #if 1
@@ -60,13 +61,15 @@ struct tny_acr_of_IXL {
   uint8_t ws_id;
 };
 
+#define MAX_UDP_PAYLOAD_SIZ 1472
 typedef struct msgTinyServerStatus {
   uint8_t tny_msgServerID;
   struct tny_acr_of_IXL currentACR[END_OF_ACRs];
   uint8_t tny_RegulationMode;
   uint8_t flgs_1; // msgCommPA, msgCommTrainRadio, msgCommTVS, msgCommSCADA, msgCommLogger_1, msgCommLogger_2, N/A, N/A.
   ;
-  int n;
+  uint8_t n;
+  //uint8_t padding[MAX_UDP_PAYLOAD_SIZ - 106];
 } MSG_TINY_SERVER_STATUS, *MSG_TINY_SERVER_STATUS_PTR;
 
 #define FLG1_TINY_MSG_COMM_PA 128
@@ -90,19 +93,18 @@ extern BOOL TINY_SRVSTAT_MSG_COMM_SCADA( MSG_TINY_SERVER_STATUS S, BOOL commSCAD
 extern BOOL TINY_SRVSTAT_MSG_COMM_LOGGER1( MSG_TINY_SERVER_STATUS S, BOOL commLogger_1 );
 extern BOOL TINY_SRVSTAT_MSG_COMM_LOGGER2( MSG_TINY_SERVER_STATUS S, BOOL commLogger_2 );
   
-#define TINY_SRVSTAT_MSG_SERVERID( S, _msgSererID ) (((S).tny_msgServerID = (_msgSererID)), ((S).tny_msgServerID))
+//#define TINY_SRVSTAT_MSG_SERVERID( S, _msgSererID ) (((S).tny_msgServerID = (_msgSererID)), ((S).tny_msgServerID))
+#define TINY_SRVSTAT_MSG_SERVERID( S, _msgSererID ) ((S).tny_msgServerID = (_msgSererID))
 
-#define TINY_SRVSTAT_CURRENT_ACR_USERID( S, _IXL, _user_id ) (((S).currentACR[(_IXL)].user_id = (_user_id)), ((S).current[(_IXL)].user_id))
-#define TINY_SRVSTAT_CURRENT_ACR_WSID( S, _IXL, _ws_id ) (((S).currentACR[(_IXL)].ws_id = (_ws_id)), ((S).currentACR[(_IXL)].ws_id))
+#define TINY_SRVSTAT_CURRENT_ACR_USERID( S, _IXL, _user_id ) ((S).currentACR[(_IXL)].user_id = (_user_id))
+#define TINY_SRVSTAT_CURRENT_ACR_WSID( S, _IXL, _ws_id ) ((S).currentACR[(_IXL)].ws_id = (_ws_id))
 #define TINY_SRVSTAT_CURRENT_ACR( S, _IXL, _user_id, _ws_id ) (		\
   {									\
     assert( (_user_id) == TINY_SRVSTAT_CURRENT_ACR_USERID((S), (_IXL), (_user_id)) ); \
     assert( (_ws_id) == TINY_SRVSTAT_CURRENT_ACR_WSID((S), (_IXL), (_ws_id)) ); \
-  }
-
-#define TINY_SRVSTAT_REGURATION_MODE( S, _RegulationMode )	\
-  (((S).tny_RegulationMode = (_RegulationMode)),		\
-   ((TINY_REGULATION_MODE)((S).tny_RegulationMode)))
+  }									\
+)
+#define TINY_SRVSTAT_REGURATION_MODE( S, _RegulationMode ) ((TINY_REGULATION_MODE)((S).tny_RegulationMode = (_RegulationMode)))
 #define TINY_SRVSTAT_MSG_COMM_PA( S, _comm_PA )				\
   (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_PA) | ((_comm_PA) << nbits_sft((FLG1_TINY_MSG_COMM_PA))))),	\
    ((S).flgs_1 & FLG1_TINY_MSG_COMM_PA))
@@ -110,14 +112,15 @@ extern BOOL TINY_SRVSTAT_MSG_COMM_LOGGER2( MSG_TINY_SERVER_STATUS S, BOOL commLo
   (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_TRAINRADIO) | (_commTrainRadio << nbits_sft((FLG1_TINY_MSG_COMM_TRAINRADIO))))), \
    ((S).flgs_1 & FLG1_TINY_MSG_COMM_TRAINRADIO))
 #define TINY_SRVSTAT_MSG_COMM_TVS( S, _commTVS )			\
-  (((S),flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_TVS) | (_commTVS << nbits_sft(FLG1_TINY_MSG_COMM_TVS)))), \
+  (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_TVS) | (_commTVS << nbits_sft(FLG1_TINY_MSG_COMM_TVS)))), \
    ((S).flgs_1 & FLG1_TINY_MSG_COMM_TVS))
 #define TINY_SRVSTAT_MSG_COMM_SCADA( S, _commSCADA )			\
   (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_SCADA) | (_commSCADA << nbits_sft(FLG1_TINY_MSG_COMM_SCADA)))), \
    ((S).flgs_1 & FLG1_TINY_MSG_COMM_SCADA))
 #define TINY_SRVSTAT_MSG_COMM_LOGGER1( S, _commLogger_1 )		\
-  (((S).flgs_1 = (((S).flgs_1 & ~TINY_SRVSTAT_MSG_COMM_LOGGER1) | (_commLogger_1 << nbits_sft(TINY_SRVSTAT_MSG_COMM_LOGGER1)))), \
-   ((S).flgs_1 & TINY_SRVSTAT_MSG_COMM_LOGGER1))
+  (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_LOGGER1) | (_commLogger_1 << nbits_sft(FLG1_TINY_MSG_COMM_LOGGER1)))), \
+   ((S).flgs_1 & FLG1_TINY_MSG_COMM_LOGGER1))
 #define TINY_SRVSTAT_MSG_COMM_LOGGER2( S, _commLogger_2 )		\
-  (((S).flgs_1 = (((S).flgs_1 & ~TINY_SRVSTAT_MSG_COMM_LOGGER2) | (_commLogger_2 << nbits_sft(TINY_SRVSTAT_MSG_COMM_LOGGER2)))),	\
-   ((S).flgs_1 & TINY_SRVSTAT_MSG_COMM_LOGGER2))
+  (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_LOGGER2) | (_commLogger_2 << nbits_sft(FLG1_TINY_MSG_COMM_LOGGER2)))), \
+   ((S).flgs_1 & FLG1_TINY_MSG_COMM_LOGGER2))
+ 
