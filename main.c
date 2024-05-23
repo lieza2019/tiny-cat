@@ -137,7 +137,7 @@ int main ( void ) {
       {
 	int msglen = -1;
 	assert( sock_recv_buf_attached(&socks, sd_recv_srvstat, &msglen) == buf_msgServerStatus );
-	//assert( (msglen > 0) ? (msglen == sizeof(MSG_TINY_SERVER_STATUS)) : TRUE );
+	assert( (msglen > 0) ? (msglen == (sizeof(NXNS_HEADER) + sizeof(MSG_TINY_SERVER_STATUS))) : TRUE );
       }
       
       {

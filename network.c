@@ -175,7 +175,7 @@ TINY_SOCK_DESC creat_sock_send ( TINY_SOCK_PTR pS, unsigned short udp_dst_port, 
     char ip_addr[15 + 1];
     ipaddr_desc2str( ip_addr, sizeof(ip_addr), pIPdesc );
     pS->send[r].addr.sin_family = AF_INET;
-    pS->send[r].addr.sin_port = htons( udp_dst_port );
+    pS->send[r].addr.sin_port = htons( udp_dst_port );    
     inet_pton( AF_INET, ip_addr, &(pS->send[r].addr.sin_addr.s_addr) );
     {
       int s = -1;
@@ -281,7 +281,7 @@ int sock_recv ( TINY_SOCK_PTR pS ) {
 	    continue;
 	  }
 	  //phony_raw_recvbuf_traininfo( valid[l].pbuf );  // ***** for debugging.
-	  m = recvfrom( valid[l].sock, valid[l].pbuf, valid[l].buf_siz, MSG_WAITALL, (struct sockaddr *)&from, &sockaddr_in_size );
+	  m = recvfrom( valid[l].sock, valid[l].pbuf, valid[l].buf_siz, 0, (struct sockaddr *)&from, &sockaddr_in_size );
 	  //dump_raw_recvbuf_traininfo( valid[l].pbuf );  // ***** for debugging.
 	  if( m < 0 ) {
 	    err = TRUE;
