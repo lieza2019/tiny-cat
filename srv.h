@@ -6,6 +6,7 @@ typedef enum _ars_rejected_reason {
   ARS_WELL_CONDITION
 } ARS_REJECTED_REASON;
 
+#define UDP_BCAST_SEND_PORT_MsgServerHeartbeat 61000
 #define UDP_BCAST_SEND_PORT_msgServerStatus 61001
 //#define BROADCAST_DST_IPADDR "255.255.255.255"
 #define BROADCAST_DSTIP_1stO 172
@@ -13,21 +14,6 @@ typedef enum _ars_rejected_reason {
 #define BROADCAST_DSTIP_3rdO 255
 #define BROADCAST_DSTIP_4thO 255
 #define LOOPBACK_IPADDR {127, 0, 0, 1}
-
-typedef struct msgServerStatus {
-  uint16_t msgServerID;
-  struct {
-    uint8_t nReqs;
-    uint16_t OC_ID;
-    struct {
-      uint16_t UserID;
-      uint16_t WorkstationID;
-    } ACR_request;
-    uint8_t msgSrvCurrentRegulationMode;
-  } msgSrvCurrentControlStatus;
-  ;
-  int n;
-} MSG_SERVER_STATUS, *MSG_SERVER_STATUS_PTR;
 
 typedef enum tiny_regulation_mode {
   TNY_CUTOFF,
@@ -64,6 +50,10 @@ struct tny_acr_of_IXL {
   uint8_t ws_id;
 };
 
+typedef struct msgTinyServerHeartbeat {
+  uint8_t tny_heartbeatServerID;
+} MSG_TINY_HEARTBEAT, *MSG_TINY_HEARTBEAT_PTR;
+
 #define MAX_UDP_PAYLOAD_SIZ 1472
 typedef struct msgTinyServerStatus {
   uint8_t tny_msgServerID;
@@ -89,7 +79,7 @@ extern int TINY_SRVSTAT_CURRENT_ACR_USERID( MSG_TINY_SERVER_STATUS S, IXL_of_Lin
 extern int TINY_SRVSTAT_CURRENT_ACR_WSID( MSG_TINY_SERVER_STATUS S, IXL_of_Line8 IXL, int ws_id );
 extern void TINY_SRVSTAT_CURRENT_ACR( MSG_TINY_SERVER_STATUS S, IXL_of_Line8 IXL, int user_id, int ws_id );
 
-extern TINY_REGULATION_MODE TINY_SRVSTAT_REGURATION_MODE( MSG_TINY_SERVER_STATUS S, MSG_SERVER_STATUS regulationMode );
+extern TINY_REGULATION_MODE TINY_SRVSTAT_REGURATION_MODE( MSG_TINY_SERVER_STATUS S, TINY_REGULATION_MODE regulationMode );
 extern BOOL TINY_SRVSTAT_MSG_COMM_PA( MSG_TINY_SERVER_STATUS S, BOOL comm_PA );
 extern BOOL TINY_SRVSTAT_MSG_COMM_TRAINRADIO( MSG_TINY_SERVER_STATUS S, BOOL commTrainRadio );
 extern BOOL TINY_SRVSTAT_MSG_COMM_TVS( MSG_TINY_SERVER_STATUS S, BOOL commTVS );
