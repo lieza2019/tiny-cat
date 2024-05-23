@@ -7,10 +7,13 @@ typedef enum _ars_rejected_reason {
 } ARS_REJECTED_REASON;
 
 #define UDP_BCAST_SEND_PORT_msgServerStatus 61001
-#define BROADCAST_DST_IPADDR "255.255.255.255"
-#define LOOPBACK_IPADDR "127.0.0.1"
-//#define BROADCAST_DST_IPADDR LOOPBACK_IPADDR
-//#define BROADCAST_DST_IPADDR "172.21.102.99"
+//#define BROADCAST_DST_IPADDR "255.255.255.255"
+#define BROADCAST_DSTIP_1stO 172
+#define BROADCAST_DSTIP_2ndO 21
+#define BROADCAST_DSTIP_3rdO 255
+#define BROADCAST_DSTIP_4thO 255
+#define LOOPBACK_IPADDR {127, 0, 0, 1}
+
 typedef struct msgServerStatus {
   uint16_t msgServerID;
   struct {

@@ -8,6 +8,13 @@
 
 #ifndef NETWORK_H_INCLUDED
 #define NETWORK_H_INCLUDED
+typedef struct ip_addr_desc {
+  unsigned char oct_1st;
+  unsigned char oct_2nd;
+  unsigned char oct_3rd;
+  unsigned char oct_4th;
+} IP_ADDR_DESC, *IP_ADDR_DESC_PTR;
+
 #define MAX_RECV_BUFSIZ (16 * 1024) // in bytes
 #define MAX_SEND_BUFSIZ (16 * 1024) // in bytes
 struct tiny_sock_entry {
@@ -54,8 +61,8 @@ extern unsigned char *sock_send_buf_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC t
 extern int sock_send_ready ( TINY_SOCK_PTR pS, TINY_SOCK_DESC sd, int len );
 
 extern int creat_sock_bcast_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_port );
-extern TINY_SOCK_DESC creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port, const char *dest_host_ipaddr );
-extern TINY_SOCK_DESC creat_sock_bcast_sendnx ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port, const char *dest_host_ipaddr );
+extern TINY_SOCK_DESC creat_sock_send ( TINY_SOCK_PTR pS, unsigned short udp_dst_port, BOOL bcast, const IP_ADDR_DESC_PTR pIPdesc );
+extern TINY_SOCK_DESC creat_sock_sendnx ( TINY_SOCK_PTR pS, unsigned short udp_dst_port, BOOL bcast, const IP_ADDR_DESC_PTR pIPdesc );
 
 extern int sock_recv ( TINY_SOCK_PTR pS );
 extern int sock_send ( TINY_SOCK_PTR pS );

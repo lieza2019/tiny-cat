@@ -140,30 +140,56 @@ int creat_sock_bcast_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_port
   return r;
 }
 
-TINY_SOCK_DESC creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port, const char *dest_host_ipaddr ) {
+static void ipaddr_desc2str ( char buf[], int size, IP_ADDR_DESC_PTR pdesc ) {
+  assert( buf );
+  assert( pdesc );
+  assert( size > strlen("255.255.255.255") );
+  char *p = buf;
+  int n = 0;
+
+  assert( pdesc->oct_1st > 0 );
+  n = sprintf( p, "%d.", pdesc->oct_1st );
+  p += n;
+
+  assert( pdesc->oct_2nd > 0 );
+  n = sprintf( p, "%d.", pdesc->oct_2nd );
+  p += n;
+
+  assert( pdesc->oct_3rd > 0 );
+  n = sprintf( p, "%d.", pdesc->oct_3rd );
+  p += n;
+
+  assert( pdesc->oct_4th > 0 );
+  n = sprintf( p, "%d", pdesc->oct_4th );
+  p += n;
+  *p = 0;
+}
+
+TINY_SOCK_DESC creat_sock_send ( TINY_SOCK_PTR pS, unsigned short udp_dst_port, BOOL bcast, const IP_ADDR_DESC_PTR pIPdesc ) {
   assert( pS );
-  assert( dest_host_ipaddr );
+  assert( pIPdesc );
   int r = -1;
   
   r = TINY_SOCK_SEND_AVAIL( pS );
   if( r > -1 ) {
+    char ip_addr[15 + 1];
+    ipaddr_desc2str( ip_addr, sizeof(ip_addr), pIPdesc );
     pS->send[r].addr.sin_family = AF_INET;
-    pS->send[r].addr.sin_port = htons( udp_bcast_dest_port );
-#if 0
-    pS->send[r].addr.sin_addr.s_addr = inet_addr( dest_host_ipaddr );
-#else
-    inet_pton( AF_INET, "172.21.255.255", &(pS->send[r].addr.sin_addr.s_addr) );
-#endif
+    pS->send[r].addr.sin_port = htons( udp_dst_port );
+    inet_pton( AF_INET, ip_addr, &(pS->send[r].addr.sin_addr.s_addr) );
     {
       int s = -1;
       s = socket( AF_INET, SOCK_DGRAM, 0 );
       if( s < 0 )
 	r = -1;
       else {
-	BOOL yes = TRUE;
-	if( setsockopt( s, SOL_SOCKET, SO_BROADCAST, (char *)&yes, sizeof(yes) ) < 0 ) {
-	  close( s );
-	  r = -1;
+	if( bcast ) {
+	  BOOL yes = TRUE;
+	  if( setsockopt( s, SOL_SOCKET, SO_BROADCAST, (char *)&yes, sizeof(yes) ) < 0 ) {
+	    close( s );
+	    r = -1;
+	  } else
+	    pS->send[r].sock = s;
 	} else
 	  pS->send[r].sock = s;
       }
@@ -177,12 +203,12 @@ TINY_SOCK_DESC creat_sock_bcast_send ( TINY_SOCK_PTR pS, unsigned short udp_bcas
   return r;
 }
 
-TINY_SOCK_DESC creat_sock_bcast_sendnx ( TINY_SOCK_PTR pS, unsigned short udp_bcast_dest_port, const char *dest_host_ipaddr ) {
+TINY_SOCK_DESC creat_sock_sendnx ( TINY_SOCK_PTR pS, unsigned short udp_dst_port, BOOL bcast, const IP_ADDR_DESC_PTR pIPdesc ) {
   assert( pS );
-  assert( dest_host_ipaddr );
+  assert( pIPdesc );
   TINY_SOCK_DESC d = -1;
   
-  if( (d = creat_sock_bcast_send ( pS, udp_bcast_dest_port, dest_host_ipaddr )) >= 0 )
+  if( (d = creat_sock_send ( pS, udp_dst_port, bcast, pIPdesc )) >= 0 )
     pS->send[d].is_nx = TRUE;
   return d;
 }

@@ -33,9 +33,14 @@ static int diag_tracking_trains ( FILE *fp_out ) {
 static unsigned char buf_msgServerStatus[BUFSIZ_msgServerStatus];
 TINY_SOCK_DESC launch_msg_srv_stat ( TINY_SOCK_PTR pS ) {
   assert( pS );
+  IP_ADDR_DESC srvstat_dstip = { 0, 0, 0, 0 };
   TINY_SOCK_DESC d = -1;
   
-  if( (d = creat_sock_bcast_sendnx( pS, UDP_BCAST_SEND_PORT_msgServerStatus, BROADCAST_DST_IPADDR )) >= 0 )
+  srvstat_dstip.oct_1st = BROADCAST_DSTIP_1stO;
+  srvstat_dstip.oct_2nd = BROADCAST_DSTIP_2ndO;
+  srvstat_dstip.oct_3rd = BROADCAST_DSTIP_3rdO;
+  srvstat_dstip.oct_4th = BROADCAST_DSTIP_4thO;
+  if( (d = creat_sock_sendnx( pS, UDP_BCAST_SEND_PORT_msgServerStatus, TRUE, &srvstat_dstip )) >= 0 )
     sock_attach_send_buf( pS, d, buf_msgServerStatus, sizeof(buf_msgServerStatus) );
   return d;
 }
@@ -183,12 +188,14 @@ int main (void) {
     exit( 1 );
   } else
     sock_attach_recv_buf( &socks, sd_recv, recv_buf_msgServerStatus, sizeof(recv_buf_msgServerStatus) );
-  
-  if( (sd_send = creat_sock_bcast_sendnx ( &socks, UDP_BCAST_SEND_PORT_msgServerStatus, LOOPBACK_IPADDR )) < 0 ) {
-    errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
-    exit( 1 );
-  } else
-    sock_attach_send_buf( &socks, sd_send, send_buf_msgServerStatus, sizeof(send_buf_msgServerStatus) );
+  {
+    IP_ADDR_DESC dst_ipaddr = LOOPBACK_IPADDR;
+    if( (sd_send = creat_sock_sendnx ( &socks, UDP_BCAST_SEND_PORT_msgServerStatus, TRUE, &dst_ipaddr )) < 0 ) {
+      errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
+      exit( 1 );
+    } else
+      sock_attach_send_buf( &socks, sd_send, send_buf_msgServerStatus, sizeof(send_buf_msgServerStatus) );
+  }
   
   // Workstation commandを、TCPにて受信できるように、なる。
   ;

@@ -73,12 +73,7 @@ struct recv_buf_traininfo {
 };
 
 typedef struct SC_stat_infoset {
-  struct {
-    unsigned char oct_1st;
-    unsigned char oct_2nd;
-    unsigned char oct_3rd;
-    unsigned char oct_4th;
-  } sc_ipaddr;
+  IP_ADDR_DESC sc_ipaddr;
   struct {
     const unsigned short dst_port;
     TINY_SOCK_DESC d_recv_train_info;
