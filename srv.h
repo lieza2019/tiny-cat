@@ -72,6 +72,7 @@ typedef struct msgTinyServerStatus {
   uint8_t flgs_1; // msgCommPA, msgCommTrainRadio, msgCommTVS, msgCommSCADA, msgCommLogger_1, msgCommLogger_2, N/A, N/A.
   ;
   uint8_t n;
+  uint8_t padding[76];
   //uint8_t padding[MAX_UDP_PAYLOAD_SIZ - 106];
 } MSG_TINY_SERVER_STATUS, *MSG_TINY_SERVER_STATUS_PTR;
 
