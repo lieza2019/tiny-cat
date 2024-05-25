@@ -123,7 +123,7 @@ extern BOOL TINY_SRVSTAT_MSG_COMM_LOGGER2( MSG_TINY_SERVER_STATUS S, BOOL commLo
 #define TINY_SRVSTAT_REGURATION_MODE( S, _RegulationMode ) ((TINY_REGULATION_MODE)((S).tny_RegulationMode = (_RegulationMode)))
 #define TINY_SRVSTAT_MSG_COMM_PA( S, _comm_PA )				\
   (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_PA) | ((_comm_PA) << nbits_sft((FLG1_TINY_MSG_COMM_PA))))),	\
-   ((S).flgs_1 & FLG1_TINY_MSG_COMM_PA))
+   (BOOL)((S).flgs_1 & FLG1_TINY_MSG_COMM_PA))
 #define TINY_SRVSTAT_MSG_COMM_TRAINRADIO( S, _commTrainRadio )		\
   (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_TRAINRADIO) | (_commTrainRadio << nbits_sft((FLG1_TINY_MSG_COMM_TRAINRADIO))))), \
    ((S).flgs_1 & FLG1_TINY_MSG_COMM_TRAINRADIO))
@@ -139,4 +139,3 @@ extern BOOL TINY_SRVSTAT_MSG_COMM_LOGGER2( MSG_TINY_SERVER_STATUS S, BOOL commLo
 #define TINY_SRVSTAT_MSG_COMM_LOGGER2( S, _commLogger_2 )		\
   (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_LOGGER2) | (_commLogger_2 << nbits_sft(FLG1_TINY_MSG_COMM_LOGGER2)))), \
    ((S).flgs_1 & FLG1_TINY_MSG_COMM_LOGGER2))
- 

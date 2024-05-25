@@ -37,8 +37,22 @@ typedef enum SC_ID {
 } SC_ID;
 #define SC_ID_CONV_2_INT( S ) ((S) + 801)
 
-typedef struct SC_ctrl_cmdset {
+struct send_buf_traincmd {
+  NXNS_HEADER header;
+  uint8_t flgs_1;
+  uint8_t spare_1;
+  uint8_t spare_2;
+  uint8_t spare_3;
   TRAIN_COMMAND train_cmd;
+};
+typedef struct SC_ctrl_cmdset {
+  IP_ADDR_DESC sc_ipaddr;
+  struct {
+    const unsigned short dst_port;
+    TINY_SOCK_DESC d_send_train_cmd;
+    struct send_buf_traincmd send;
+    TINY_TRAIN_STATE_PTR pTrain_stat[TRAIN_COMMAND_ENTRIES_NUM];
+  } train_command;
 } SC_CTRL_CMDSET, *SC_CTRL_CMDSET_PTR;
 
 #define UDP_BCAST_RECV_PORT_SC801_Train_information 55135
@@ -71,14 +85,13 @@ struct recv_buf_traininfo {
   uint8_t spare_3;
   TRAIN_INFO train_info;
 };
-
 typedef struct SC_stat_infoset {
   IP_ADDR_DESC sc_ipaddr;
   struct {
     const unsigned short dst_port;
     TINY_SOCK_DESC d_recv_train_info;
     struct recv_buf_traininfo recv;
-    TINY_TRAIN_STATE_PTR pTrain_stat[MAX_TRAIN_INFO_ENTRIES];
+    TINY_TRAIN_STATE_PTR pTrain_stat[TRAIN_INFO_ENTRIES_NUM];
   } train_information;
 } SC_STAT_INFOSET, *SC_STAT_INFOSET_PTR;
 

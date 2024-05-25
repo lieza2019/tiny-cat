@@ -87,7 +87,7 @@ void reveal_train_tracking( TINY_SOCK_PTR pS ) {
     pSC = snif_train_info( pS, (SC_ID)i );
     if( pSC ) {
       int j;
-      for( j = 0; j < MAX_TRAIN_INFO_ENTRIES; j++ ) {
+      for( j = 0; j < TRAIN_INFO_ENTRIES_NUM; j++ ) {
 	TINY_TRAIN_STATE_PTR pE = NULL;
 	unsigned short rakeID = TRAIN_INFO_RAKEID(pSC->train_information.recv.train_info.entries[j]);
 	if( rakeID != 0 ) {
@@ -178,22 +178,25 @@ static void cons_train_cmd( TINY_TRAIN_STATE_PTR pTs ) {
     if( pTs->pTC[i] ) {
       TRAIN_COMMAND_ENTRY_PTR pE = pTs->pTC[i];
       assert( pE );
-      assert( pTs ->rakeID == TRAIN_INFO_RAKEID( *pE ) );
+      assert( TRAIN_INFO_RAKEID(*pE) == pTs->rakeID );
+#if 0
       {
 	char buf[TRAINID_MAX_LEN + 1];
 	buf[TRAINID_MAX_LEN] = 0;
 	assert( ! strncmp( pTs->trainID, TRAIN_CMD_TRAINID ( *pE, buf, TRAINID_MAX_LEN ), TRAINID_MAX_LEN ) );
       }
-      assert( pTs->dest_blockID == TRAIN_CMD_DESTINATION_BLOCKID( *pE, pTs->dest_blockID ) );
-      assert( pTs->skip_next_stop == TRAIN_CMD_SKIP_NEXT_STOP( *pE, pTs->skip_next_stop ) );
-      assert( pTs->ATO_dept_cmd == TRAIN_CMD_ATO_DEPARTURE_COMMAND( *pE, pTs->ATO_dept_cmd ) );
-      assert( pTs->TH_cmd == TRAIN_CMD_TRAIN_HOLD_COMMAND( *pE, pTs->TH_cmd ) );
-      assert( pTs->perf_regime_cmd == TRAIN_CMD_TRAIN_PERFORMANCE_REGIME_COMMAND( *pE, pTs->perf_regime_cmd ) );
-      assert( pTs->turnback_siding == TRAIN_CMD_TURNBACK_OR_SIDING( *pE, pTs->turnback_siding ) );
-      assert( pTs->dwell_time == TRAIN_CMD_DWELL_TIME( *pE, pTs->dwell_time ) );
-      assert( pTs->train_remove == TRAIN_CMD_TRAIN_REMOVE( *pE, pTs->train_remove ) );
-      assert( pTs->releasing_emergency_stop == TRAIN_CMD_ORDERING_RELEASE_FOR_EMERGENCY_STOP( *pE, pTs->releasing_emergency_stop ) );
-      assert( TRAIN_CMD_ORDERING_EMERGENCY_STOP( *pE, pTs->ordering_emergency_stop ) );
+#endif     
+      TRAIN_CMD_DESTINATION_BLOCKID( *pE, pTs->dest_blockID );
+      TRAIN_CMD_SKIP_NEXT_STOP( *pE, pTs->skip_next_stop );
+      TRAIN_CMD_ATO_DEPARTURE_COMMAND( *pE, pTs->ATO_dept_cmd );
+      TRAIN_CMD_TRAIN_HOLD_COMMAND( *pE, pTs->TH_cmd );
+      TRAIN_CMD_TRAIN_PERFORMANCE_REGIME_COMMAND( *pE, pTs->perf_regime_cmd );
+      TRAIN_CMD_TURNBACK_OR_SIDING( *pE, pTs->turnback_siding );
+      TRAIN_CMD_DWELL_TIME( *pE, pTs->dwell_time );
+      TRAIN_CMD_TRAIN_REMOVE( *pE, pTs->train_remove );
+      TRAIN_CMD_ORDERING_RELEASE_FOR_EMERGENCY_STOP( *pE, pTs->releasing_emergency_stop );
+      TRAIN_CMD_ORDERING_EMERGENCY_STOP( *pE, pTs->ordering_emergency_stop );
+      TRAIN_CMD_AUTOMATIC_TURNBACK_COMMAND( *pE, pTs->ATB_cmd );
     }
   }
 }
@@ -207,22 +210,28 @@ int charge_train_command( void ) {
     TINY_TRAIN_STATE_PTR pstat = NULL;
     pstat = &trains_tracking[i];
     assert( pstat );
-    if( (pstat->rakeID > 0) && (! pstat->omit) ) {
-      TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
-      int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
-      int back_blk = TRAIN_INFO_OCCUPIED_BLK_BACK( *(pstat->pTI) );
-      int n = alloc_train_cmd_entries( es, pstat->rakeID, front_blk, back_blk );
-      assert( (n > 0) && (n <= 2) );
-      {
-	int j;
-	for( j = 0; j < n; j++ )
-	  pstat->pTC[j] = es[j];
-	assert( j > 0 );
-	if( j < 2 )
-	  pstat->pTC[j] = NULL;
+    if( pstat->rakeID > 0 ) {
+      if( pstat->omit )
+	continue;
+      else {
+	TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
+	int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
+	int back_blk = TRAIN_INFO_OCCUPIED_BLK_BACK( *(pstat->pTI) );
+	int n = alloc_train_cmd_entries( es, pstat->rakeID, front_blk, back_blk );
+	assert( (n > 0) && (n <= 2) );
+	{
+	  int j;
+	  for( j = 0; j < n; j++ )
+	    pstat->pTC[j] = es[j];
+	  assert( (j > 0) && (j <= 2) );
+	  if( j < 2 ) {
+	    assert( j == 1 );
+	    pstat->pTC[j] = NULL;
+	  }
+	}
+	cons_train_cmd( pstat );
+	cnt++;
       }
-      cons_train_cmd( pstat );
-      cnt++;
     }
   }
   return cnt;

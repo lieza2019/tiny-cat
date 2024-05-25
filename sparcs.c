@@ -42,33 +42,39 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd( SC_CTRL_CMDSET_PTR pCs, int rakeI
   assert( pCs );
   assert( rakeID > 0 );
   TRAIN_COMMAND_ENTRY_PTR pE = NULL;
+  int i;
   
-  {
-    int i;
-    for( i = 0; i < TRAIN_COMMAND_ENTRIES_NUM; i++ )
-      if( pCs->train_cmd.entries[i].rakeID == rakeID ) {
-	pE = &pCs->train_cmd.entries[i];
-	break;
-      }
-  }
-  if( !pE ) {
+  for( i = 0; i < TRAIN_COMMAND_ENTRIES_NUM; i++ )
+    if( pCs->train_command.send.train_cmd.entries[i].rakeID == rakeID ) {
+      pE = &pCs->train_command.send.train_cmd.entries[i];
+      break;
+    }
+  
+  if( pE ) {
+    assert( pCs->train_command.pTrain_stat[i] );
+    TINY_TRAIN_STATE_PTR pTs = pCs->train_command.pTrain_stat[i];
+    ;
+  } else {
     int j;
-    for( j = 0 ; j < pCs->train_cmd.frontier; j++ )
-      if( pCs->train_cmd.entries[j].rakeID == 0 ) {
-	pE = &pCs->train_cmd.entries[j];
+    for( j = 0 ; j < pCs->train_command.send.train_cmd.frontier; j++ )
+      if( pCs->train_command.send.train_cmd.entries[j].rakeID == 0 ) {
+	pE = &pCs->train_command.send.train_cmd.entries[j];
 	break;
       }
     if( !pE ) {
-      assert( j == pCs->train_cmd.frontier );
-      if( pCs->train_cmd.frontier < TRAIN_COMMAND_ENTRIES_NUM ) {
-	int f = pCs->train_cmd.frontier;
-	assert( pCs->train_cmd.entries[f].rakeID == 0 );
-	pE = &pCs->train_cmd.entries[f];
-	pCs->train_cmd.frontier++;
-      }
-    } else
-      assert( FALSE );
+      assert( j == pCs->train_command.send.train_cmd.frontier );
+      if( pCs->train_command.send.train_cmd.frontier < TRAIN_COMMAND_ENTRIES_NUM ) {
+	int f = pCs->train_command.send.train_cmd.frontier;
+	assert( pCs->train_command.send.train_cmd.entries[f].rakeID == 0 );
+	pE = &pCs->train_command.send.train_cmd.entries[f];
+	pCs->train_command.send.train_cmd.frontier++;
+      } else
+	assert( FALSE );
+    }
+    pE->rakeID = rakeID;
   }
+  assert( pE );
+  assert( pE->rakeID > 0 );
   return pE;
 }
 
@@ -87,6 +93,7 @@ int alloc_train_cmd_entries( TRAIN_COMMAND_ENTRY_PTR es[], int rakeID, int front
     for( i = 0; i < n; i++ ) {
       assert( zones[i] != END_OF_SCs );
       es[i] = lkup_train_cmd( &SC_ctrl_cmds[zones[i]], rakeID );
+      assert( es[i] );
     }
     assert( i == n );
     r = i;
@@ -108,7 +115,7 @@ SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id ) {
   assert( pSC );
   {
     int i;
-    for( i = 0; i < MAX_TRAIN_INFO_ENTRIES; i++ )
+    for( i = 0; i < TRAIN_INFO_ENTRIES_NUM; i++ )
       pSC->train_information.pTrain_stat[i] = NULL;
   }
   
@@ -132,13 +139,13 @@ SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id ) {
 
 void phony_raw_recvbuf_traininfo( void *pbuf ) {  // ***** for debugging.
   int i;
-  for( i = 0; i < MAX_TRAIN_INFO_ENTRIES; i++ )
+  for( i = 0; i < TRAIN_INFO_ENTRIES_NUM; i++ )
     ((struct recv_buf_traininfo *)pbuf)->train_info.entries[i].rakeID = (uint8_t)(i + 20);
 }  
 void dump_raw_recvbuf_traininfo( void *pbuf ) {  // ***** for debugging.
   assert( pbuf );
   int i;
-  for( i = 0; i < MAX_TRAIN_INFO_ENTRIES; i++ ) {
+  for( i = 0; i < TRAIN_INFO_ENTRIES_NUM; i++ ) {
     unsigned short rakeID =  TRAIN_INFO_RAKEID( ((struct recv_buf_traininfo *)pbuf)->train_info.entries[i] );
     if( rakeID > 0 )
       printf( "received rakeID: %03d.\n", rakeID );
