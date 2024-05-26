@@ -6,6 +6,7 @@ typedef enum _ars_rejected_reason {
   ARS_WELL_CONDITION
 } ARS_REJECTED_REASON;
 
+//#define UDP_BCAST_SEND_PORT_MsgServerHeartbeat 60000
 #define UDP_BCAST_SEND_PORT_MsgServerHeartbeat 61000
 #define UDP_BCAST_SEND_PORT_msgServerStatus 61001
 //#define BROADCAST_DST_IPADDR "255.255.255.255"
@@ -64,7 +65,7 @@ typedef struct msgTinyServerHeartbeat {
   ATS_VERSION tny_ats_version;
   ;
   int n;
-  uint8_t padding[8];
+  //uint8_t padding[8];
 } MSG_TINY_HEARTBEAT, *MSG_TINY_HEARTBEAT_PTR;
 
 extern int TINY_SRVBEAT_HEARTBEAT_SERVERID( MSG_TINY_HEARTBEAT B, int msgServerID );

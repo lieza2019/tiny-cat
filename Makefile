@@ -1,7 +1,7 @@
 RM = rm
 TOUCH = touch
 CC = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -Wno-unused-value  -g
 TINY_NAME = tiny_cat
 TINY_NAME_BIN = $(TINY_NAME)
 

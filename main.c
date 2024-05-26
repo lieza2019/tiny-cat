@@ -158,7 +158,7 @@ int main ( void ) {
 	pmsg_buf = sock_send_buf_attached( &socks, sd_send_srvbeat, &size );
 	assert( pmsg_buf );
 	assert( size >= sizeof(MSG_TINY_HEARTBEAT) );
-	msg_srv_beat.n = cnt;
+	//msg_srv_beat.n = cnt;
 	assert( memcpy( pmsg_buf, &msg_srv_beat, sizeof(msg_srv_beat) ) == pmsg_buf );
 	assert( sock_send_ready(&socks, sd_send_srvbeat, sizeof(msg_srv_beat)) == sizeof(MSG_TINY_HEARTBEAT) );
 	
