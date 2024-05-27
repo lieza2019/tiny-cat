@@ -75,6 +75,7 @@ typedef struct SC_ctrl_cmdset {
     struct send_buf_traincmd send;
     BOOL expired[TRAIN_COMMAND_ENTRIES_NUM];
     TINY_TRAIN_STATE_PTR pTrain_stat[TRAIN_COMMAND_ENTRIES_NUM];
+    int frontier;
   } train_command;
 } SC_CTRL_CMDSET, *SC_CTRL_CMDSET_PTR;
 

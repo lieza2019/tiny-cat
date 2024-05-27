@@ -78,18 +78,18 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd( SC_CTRL_CMDSET_PTR pCs, int rakeI
     ;
   } else {
     int j;
-    for( j = 0 ; j < pCs->train_command.send.train_cmd.frontier; j++ )
+    for( j = 0 ; j < pCs->train_command.frontier; j++ )
       if( pCs->train_command.send.train_cmd.entries[j].rakeID == 0 ) {
 	pE = &pCs->train_command.send.train_cmd.entries[j];
 	break;
       }
     if( !pE ) {
-      assert( j == pCs->train_command.send.train_cmd.frontier );
-      if( pCs->train_command.send.train_cmd.frontier < TRAIN_COMMAND_ENTRIES_NUM ) {
-	int f = pCs->train_command.send.train_cmd.frontier;
+      assert( j == pCs->train_command.frontier );
+      if( pCs->train_command.frontier < TRAIN_COMMAND_ENTRIES_NUM ) {
+	int f = pCs->train_command.frontier;
 	assert( pCs->train_command.send.train_cmd.entries[f].rakeID == 0 );
 	pE = &pCs->train_command.send.train_cmd.entries[f];
-	pCs->train_command.send.train_cmd.frontier++;
+	pCs->train_command.frontier++;
       } else
 	assert( FALSE );
     }

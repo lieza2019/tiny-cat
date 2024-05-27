@@ -82,7 +82,6 @@ typedef struct train_command_entry {
 #define TRAIN_COMMAND_ENTRIES_NUM 20
 typedef struct train_command {
   TRAIN_COMMAND_ENTRY entries[TRAIN_COMMAND_ENTRIES_NUM];
-  int frontier;
 } TRAIN_COMMAND, *TRAIN_COMMAND_PTR;
 
 extern unsigned short TRAIN_CMD_RAKEID( TRAIN_COMMAND_ENTRY Ce, unsigned short rakeID );
