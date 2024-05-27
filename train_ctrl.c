@@ -71,6 +71,15 @@ static TINY_TRAIN_STATE_PTR update_train_state( TRAIN_INFO_ENTRY_PTR pI ) {
   return pE;
 }
 
+static void expire_all_train_cmds ( void ) {
+  int i;
+  for( i = 0; i < END_OF_SCs; i++ ) {
+    int j;
+    for( j = 0; j < TRAIN_COMMAND_ENTRIES_NUM; j++ )
+      SC_ctrl_cmds[i].train_command.expired[j] = TRUE;
+  }
+}
+
 static void expire_train_state ( void ) {
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
@@ -121,7 +130,7 @@ static SC_STAT_INFOSET_PTR willing_to_recv_train_info ( TINY_SOCK_PTR pS, SC_ID 
   {
     TINY_SOCK_DESC d = -1;
     pSC->train_information.d_recv_train_info = -1;
-    if( (d = creat_sock_bcast_recv( pS, pSC->train_information.dst_port )) < 0 ) {
+    if( (d = creat_sock_recv( pS, pSC->train_information.dst_port )) < 0 ) {
       errorF( "failed to create the socket to receive Train information from SC%d.\n", SC_ID_CONV_2_INT(sc_id) );
       goto exit;
     }
@@ -143,19 +152,67 @@ static void expire_all_train_state ( void ) {
 static BOOL establish_SC_statinfo_recv ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
+  {
+    int i = (int)SC801;
+    while( i < (int)END_OF_SCs ) {
+      SC_STAT_INFOSET_PTR p = NULL;
+      expire_all_train_state();
+      if( ! (p = willing_to_recv_train_info( pS, (SC_ID)i )) )
+	goto exit;
+      assert( p );
+      assert( p->train_information.d_recv_train_info > -1 );
+      i++;
+    }
+    r = TRUE;
+  } 
+ exit:
+  return r;
+}
+
+static SC_CTRL_CMDSET_PTR willing_to_send_train_cmd ( TINY_SOCK_PTR pS, SC_ID sc_id ) {
+  assert( pS );
+  assert( (sc_id >= 0) && (sc_id < END_OF_SCs) );
+  SC_CTRL_CMDSET_PTR r = NULL;
   
-  int i = (int)SC801;
-  while( i < (int)END_OF_SCs ) {
-    SC_STAT_INFOSET_PTR p = NULL;
-    expire_all_train_state();
-    if( ! (p = willing_to_recv_train_info( pS, (SC_ID)i )) )
+  SC_CTRL_CMDSET_PTR pSC = NULL;
+  pSC = &SC_ctrl_cmds[sc_id];
+  assert( pSC );
+  {
+    IP_ADDR_DESC bcast_dst_ipaddr = SC_ctrl_cmds[sc_id].sc_ipaddr;
+    TINY_SOCK_DESC d = -1;
+    pSC->train_command.d_send_train_cmd = -1;
+    
+    bcast_dst_ipaddr.oct_3rd = 255;
+    bcast_dst_ipaddr.oct_4th = 255;
+    if( (d = creat_sock_sendnx( pS, pSC->train_command.dst_port, TRUE, &bcast_dst_ipaddr )) < 0 ) {
+      errorF( "failed to create the socket to send Train command toward SC%d.\n", SC_ID_CONV_2_INT(sc_id) );
       goto exit;
-    assert( p );
-    assert( p->train_information.d_recv_train_info >= 0 );
-    i++;
+    }
+    pSC->train_command.d_send_train_cmd = d;
+    sock_attach_send_buf( pS, d, (unsigned char *)&(pSC->train_command.send), (int)sizeof(pSC->train_command.send) );
+    r = pSC;
   }
-  r = TRUE;
   
+ exit:
+  return r;
+}
+
+static BOOL establish_SC_traincmd_send ( TINY_SOCK_PTR pS ) {
+  assert( pS );
+  BOOL r = FALSE;
+  {
+    int i = (int)SC801;
+    while( i < (int)END_OF_SCs ) {
+      SC_CTRL_CMDSET_PTR p = NULL;
+      expire_all_train_cmds();
+      if(! (p = willing_to_send_train_cmd( pS, (SC_ID)i )) )
+	goto exit;
+      assert( p );
+      assert( p->train_command.d_send_train_cmd > -1 );
+      i++;
+    }
+    r = TRUE;
+  }
  exit:
   return r;
 }
@@ -165,6 +222,7 @@ BOOL establish_SC_comm ( TINY_SOCK_PTR pS ) {
   BOOL r = FALSE;
   
   if( establish_SC_statinfo_recv( pS ) )
+    if( establish_SC_traincmd_send( pS ) )
     r = TRUE;
   
   return r;
@@ -201,7 +259,7 @@ static void cons_train_cmd( TINY_TRAIN_STATE_PTR pTs ) {
   }
 }
 
-int charge_train_command( void ) {
+int charge_train_command ( void ) {
   int cnt = 0;
   int i;
   

@@ -3,29 +3,51 @@
 #include "misc.h"
 #include "sparcs.h"
 
-SC_CTRL_CMDSET SC_ctrl_cmds[END_OF_SCs];
+SC_CTRL_CMDSET SC_ctrl_cmds[END_OF_SCs] = {
+  {{172, 21,  1, 1}, {UDP_BCAST_RECV_PORT_SC801_Train_command}},
+  {{172, 21,  2, 1}, {UDP_BCAST_RECV_PORT_SC802_Train_command}},
+  {{172, 21,  3, 1}, {UDP_BCAST_RECV_PORT_SC803_Train_command}},
+  {{172, 21,  4, 1}, {UDP_BCAST_RECV_PORT_SC804_Train_command}},
+  {{172, 21,  5, 1}, {UDP_BCAST_RECV_PORT_SC805_Train_command}},
+  {{172, 21,  6, 1}, {UDP_BCAST_RECV_PORT_SC806_Train_command}},
+  {{172, 21,  7, 1}, {UDP_BCAST_RECV_PORT_SC807_Train_command}},
+  {{172, 21,  8, 1}, {UDP_BCAST_RECV_PORT_SC808_Train_command}},
+  {{172, 21,  9, 1}, {UDP_BCAST_RECV_PORT_SC809_Train_command}},
+  {{172, 21, 10, 1}, {UDP_BCAST_RECV_PORT_SC810_Train_command}},
+  {{172, 21, 11, 1}, {UDP_BCAST_RECV_PORT_SC811_Train_command}},
+  {{172, 21, 12, 1}, {UDP_BCAST_RECV_PORT_SC812_Train_command}},
+  {{172, 21, 13, 1}, {UDP_BCAST_RECV_PORT_SC813_Train_command}},
+  {{172, 21, 14, 1}, {UDP_BCAST_RECV_PORT_SC814_Train_command}},
+  {{172, 21, 15, 1}, {UDP_BCAST_RECV_PORT_SC815_Train_command}},
+  {{172, 21, 16, 1}, {UDP_BCAST_RECV_PORT_SC816_Train_command}},
+  {{172, 21, 17, 1}, {UDP_BCAST_RECV_PORT_SC817_Train_command}},
+  {{172, 21, 18, 1}, {UDP_BCAST_RECV_PORT_SC818_Train_command}},
+  {{172, 21, 19, 1}, {UDP_BCAST_RECV_PORT_SC819_Train_command}},
+  {{172, 21, 20, 1}, {UDP_BCAST_RECV_PORT_SC820_Train_command}},
+  {{172, 21, 21, 1}, {UDP_BCAST_RECV_PORT_SC821_Train_command}}
+};
 SC_STAT_INFOSET SC_stat_infos[END_OF_SCs] = {
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC801_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC802_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC803_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC804_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC805_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC806_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC807_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC808_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC809_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC810_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC811_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC812_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC813_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC814_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC815_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC816_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC817_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC818_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC819_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC820_Train_information}},
-  {{0, 0, 0, 0}, {UDP_BCAST_RECV_PORT_SC821_Train_information}}
+  {{172, 21,  1, 1}, {UDP_BCAST_RECV_PORT_SC801_Train_information}},
+  {{172, 21,  2, 1}, {UDP_BCAST_RECV_PORT_SC802_Train_information}},
+  {{172, 21,  3, 1}, {UDP_BCAST_RECV_PORT_SC803_Train_information}},
+  {{172, 21,  4, 1}, {UDP_BCAST_RECV_PORT_SC804_Train_information}},
+  {{172, 21,  5, 1}, {UDP_BCAST_RECV_PORT_SC805_Train_information}},
+  {{172, 21,  6, 1}, {UDP_BCAST_RECV_PORT_SC806_Train_information}},
+  {{172, 21,  7, 1}, {UDP_BCAST_RECV_PORT_SC807_Train_information}},
+  {{172, 21,  8, 1}, {UDP_BCAST_RECV_PORT_SC808_Train_information}},
+  {{172, 21,  9, 1}, {UDP_BCAST_RECV_PORT_SC809_Train_information}},
+  {{172, 21, 10, 1}, {UDP_BCAST_RECV_PORT_SC810_Train_information}},
+  {{172, 21, 11, 1}, {UDP_BCAST_RECV_PORT_SC811_Train_information}},
+  {{172, 21, 12, 1}, {UDP_BCAST_RECV_PORT_SC812_Train_information}},
+  {{172, 21, 13, 1}, {UDP_BCAST_RECV_PORT_SC813_Train_information}},
+  {{172, 21, 14, 1}, {UDP_BCAST_RECV_PORT_SC814_Train_information}},
+  {{172, 21, 15, 1}, {UDP_BCAST_RECV_PORT_SC815_Train_information}},
+  {{172, 21, 16, 1}, {UDP_BCAST_RECV_PORT_SC816_Train_information}},
+  {{172, 21, 17, 1}, {UDP_BCAST_RECV_PORT_SC817_Train_information}},
+  {{172, 21, 18, 1}, {UDP_BCAST_RECV_PORT_SC818_Train_information}},
+  {{172, 21, 19, 1}, {UDP_BCAST_RECV_PORT_SC819_Train_information}},
+  {{172, 21, 20, 1}, {UDP_BCAST_RECV_PORT_SC820_Train_information}},
+  {{172, 21, 21, 1}, {UDP_BCAST_RECV_PORT_SC821_Train_information}}
 };
 
 static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {  

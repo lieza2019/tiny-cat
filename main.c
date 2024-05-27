@@ -93,7 +93,7 @@ int main ( void ) {
   assert( sd_send_srvstat > -1 );
   assert( sd_send_srvbeat > -1 );
   
-  if( (sd_recv_srvstat = creat_sock_bcast_recv( &socks, UDP_BCAST_SEND_PORT_msgServerStatus )) < 0 ) {
+  if( (sd_recv_srvstat = creat_sock_recv( &socks, UDP_BCAST_SEND_PORT_msgServerStatus )) < 0 ) {
     errorF( "%s", "failed to create the socket to self-receive msgServerStatus.\n" );
     exit( 1 );
   } else {
@@ -197,7 +197,7 @@ int main (void) {
   
   // msgServerStatusを、UDPにて送受信できるようになる。
   TINY_SOCK_CREAT( socks );
-  if( (sd_recv = creat_sock_bcast_recv ( &socks, UDP_BCAST_SEND_PORT_msgServerStatus )) < 0 ) {
+  if( (sd_recv = creat_sock_recv ( &socks, UDP_BCAST_SEND_PORT_msgServerStatus )) < 0 ) {
     errorF( "%s", "failed to create the socket to receive msgServerStatus.\n" );
     exit( 1 );
   } else

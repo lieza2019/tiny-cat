@@ -110,7 +110,7 @@ int sock_send_ready ( TINY_SOCK_PTR pS, TINY_SOCK_DESC sd, int len ) {
   return pS->send[sd].wrote_len;
 }
 
-int creat_sock_bcast_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_port ) {
+int creat_sock_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_port ) {
   assert( pS );
   int r = 1;
   

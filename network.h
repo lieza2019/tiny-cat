@@ -60,7 +60,7 @@ extern unsigned char *sock_attach_send_buf( TINY_SOCK_PTR pS, TINY_SOCK_DESC td,
 extern unsigned char *sock_send_buf_attached( TINY_SOCK_PTR pS, TINY_SOCK_DESC td, int *psize );
 extern int sock_send_ready ( TINY_SOCK_PTR pS, TINY_SOCK_DESC sd, int len );
 
-extern int creat_sock_bcast_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_port );
+extern int creat_sock_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_port );
 extern TINY_SOCK_DESC creat_sock_send ( TINY_SOCK_PTR pS, unsigned short udp_dst_port, BOOL bcast, const IP_ADDR_DESC_PTR pIPdesc );
 extern TINY_SOCK_DESC creat_sock_sendnx ( TINY_SOCK_PTR pS, unsigned short udp_dst_port, BOOL bcast, const IP_ADDR_DESC_PTR pIPdesc );
 
