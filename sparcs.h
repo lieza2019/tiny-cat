@@ -10,7 +10,7 @@
 #include "cbtc_def.h"
 #undef BLOCK_ID_DEFINITIONS
 
-#define NUM_OF_SCs 4
+#define NUM_OF_SCs 4n
 typedef enum SC_ID {
   SC801,
   SC802,
@@ -128,7 +128,9 @@ typedef struct block {
 
 extern SC_CTRL_CMDSET SC_ctrl_cmds[END_OF_SCs];
 extern SC_STAT_INFOSET SC_stat_infos[END_OF_SCs];
+extern STANDBY_TRAIN_CMDS standby_train_cmds;
 
-extern int alloc_train_cmd_entries( TRAIN_COMMAND_ENTRY_PTR es[], int rakeID, int front_blk, int back_blk );
+extern int alloc_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR pTs, int rakeID, int front_blk, int back_blk );
+extern int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR pTs, int rakeID, int front_blk, int back_blk );
 extern SC_CTRL_CMDSET_PTR emit_train_cmd( TINY_SOCK_PTR pS, SC_ID sc_id );
 extern SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id );

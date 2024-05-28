@@ -50,6 +50,8 @@ SC_STAT_INFOSET SC_stat_infos[END_OF_SCs] = {
   {{172, 21, 21, 1}, {UDP_BCAST_RECV_PORT_SC821_Train_information}}
 };
 
+STANDBY_TRAIN_CMDS standby_train_cmds;
+
 static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {  
   assert( zones );
   assert( front_blk > 0 );
@@ -60,7 +62,8 @@ static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {
   return( 2 );
 }
 
-static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd( SC_CTRL_CMDSET_PTR pCs, int rakeID ) {
+static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTRL_CMDSET_PTR pCs, int rakeID ) {
+  assert( pTs );
   assert( pCs );
   assert( rakeID > 0 );
   TRAIN_COMMAND_ENTRY_PTR pE = NULL;
@@ -69,18 +72,21 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd( SC_CTRL_CMDSET_PTR pCs, int rakeI
   for( i = 0; i < TRAIN_COMMAND_ENTRIES_NUM; i++ )
     if( pCs->train_command.send.train_cmd.entries[i].rakeID == rakeID ) {
       pE = &pCs->train_command.send.train_cmd.entries[i];
+      pCs->train_command.expired[i] = FALSE;
       break;
     }
-  
   if( pE ) {
-    assert( pCs->train_command.pTrain_stat[i] );
-    TINY_TRAIN_STATE_PTR pTs = pCs->train_command.pTrain_stat[i];
-    ;
+    TINY_TRAIN_STATE_PTR pTs0 = pCs->train_command.pTrain_stat[i];
+    assert( pTs0 );
+    assert( pTs0 == pTs );
   } else {
     int j;
-    for( j = 0 ; j < pCs->train_command.frontier; j++ )
+    for( j = 0; j < pCs->train_command.frontier; j++ )
       if( pCs->train_command.send.train_cmd.entries[j].rakeID == 0 ) {
+	assert( pCs->train_command.expired[j] );
 	pE = &pCs->train_command.send.train_cmd.entries[j];
+	pCs->train_command.pTrain_stat[j] = pTs;
+	pCs->train_command.expired[j] = FALSE;
 	break;
       }
     if( !pE ) {
@@ -88,20 +94,28 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd( SC_CTRL_CMDSET_PTR pCs, int rakeI
       if( pCs->train_command.frontier < TRAIN_COMMAND_ENTRIES_NUM ) {
 	int f = pCs->train_command.frontier;
 	assert( pCs->train_command.send.train_cmd.entries[f].rakeID == 0 );
+	assert( pCs->train_command.expired[f] );
 	pE = &pCs->train_command.send.train_cmd.entries[f];
+	pCs->train_command.pTrain_stat[f] = pTs;
+	pCs->train_command.expired[f] = FALSE;
 	pCs->train_command.frontier++;
-      } else
-	assert( FALSE );
+      } else {
+	if( standby_train_cmds.pptl )
+	  *standby_train_cmds.pptl = pTs;
+	standby_train_cmds.pptl = &(pTs->pNext);
+	*standby_train_cmds.pptl = NULL;
+      }
     }
-    pE->rakeID = rakeID;
   }
-  assert( pE );
-  assert( pE->rakeID > 0 );
+  
+  if( pE )
+    TRAIN_CMD_RAKEID( *pE, rakeID ); 
   return pE;
 }
 
-int alloc_train_cmd_entries( TRAIN_COMMAND_ENTRY_PTR es[], int rakeID, int front_blk, int back_blk ) {
+int alloc_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR pTs, int rakeID, int front_blk, int back_blk ) {
   assert( es );
+  assert( pTs );
   assert( rakeID > 0 );
   assert( front_blk > 0 );
   assert( back_blk > 0 );
@@ -114,12 +128,55 @@ int alloc_train_cmd_entries( TRAIN_COMMAND_ENTRY_PTR es[], int rakeID, int front
     int i;
     for( i = 0; i < n; i++ ) {
       assert( zones[i] != END_OF_SCs );
-      es[i] = lkup_train_cmd( &SC_ctrl_cmds[zones[i]], rakeID );
-      assert( es[i] );
+      if( !(es[i] = lkup_train_cmd( pTs, &SC_ctrl_cmds[zones[i]], rakeID )) ) {
+	assert( standby_train_cmds.pptl );
+	if( !standby_train_cmds.phd ) {
+	  standby_train_cmds.phd = pTs;
+	  assert( standby_train_cmds.pptl == &(standby_train_cmds.phd->pNext) );
+	}
+	assert( !(*standby_train_cmds.pptl) );
+      } else
+	r++;
     }
-    assert( i == n );
-    r = i;
   }
+  assert( r == n );
+  return r;
+}
+
+int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR pTs, int rakeID, int front_blk, int back_blk ) {
+  assert( es );
+  assert( pTs );
+  assert( rakeID > 0 );
+  assert( front_blk > 0 );
+  assert( back_blk > 0 );
+  SC_ID zones[2] = { END_OF_SCs, END_OF_SCs };
+  int r = 0;
+  
+  int n = which_SC_zones( zones, front_blk, back_blk );
+  assert( (n > 0) && (n <= 2) );
+  {
+    int i;
+    for( i = 0; i < n; i++ ) {
+      assert( zones[i] != END_OF_SCs );
+      SC_CTRL_CMDSET_PTR pCs = &SC_ctrl_cmds[zones[i]];
+      assert( pCs );
+      int j;
+      for( j = 0; j < TRAIN_COMMAND_ENTRIES_NUM; j++ ) {
+	if( pCs->train_command.send.train_cmd.entries[j].rakeID == 0 ) {
+	  assert( pCs->train_command.expired[j] );
+	  TRAIN_CMD_RAKEID( pCs->train_command.send.train_cmd.entries[j], rakeID );
+	  pCs->train_command.pTrain_stat[j] = pTs;
+	  pCs->train_command.expired[j] = FALSE;
+	  es[i] = &pCs->train_command.send.train_cmd.entries[j];
+	  if( j > pCs->train_command.frontier )
+	    pCs->train_command.frontier = j;
+	  assert( pCs->train_command.frontier < TRAIN_COMMAND_ENTRIES_NUM );
+	  r++;
+	}
+      }
+    }
+  }
+  assert( r == n );
   return r;
 }
 

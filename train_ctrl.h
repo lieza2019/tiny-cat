@@ -9,7 +9,7 @@ typedef struct tiny_train_state {
   BOOL skip_next_stop;
   BOOL ATO_dept_cmd;
   BOOL TH_cmd;
-  TRAIN_PERF_REGIME perf_regime_cmd;
+  TRAIN_PERF_REGIME perf_regime;
   BOOL turnback_siding;
   int dwell_time;
   BOOL train_remove;
@@ -27,8 +27,14 @@ typedef struct tiny_train_state {
   struct tiny_train_state *pNext;
 } TINY_TRAIN_STATE, *TINY_TRAIN_STATE_PTR;
 
+typedef struct standby_train_cmds {
+  TINY_TRAIN_STATE_PTR phd;
+  TINY_TRAIN_STATE_PTR *pptl;
+} STANDBY_TRAIN_CMDS, *STANDBY_TRAIN_CMDS_PTR;
+
 #define MAX_TRAIN_TRACKINGS 1024
 
 extern TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 extern void reveal_train_tracking( TINY_SOCK_PTR pS );
 extern BOOL establish_SC_comm ( TINY_SOCK_PTR pS );
+extern int load_train_command ( void );

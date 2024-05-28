@@ -35,7 +35,7 @@ static void retrieve_from_train_info ( TINY_TRAIN_STATE_PTR pS, TRAIN_INFO_ENTRY
   assert( pI );
   pS->rakeID = TRAIN_INFO_RAKEID( *pI );
   pS->skip_next_stop = TRAIN_INFO_SKIP_NEXT_STOP( *pI );
-  pS->perf_regime_cmd = TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( *pI );
+  pS->perf_regime = TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( *pI );
 }
 
 static TINY_TRAIN_STATE_PTR update_train_state( TRAIN_INFO_ENTRY_PTR pI ) {
@@ -80,7 +80,7 @@ static void expire_all_train_cmds ( void ) {
   }
 }
 
-static void expire_train_state ( void ) {
+static void expire_all_train_states ( void ) {
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
     trains_tracking[i].updated = FALSE;
@@ -90,7 +90,7 @@ void reveal_train_tracking( TINY_SOCK_PTR pS ) {
   assert( pS );
   int i;
   
-  expire_train_state();
+  expire_all_train_states();
   for( i = (int)SC801; i < END_OF_SCs; i++ ) {
     SC_STAT_INFOSET_PTR pSC = NULL;
     pSC = snif_train_info( pS, (SC_ID)i );
@@ -178,18 +178,20 @@ static SC_CTRL_CMDSET_PTR willing_to_send_train_cmd ( TINY_SOCK_PTR pS, SC_ID sc
   pSC = &SC_ctrl_cmds[sc_id];
   assert( pSC );
   {
-    IP_ADDR_DESC bcast_dst_ipaddr = SC_ctrl_cmds[sc_id].sc_ipaddr;
-    TINY_SOCK_DESC d = -1;
-    pSC->train_command.d_send_train_cmd = -1;
-    
+    IP_ADDR_DESC bcast_dst_ipaddr = SC_ctrl_cmds[sc_id].sc_ipaddr;    
     bcast_dst_ipaddr.oct_3rd = 255;
     bcast_dst_ipaddr.oct_4th = 255;
-    if( (d = creat_sock_sendnx( pS, pSC->train_command.dst_port, TRUE, &bcast_dst_ipaddr )) < 0 ) {
-      errorF( "failed to create the socket to send Train command toward SC%d.\n", SC_ID_CONV_2_INT(sc_id) );
-      goto exit;
+    
+    pSC->train_command.d_send_train_cmd = -1;
+    {
+      TINY_SOCK_DESC d = -1;
+      if( (d = creat_sock_sendnx( pS, pSC->train_command.dst_port, TRUE, &bcast_dst_ipaddr )) < 0 ) {
+	errorF( "failed to create the socket to send Train command toward SC%d.\n", SC_ID_CONV_2_INT(sc_id) );
+	goto exit;
+      }
+      pSC->train_command.d_send_train_cmd = d;
+      sock_attach_send_buf( pS, pSC->train_command.d_send_train_cmd, (unsigned char *)&(pSC->train_command.send), (int)sizeof(pSC->train_command.send) );
     }
-    pSC->train_command.d_send_train_cmd = d;
-    sock_attach_send_buf( pS, d, (unsigned char *)&(pSC->train_command.send), (int)sizeof(pSC->train_command.send) );
     r = pSC;
   }
   
@@ -228,7 +230,7 @@ BOOL establish_SC_comm ( TINY_SOCK_PTR pS ) {
   return r;
 }
 
-static void cons_train_cmd( TINY_TRAIN_STATE_PTR pTs ) {
+static void cons_train_cmd ( TINY_TRAIN_STATE_PTR pTs ) {
   assert( pTs );
   int i;
   
@@ -248,7 +250,7 @@ static void cons_train_cmd( TINY_TRAIN_STATE_PTR pTs ) {
       TRAIN_CMD_SKIP_NEXT_STOP( *pE, pTs->skip_next_stop );
       TRAIN_CMD_ATO_DEPARTURE_COMMAND( *pE, pTs->ATO_dept_cmd );
       TRAIN_CMD_TRAIN_HOLD_COMMAND( *pE, pTs->TH_cmd );
-      TRAIN_CMD_TRAIN_PERFORMANCE_REGIME_COMMAND( *pE, pTs->perf_regime_cmd );
+      TRAIN_CMD_TRAIN_PERFORMANCE_REGIME_COMMAND( *pE, pTs->perf_regime );
       TRAIN_CMD_TURNBACK_OR_SIDING( *pE, pTs->turnback_siding );
       TRAIN_CMD_DWELL_TIME( *pE, pTs->dwell_time );
       TRAIN_CMD_TRAIN_REMOVE( *pE, pTs->train_remove );
@@ -259,7 +261,46 @@ static void cons_train_cmd( TINY_TRAIN_STATE_PTR pTs ) {
   }
 }
 
-int charge_train_command ( void ) {
+static void purge_train_cmds ( void ) {
+  int i;
+  for ( i = 0; i < END_OF_SCs; i++ ) {
+    int j;
+    for( j = 0; j < TRAIN_COMMAND_ENTRIES_NUM; j++ )
+      if( SC_ctrl_cmds[i].train_command.expired[j] ) {
+	TRAIN_CMD_RAKEID( SC_ctrl_cmds[i].train_command.send.train_cmd.entries[j], 0 );
+      }
+  }
+}
+
+static void fine_train_cmds ( void ) {
+  int i;
+  for( i = 0; i < END_OF_SCs; i++ ) {
+    SC_CTRL_CMDSET_PTR pSc = &SC_ctrl_cmds[i];
+    assert( pSc );
+    int maiden = -1;
+    int j = 0;
+    while( j < TRAIN_COMMAND_ENTRIES_NUM ) {
+      if( pSc->train_command.send.train_cmd.entries[j].rakeID == 0 ) {
+	assert( pSc->train_command.expired[j] );
+	if( maiden < 0 )
+	  maiden = j;
+	j++;
+      } else if( maiden >= 0 ) {
+	pSc->train_command.send.train_cmd.entries[maiden] = pSc->train_command.send.train_cmd.entries[maiden + 1];
+	j = maiden + 1;
+	maiden = -1;
+      } else
+	j++;
+      assert( maiden < TRAIN_COMMAND_ENTRIES_NUM );
+    }
+    if( maiden >= 0 ) {
+      int n = TRAIN_COMMAND_ENTRIES_NUM - maiden;
+      memset( &pSc->train_command.send.train_cmd.entries[maiden], 0, ((int)sizeof(TRAIN_COMMAND_ENTRY) * n) );
+    }
+  }
+}
+
+int load_train_command ( void ) {
   int cnt = 0;
   int i;
   
@@ -275,7 +316,7 @@ int charge_train_command ( void ) {
 	TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
 	int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
 	int back_blk = TRAIN_INFO_OCCUPIED_BLK_BACK( *(pstat->pTI) );
-	int n = alloc_train_cmd_entries( es, pstat->rakeID, front_blk, back_blk );
+	int n = alloc_train_cmd_entries( es, pstat, pstat->rakeID, front_blk, back_blk );
 	assert( (n > 0) && (n <= 2) );
 	{
 	  int j;
@@ -292,5 +333,34 @@ int charge_train_command ( void ) {
       }
     }
   }
+  purge_train_cmds();
+  
+  while( standby_train_cmds.phd ) {
+    assert( standby_train_cmds.pptl );
+    TINY_TRAIN_STATE_PTR pstat = standby_train_cmds.phd;
+    assert( pstat );
+    assert( pstat->rakeID > 0 );
+    assert( ! pstat->omit );
+    TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
+    int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
+    int back_blk = TRAIN_INFO_OCCUPIED_BLK_BACK( *(pstat->pTI) );
+    int n = standup_train_cmd_entries( es, pstat, pstat->rakeID, front_blk, back_blk );
+    assert( (n > 0) && (n <= 2) );
+    {
+      int k;
+      for( k = 0; k < n; k++ )
+	pstat->pTC[k] = es[k];
+      assert( (k > 0) && (k <= 2) );
+      if( k < 2 ) {
+	assert( k == 1 );
+	pstat->pTC[k] = NULL;
+      }
+    }
+    cnt++;
+    assert( standby_train_cmds.phd->pNext ? TRUE : standby_train_cmds.pptl == &(standby_train_cmds.phd->pNext) );
+    standby_train_cmds.phd = standby_train_cmds.phd->pNext;
+  }
+  
+  fine_train_cmds();
   return cnt;
 }
