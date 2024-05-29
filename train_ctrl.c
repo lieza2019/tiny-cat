@@ -286,17 +286,24 @@ static void fine_train_cmds ( void ) {
 	  maiden = j;
 	j++;
       } else if( maiden >= 0 ) {
-	pSc->train_command.send.train_cmd.entries[maiden] = pSc->train_command.send.train_cmd.entries[maiden + 1];
+	pSc->train_command.send.train_cmd.entries[maiden] = pSc->train_command.send.train_cmd.entries[j];
+	pSc->train_command.pTrain_stat[maiden] = pSc->train_command.pTrain_stat[j];
+	pSc->train_command.expired[maiden] = FALSE;
+	TRAIN_CMD_RAKEID( pSc->train_command.send.train_cmd.entries[j], 0 );
+	pSc->train_command.expired[j] = TRUE;
 	j = maiden + 1;
 	maiden = -1;
       } else
 	j++;
       assert( maiden < TRAIN_COMMAND_ENTRIES_NUM );
     }
+    pSc->train_command.frontier = TRAIN_COMMAND_ENTRIES_NUM;
     if( maiden >= 0 ) {
       int n = TRAIN_COMMAND_ENTRIES_NUM - maiden;
       memset( &pSc->train_command.send.train_cmd.entries[maiden], 0, ((int)sizeof(TRAIN_COMMAND_ENTRY) * n) );
+      pSc->train_command.frontier = maiden;
     }
+    assert( pSc->train_command.frontier <= TRAIN_COMMAND_ENTRIES_NUM );
   }
 }
 
