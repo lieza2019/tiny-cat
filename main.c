@@ -102,7 +102,7 @@ int main ( void ) {
   }
   
   if( ! establish_SC_comm( &socks ) ) {
-    errorF("%s", "failed to create the recv ports for Train information.\n");
+    errorF("%s", "failed to create the recv/send UDP ports for Train information and Train command respectively.\n");
     exit( 1 );
   }
   
@@ -137,18 +137,22 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
     
     while( TRUE ) {
-      errorF( "%s", "waken up.\n" );
+      errorF( "%s", "waken up!\n" );
       if( (nrecv = sock_recv( &socks )) < 0 ) {
 	errorF( "%s", "error on receiving CBTC status information from SCs.\n" );
 	continue;
       }
+      
       reveal_train_tracking( &socks );
       if( diag_tracking_trains( stdout ) > 0 )
 	fprintf( stdout, "\n" );
       
       {
+	unsigned char *pmsg_buf = NULL;
 	int msglen = -1;
-	assert( sock_recv_buf_attached(&socks, sd_recv_srvstat, &msglen) == buf_msgServerStatus );
+	pmsg_buf = sock_recv_buf_attached( &socks, sd_recv_srvstat, &msglen );
+	assert( pmsg_buf );
+	assert( pmsg_buf == buf_msgServerStatus );
 	assert( (msglen > 0) ? (msglen == sizeof(MSG_TINY_SERVER_STATUS)) : TRUE );
       }
       
@@ -158,9 +162,12 @@ int main ( void ) {
 	pmsg_buf = sock_send_buf_attached( &socks, sd_send_srvbeat, &size );
 	assert( pmsg_buf );
 	assert( size >= sizeof(MSG_TINY_HEARTBEAT) );
-	//msg_srv_beat.n = cnt;
-	assert( memcpy( pmsg_buf, &msg_srv_beat, sizeof(msg_srv_beat) ) == pmsg_buf );
-	assert( sock_send_ready(&socks, sd_send_srvbeat, sizeof(msg_srv_beat)) == sizeof(MSG_TINY_HEARTBEAT) );
+	memcpy( pmsg_buf, &msg_srv_beat, sizeof(msg_srv_beat) );
+	{
+	  int n = -1;
+	  n = sock_send_ready( &socks, sd_send_srvbeat, sizeof(msg_srv_beat) );
+	  assert( n == sizeof(MSG_TINY_HEARTBEAT) );
+	}
 	
 	pmsg_buf = NULL;
 	size = -1;
@@ -168,15 +175,21 @@ int main ( void ) {
 	assert( pmsg_buf );
 	assert( size >= sizeof(MSG_TINY_SERVER_STATUS) );
 	msg_srv_stat.n = cnt;
-	assert( memcpy( pmsg_buf, &msg_srv_stat, sizeof(msg_srv_stat) ) == pmsg_buf );
-	assert( sock_send_ready(&socks, sd_send_srvstat, sizeof(msg_srv_stat)) == sizeof(MSG_TINY_SERVER_STATUS) );
-	
-	if( sock_send(&socks) < 1 ) {
-	  errorF( "%s", "failed to send msgServerStatus.\n" );
-	  exit( 1 );
+	memcpy( pmsg_buf, &msg_srv_stat, sizeof(msg_srv_stat) );
+	{
+	  int n = -1;
+	  n = sock_send_ready( &socks, sd_send_srvstat, sizeof(msg_srv_stat) );
+	  assert( n == sizeof(MSG_TINY_SERVER_STATUS) );
 	}
-	cnt++;
       }
+      
+      load_train_command();
+      
+      if( sock_send(&socks) < 1 ) {
+	errorF( "%s", "failed to send msgServerStatus.\n" );
+	exit( 1 );
+      }
+      cnt++;
       assert( ! usleep( interval ) );
     }
   }
