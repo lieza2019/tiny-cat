@@ -70,7 +70,7 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTR
   int i;
   
   for( i = 0; i < TRAIN_COMMAND_ENTRIES_NUM; i++ )
-    if( pCs->train_command.send.train_cmd.entries[i].rakeID == rakeID ) {
+    if( (int)ntohs(pCs->train_command.send.train_cmd.entries[i].rakeID) == rakeID ) {
       pE = &pCs->train_command.send.train_cmd.entries[i];
       pCs->train_command.expired[i] = FALSE;
       break;

@@ -22,7 +22,7 @@ static int diag_tracking_trains ( FILE *fp_out ) {
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
     if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
-      assert( trains_tracking[i].rakeID == (int)(trains_tracking[i].pTI->rakeID) );
+      assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(*trains_tracking[i].pTI) );
       fprintf( fp_out, "%-3d: rakeID\n", trains_tracking[i].rakeID );
       r++;
     }

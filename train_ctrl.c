@@ -238,7 +238,7 @@ static void cons_train_cmd ( TINY_TRAIN_STATE_PTR pTs ) {
     if( pTs->pTC[i] ) {
       TRAIN_COMMAND_ENTRY_PTR pE = pTs->pTC[i];
       assert( pE );
-      assert( TRAIN_INFO_RAKEID(*pE) == pTs->rakeID );
+      assert( ntohs(pE->rakeID) == pTs->rakeID );
 #if 0
       {
 	char buf[TRAINID_MAX_LEN + 1];
