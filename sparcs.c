@@ -4,50 +4,50 @@
 #include "sparcs.h"
 
 SC_CTRL_CMDSET SC_ctrl_cmds[END_OF_SCs] = {
-  {{172, 21,  1, 1}, {UDP_BCAST_RECV_PORT_SC801_Train_command}},
-  {{172, 21,  2, 1}, {UDP_BCAST_RECV_PORT_SC802_Train_command}},
-  {{172, 21,  3, 1}, {UDP_BCAST_RECV_PORT_SC803_Train_command}},
-  {{172, 21,  4, 1}, {UDP_BCAST_RECV_PORT_SC804_Train_command}},
-  {{172, 21,  5, 1}, {UDP_BCAST_RECV_PORT_SC805_Train_command}},
-  {{172, 21,  6, 1}, {UDP_BCAST_RECV_PORT_SC806_Train_command}},
-  {{172, 21,  7, 1}, {UDP_BCAST_RECV_PORT_SC807_Train_command}},
-  {{172, 21,  8, 1}, {UDP_BCAST_RECV_PORT_SC808_Train_command}},
-  {{172, 21,  9, 1}, {UDP_BCAST_RECV_PORT_SC809_Train_command}},
-  {{172, 21, 10, 1}, {UDP_BCAST_RECV_PORT_SC810_Train_command}},
-  {{172, 21, 11, 1}, {UDP_BCAST_RECV_PORT_SC811_Train_command}},
-  {{172, 21, 12, 1}, {UDP_BCAST_RECV_PORT_SC812_Train_command}},
-  {{172, 21, 13, 1}, {UDP_BCAST_RECV_PORT_SC813_Train_command}},
-  {{172, 21, 14, 1}, {UDP_BCAST_RECV_PORT_SC814_Train_command}},
-  {{172, 21, 15, 1}, {UDP_BCAST_RECV_PORT_SC815_Train_command}},
-  {{172, 21, 16, 1}, {UDP_BCAST_RECV_PORT_SC816_Train_command}},
-  {{172, 21, 17, 1}, {UDP_BCAST_RECV_PORT_SC817_Train_command}},
-  {{172, 21, 18, 1}, {UDP_BCAST_RECV_PORT_SC818_Train_command}},
-  {{172, 21, 19, 1}, {UDP_BCAST_RECV_PORT_SC819_Train_command}},
-  {{172, 21, 20, 1}, {UDP_BCAST_RECV_PORT_SC820_Train_command}},
-  {{172, 21, 21, 1}, {UDP_BCAST_RECV_PORT_SC821_Train_command}}
+  {"SC801", {172, 21,  1, 1}, {UDP_BCAST_RECV_PORT_SC801_Train_command}},
+  {"SC802", {172, 21,  2, 1}, {UDP_BCAST_RECV_PORT_SC802_Train_command}},
+  {"SC803", {172, 21,  3, 1}, {UDP_BCAST_RECV_PORT_SC803_Train_command}},
+  {"SC804", {172, 21,  4, 1}, {UDP_BCAST_RECV_PORT_SC804_Train_command}},
+  {"SC805", {172, 21,  5, 1}, {UDP_BCAST_RECV_PORT_SC805_Train_command}},
+  {"SC806", {172, 21,  6, 1}, {UDP_BCAST_RECV_PORT_SC806_Train_command}},
+  {"SC807", {172, 21,  7, 1}, {UDP_BCAST_RECV_PORT_SC807_Train_command}},
+  {"SC808", {172, 21,  8, 1}, {UDP_BCAST_RECV_PORT_SC808_Train_command}},
+  {"SC809", {172, 21,  9, 1}, {UDP_BCAST_RECV_PORT_SC809_Train_command}},
+  {"SC810", {172, 21, 10, 1}, {UDP_BCAST_RECV_PORT_SC810_Train_command}},
+  {"SC811", {172, 21, 11, 1}, {UDP_BCAST_RECV_PORT_SC811_Train_command}},
+  {"SC812", {172, 21, 12, 1}, {UDP_BCAST_RECV_PORT_SC812_Train_command}},
+  {"SC813", {172, 21, 13, 1}, {UDP_BCAST_RECV_PORT_SC813_Train_command}},
+  {"SC814", {172, 21, 14, 1}, {UDP_BCAST_RECV_PORT_SC814_Train_command}},
+  {"SC815", {172, 21, 15, 1}, {UDP_BCAST_RECV_PORT_SC815_Train_command}},
+  {"SC816", {172, 21, 16, 1}, {UDP_BCAST_RECV_PORT_SC816_Train_command}},
+  {"SC817", {172, 21, 17, 1}, {UDP_BCAST_RECV_PORT_SC817_Train_command}},
+  {"SC818", {172, 21, 18, 1}, {UDP_BCAST_RECV_PORT_SC818_Train_command}},
+  {"SC819", {172, 21, 19, 1}, {UDP_BCAST_RECV_PORT_SC819_Train_command}},
+  {"SC820", {172, 21, 20, 1}, {UDP_BCAST_RECV_PORT_SC820_Train_command}},
+  {"SC821", {172, 21, 21, 1}, {UDP_BCAST_RECV_PORT_SC821_Train_command}}
 };
 SC_STAT_INFOSET SC_stat_infos[END_OF_SCs] = {
-  {{172, 21,  1, 1}, {UDP_BCAST_RECV_PORT_SC801_Train_information}},
-  {{172, 21,  2, 1}, {UDP_BCAST_RECV_PORT_SC802_Train_information}},
-  {{172, 21,  3, 1}, {UDP_BCAST_RECV_PORT_SC803_Train_information}},
-  {{172, 21,  4, 1}, {UDP_BCAST_RECV_PORT_SC804_Train_information}},
-  {{172, 21,  5, 1}, {UDP_BCAST_RECV_PORT_SC805_Train_information}},
-  {{172, 21,  6, 1}, {UDP_BCAST_RECV_PORT_SC806_Train_information}},
-  {{172, 21,  7, 1}, {UDP_BCAST_RECV_PORT_SC807_Train_information}},
-  {{172, 21,  8, 1}, {UDP_BCAST_RECV_PORT_SC808_Train_information}},
-  {{172, 21,  9, 1}, {UDP_BCAST_RECV_PORT_SC809_Train_information}},
-  {{172, 21, 10, 1}, {UDP_BCAST_RECV_PORT_SC810_Train_information}},
-  {{172, 21, 11, 1}, {UDP_BCAST_RECV_PORT_SC811_Train_information}},
-  {{172, 21, 12, 1}, {UDP_BCAST_RECV_PORT_SC812_Train_information}},
-  {{172, 21, 13, 1}, {UDP_BCAST_RECV_PORT_SC813_Train_information}},
-  {{172, 21, 14, 1}, {UDP_BCAST_RECV_PORT_SC814_Train_information}},
-  {{172, 21, 15, 1}, {UDP_BCAST_RECV_PORT_SC815_Train_information}},
-  {{172, 21, 16, 1}, {UDP_BCAST_RECV_PORT_SC816_Train_information}},
-  {{172, 21, 17, 1}, {UDP_BCAST_RECV_PORT_SC817_Train_information}},
-  {{172, 21, 18, 1}, {UDP_BCAST_RECV_PORT_SC818_Train_information}},
-  {{172, 21, 19, 1}, {UDP_BCAST_RECV_PORT_SC819_Train_information}},
-  {{172, 21, 20, 1}, {UDP_BCAST_RECV_PORT_SC820_Train_information}},
-  {{172, 21, 21, 1}, {UDP_BCAST_RECV_PORT_SC821_Train_information}}
+  {"SC801", {172, 21,  1, 1}, {UDP_BCAST_RECV_PORT_SC801_Train_information}},
+  {"SC802", {172, 21,  2, 1}, {UDP_BCAST_RECV_PORT_SC802_Train_information}},
+  {"SC803", {172, 21,  3, 1}, {UDP_BCAST_RECV_PORT_SC803_Train_information}},
+  {"SC804", {172, 21,  4, 1}, {UDP_BCAST_RECV_PORT_SC804_Train_information}},
+  {"SC805", {172, 21,  5, 1}, {UDP_BCAST_RECV_PORT_SC805_Train_information}},
+  {"SC806", {172, 21,  6, 1}, {UDP_BCAST_RECV_PORT_SC806_Train_information}},
+  {"SC807", {172, 21,  7, 1}, {UDP_BCAST_RECV_PORT_SC807_Train_information}},
+  {"SC808", {172, 21,  8, 1}, {UDP_BCAST_RECV_PORT_SC808_Train_information}},
+  {"SC809", {172, 21,  9, 1}, {UDP_BCAST_RECV_PORT_SC809_Train_information}},
+  {"SC810", {172, 21, 10, 1}, {UDP_BCAST_RECV_PORT_SC810_Train_information}},
+  {"SC811", {172, 21, 11, 1}, {UDP_BCAST_RECV_PORT_SC811_Train_information}},
+  {"SC812", {172, 21, 12, 1}, {UDP_BCAST_RECV_PORT_SC812_Train_information}},
+  {"SC813", {172, 21, 13, 1}, {UDP_BCAST_RECV_PORT_SC813_Train_information}},
+  {"SC814", {172, 21, 14, 1}, {UDP_BCAST_RECV_PORT_SC814_Train_information}},
+  {"SC815", {172, 21, 15, 1}, {UDP_BCAST_RECV_PORT_SC815_Train_information}},
+  {"SC816", {172, 21, 16, 1}, {UDP_BCAST_RECV_PORT_SC816_Train_information}},
+  {"SC817", {172, 21, 17, 1}, {UDP_BCAST_RECV_PORT_SC817_Train_information}},
+  {"SC818", {172, 21, 18, 1}, {UDP_BCAST_RECV_PORT_SC818_Train_information}},
+  {"SC819", {172, 21, 19, 1}, {UDP_BCAST_RECV_PORT_SC819_Train_information}},
+  {"SC820", {172, 21, 20, 1}, {UDP_BCAST_RECV_PORT_SC820_Train_information}},
+  {"SC821", {172, 21, 21, 1}, {UDP_BCAST_RECV_PORT_SC821_Train_information}}
 };
 
 STANDBY_TRAIN_CMDS standby_train_cmds;
@@ -57,8 +57,8 @@ static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {
   assert( front_blk > 0 );
   assert( back_blk > 0 );
   
-  zones[0] = SC801;
-  zones[1] = SC802;
+  zones[0] = SC817;
+  zones[1] = SC818;
   return( 2 );
 }
 

@@ -15,15 +15,207 @@
 #include "interlock.h"
 
 #if 1
-static int diag_tracking_trains ( FILE *fp_out ) {
+static SC_CTRL_CMDSET_PTR which_SC_from_train_cmd ( TRAIN_COMMAND_ENTRY_PTR pTc ) {
+  assert( pTc );
+  int i;
+  for( i = 0; i < END_OF_SCs; i++ ) {
+    void *lim_inf = (void *)&SC_ctrl_cmds[i];
+    void *lim_sup = lim_inf + sizeof(SC_CTRL_CMDSET);
+    if( ((void *)pTc > lim_inf) && ((void *)pTc < lim_sup) )
+      break;
+  }
+  assert( i < END_OF_SCs );
+  return &SC_ctrl_cmds[i];
+}
+
+static SC_STAT_INFOSET_PTR which_SC_from_train_info ( TRAIN_INFO_ENTRY_PTR pTi ) {
+  assert( pTi );
+  int i;
+  for( i = 0; i < END_OF_SCs; i++ ) {
+    void *lim_inf = (void *)&SC_stat_infos[i];
+    void *lim_sup = lim_inf + sizeof(SC_STAT_INFOSET);
+    if( ((void *)pTi > lim_inf) && ((void *)pTi < lim_sup) )
+      break;
+  }
+  assert( i < END_OF_SCs );
+  return &SC_stat_infos[i];
+}
+
+static int enum_alive_rakes ( int rakeIDs[END_OF_SCs][TRAIN_INFO_ENTRIES_NUM + 1] ) {
+  struct {
+    char sc_name[6];
+    SC_ID sc_id;
+    int num_of_rakes;
+  } lkup[END_OF_SCs] = {
+    {"SC801", SC801, 0},
+    {"SC802", SC802, 0},
+    {"SC803", SC803, 0},
+    {"SC804", SC804, 0},
+    {"SC805", SC805, 0},
+    {"SC806", SC806, 0},
+    {"SC807", SC807, 0},
+    {"SC808", SC808, 0},
+    {"SC809", SC809, 0},
+    {"SC810", SC810, 0},
+    {"SC811", SC811, 0},
+    {"SC812", SC812, 0},
+    {"SC813", SC813, 0},
+    {"SC814", SC814, 0},
+    {"SC815", SC815, 0},
+    {"SC816", SC816, 0},
+    {"SC817", SC817, 0},
+    {"SC818", SC818, 0},
+    {"SC819", SC819, 0},
+    {"SC820", SC820, 0},
+    {"SC821", SC821, 0}
+  };
+  int cnt = 0;
+  int i;
+  for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
+    if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
+      TRAIN_INFO_ENTRY_PTR pE = trains_tracking[i].pTI;
+      assert( pE );
+      SC_STAT_INFOSET_PTR pSi = which_SC_from_train_info( pE );
+      assert( pSi );
+      int j;
+      for( j = 0; j < END_OF_SCs; j++ )
+	if( ! strncmp( pSi->sc_name, lkup[j].sc_name, strlen("SC8xx") ) )
+	  break;
+      assert( j < END_OF_SCs );
+      rakeIDs[lkup[j].sc_id][lkup[j].num_of_rakes] = (int)TRAIN_INFO_RAKEID( *pE );
+      lkup[j].num_of_rakes++;
+      rakeIDs[lkup[j].sc_id][lkup[j].num_of_rakes] = -1;
+      cnt++;
+    }
+  return cnt;
+}
+
+static BOOL chk_consistency ( int rakeIDs[], int num_of_rakes ) {
+  assert( rakeIDs );
+  assert( num_of_rakes > -1 );
+  BOOL r = TRUE;
+  if( num_of_rakes > 1 ) {
+    int rID = rakeIDs[0];
+    int i;
+    for( i = 1; i < num_of_rakes; i++ )
+      if( rID == rakeIDs[i] ) {
+	r = FALSE;
+	break;
+      }
+    if( r )
+      r = chk_consistency( &rakeIDs[1], (num_of_rakes - 1) );
+  }
+  return r;
+}
+static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of_rakes ) {
+  assert( sc_id < END_OF_SCs );
+  assert( rakeIDs );
+  assert( (num_of_rakes > -1) && (num_of_rakes <= TRAIN_COMMAND_ENTRIES_NUM) );
+  const TRAIN_COMMAND_ENTRY_PTR plim = &SC_ctrl_cmds[sc_id].train_command.send.train_cmd.entries[TRAIN_COMMAND_ENTRIES_NUM];
+  TRAIN_COMMAND_ENTRY_PTR pE = &SC_ctrl_cmds[sc_id].train_command.send.train_cmd.entries[0];
+  assert( pE );
+  assert( chk_consistency( rakeIDs, num_of_rakes ) );
+  int i;
+  for( i = 0; i < num_of_rakes; i++ ) {
+    assert( pE < plim );
+    BOOL found = FALSE;
+    TRAIN_COMMAND_ENTRY_PTR p = pE;
+    assert( p );
+    TRAIN_COMMAND_ENTRY_PTR pEp = pE;
+    int rID = ntohs( p->rakeID );
+    while( rID > 0 ) {
+      assert( p < plim );
+      if( rID == rakeIDs[i] ) {
+	pE++;
+	found = TRUE;
+	break;
+      } else {
+	p++;
+	if( p < plim )
+	  rID = ntohs( p->rakeID );
+	else
+	  break;
+      }
+    }
+    if( found )
+      assert( pE == pEp++ );
+    else
+      assert( FALSE );
+  }
+  
+  assert( num_of_rakes < TRAIN_COMMAND_ENTRIES_NUM ? pE < plim : pE == plim );
+  if( pE < plim ) {
+    const int n = (int)((unsigned char *)plim - (unsigned char *)pE);
+    assert( n > 0 );
+    unsigned char *q = (unsigned char *)pE;
+    assert( q );
+    int k;
+    for( k = 0; k < n; i++ ) {
+      assert( *q == 0x00 );
+      q++;
+    }
+  }
+}
+
+static void chk_solid_train_cmds ( void ) {
+  int rakeIDs[END_OF_SCs][TRAIN_INFO_ENTRIES_NUM + 1];
+  int i;
+  enum_alive_rakes( rakeIDs );
+  for( i = 0; i < END_OF_SCs; i++ ) {
+    int num_of_rakes = -1;
+    int j;
+    for( j = 0; j < TRAIN_INFO_ENTRIES_NUM; j++ )
+      if( rakeIDs[i][j] < 0 ) {
+	num_of_rakes = j;
+	break;
+      }
+    assert( j < TRAIN_INFO_ENTRIES_NUM );
+    assert( num_of_rakes > -1 );
+    chk_massiv_train_cmds_array( i, rakeIDs[i], num_of_rakes );
+  }
+}
+
+static int diag_tracking_train_cmd ( FILE *fp_out ) {
+  assert( fp_out );
+  int r = 0;
+
+  int i;
+  for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
+    if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
+      int j = 0;
+      do {
+	TRAIN_COMMAND_ENTRY_PTR pE = trains_tracking[i].pTC[j];
+	assert( j < 1 ? pE : (TRAIN_COMMAND_ENTRY_PTR)TRUE );
+	int rakeID = -1;
+	rakeID = (int)ntohs( pE->rakeID );
+	assert( rakeID > 0 );
+	assert( rakeID == trains_tracking[i].rakeID );
+
+	fprintf( fp_out, "%s;\n", (which_SC_from_train_cmd(pE))->sc_name );
+	fprintf( fp_out, "rakeID: %-3d\n", rakeID );
+	j++;
+      } while( (j < 2) && trains_tracking[i].pTC[j] );
+      fprintf( fp_out, "\n" );
+      r++;
+    }
+  return r;
+}
+
+static int diag_tracking_train_stat ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
   
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
     if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
+      TRAIN_INFO_ENTRY_PTR pE = trains_tracking[i].pTI;
+      assert( pE );
+      fprintf( fp_out, "%s;\n", (which_SC_from_train_info(pE))->sc_name );
+      
       assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(*trains_tracking[i].pTI) );
-      fprintf( fp_out, "%-3d: rakeID\n", trains_tracking[i].rakeID );
+      fprintf( fp_out, "rakeID: %-3d\n", trains_tracking[i].rakeID );
+      
+      fprintf( fp_out, "\n" );
       r++;
     }
   return r;
@@ -144,8 +336,10 @@ int main ( void ) {
       }
       
       reveal_train_tracking( &socks );
-      if( diag_tracking_trains( stdout ) > 0 )
+#if 0
+      if( diag_tracking_train_stat( stdout ) > 0 )
 	fprintf( stdout, "\n" );
+#endif
       
       {
 	unsigned char *pmsg_buf = NULL;
@@ -184,11 +378,17 @@ int main ( void ) {
       }
       
       load_train_command();
-      
+#ifdef CHK_STRICT_CONSISTENCY
+      chk_solid_train_cmds();
+#endif // CHK_STRICT_CONSISTENCY
+      if( diag_tracking_train_cmd( stdout ) > 0 )
+	fprintf( stdout, "\n" );
+#if 0
       if( sock_send(&socks) < 1 ) {
 	errorF( "%s", "failed to send msgServerStatus.\n" );
 	exit( 1 );
       }
+#endif
       cnt++;
       assert( ! usleep( interval ) );
     }

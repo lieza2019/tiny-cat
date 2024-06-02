@@ -68,6 +68,7 @@ struct send_buf_traincmd {
   TRAIN_COMMAND train_cmd;
 };
 typedef struct SC_ctrl_cmdset {
+  char sc_name[6];
   IP_ADDR_DESC sc_ipaddr;
   struct {
     const unsigned short dst_port;
@@ -110,6 +111,7 @@ struct recv_buf_traininfo {
   TRAIN_INFO train_info;
 };
 typedef struct SC_stat_infoset {
+  char sc_name[6];
   IP_ADDR_DESC sc_ipaddr;
   struct {
     const unsigned short dst_port;
