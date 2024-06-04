@@ -310,15 +310,18 @@ static void fine_train_cmds ( void ) {
 int load_train_command ( void ) {
   int cnt = 0;
   int i;
-  
+
+  //BOOL HIT = FALSE;
   assert( frontier < MAX_TRAIN_TRACKINGS );
   for( i = 0; i < frontier; i++ ) {
     TINY_TRAIN_STATE_PTR pstat = NULL;
     pstat = &trains_tracking[i];
     assert( pstat );
     if( pstat->rakeID > 0 ) {
-      if( pstat->omit )
+      if( pstat->omit ) {
+	//HIT = TRUE;
 	continue;
+      }
       else {
 	TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
 	int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
@@ -340,6 +343,12 @@ int load_train_command ( void ) {
       }
     }
   }
+#if 0
+  if( HIT ) {
+    printf( "HIT! with %2d\n", i );
+    exit( 1 );
+  }
+#endif
   purge_train_cmds();
   
   while( standby_train_cmds.phd ) {
