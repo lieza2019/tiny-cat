@@ -58,8 +58,8 @@ static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {
   assert( back_blk > 0 );
   
   zones[0] = SC817;
-  zones[1] = SC818;
-  return( 2 );
+  //zones[1] = SC818;
+  return( 1 );
 }
 
 static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTRL_CMDSET_PTR pCs, int rakeID ) {

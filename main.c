@@ -41,7 +41,8 @@ static SC_STAT_INFOSET_PTR which_SC_from_train_info ( TRAIN_INFO_ENTRY_PTR pTi )
   return &SC_stat_infos[i];
 }
 
-static int enum_alive_rakes ( int rakeIDs[END_OF_SCs][TRAIN_INFO_ENTRIES_NUM + 1] ) {
+//static int enum_alive_rakes ( int rakeIDs[END_OF_SCs][TRAIN_INFO_ENTRIES_NUM + 1] ) {
+static int enum_alive_rakes ( int (*rakeIDs)[TRAIN_INFO_ENTRIES_NUM + 1] ) {
   struct {
     char sc_name[6];
     SC_ID sc_id;
@@ -71,6 +72,11 @@ static int enum_alive_rakes ( int rakeIDs[END_OF_SCs][TRAIN_INFO_ENTRIES_NUM + 1
   };
   int cnt = 0;
   int i;
+  {
+    int sc;
+    for( sc = SC801; sc < END_OF_SCs; sc++ )
+      rakeIDs[sc][0] = -1;
+  }
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
     if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
       TRAIN_INFO_ENTRY_PTR pE = trains_tracking[i].pTI;
@@ -138,7 +144,7 @@ static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of
       }
     }
     if( found )
-      assert( pE == pEp++ );
+      assert( pE == ++pEp );
     else
       assert( FALSE );
   }
@@ -150,7 +156,7 @@ static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of
     unsigned char *q = (unsigned char *)pE;
     assert( q );
     int k;
-    for( k = 0; k < n; i++ ) {
+    for( k = 0; k < n; k++ ) {
       assert( *q == 0x00 );
       q++;
     }
@@ -160,6 +166,7 @@ static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of
 static void chk_solid_train_cmds ( void ) {
   int rakeIDs[END_OF_SCs][TRAIN_INFO_ENTRIES_NUM + 1];
   int i;
+  memset( rakeIDs, 0, sizeof(rakeIDs) );
   enum_alive_rakes( rakeIDs );
   for( i = 0; i < END_OF_SCs; i++ ) {
     int num_of_rakes = -1;
