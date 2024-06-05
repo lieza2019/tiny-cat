@@ -287,8 +287,19 @@ static void fine_train_cmds ( void ) {
 	j++;
       } else if( maiden >= 0 ) {
 	pSc->train_command.send.train_cmd.entries[maiden] = pSc->train_command.send.train_cmd.entries[j];
-	pSc->train_command.pTrain_stat[maiden] = pSc->train_command.pTrain_stat[j];
+	{
+	  TINY_TRAIN_STATE_PTR pTs = pSc->train_command.pTrain_stat[j];
+	  assert( pTs );
+	  if( pTs->pTC[0] == &pSc->train_command.send.train_cmd.entries[j] )
+	    pTs->pTC[0] = &pSc->train_command.send.train_cmd.entries[maiden];
+	  else if( pTs->pTC[1] == &pSc->train_command.send.train_cmd.entries[j] )
+	    pTs->pTC[1] = &pSc->train_command.send.train_cmd.entries[maiden];
+	  else
+	    assert( FALSE );
+	  pSc->train_command.pTrain_stat[maiden] = pTs;
+	}
 	pSc->train_command.expired[maiden] = FALSE;
+	
 	TRAIN_CMD_RAKEID( pSc->train_command.send.train_cmd.entries[j], 0 );
 	pSc->train_command.expired[j] = TRUE;
 	j = maiden + 1;
@@ -310,18 +321,16 @@ static void fine_train_cmds ( void ) {
 int load_train_command ( void ) {
   int cnt = 0;
   int i;
-
-  //BOOL HIT = FALSE;
-  assert( frontier < MAX_TRAIN_TRACKINGS );
+  
+  expire_all_train_cmds();
   for( i = 0; i < frontier; i++ ) {
+    assert( frontier < MAX_TRAIN_TRACKINGS );
     TINY_TRAIN_STATE_PTR pstat = NULL;
     pstat = &trains_tracking[i];
     assert( pstat );
     if( pstat->rakeID > 0 ) {
-      if( pstat->omit ) {
-	//HIT = TRUE;
+      if( pstat->omit )
 	continue;
-      }
       else {
 	TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
 	int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
@@ -343,12 +352,6 @@ int load_train_command ( void ) {
       }
     }
   }
-#if 0
-  if( HIT ) {
-    printf( "HIT! with %2d\n", i );
-    exit( 1 );
-  }
-#endif
   purge_train_cmds();
   
   while( standby_train_cmds.phd ) {

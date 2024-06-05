@@ -96,6 +96,39 @@ static int enum_alive_rakes ( int (*rakeIDs)[TRAIN_INFO_ENTRIES_NUM + 1] ) {
   return cnt;
 }
 
+static void dump_train_cmds ( TRAIN_COMMAND_ENTRY_PTR pE ) {
+  assert( pE );
+  int i;
+  for( i = 0; i < TRAIN_COMMAND_ENTRIES_NUM; i++ ) {
+    printf( "%2dth rakeID: %d\n", i, (int)ntohs(pE->rakeID) );
+    pE++;
+  }
+}
+
+static void dup_book ( int rakeIDs_dup[], int rakeIDs_org[], int num_of_rakes ) {
+  assert( rakeIDs_dup );
+  assert( rakeIDs_org );
+  assert( (num_of_rakes > -1) && (num_of_rakes <= TRAIN_COMMAND_ENTRIES_NUM) );
+  int i;
+  for( i = 0; i < num_of_rakes; i++ )
+    rakeIDs_dup[i] = rakeIDs_org[i];
+  assert( i == num_of_rakes );
+  rakeIDs_dup[i] = -1;
+}
+static void elim_rake( int rakeIDs[], int elim, int num_of_elems ) {
+  assert( rakeIDs );
+  assert( (num_of_elems > -1) && (num_of_elems <= TRAIN_COMMAND_ENTRIES_NUM) );
+  assert( (elim > -1) && (elim < num_of_elems) );
+  int i = elim;
+  assert( rakeIDs[num_of_elems] < 0 );
+  while( i < num_of_elems ) {
+    assert( i < num_of_elems );
+    rakeIDs[i] = rakeIDs[i + 1];
+    i++;
+  }
+  assert( num_of_elems > 0 ? (rakeIDs[num_of_elems - 1] < 0) : (rakeIDs[0] < 0) );
+}
+
 static BOOL chk_consistency ( int rakeIDs[], int num_of_rakes ) {
   assert( rakeIDs );
   assert( num_of_rakes > -1 );
@@ -113,43 +146,44 @@ static BOOL chk_consistency ( int rakeIDs[], int num_of_rakes ) {
   }
   return r;
 }
+
 static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of_rakes ) {
   assert( sc_id < END_OF_SCs );
   assert( rakeIDs );
   assert( (num_of_rakes > -1) && (num_of_rakes <= TRAIN_COMMAND_ENTRIES_NUM) );
+  assert( chk_consistency( rakeIDs, num_of_rakes ) );
   const TRAIN_COMMAND_ENTRY_PTR plim = &SC_ctrl_cmds[sc_id].train_command.send.train_cmd.entries[TRAIN_COMMAND_ENTRIES_NUM];
   TRAIN_COMMAND_ENTRY_PTR pE = &SC_ctrl_cmds[sc_id].train_command.send.train_cmd.entries[0];
   assert( pE );
-  assert( chk_consistency( rakeIDs, num_of_rakes ) );
-  int i;
-  for( i = 0; i < num_of_rakes; i++ ) {
-    assert( pE < plim );
-    BOOL found = FALSE;
-    TRAIN_COMMAND_ENTRY_PTR p = pE;
-    assert( p );
-    TRAIN_COMMAND_ENTRY_PTR pEp = pE;
-    int rID = ntohs( p->rakeID );
-    while( rID > 0 ) {
-      assert( p < plim );
-      if( rID == rakeIDs[i] ) {
-	pE++;
-	found = TRUE;
-	break;
-      } else {
-	p++;
-	if( p < plim )
-	  rID = ntohs( p->rakeID );
-	else
+  {
+    int rakeIDs_w[TRAIN_COMMAND_ENTRIES_NUM + 1];
+    dup_book( rakeIDs_w, rakeIDs, num_of_rakes );
+    while( rakeIDs_w[0] > -1 ) {
+      assert( pE < plim );
+      BOOL found = FALSE;
+      TRAIN_COMMAND_ENTRY_PTR pEp = pE;
+      int rID = ntohs( pE->rakeID );
+      int j = 0;
+      while( rakeIDs_w[j] > -1 ) {
+	if( rID == rakeIDs_w[j] ) {
+	  int len = 0;
+	  while( rakeIDs_w[len] > -1 )
+	    len++;
+	  elim_rake( rakeIDs_w, j, len );
+	  pE++;
+	  found = TRUE;
 	  break;
+	} else
+	  j++;
       }
+      if( found )
+	assert( pE == ++pEp );
+      else
+	assert( FALSE );
     }
-    if( found )
-      assert( pE == ++pEp );
-    else
-      assert( FALSE );
   }
-  
   assert( num_of_rakes < TRAIN_COMMAND_ENTRIES_NUM ? pE < plim : pE == plim );
+  
   if( pE < plim ) {
     const int n = (int)((unsigned char *)plim - (unsigned char *)pE);
     assert( n > 0 );
@@ -160,7 +194,7 @@ static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of
       assert( *q == 0x00 );
       q++;
     }
-  }
+  }  
 }
 
 static void chk_solid_train_cmds ( void ) {
@@ -197,7 +231,7 @@ static int diag_tracking_train_cmd ( FILE *fp_out ) {
 	rakeID = (int)ntohs( pE->rakeID );
 	assert( rakeID > 0 );
 	assert( rakeID == trains_tracking[i].rakeID );
-
+	
 	fprintf( fp_out, "%s;\n", (which_SC_from_train_cmd(pE))->sc_name );
 	fprintf( fp_out, "rakeID: %-3d\n", rakeID );
 	j++;

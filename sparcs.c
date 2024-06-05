@@ -72,13 +72,16 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTR
   for( i = 0; i < TRAIN_COMMAND_ENTRIES_NUM; i++ )
     if( (int)ntohs(pCs->train_command.send.train_cmd.entries[i].rakeID) == rakeID ) {
       pE = &pCs->train_command.send.train_cmd.entries[i];
+      pCs->train_command.pTrain_stat[i] = pTs;
       pCs->train_command.expired[i] = FALSE;
       break;
     }
   if( pE ) {
-    TINY_TRAIN_STATE_PTR pTs0 = pCs->train_command.pTrain_stat[i];
-    assert( pTs0 );
-    assert( pTs0 == pTs );
+    assert( i < TRAIN_COMMAND_ENTRIES_NUM );
+    assert( (int)ntohs(pCs->train_command.send.train_cmd.entries[i].rakeID) == rakeID );
+    assert( pCs->train_command.pTrain_stat[i] );
+    assert( pCs->train_command.pTrain_stat[i] == pTs );
+    pCs->train_command.expired[i] = FALSE;   
   } else {
     int j;
     for( j = 0; j < pCs->train_command.frontier; j++ )
@@ -107,7 +110,6 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTR
       }
     }
   }
-  
   if( pE )
     TRAIN_CMD_RAKEID( *pE, rakeID ); 
   return pE;
