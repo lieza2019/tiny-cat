@@ -52,6 +52,32 @@ SC_STAT_INFOSET SC_stat_infos[END_OF_SCs] = {
 
 STANDBY_TRAIN_CMDS standby_train_cmds;
 
+SC_CTRL_CMDSET_PTR which_SC_from_train_cmd ( TRAIN_COMMAND_ENTRY_PTR pTc ) {
+  assert( pTc );
+  int i;
+  for( i = 0; i < END_OF_SCs; i++ ) {
+    void *lim_inf = (void *)&SC_ctrl_cmds[i];
+    void *lim_sup = lim_inf + sizeof(SC_CTRL_CMDSET);
+    if( ((void *)pTc > lim_inf) && ((void *)pTc < lim_sup) )
+      break;
+  }
+  assert( i < END_OF_SCs );
+  return &SC_ctrl_cmds[i];
+}
+
+SC_STAT_INFOSET_PTR which_SC_from_train_info ( TRAIN_INFO_ENTRY_PTR pTi ) {
+  assert( pTi );
+  int i;
+  for( i = 0; i < END_OF_SCs; i++ ) {
+    void *lim_inf = (void *)&SC_stat_infos[i];
+    void *lim_sup = lim_inf + sizeof(SC_STAT_INFOSET);
+    if( ((void *)pTi > lim_inf) && ((void *)pTi < lim_sup) )
+      break;
+  }
+  assert( i < END_OF_SCs );
+  return &SC_stat_infos[i];
+}
+
 static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {  
   assert( zones );
   assert( front_blk > 0 );

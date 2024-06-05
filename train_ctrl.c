@@ -383,3 +383,168 @@ int load_train_command ( void ) {
   fine_train_cmds();
   return cnt;
 }
+
+static int enum_alive_rakes ( int (*rakeIDs)[TRAIN_INFO_ENTRIES_NUM + 1] ) {
+  struct {
+    char sc_name[6];
+    SC_ID sc_id;
+    int num_of_rakes;
+  } lkup[END_OF_SCs] = {
+    {"SC801", SC801, 0},
+    {"SC802", SC802, 0},
+    {"SC803", SC803, 0},
+    {"SC804", SC804, 0},
+    {"SC805", SC805, 0},
+    {"SC806", SC806, 0},
+    {"SC807", SC807, 0},
+    {"SC808", SC808, 0},
+    {"SC809", SC809, 0},
+    {"SC810", SC810, 0},
+    {"SC811", SC811, 0},
+    {"SC812", SC812, 0},
+    {"SC813", SC813, 0},
+    {"SC814", SC814, 0},
+    {"SC815", SC815, 0},
+    {"SC816", SC816, 0},
+    {"SC817", SC817, 0},
+    {"SC818", SC818, 0},
+    {"SC819", SC819, 0},
+    {"SC820", SC820, 0},
+    {"SC821", SC821, 0}
+  };
+  int cnt = 0;
+  int i;
+  {
+    int sc;
+    for( sc = SC801; sc < END_OF_SCs; sc++ )
+      rakeIDs[sc][0] = -1;
+  }
+  for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
+    if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
+      TRAIN_INFO_ENTRY_PTR pE = trains_tracking[i].pTI;
+      assert( pE );
+      SC_STAT_INFOSET_PTR pSi = which_SC_from_train_info( pE );
+      assert( pSi );
+      int j;
+      for( j = 0; j < END_OF_SCs; j++ )
+	if( ! strncmp( pSi->sc_name, lkup[j].sc_name, strlen("SC8xx") ) )
+	  break;
+      assert( j < END_OF_SCs );
+      rakeIDs[lkup[j].sc_id][lkup[j].num_of_rakes] = (int)TRAIN_INFO_RAKEID( *pE );
+      lkup[j].num_of_rakes++;
+      rakeIDs[lkup[j].sc_id][lkup[j].num_of_rakes] = -1;
+      cnt++;
+    }
+  return cnt;
+}
+
+static void dup_book ( int rakeIDs_dup[], int rakeIDs_org[], int num_of_rakes ) {
+  assert( rakeIDs_dup );
+  assert( rakeIDs_org );
+  assert( (num_of_rakes > -1) && (num_of_rakes <= TRAIN_COMMAND_ENTRIES_NUM) );
+  int i;
+  for( i = 0; i < num_of_rakes; i++ )
+    rakeIDs_dup[i] = rakeIDs_org[i];
+  assert( i == num_of_rakes );
+  rakeIDs_dup[i] = -1;
+}
+static void elim_rake( int rakeIDs[], int elim, int num_of_elems ) {
+  assert( rakeIDs );
+  assert( (num_of_elems > -1) && (num_of_elems <= TRAIN_COMMAND_ENTRIES_NUM) );
+  assert( (elim > -1) && (elim < num_of_elems) );
+  int i = elim;
+  assert( rakeIDs[num_of_elems] < 0 );
+  while( i < num_of_elems ) {
+    assert( i < num_of_elems );
+    rakeIDs[i] = rakeIDs[i + 1];
+    i++;
+  }
+  assert( num_of_elems > 0 ? (rakeIDs[num_of_elems - 1] < 0) : (rakeIDs[0] < 0) );
+}
+
+static BOOL chk_consistency ( int rakeIDs[], int num_of_rakes ) {
+  assert( rakeIDs );
+  assert( num_of_rakes > -1 );
+  BOOL r = TRUE;
+  if( num_of_rakes > 1 ) {
+    int rID = rakeIDs[0];
+    int i;
+    for( i = 1; i < num_of_rakes; i++ )
+      if( rID == rakeIDs[i] ) {
+	r = FALSE;
+	break;
+      }
+    if( r )
+      r = chk_consistency( &rakeIDs[1], (num_of_rakes - 1) );
+  }
+  return r;
+}
+
+static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of_rakes ) {
+  assert( sc_id < END_OF_SCs );
+  assert( rakeIDs );
+  assert( (num_of_rakes > -1) && (num_of_rakes <= TRAIN_COMMAND_ENTRIES_NUM) );
+  assert( chk_consistency( rakeIDs, num_of_rakes ) );
+  const TRAIN_COMMAND_ENTRY_PTR plim = &SC_ctrl_cmds[sc_id].train_command.send.train_cmd.entries[TRAIN_COMMAND_ENTRIES_NUM];
+  TRAIN_COMMAND_ENTRY_PTR pE = &SC_ctrl_cmds[sc_id].train_command.send.train_cmd.entries[0];
+  assert( pE );
+  {
+    int rakeIDs_w[TRAIN_COMMAND_ENTRIES_NUM + 1];
+    dup_book( rakeIDs_w, rakeIDs, num_of_rakes );
+    while( rakeIDs_w[0] > -1 ) {
+      assert( pE < plim );
+      BOOL found = FALSE;
+      TRAIN_COMMAND_ENTRY_PTR pEp = pE;
+      int rID = ntohs( pE->rakeID );
+      int j = 0;
+      while( rakeIDs_w[j] > -1 ) {
+	if( rID == rakeIDs_w[j] ) {
+	  int len = 0;
+	  while( rakeIDs_w[len] > -1 )
+	    len++;
+	  elim_rake( rakeIDs_w, j, len );
+	  pE++;
+	  found = TRUE;
+	  break;
+	} else
+	  j++;
+      }
+      if( found )
+	assert( pE == ++pEp );
+      else
+	assert( FALSE );
+    }
+  }
+  assert( num_of_rakes < TRAIN_COMMAND_ENTRIES_NUM ? pE < plim : pE == plim );
+  
+  if( pE < plim ) {
+    const int n = (int)((unsigned char *)plim - (unsigned char *)pE);
+    assert( n > 0 );
+    unsigned char *q = (unsigned char *)pE;
+    assert( q );
+    int k;
+    for( k = 0; k < n; k++ ) {
+      assert( *q == 0x00 );
+      q++;
+    }
+  }  
+}
+
+void chk_solid_train_cmds ( void ) {
+  int rakeIDs[END_OF_SCs][TRAIN_INFO_ENTRIES_NUM + 1];
+  int i;
+  memset( rakeIDs, 0, sizeof(rakeIDs) );
+  enum_alive_rakes( rakeIDs );
+  for( i = 0; i < END_OF_SCs; i++ ) {
+    int num_of_rakes = -1;
+    int j;
+    for( j = 0; j < TRAIN_INFO_ENTRIES_NUM; j++ )
+      if( rakeIDs[i][j] < 0 ) {
+	num_of_rakes = j;
+	break;
+      }
+    assert( j < TRAIN_INFO_ENTRIES_NUM );
+    assert( num_of_rakes > -1 );
+    chk_massiv_train_cmds_array( i, rakeIDs[i], num_of_rakes );
+  }
+}

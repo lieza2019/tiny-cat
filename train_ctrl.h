@@ -38,3 +38,4 @@ extern TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 extern void reveal_train_tracking( TINY_SOCK_PTR pS );
 extern BOOL establish_SC_comm ( TINY_SOCK_PTR pS );
 extern int load_train_command ( void );
+extern void chk_solid_train_cmds ( void );
