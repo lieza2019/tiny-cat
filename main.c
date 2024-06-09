@@ -12,9 +12,19 @@
 #include "misc.h"
 #include "network.h"
 #include "srv.h"
+#include "cbi.h"
 #include "interlock.h"
 
 #if 1
+int main ( void ) {
+  int n;
+  n = load_CBI_code_tbl ( "./cbi/BOTANICAL_GARDEN.csv" );
+  printf( "processed %d entries.\n", n );
+  return 0;
+}
+#endif
+
+#if 0
 static int diag_tracking_train_cmd ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
