@@ -63,4 +63,5 @@ typedef struct cbi_stat_attr {
   struct cbi_stat_attr *pNext;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
+extern void dump_cbi_stat_prof ( void );
 extern int load_CBI_code_tbl ( const char *fname );

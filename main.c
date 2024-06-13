@@ -18,8 +18,11 @@
 #if 1
 int main ( void ) {
   int n;
+  
   n = load_CBI_code_tbl ( "./cbi/BOTANICAL_GARDEN.csv" );
   printf( "processed %d entries.\n", n );
+  dump_cbi_stat_prof();
+  
   return 0;
 }
 #endif

@@ -8,6 +8,42 @@
 static CBI_STAT_ATTR cbi_stat_prof[MAX_CBI_STAT_BITS];
 static int frontier;
 
+static char *show_cbi_stat_bit_mask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask ) {
+  assert( mask_name );
+  assert( len > strlen("CBI_STAT_BIT_x") );
+  switch( mask ) {
+  case CBI_STAT_BIT_0:
+    strncpy( mask_name, "CBI_STAT_BIT_0", len );
+    break;
+  case CBI_STAT_BIT_1:
+    strncpy( mask_name, "CBI_STAT_BIT_1", len );
+    break;
+  case CBI_STAT_BIT_2:
+    strncpy( mask_name, "CBI_STAT_BIT_2", len );
+    break;
+  case CBI_STAT_BIT_3:
+    strncpy( mask_name, "CBI_STAT_BIT_3", len );
+    break;
+  case CBI_STAT_BIT_4:
+    strncpy( mask_name, "CBI_STAT_BIT_4", len );
+    break;
+  case CBI_STAT_BIT_5:
+    strncpy( mask_name, "CBI_STAT_BIT_5", len );
+    break;
+  case CBI_STAT_BIT_6:
+    strncpy( mask_name, "CBI_STAT_BIT_6", len );
+    break;
+  case CBI_STAT_BIT_7:
+    strncpy( mask_name, "CBI_STAT_BIT_7", len );
+    break;
+  case END_OF_CBI_STAT_BIT_MASK:
+    /* fall thru */
+    default:
+      assert( FALSE );
+  }
+  return mask_name;
+}
+
 static CBI_STAT_BIT_MASK cbi_stat_bit_mask_pattern ( int pos ) {
   assert( (pos >= 0) && (pos < 8) );
   CBI_STAT_BIT_MASK mask = END_OF_CBI_STAT_BIT_MASK;
@@ -95,7 +131,7 @@ static BOOL cbi_lex ( char *src, int src_len, char *name, int name_len, int *pgr
   return r;
 }
 
-#if 0  // ***** for debugging.
+#if 1  // ***** for debugging.
 #define DUP_FNAME "BCGN_dup.txt"
 static FILE *fp_out = NULL;
 static void dup_CBI_code_tbl ( const char *name, int group, int disp ) { // ***** for debugging.
@@ -106,6 +142,24 @@ static void dup_CBI_code_tbl ( const char *name, int group, int disp ) { // ****
   fprintf( fp_out, "%s,%d,%d\n", name, group, disp );
 }
 #endif
+#define CBI_STAT_MASKNAME_MAXLEN 256
+void dump_cbi_stat_prof ( void ) {
+  int i;
+  for( i = 0; i < MAX_CBI_STAT_BITS; i++ ) {
+    printf( "name: %s\n", cbi_stat_prof[i].name );
+    printf( "ident: %s\n", cbi_stat_prof[i].ident );
+    printf( "disp.raw: %d\n", cbi_stat_prof[i].disp.raw );
+    printf( "disp.bytes: %d\n", cbi_stat_prof[i].disp.bytes );
+    printf( "disp.bits: %d\n", cbi_stat_prof[i].disp.bits );
+    {
+      char str[CBI_STAT_MASKNAME_MAXLEN];
+      str[256] = 0;
+      show_cbi_stat_bit_mask( str, CBI_STAT_MASKNAME_MAXLEN, cbi_stat_prof[i].disp.mask );
+      printf( "disp.mask: %s\n", str );
+    }
+    printf( "\n" );
+  }
+}
 int load_CBI_code_tbl ( const char *fname ) {
   assert( fname );
   FILE *fp = NULL;
@@ -117,7 +171,7 @@ int load_CBI_code_tbl ( const char *fname ) {
     int disp = -1;
     char name[CBI_STAT_NAME_LEN + 1];
     name[CBI_STAT_NAME_LEN] = 0;
-    while( ! feof(fp) ) {
+    while( (! feof(fp)) && (frontier < MAX_CBI_STAT_BITS) ) {
       char buf[CBI_STAT_BITS_LEXBUF_SIZE + 1];
       buf[CBI_STAT_BITS_LEXBUF_SIZE] = 0;
       fscanf( fp, "%s\n", buf );
