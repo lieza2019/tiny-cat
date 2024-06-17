@@ -37,7 +37,7 @@ typedef enum route_kind {
 } ROUTE_KIND;
 
 #define MAX_ROUTE_TRACKS 21
-typedef struct route {
+typedef struct _route {
   ROUTE_ID id;
   char *name;
   ROUTE_KIND kind;

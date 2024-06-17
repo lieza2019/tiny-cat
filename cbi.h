@@ -2,7 +2,7 @@
 #include "misc.h"
 #include "network.h"
 
-#define MAX_CBI_STAT_BITS 65536
+#define CBI_MAX_STAT_BITS 65536
 #define CBI_STAT_BITS_LEXBUF_SIZE 256
 
 typedef enum _cbi_stat_group {
@@ -63,5 +63,12 @@ typedef struct cbi_stat_attr {
   struct cbi_stat_attr *pNext;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
+extern CBI_STAT_ATTR cbi_stat_prof[CBI_MAX_STAT_BITS];
+
 extern void dump_cbi_stat_prof ( void );
 extern int load_CBI_code_tbl ( const char *fname );
+
+typedef enum cbi_stat_kind {
+  _ROUTE,
+  END_OF_CBI_STAT_KIND
+} CBI_STAT_KIND;

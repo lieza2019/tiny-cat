@@ -5,7 +5,7 @@
 #include "misc.h"
 #include "cbi.h"
 
-static CBI_STAT_ATTR cbi_stat_prof[MAX_CBI_STAT_BITS];
+CBI_STAT_ATTR cbi_stat_prof[CBI_MAX_STAT_BITS];
 static int frontier;
 
 static char *show_cbi_stat_bit_mask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask ) {
@@ -145,7 +145,7 @@ static void dup_CBI_code_tbl ( const char *name, int group, int disp ) { // ****
 #define CBI_STAT_MASKNAME_MAXLEN 256
 void dump_cbi_stat_prof ( void ) {
   int i;
-  for( i = 0; i < MAX_CBI_STAT_BITS; i++ ) {
+  for( i = 0; i < CBI_MAX_STAT_BITS; i++ ) {
     printf( "name: %s\n", cbi_stat_prof[i].name );
     printf( "ident: %s\n", cbi_stat_prof[i].ident );
     printf( "disp.raw: %d\n", cbi_stat_prof[i].disp.raw );
@@ -171,7 +171,7 @@ int load_CBI_code_tbl ( const char *fname ) {
     int disp = -1;
     char name[CBI_STAT_NAME_LEN + 1];
     name[CBI_STAT_NAME_LEN] = 0;
-    while( (! feof(fp)) && (frontier < MAX_CBI_STAT_BITS) ) {
+    while( (! feof(fp)) && (frontier < CBI_MAX_STAT_BITS) ) {
       char buf[CBI_STAT_BITS_LEXBUF_SIZE + 1];
       buf[CBI_STAT_BITS_LEXBUF_SIZE] = 0;
       fscanf( fp, "%s\n", buf );
@@ -313,10 +313,6 @@ typedef enum _il_obj {
   ES814B_ES812B_R,
 } IL_OBJ;
 
-typedef enum cbi_stat_kind {
-  ROUTE,
-  END_OF_CBI_STAT_KIND
-} CBI_STAT_KIND;
 //{ROUTE_CONTROL, Sxxxy, Sxxxy,
 struct attr {
   CBI_STAT_KIND kind;

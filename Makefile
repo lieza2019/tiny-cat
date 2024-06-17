@@ -16,7 +16,7 @@ sparcs.h : generic.h misc.h train_cmd.h train_info.h sparcs_def.h
 	$(TOUCH) $@
 train_ctrl.h : generic.h misc.h sparcs.h
 	$(TOUCH) $@
-cbi.h: generic.h misc.h
+cbi.h: generic.h misc.h network.h
 	$(TOUCH) $@
 interlock.h : generic.h misc.h interlock_def.h sparcs.h
 	$(TOUCH) $@
