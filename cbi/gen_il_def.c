@@ -157,16 +157,139 @@ static char *lex_cbi_stat_name ( CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srcl
 }
 
 #define CBI_EXPAND_EMIT_MAXLEN 256
-static int lex_exp_pat( char *buf, int buflen, CBI_LEX_SYMTBL_PTR psymtbl, char *pat, int patlen ) {
+static char *trim_pat_ident ( char *ident, int rem_chrs ) {
+  assert( ident );
+  char *p = ident;
+  
+  assert( p );
+  while( *p && (p < (ident + rem_chrs)) ) {
+    assert( p < (ident + rem_chrs) );
+    if( p == ident ) {
+      if( (! isalpha(*p)) || (*p == '_') )
+	if( islower(*p) )
+	  break;
+    } else {
+      if( (! isalnum(*p)) || (*p == '_') )
+	if( islower(*p) )
+	  break;
+    }
+    p++; 
+  }
+  return p;
+}
+
+static char *lex_pat_idx( int *pidx, char *digits, int rem_chrs ) {
+  assert( pidx );
+  assert( digits );
+  char *p = digits;
+  while( *p && (p < (digits + rem_chrs)) ) {
+    assert( p < (digits + rem_chrs) );
+    if( ! isdigit(*p) )
+      break;
+    p++;
+  }
+  {
+    char atoi_buf[CBI_LEX_PAT_LEN + 1];
+    atoi_buf[CBI_LEX_PAT_LEN] = 0;
+    strncpy( atoi_buf, digits, (p - digits) );
+    atoi_buf[p - digits] = 0;
+    *pidx = atoi( atoi_buf );
+  }
+  return p;
+}
+
+static int lex_exp_pat ( char *buf, int buflen, CBI_LEX_SYMTBL_PTR psymtbl, char *pat, int patlen ) {
   assert( buf );
   assert( (buflen > 0) && (buflen <= CBI_EXPAND_EMIT_MAXLEN) );
   assert( psymtbl );
   assert( pat );
   assert( (patlen > 0) && (patlen <= CBI_LEX_PAT_LEN) );
+  const char *plim = pat + patlen;
+  char *ppat = pat;
+  char *pbuf = buf;
   
-  return 0;
+  assert( ppat );
+  while( *ppat && (ppat < plim) ) {
+    char *pp1 = NULL;
+    pp1 = trim_pat_ident( ppat, (plim - ppat) );
+    assert( pp1 );
+    assert( pp1 <= plim );
+    if( (pp1 == ppat) && (ppat < plim) ) {  // identifier over patterns, should be only 1 lowercase alphabet.
+      assert( ppat );
+      if( islower(*ppat) ) {
+	char id[CBI_IDENT_MAXLEN + 1];
+	id[CBI_IDENT_MAXLEN] = 0;
+	strncpy( id, ppat, 1 );
+	id[1] = 0;
+	ppat++;
+	assert( ppat <= plim );
+	switch( *ppat ) {
+	case '[':
+	  int idx = -1;
+	  char *pp2 = NULL;
+	  pp2 = lex_pat_idx( &idx, ppat, (plim - ppat) );
+	  assert( pp2 );
+	  assert( pp2 <= plim );
+	  ppat = pp2;
+	  if( *ppat == ']' ) {
+	    assert( ppat < plim );
+	    CBI_LEX_SYMBOL_PTR pS = NULL;
+	    int id_len = strnlen( id, CBI_IDENT_MAXLEN );
+	    assert( (id_len > 0) && (id_len <= CBI_IDENT_MAXLEN) );
+	    pS = walk_symtbl( psymtbl, id, id_len );
+	    {
+	      int cnt;
+	      for( cnt = 1; pS; cnt++ ) {
+		assert( pS->sfx == cnt );
+		if( pS->sfx == idx )
+		  break;
+		pS = pS->pSucc;
+	      }
+	    }
+	    if( !pS )
+	      break;  // LEXERR: specified index is out of scope over the variable registered on.
+	    assert( pbuf );
+	    assert( pbuf < (buf + buflen) );
+	    {
+	      const int subst_strlen = strnlen( pS->matched, CBI_MATCHED_CHRS_MAXLEN );
+	      const int rem_chrs = (buf + buflen) - pbuf;
+	      const int emit_len = subst_strlen < rem_chrs ? subst_strlen : rem_chrs;
+	      strncpy( pbuf, pS->matched, emit_len );
+	      pbuf[emit_len] = 0;
+	      pbuf = &pbuf[emit_len];
+	    }
+	    assert( pbuf <= (buf + buflen) );
+	    ppat++;
+	  } else
+	    break;  // LEXERR: missing closing '[' for beginning index notation.
+	default: // including the case of (*ppat == 0).
+	  /* lowercase of alphabet, i.e. letter, without trailing '[' for beginning index notation,
+	     should be parsed and accepted as a character consists of the bare string to be simply
+	     expanded onto the output. */
+	  char *w = pp1;
+	  pp1 = ppat;
+	  ppat = w;
+	  goto emit_chrs;
+	}
+      } else  // LEXERR: illegal character detected.
+	break;
+    } else {
+    emit_chrs:
+      assert( ppat < pp1 );
+      assert( pp1 <= plim );
+      const int rem_chrs = (buf + buflen) - pbuf;
+      const int emit_len = (pp1 - ppat) < rem_chrs ? (pp1 - ppat) : rem_chrs;
+      strncpy( pbuf, ppat, emit_len );
+      pbuf[emit_len] = 0;
+      pbuf = &pbuf[emit_len];
+      assert( pbuf <= (buf + buflen) );
+      ppat = pp1;
+    }
+  }
+  
+  return( strnlen(buf, buflen) );
 }
-
+  
 static int emit_il_obj_name ( FILE *fp, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
   assert( fp );
   assert( psymtbl );
@@ -185,7 +308,7 @@ static int emit_il_obj_name ( FILE *fp, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_P
 	assert( (n >= 0) && (n <= CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[n] = 0;
 	if( n > 0 ) {
-	  fprintf( "%s, ", emit_buf );
+	  fprintf( fp, "%s, ", emit_buf );
 	  cnt++;
 	}
       }
