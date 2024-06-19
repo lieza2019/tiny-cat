@@ -69,6 +69,7 @@ extern void dump_cbi_stat_prof ( void );
 extern int load_CBI_code_tbl ( const char *fname );
 
 typedef enum cbi_stat_kind {
+  _SIGNAL,
   _ROUTE,
   END_OF_CBI_STAT_KIND
 } CBI_STAT_KIND;
