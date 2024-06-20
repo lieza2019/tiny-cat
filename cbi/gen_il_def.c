@@ -105,11 +105,14 @@ static char *match_name ( char *matched, int max_match_len, char *src, CBI_LEX_S
     matched[0] = 0;
   return src;
 }
-static char *lex_cbi_stat_name ( CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srclen, LEX_IL_OBJ_PTR plex ) {
+
+#define MATCH_PAT_COL(pHd, pCrnt) (((int)((pCrnt) - (pHd))) + 1)
+static char *lex_cbi_stat_name ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srclen, LEX_IL_OBJ_PTR plex ) {
   assert( psymtbl );
   assert( src );
   assert( (srclen > 0) && (srclen <= CBI_STAT_NAME_LEN) );
   assert( plex );
+  BOOL err = FALSE;
   char *psrc = src;
   char *ppat = plex->pat;
   
@@ -141,8 +144,10 @@ static char *lex_cbi_stat_name ( CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srcl
 	    ppat++;
 	    continue;
 	  }
-	}
+	}	
       }
+      fprintf( errfp, "line: %d, matching pattern, col= %d: has no bound,\n", line, MATCH_PAT_COL(plex->pat, ppat) );
+      err = TRUE;
       break;
     } else {
       if( *psrc && (psrc < (src + srclen)) )
@@ -151,7 +156,20 @@ static char *lex_cbi_stat_name ( CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srcl
 	  ppat++;
 	  continue;
 	}
+      fprintf( errfp, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->pat, ppat) );
+      err = TRUE;
       break;
+    }
+  }
+  if( ! err ) {
+    if( *ppat ) {
+      assert( ppat < (plex->pat + CBI_LEX_PAT_LEN) );
+      fprintf( stdout, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->pat, ppat) );
+    } else {
+      if( psrc < (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
+	assert( *psrc );
+	fprintf( stdout, "line: %d, matching pattern, col= %d: excessive unmatched characters remain,\n", line, MATCH_PAT_COL(plex->pat, ppat) );
+      }
     }
   }
   return psrc;
@@ -377,7 +395,7 @@ BOOL enum_il_objs ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, CBI_STAT_ATT
     strncpy( src, plex->raw_name, CBI_STAT_NAME_LEN );
     {
       char *src1;
-      src1 = lex_cbi_stat_name( psymtbl, src, strnlen(src, CBI_STAT_NAME_LEN), plex );
+      src1 = lex_cbi_stat_name( stdout, line, psymtbl, src, strnlen(src, CBI_STAT_NAME_LEN), plex );
       assert( src1 );
       if( src1 >= (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
 	assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
@@ -390,11 +408,13 @@ BOOL enum_il_objs ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, CBI_STAT_ATT
 }
 
 /*
- * grammar: {KIND, match_pattern, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}, raw-stat-name}
+ * grammar: {kind, match_pattern, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}, raw-stat-name}
  */
 LEX_IL_OBJ cbi_lex_def[] = {
   //{_SIGNAL, "Sxxxy_Sxxxy_R", {{"Sxx[1]x[2]x[3]y[1]w"}, {"Sig_Syx[4]x[5]x[6]y[2]z"}}},
-  {_ROUTE, "Sxxxy_Sxxxy_R", {{"Sxx[1fg(]x[2]x[3]y[1]w"}}},
+  //{_ROUTE, "Sxxxy_Sxxxy_R", {{"Sxx[1fg(]x[2]x[3]y[1]w"}}},
+  //{_SIGNAL, "Sxxxy_Sxxxy_R", {{"Sxx[1]x[2]x[3]y[1]w"}}},
+  {_SIGNAL, "Sxxxy_Sxxxy", {{"Sxx[1]x[2]x[3]y[1]w"}}},
   {END_OF_CBI_STAT_KIND, "", {{""}}}
 };
 
