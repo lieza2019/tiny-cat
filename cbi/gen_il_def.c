@@ -207,7 +207,8 @@ static char *lex_pat_idx( int *pidx, char *digits, int rem_chrs ) {
   return p;
 }
 
-static int lex_exp_pat ( FILE *errfp, int line, char *buf, int buflen, CBI_LEX_SYMTBL_PTR psymtbl, char *pat, int patlen ) {
+#define EXP_PAT_COL(pHd, pCrnt) (((int)((pCrnt) - (pHd))) + 1)
+static int lex_exp_pat ( FILE *errfp, int line, int patno, char *buf, int buflen, CBI_LEX_SYMTBL_PTR psymtbl, char *pat, int patlen ) {
   assert( errfp );
   assert( buf );
   assert( (buflen > 0) && (buflen <= CBI_EXPAND_EMIT_MAXLEN) );
@@ -246,7 +247,7 @@ static int lex_exp_pat ( FILE *errfp, int line, char *buf, int buflen, CBI_LEX_S
 	  if( idx < 0 ) {  // LEXERR: index must be integers in the range on registration.
 	    assert( pp2 == ppat );
 	    err = TRUE;
-	    fprintf( errfp, "line %d: index must be integer, ", line );
+	    fprintf( errfp, "line: %d, (expansion pattern, col)= (%d, %d): index must be integer, ", line, patno, EXP_PAT_COL(pat, pp2) );
 	    goto err_illegal_chr;
 	  } else {
 	    ppat = pp2;
@@ -267,7 +268,7 @@ static int lex_exp_pat ( FILE *errfp, int line, char *buf, int buflen, CBI_LEX_S
 	      }
 	      if( !pS ) {  // LEXERR: specified index is out of scope over the variable registered on.
 		err = TRUE;
-		fprintf( errfp, "line %d: index is out of range over the variables registered on.\n", line );
+		fprintf( errfp, "line :%d, (expansion pattern, col)= (%d, %d): index is out of range over the variables registered on.\n", line, patno, EXP_PAT_COL(pat, ppat) );
 		break;
 	      }
 	      assert( pbuf );
@@ -285,7 +286,7 @@ static int lex_exp_pat ( FILE *errfp, int line, char *buf, int buflen, CBI_LEX_S
 	      break;
 	    } else {  // LEXERR: missing closing ']' for index description over variables.
 	      err = TRUE;
-	      fprintf( errfp, "line %d: missing the closing ']' for index description over the variables", line );
+	      fprintf( errfp, "line: %d, (expansion pattern, col)= (%d, %d): missing the closing ']' for index description over the variables", line, patno, EXP_PAT_COL(pat, ppat) );
 	      if( *ppat ) {
 		assert( ppat < plim );
 		fprintf( errfp, ", " );
@@ -308,7 +309,7 @@ static int lex_exp_pat ( FILE *errfp, int line, char *buf, int buflen, CBI_LEX_S
 	  break;
       } else {  // LEXERR: illegal character detected.
 	err = TRUE;
-	fprintf( errfp, "line %d: ", line );
+	fprintf( errfp, "line:%d, (expansion pattern, col)= (%d, %d): ", line, patno, EXP_PAT_COL(pat, ppat) );
 	err_illegal_chr:
 	fprintf( errfp, "illegal character detected.\n" );
 	break;
@@ -347,7 +348,7 @@ static int emit_il_obj_name ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LE
 	break;
       {
 	int n = -1;
-	n = lex_exp_pat( stdout, line, emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp[i].pat, strnlen(plex->exp[i].pat, CBI_LEX_PAT_LEN) );
+	n = lex_exp_pat( stdout, line, (i + 1), emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp[i].pat, strnlen(plex->exp[i].pat, CBI_LEX_PAT_LEN) );
 	assert( (abs(n) >= 0) && (abs(n) <= CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[abs(n)] = 0;
 	if( n > 0 ) {
@@ -399,7 +400,7 @@ LEX_IL_OBJ cbi_lex_def[] = {
 
 int main ( void ) {
   CBI_LEX_SYMTBL S;
-p  int n;
+  int n;
   
   n = load_CBI_code_tbl ( "./test.csv" );
   assert( n == 1 );
