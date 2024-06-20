@@ -31,6 +31,15 @@ typedef struct cbi_lex_symtbl {
 
 #define CBI_EXPAND_EMIT_MAXLEN 256
 
+LEX_IL_OBJ cbi_lex_def[] = {
+  /*
+   * grammar:  {{kind, match_pattern, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}, raw-stat-name}}
+   * grammar': {{kind, match_pattern, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}, expand_pat_4ident}}
+   */
+#include "cbi_pat_def.h"
+  {END_OF_CBI_STAT_KIND, "", {{""}}}
+};
+
 static CBI_LEX_SYMBOL_PTR regist_symbol ( CBI_LEX_SYMTBL_PTR psymtbl, CBI_LEX_SYMBOL_PTR ancest, char *id, int id_len ) {
   assert( psymtbl );
   assert( id );
@@ -406,17 +415,6 @@ BOOL enum_il_objs ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, CBI_STAT_ATT
   }
   return r;
 }
-
-/*
- * grammar: {kind, match_pattern, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}, raw-stat-name}
- */
-LEX_IL_OBJ cbi_lex_def[] = {
-  //{_SIGNAL, "Sxxxy_Sxxxy_R", {{"Sxx[1]x[2]x[3]y[1]w"}, {"Sig_Syx[4]x[5]x[6]y[2]z"}}},
-  //{_ROUTE, "Sxxxy_Sxxxy_R", {{"Sxx[1fg(]x[2]x[3]y[1]w"}}},
-  //{_SIGNAL, "Sxxxy_Sxxxy_R", {{"Sxx[1]x[2]x[3]y[1]w"}}},
-  {_SIGNAL, "Sxxxy_Sxxxy", {{"Sxx[1]x[2]x[3]y[1]w"}}},
-  {END_OF_CBI_STAT_KIND, "", {{""}}}
-};
 
 int main ( void ) {
   CBI_LEX_SYMTBL S;
