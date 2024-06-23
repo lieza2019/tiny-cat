@@ -9,7 +9,7 @@
 #define CBI_EXPAND_PAT_MAXNUM 5
 typedef struct lex_il_obj {
   CBI_STAT_KIND kind;
-  char pat[CBI_LEX_PAT_LEN + 1];
+  char match_pat[CBI_LEX_PAT_LEN + 1];
   char exp_ident_pat[CBI_LEX_PAT_LEN + 1];
   struct {
     char pat[CBI_LEX_PAT_LEN + 1];
@@ -124,11 +124,11 @@ static char *lex_cbi_stat_name ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymt
   assert( plex );
   BOOL err = FALSE;
   char *psrc = src;
-  char *ppat = plex->pat;
+  char *ppat = plex->match_pat;
   
   assert( psrc );
   assert( ppat );
-  while( *ppat && (ppat < (plex->pat + CBI_LEX_PAT_LEN)) ) {
+  while( *ppat && (ppat < (plex->match_pat + CBI_LEX_PAT_LEN)) ) {
     if( islower(*ppat) ) {
       char var_id[2];
       int id_len = -1;
@@ -156,7 +156,7 @@ static char *lex_cbi_stat_name ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymt
 	  }
 	}	
       }
-      fprintf( errfp, "line: %d, matching pattern, col= %d: has no bound,\n", line, MATCH_PAT_COL(plex->pat, ppat) );
+      fprintf( errfp, "line: %d, matching pattern, col= %d: has no bound,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
       err = TRUE;
       break;
     } else {
@@ -166,19 +166,19 @@ static char *lex_cbi_stat_name ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymt
 	  ppat++;
 	  continue;
 	}
-      fprintf( errfp, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->pat, ppat) );
+      fprintf( errfp, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
       err = TRUE;
       break;
     }
   }
   if( ! err ) {
     if( *ppat ) {
-      assert( ppat < (plex->pat + CBI_LEX_PAT_LEN) );
-      fprintf( stdout, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->pat, ppat) );
+      assert( ppat < (plex->match_pat + CBI_LEX_PAT_LEN) );
+      fprintf( stdout, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
     } else {
       if( psrc < (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
 	assert( *psrc );
-	fprintf( stdout, "line: %d, matching pattern, col= %d: excessive unmatched characters remain,\n", line, MATCH_PAT_COL(plex->pat, ppat) );
+	fprintf( stdout, "line: %d, matching pattern, col= %d: excessive unmatched characters remain,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
       }
     }
   }
@@ -328,9 +328,11 @@ static int lex_exp_pat ( FILE *errfp, int line, int patno, char *buf, int buflen
 	  /* lowercase of alphabet, i.e. letter, without trailing '[' for beginning index notation,
 	     should be parsed and accepted as a character consists of the bare string to be simply
 	     expanded onto the output. */
-	  char *w = pp1;
-	  pp1 = ppat;
-	  ppat = w;
+	  {
+	    char *w = pp1;
+	    pp1 = ppat;
+	    ppat = w;
+	  }
 	  goto emit_chrs;
 	}
 	if( err )
@@ -417,11 +419,13 @@ BOOL enum_il_objs ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, CBI_STAT_ATT
   return r;
 }
 
+#if 0
 int main ( void ) {
   CBI_LEX_SYMTBL S;
   int n;
   
-  n = load_CBI_code_tbl ( "./test.csv" );
+  n = load_cbi_code_tbl ( "./BOTANICAL_GARDEN.csv" );
+  //n = load_CBI_code_tbl ( "./test.csv" );
   assert( n == 1 );
   printf( "read %d entries from csv.\n", n );
   {
@@ -436,3 +440,24 @@ int main ( void ) {
   }
   return 0;
 }
+#else
+int main ( void ) {
+  int n = -1;
+  
+  n = load_cbi_code_tbl ( "./BOTANICAL_GARDEN.csv" );
+  assert( (n >= 0) && (n <= CBI_MAX_STAT_BITS) );
+  printf( "read %d entries from csv.\n", n );
+  
+  // test correctness on construction of hash-map for cbi state bits.
+  {
+    int i;
+    for( i = 0; i < n; i++ ) {
+      CBI_STAT_ATTR_PTR pE = NULL;
+      pE = cbi_stat_idntify( cbi_stat_prof[i].ident );
+      assert( pE );
+      assert( ! strncmp(pE->ident, cbi_stat_prof[i].ident, CBI_STAT_IDENT_LEN) );
+    }
+  }
+  return 0;
+}
+#endif

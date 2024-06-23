@@ -9,11 +9,21 @@
 CBI_STAT_ATTR cbi_stat_prof[CBI_MAX_STAT_BITS];
 static int frontier;
 
-#define CBI_STAT_HASH_BUDGETS_NUM 256
 static CBI_STAT_ATTR_PTR cbi_stat_hash_budgets[CBI_STAT_HASH_BUDGETS_NUM];
 
-static int hash_key( char *ident, int id_maxlen ){
-  return 0;
+static int hash_key ( char *ident ) {
+  assert( ident );
+  const int n = 4;
+  assert( (n > 0) && (n <= CBI_STAT_IDENT_LEN) );
+  
+  int h;
+  h = 0;
+  {
+    int i;
+    for( i = 0; (i < n) && ident[i]; i++ )
+      h = 13 * h + ident[i];
+  }
+  return ( h % CBI_STAT_HASH_BUDGETS_NUM );
 }
 
 static BOOL chk_uniq_in_budget ( CBI_STAT_ATTR_PTR pE ) {
@@ -37,14 +47,14 @@ static BOOL chk_uniq_in_budget ( CBI_STAT_ATTR_PTR pE ) {
   }
   return( !found );
 }
-static CBI_STAT_ATTR_PTR *walk_hash ( CBI_STAT_ATTR_PTR *ppB, char *ident, int id_maxlen ) {
+static CBI_STAT_ATTR_PTR *walk_hash ( CBI_STAT_ATTR_PTR *ppB, char *ident ) {
   assert( ppB );
   assert( ident );
-  assert( (id_maxlen > 0) && (id_maxlen <= CBI_STAT_IDENT_LEN) );
   CBI_STAT_ATTR_PTR *pp = ppB;
+  
   assert( pp );
   while( *pp ) {
-    if( !strncmp((*pp)->ident, ident, id_maxlen) ) {
+    if( !strncmp((*pp)->ident, ident, CBI_STAT_IDENT_LEN) ) {
 #ifdef CHK_STRICT_CONSISTENCY
       assert( chk_uniq_in_budget(*pp) );
 #endif // CHK_STRICT_CONSISTENCY
@@ -58,9 +68,10 @@ static CBI_STAT_ATTR_PTR *walk_hash ( CBI_STAT_ATTR_PTR *ppB, char *ident, int i
 static void regist_hash ( CBI_STAT_ATTR_PTR pE ) {
   assert( pE );
   CBI_STAT_ATTR_PTR *ppB = NULL;
+  
   {
     int h = -1;
-    h = hash_key( pE->ident, CBI_STAT_IDENT_LEN );
+    h = hash_key( pE->ident );
     assert( (h > -1) && (h < CBI_STAT_HASH_BUDGETS_NUM) );
     ppB = &cbi_stat_hash_budgets[h];
   }
@@ -68,9 +79,10 @@ static void regist_hash ( CBI_STAT_ATTR_PTR pE ) {
   pE->pNext_hsh = NULL;
   {
     CBI_STAT_ATTR_PTR *pp;
-    pp = walk_hash( ppB, pE->ident, strnlen(pE->ident, CBI_STAT_IDENT_LEN) );
+    pp = walk_hash( ppB, pE->ident );
     if( *pp ) {
-      assert( FALSE );
+      //assert( FALSE );
+      errorF( "redefinition of cbi condition: %s\n", (*pp)->ident );
       pE->pNext_hsh = (*pp)->pNext_hsh;
     }
     assert( pp );
@@ -79,16 +91,15 @@ static void regist_hash ( CBI_STAT_ATTR_PTR pE ) {
   }
 }
 
-static CBI_STAT_ATTR_PTR re_hash ( char *ident, int id_maxlen, CBI_STAT_ATTR_PTR pE ) {
+static CBI_STAT_ATTR_PTR re_hash ( char *ident, CBI_STAT_ATTR_PTR pE ) {
   assert( ident );
-  assert( (id_maxlen > 0) && (id_maxlen <= CBI_STAT_IDENT_LEN) );
   assert( pE );
   CBI_STAT_ATTR_PTR r = NULL;
   CBI_STAT_ATTR_PTR *ppB = NULL;
   
   {
     int h = -1;
-    h = hash_key( ident, id_maxlen );
+    h = hash_key( ident );
     assert( (h > -1) && (h < CBI_STAT_HASH_BUDGETS_NUM) );
     ppB = &cbi_stat_hash_budgets[h];
   }
@@ -96,7 +107,7 @@ static CBI_STAT_ATTR_PTR re_hash ( char *ident, int id_maxlen, CBI_STAT_ATTR_PTR
   
   {
     CBI_STAT_ATTR_PTR *pp = NULL;
-    pp = walk_hash( ppB, ident, id_maxlen );
+    pp = walk_hash( ppB, ident );
     assert( pp );
     if( *pp ) {
       pE->pNext_hsh = (*pp)->pNext_hsh;
@@ -108,6 +119,37 @@ static CBI_STAT_ATTR_PTR re_hash ( char *ident, int id_maxlen, CBI_STAT_ATTR_PTR
     }
   }
   return r;
+}
+CBI_STAT_ATTR_PTR cbi_stat_rehash ( char *ident, CBI_STAT_ATTR_PTR pE ) {
+  assert( ident );
+  assert( pE );
+  return re_hash( ident, pE );
+}
+
+static CBI_STAT_ATTR_PTR conslt_hash ( char *ident ) {
+  assert( ident );
+  CBI_STAT_ATTR_PTR r = NULL;
+  
+  CBI_STAT_ATTR_PTR *ppB = NULL;
+  {
+    int h = -1;
+    h = hash_key( ident );
+    assert( (h > -1) && (h < CBI_STAT_HASH_BUDGETS_NUM) );
+    ppB = &cbi_stat_hash_budgets[h];
+  }
+  assert( ppB );
+  
+  {
+    CBI_STAT_ATTR_PTR *pp = NULL;
+    pp = walk_hash( ppB, ident );
+    assert( pp );
+    r = *pp;
+  }
+  return r;
+}
+CBI_STAT_ATTR_PTR cbi_stat_idntify ( char *ident ) {
+  assert( ident );
+  return conslt_hash( ident );
 }
 
 static char *show_cbi_stat_bit_mask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask ) {
@@ -254,15 +296,15 @@ void dump_cbi_stat_prof ( void ) {
     printf( "disp.bytes: %d\n", cbi_stat_prof[i].disp.bytes );
     printf( "disp.bits: %d\n", cbi_stat_prof[i].disp.bits );
     {
-      char str[CBI_STAT_MASKNAME_MAXLEN];
-      str[256] = 0;
+      char str[CBI_STAT_MASKNAME_MAXLEN + 1];
+      str[CBI_STAT_MASKNAME_MAXLEN] = 0;
       show_cbi_stat_bit_mask( str, CBI_STAT_MASKNAME_MAXLEN, cbi_stat_prof[i].disp.mask );
       printf( "disp.mask: %s\n", str );
     }
     printf( "\n" );
   }
 }
-int load_CBI_code_tbl ( const char *fname ) {
+int load_cbi_code_tbl ( const char *fname ) {
   assert( fname );
   FILE *fp = NULL;
   
@@ -284,6 +326,7 @@ int load_CBI_code_tbl ( const char *fname ) {
 	CBI_STAT_ATTR_PTR pA = &cbi_stat_prof[frontier];
 	assert( pA );
 	strncpy( pA->name, name, CBI_STAT_NAME_LEN );
+	strncpy( pA->ident, name, CBI_STAT_NAME_LEN );
 	pA->group = (CBI_STAT_GROUP)group;
 	pA->disp.raw = disp;
 	{
@@ -310,7 +353,13 @@ int load_CBI_code_tbl ( const char *fname ) {
     errorF( "failed to open the file: %s.\n", fname );
     assert( FALSE );
   }
-  
+
+  {
+    int i;
+    for( i = 0; i < frontier; i++ )
+      regist_hash( &cbi_stat_prof[i] );
+    assert( i == frontier );
+  }
   return frontier;
 }
 
@@ -426,4 +475,3 @@ struct attr {
     } route;
   } u;
 };
-  

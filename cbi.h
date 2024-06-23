@@ -1,4 +1,4 @@
-#include "generic.h"
+ #include "generic.h"
 #include "misc.h"
 #include "network.h"
 
@@ -63,10 +63,18 @@ typedef struct cbi_stat_attr {
   struct cbi_stat_attr *pNext_hsh;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
+/*
+ * temporal exporting, only for debugging the hash-map dedicated to cbi stat bits.
+ * never forget to elide them all, after the debugging.
+ */
 extern CBI_STAT_ATTR cbi_stat_prof[CBI_MAX_STAT_BITS];
 
+#define CBI_STAT_HASH_BUDGETS_NUM 256
+extern CBI_STAT_ATTR_PTR cbi_stat_rehash ( char *ident, CBI_STAT_ATTR_PTR pE );
+extern CBI_STAT_ATTR_PTR cbi_stat_idntify ( char *ident );
+
+extern int load_cbi_code_tbl ( const char *fname );
 extern void dump_cbi_stat_prof ( void );
-extern int load_CBI_code_tbl ( const char *fname );
 
 typedef enum cbi_stat_kind {
   _SIGNAL,
