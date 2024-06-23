@@ -60,7 +60,7 @@ typedef struct cbi_stat_attr {
     int bits;
     CBI_STAT_BIT_MASK mask;
   } disp;
-  struct cbi_stat_attr *pNext;
+  struct cbi_stat_attr *pNext_hsh;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
 extern CBI_STAT_ATTR cbi_stat_prof[CBI_MAX_STAT_BITS];

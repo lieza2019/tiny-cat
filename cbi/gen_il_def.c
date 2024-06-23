@@ -10,6 +10,7 @@
 typedef struct lex_il_obj {
   CBI_STAT_KIND kind;
   char pat[CBI_LEX_PAT_LEN + 1];
+  char exp_ident_pat[CBI_LEX_PAT_LEN + 1];
   struct {
     char pat[CBI_LEX_PAT_LEN + 1];
   } exp[CBI_EXPAND_PAT_MAXNUM];
@@ -34,10 +35,10 @@ typedef struct cbi_lex_symtbl {
 LEX_IL_OBJ cbi_lex_def[] = {
   /*
    * grammar:  {{kind, match_pattern, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}, raw-stat-name}}
-   * grammar': {{kind, match_pattern, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}, expand_pat_4ident}}
+   * grammar': {{kind, match_pattern, expand_pat_4ident, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}}}
    */
 #include "cbi_pat_def.h"
-  {END_OF_CBI_STAT_KIND, "", {{""}}}
+  {END_OF_CBI_STAT_KIND, "", "", {{""}}}
 };
 
 static CBI_LEX_SYMBOL_PTR regist_symbol ( CBI_LEX_SYMTBL_PTR psymtbl, CBI_LEX_SYMBOL_PTR ancest, char *id, int id_len ) {

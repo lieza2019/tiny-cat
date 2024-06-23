@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -7,6 +8,107 @@
 
 CBI_STAT_ATTR cbi_stat_prof[CBI_MAX_STAT_BITS];
 static int frontier;
+
+#define CBI_STAT_HASH_BUDGETS_NUM 256
+static CBI_STAT_ATTR_PTR cbi_stat_hash_budgets[CBI_STAT_HASH_BUDGETS_NUM];
+
+static int hash_key( char *ident, int id_maxlen ){
+  return 0;
+}
+
+static BOOL chk_uniq_in_budget ( CBI_STAT_ATTR_PTR pE ) {
+  assert( pE );
+  BOOL found = FALSE;
+  char id[CBI_STAT_IDENT_LEN + 1];
+  
+  id[CBI_STAT_IDENT_LEN] = 0;
+  strncpy( id, pE->ident, CBI_STAT_IDENT_LEN );
+  assert( ! strncmp(id, pE->ident, CBI_STAT_IDENT_LEN) );
+  {
+    CBI_STAT_ATTR_PTR p = pE->pNext_hsh;
+    while( p ) {
+      if( !strncmp(p->ident, id, CBI_STAT_IDENT_LEN) ) {
+	found = TRUE;
+	break;
+      }
+      p = p->pNext_hsh;
+    }
+    assert( !found );
+  }
+  return( !found );
+}
+static CBI_STAT_ATTR_PTR *walk_hash ( CBI_STAT_ATTR_PTR *ppB, char *ident, int id_maxlen ) {
+  assert( ppB );
+  assert( ident );
+  assert( (id_maxlen > 0) && (id_maxlen <= CBI_STAT_IDENT_LEN) );
+  CBI_STAT_ATTR_PTR *pp = ppB;
+  assert( pp );
+  while( *pp ) {
+    if( !strncmp((*pp)->ident, ident, id_maxlen) ) {
+#ifdef CHK_STRICT_CONSISTENCY
+      assert( chk_uniq_in_budget(*pp) );
+#endif // CHK_STRICT_CONSISTENCY
+      break;
+    }
+    pp = &(*pp)->pNext_hsh;
+  }
+  return pp;
+}
+
+static void regist_hash ( CBI_STAT_ATTR_PTR pE ) {
+  assert( pE );
+  CBI_STAT_ATTR_PTR *ppB = NULL;
+  {
+    int h = -1;
+    h = hash_key( pE->ident, CBI_STAT_IDENT_LEN );
+    assert( (h > -1) && (h < CBI_STAT_HASH_BUDGETS_NUM) );
+    ppB = &cbi_stat_hash_budgets[h];
+  }
+  assert( ppB );
+  pE->pNext_hsh = NULL;
+  {
+    CBI_STAT_ATTR_PTR *pp;
+    pp = walk_hash( ppB, pE->ident, strnlen(pE->ident, CBI_STAT_IDENT_LEN) );
+    if( *pp ) {
+      assert( FALSE );
+      pE->pNext_hsh = (*pp)->pNext_hsh;
+    }
+    assert( pp );
+    assert( !(*pp) );
+    *pp = pE;
+  }
+}
+
+static CBI_STAT_ATTR_PTR re_hash ( char *ident, int id_maxlen, CBI_STAT_ATTR_PTR pE ) {
+  assert( ident );
+  assert( (id_maxlen > 0) && (id_maxlen <= CBI_STAT_IDENT_LEN) );
+  assert( pE );
+  CBI_STAT_ATTR_PTR r = NULL;
+  CBI_STAT_ATTR_PTR *ppB = NULL;
+  
+  {
+    int h = -1;
+    h = hash_key( ident, id_maxlen );
+    assert( (h > -1) && (h < CBI_STAT_HASH_BUDGETS_NUM) );
+    ppB = &cbi_stat_hash_budgets[h];
+  }
+  assert( ppB );
+  
+  {
+    CBI_STAT_ATTR_PTR *pp = NULL;
+    pp = walk_hash( ppB, ident, id_maxlen );
+    assert( pp );
+    if( *pp ) {
+      pE->pNext_hsh = (*pp)->pNext_hsh;
+      r = *pp;
+      *pp = pE;
+    } else {
+      *pp = pE;
+      pE->pNext_hsh = NULL;
+    }
+  }
+  return r;
+}
 
 static char *show_cbi_stat_bit_mask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask ) {
   assert( mask_name );
@@ -325,4 +427,3 @@ struct attr {
   } u;
 };
   
-
