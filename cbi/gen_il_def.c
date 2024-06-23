@@ -421,27 +421,6 @@ BOOL enum_il_objs ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, CBI_STAT_ATT
 
 #if 0
 int main ( void ) {
-  CBI_LEX_SYMTBL S;
-  int n;
-  
-  n = load_cbi_code_tbl ( "./BOTANICAL_GARDEN.csv" );
-  //n = load_CBI_code_tbl ( "./test.csv" );
-  assert( n == 1 );
-  printf( "read %d entries from csv.\n", n );
-  {
-    CBI_LEX_SYMTBL_PTR pS = &S;
-    int i = 0;
-    while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
-      assert( pS );
-      memset( pS, 0, sizeof(S) );
-      enum_il_objs( stdout, (i + 1), pS, &cbi_stat_prof[0], &cbi_lex_def[i] );
-      i++;
-    }
-  }
-  return 0;
-}
-#else
-int main ( void ) {
   int n = -1;
   
   n = load_cbi_code_tbl ( "./BOTANICAL_GARDEN.csv" );
@@ -456,6 +435,33 @@ int main ( void ) {
       pE = cbi_stat_idntify( cbi_stat_prof[i].ident );
       assert( pE );
       assert( ! strncmp(pE->ident, cbi_stat_prof[i].ident, CBI_STAT_IDENT_LEN) );
+    }
+  }
+  return 0;
+}
+#else
+int main ( void ) {
+  CBI_LEX_SYMTBL S;
+  int n;
+#if 0
+  n = load_CBI_code_tbl ( "./test.csv" );
+  assert( n == 1 );
+#endif
+  n = load_cbi_code_tbl ( "./BOTANICAL_GARDEN.csv" );
+  printf( "read %d entries from csv.\n", n );
+  {
+    CBI_LEX_SYMTBL_PTR pS = &S;
+    int i = 0;
+    while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
+      int j;
+      for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[j].name[0]; j++ ) {
+	assert( pS );
+	memset( pS, 0, sizeof(S) );
+	printf( "%d: ", (j + 1) );
+	enum_il_objs( stdout, (i + 1), pS, &cbi_stat_prof[j], &cbi_lex_def[i] );
+	printf( "\n" );
+      }
+      i++;
     }
   }
   return 0;

@@ -13,15 +13,17 @@ static CBI_STAT_ATTR_PTR cbi_stat_hash_budgets[CBI_STAT_HASH_BUDGETS_NUM];
 
 static int hash_key ( char *ident ) {
   assert( ident );
-  const int n = 4;
+  const int n = 5;
   assert( (n > 0) && (n <= CBI_STAT_IDENT_LEN) );
   
   int h;
   h = 0;
   {
     int i;
-    for( i = 0; (i < n) && ident[i]; i++ )
+    for( i = 0; (i < n) && ident[i]; i++ ) {
       h = 13 * h + ident[i];
+      h = (h < 0) ? ((h * -1) % CBI_STAT_HASH_BUDGETS_NUM) : h;
+    }
   }
   return ( h % CBI_STAT_HASH_BUDGETS_NUM );
 }
