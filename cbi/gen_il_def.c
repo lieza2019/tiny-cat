@@ -117,7 +117,7 @@ static char *match_name ( char *matched, int max_match_len, char *src, CBI_LEX_S
 }
 
 #define MATCH_PAT_COL(pHd, pCrnt) (((int)((pCrnt) - (pHd))) + 1)
-static char *lex_cbi_stat_name ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srclen, LEX_IL_OBJ_PTR plex ) {
+static char *lex_match_pattrn ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srclen, LEX_IL_OBJ_PTR plex ) {
   assert( psymtbl );
   assert( src );
   assert( (srclen > 0) && (srclen <= CBI_STAT_NAME_LEN) );
@@ -236,7 +236,7 @@ static char *lex_pat_idx( int *pidx, char *digits, int rem_chrs ) {
 }
 
 #define EXP_PAT_COL(pHd, pCrnt) (((int)((pCrnt) - (pHd))) + 1)
-static int lex_exp_pat ( FILE *errfp, int line, int patno, char *buf, int buflen, CBI_LEX_SYMTBL_PTR psymtbl, char *pat, int patlen ) {
+static int lex_exp_pattrn ( FILE *errfp, int line, int patno, char *buf, int buflen, CBI_LEX_SYMTBL_PTR psymtbl, char *pat, int patlen ) {
   assert( errfp );
   assert( buf );
   assert( (buflen > 0) && (buflen <= CBI_EXPAND_EMIT_MAXLEN) );
@@ -363,7 +363,7 @@ static int lex_exp_pat ( FILE *errfp, int line, int patno, char *buf, int buflen
   return( strnlen(buf, buflen) * (err ? -1 : 1) );
 }
   
-static int emit_il_obj_name ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
+static int emit_il_instances ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
   assert( fp );
   assert( psymtbl );
   assert( plex );
@@ -378,7 +378,7 @@ static int emit_il_obj_name ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LE
 	break;
       {
 	int n = -1;
-	n = lex_exp_pat( stdout, line, (i + 1), emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp[i].pat, strnlen(plex->exp[i].pat, CBI_LEX_PAT_LEN) );
+	n = lex_exp_pattrn( stdout, line, (i + 1), emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp[i].pat, strnlen(plex->exp[i].pat, CBI_LEX_PAT_LEN) );
 	assert( (abs(n) >= 0) && (abs(n) <= CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[abs(n)] = 0;
 	if( n > 0 ) {
@@ -397,7 +397,7 @@ static int emit_il_obj_name ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LE
   return ( cnt * (err ? -1 : 1) );
 }
 
-BOOL enum_il_objs ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, CBI_STAT_ATTR_PTR pattr, LEX_IL_OBJ_PTR plex ) {
+static BOOL transduce ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, CBI_STAT_ATTR_PTR pattr, LEX_IL_OBJ_PTR plex ) {
   assert( fp );
   assert( psymtbl );
   assert( pattr );
@@ -410,11 +410,11 @@ BOOL enum_il_objs ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, CBI_STAT_ATT
     strncpy( src, plex->raw_name, CBI_STAT_NAME_LEN );
     {
       char *src1;
-      src1 = lex_cbi_stat_name( stdout, line, psymtbl, src, strnlen(src, CBI_STAT_NAME_LEN), plex );
+      src1 = lex_match_pattrn( stdout, line, psymtbl, src, strnlen(src, CBI_STAT_NAME_LEN), plex );
       assert( src1 );
       if( src1 >= (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
 	assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
-	if( emit_il_obj_name( fp, line, psymtbl, plex ) > 0 )
+	if( emit_il_instances( fp, line, psymtbl, plex ) > 0 )
 	  r = TRUE;
       }
     }
@@ -461,7 +461,7 @@ int main ( void ) {
 	assert( pS );
 	memset( pS, 0, sizeof(S) );
 	printf( "%d: ", (j + 1) );
-	enum_il_objs( stdout, (i + 1), pS, &cbi_stat_prof[j], &cbi_lex_def[i] );
+	transduce( stdout, (i + 1), pS, &cbi_stat_prof[j], &cbi_lex_def[i] );
 	printf( "\n" );
       }
       i++;
