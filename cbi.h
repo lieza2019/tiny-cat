@@ -79,4 +79,4 @@ typedef enum cbi_stat_kind {
   END_OF_CBI_STAT_KIND
 } CBI_STAT_KIND;
 
-extern char *cnv2name_cbi_stat_kind[];
+extern char *cnv2str_cbi_stat_kind[];

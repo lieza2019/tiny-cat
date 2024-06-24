@@ -174,11 +174,11 @@ static char *lex_match_pattrn ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtb
   if( ! err ) {
     if( *ppat ) {
       assert( ppat < (plex->match_pat + CBI_LEX_PAT_LEN) );
-      fprintf( stdout, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
+      fprintf( errfp, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
     } else {
       if( psrc < (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
 	assert( *psrc );
-	fprintf( stdout, "line: %d, matching pattern, col= %d: excessive unmatched characters remain,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
+	fprintf( errfp, "line: %d, matching pattern, col= %d: excessive unmatched characters remain,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
       }
     }
   }
@@ -296,7 +296,7 @@ static int lex_exp_pattrn ( FILE *errfp, int line, int patno, char *buf, int buf
 	      }
 	      if( !pS ) {  // LEXERR: specified index is out of scope over the variable registered on.
 		err = TRUE;
-		fprintf( errfp, "line :%d, (expansion pattern, col)= (%d, %d): index is out of range over the variables registered on.\n", line, patno, EXP_PAT_COL(pat, ppat) );
+		fprintf( errfp, "line: %d, (expansion pattern, col)= (%d, %d): index is out of range over the variables registered on.\n", line, patno, EXP_PAT_COL(pat, ppat) );
 		break;
 	      }
 	      assert( pbuf );
@@ -362,12 +362,13 @@ static int lex_exp_pattrn ( FILE *errfp, int line, int patno, char *buf, int buf
   
   return( strnlen(buf, buflen) * (err ? -1 : 1) );
 }
-  
+
 static int emit_il_instances ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
   assert( fp );
   assert( psymtbl );
   assert( plex );
   BOOL err = FALSE;
+  
   int cnt = 0;
   {
     int i;
@@ -382,10 +383,12 @@ static int emit_il_instances ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, L
 	assert( (abs(n) >= 0) && (abs(n) <= CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[abs(n)] = 0;
 	if( n > 0 ) {
-	  char *name = cnv2name_cbi_stat_kind[plex->kind];
-	  assert( name );
-	  fprintf( fp, "%s: ", name );
-	  fprintf( fp, "%s, ", emit_buf );
+	  if( cnt > 0 )
+	    fprintf( fp, ", %s", emit_buf );
+	  else {
+	    assert( cnt == 0 );
+	    fprintf( fp, "%s", emit_buf );
+	  }
 	  cnt++;
 	} else {
 	  err = TRUE;
@@ -394,15 +397,51 @@ static int emit_il_instances ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, L
       }
     }
   }
+  
   return ( cnt * (err ? -1 : 1) );
 }
 
-static BOOL transduce ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, CBI_STAT_ATTR_PTR pattr, LEX_IL_OBJ_PTR plex ) {
+static int emit_stat_abbrev ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
+  assert( fp );
+  assert( psymtbl );
+  assert( plex );
+  BOOL err = FALSE;
+  
+  assert( plex->raw_name );
+  {
+    char *kind_s = NULL;
+    kind_s = cnv2str_cbi_stat_kind[plex->kind];
+    assert( kind_s );
+    if( plex->exp_ident_pat[0] ) {
+      char emit_buf[CBI_EXPAND_EMIT_MAXLEN + 1];
+      int n = -1;    
+      emit_buf[CBI_EXPAND_EMIT_MAXLEN] = 0;
+      n = lex_exp_pattrn( stdout, line, 0, emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp_ident_pat, strnlen(plex->exp_ident_pat, CBI_LEX_PAT_LEN) );
+      assert( (abs(n) >= 0) && (abs(n) <= CBI_EXPAND_EMIT_MAXLEN) );
+      emit_buf[abs(n)] = 0;
+      if( n > 0 ) {
+	fprintf( fp, "%s: ", kind_s );
+	fprintf( fp, "%s - ", plex->raw_name );
+	fprintf( fp, "%s - ", emit_buf );
+      } else
+	err = TRUE;
+    } else {
+      fprintf( fp, "%s: ", kind_s );
+      fprintf( fp, "%s - ", plex->raw_name );
+      fprintf( fp, "NO_ABBREV - " );
+    }
+  }
+  
+  return (err ? -1 : 1);
+}
+
+static BOOL transduce ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
   assert( fp );
   assert( psymtbl );
   assert( pattr );
   assert( plex );
   BOOL r = FALSE;
+  
   strncpy( plex->raw_name, pattr->name, CBI_STAT_NAME_LEN );
   {
     char src[CBI_STAT_NAME_LEN + 1];
@@ -413,9 +452,13 @@ static BOOL transduce ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, CBI_STAT
       src1 = lex_match_pattrn( stdout, line, psymtbl, src, strnlen(src, CBI_STAT_NAME_LEN), plex );
       assert( src1 );
       if( src1 >= (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
+	int r_emit = -1;
 	assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
-	if( emit_il_instances( fp, line, psymtbl, plex ) > 0 )
-	  r = TRUE;
+	if( (r_emit = emit_stat_abbrev( fp, line, psymtbl, plex )) > 0 )
+	  if( (r_emit = emit_il_instances( fp, line, psymtbl, plex )) > 0 )
+	    r = TRUE;
+	if( r_emit > 0 )
+	  fprintf( fp, "\n" );
       }
     }
   }
@@ -461,8 +504,7 @@ int main ( void ) {
 	assert( pS );
 	memset( pS, 0, sizeof(S) );
 	printf( "%d: ", (j + 1) );
-	transduce( stdout, (i + 1), pS, &cbi_stat_prof[j], &cbi_lex_def[i] );
-	printf( "\n" );
+	transduce( stdout, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[j] );
       }
       i++;
     }
