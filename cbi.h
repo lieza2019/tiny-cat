@@ -63,10 +63,6 @@ typedef struct cbi_stat_attr {
   struct cbi_stat_attr *pNext_hsh;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
-/*
- * temporal exporting, only for debugging the hash-map dedicated to cbi stat bits.
- * never forget to elide them all, after the debugging.
- */
 extern CBI_STAT_ATTR cbi_stat_prof[CBI_MAX_STAT_BITS];
 
 #define CBI_STAT_HASH_BUDGETS_NUM 256
@@ -77,7 +73,10 @@ extern int load_cbi_code_tbl ( const char *fname );
 extern void dump_cbi_stat_prof ( void );
 
 typedef enum cbi_stat_kind {
-  _SIGNAL,
-  _ROUTE,
+#define CBI_STAT_KIND_DESC(enum, name) enum,
+#include "./cbi/cbi_stat_kind.def"
+#undef CBI_STAT_KIND_DESC
   END_OF_CBI_STAT_KIND
 } CBI_STAT_KIND;
+
+extern char *cnv2name_cbi_stat_kind[];

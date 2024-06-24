@@ -382,6 +382,9 @@ static int emit_il_obj_name ( FILE *fp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LE
 	assert( (abs(n) >= 0) && (abs(n) <= CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[abs(n)] = 0;
 	if( n > 0 ) {
+	  char *name = cnv2name_cbi_stat_kind[plex->kind];
+	  assert( name );
+	  fprintf( fp, "%s: ", name );
 	  fprintf( fp, "%s, ", emit_buf );
 	  cnt++;
 	} else {

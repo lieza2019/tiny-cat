@@ -6,6 +6,13 @@
 #include "misc.h"
 #include "cbi.h"
 
+char *cnv2name_cbi_stat_kind[] = {
+#define CBI_STAT_KIND_DESC(enum, name) name,
+#include "./cbi/cbi_stat_kind.def"
+#undef CBI_STAT_KIND_DESC
+  NULL
+};
+
 CBI_STAT_ATTR cbi_stat_prof[CBI_MAX_STAT_BITS];
 static int frontier;
 

@@ -11,7 +11,7 @@ GEN_IL_DEF_BIN = $(GEN_IL_DEF_NAME)
 $(GEN_IL_DEF_BIN) : cbi.o gen_il_def.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-../cbi.h: ../generic.h ../misc.h ../network.h
+../cbi.h: ../generic.h ../misc.h ../network.h ./cbi_stat_kind.def ./cbi_pat_def.h
 	$(TOUCH) $@
 
 cbi.o : ../generic.h ../misc.h ../cbi.h ../cbi.c
