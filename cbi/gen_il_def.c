@@ -4,32 +4,32 @@
 #include <ctype.h>
 #include "../cbi.h"
 
-#define CBI_LEX_ERR_PREFIX_MAXCHRS 256
-#define CBI_LEX_EMIT_PREFIX_MAXCHRS 256
-#define CBI_LEX_ERR_SUFFIX_MAXCHRS 256
-#define CBI_LEX_EMIT_SUFFIX_MAXCHRS 256
-typedef struct prefix_suffix {
+#define CBI_LEX_ERR_PREFX_MAXCHRS 256
+#define CBI_LEX_EMIT_PREFX_MAXCHRS 256
+#define CBI_LEX_ERR_SUFIX_MAXCHRS 256
+#define CBI_LEX_EMIT_SUFIX_MAXCHRS 256
+typedef struct prefx_sufix {
   struct {
-    char err[CBI_LEX_ERR_PREFIX_MAXCHRS + 1];
-    char emit[CBI_LEX_EMIT_PREFIX_MAXCHRS + 1];
+    char err[CBI_LEX_ERR_PREFX_MAXCHRS + 1];
+    char emit[CBI_LEX_EMIT_PREFX_MAXCHRS + 1];
   } prefix;
   struct {
-    char err[CBI_LEX_ERR_SUFFIX_MAXCHRS + 1];
-    char emit[CBI_LEX_EMIT_SUFFIX_MAXCHRS + 1];
+    char err[CBI_LEX_ERR_SUFIX_MAXCHRS + 1];
+    char emit[CBI_LEX_EMIT_SUFIX_MAXCHRS + 1];
   } suffix;
-} PREFIX_SUFFIX, *PREFIX_SUFFIX_PTR;
+} PREFX_SUFIX, *PREFX_SUFIX_PTR;
 
-#define CBI_LEX_PAT_LEN 256
-#define CBI_STAT_RAWNAME_LEN 256
+#define CBI_LEX_PAT_MAXLEN 256
+#define CBI_STAT_RAWNAME_MAXLEN 256
 #define CBI_EXPAND_PAT_MAXNUM 5
 typedef struct lex_il_obj {
   CBI_STAT_KIND kind;
-  char match_pat[CBI_LEX_PAT_LEN + 1];
-  char exp_ident_pat[CBI_LEX_PAT_LEN + 1];
+  char match_pat[CBI_LEX_PAT_MAXLEN + 1];
+  char exp_ident_pat[CBI_LEX_PAT_MAXLEN + 1];
   struct {
-    char pat[CBI_LEX_PAT_LEN + 1];
+    char pat[CBI_LEX_PAT_MAXLEN + 1];
   } exp[CBI_EXPAND_PAT_MAXNUM];
-  char raw_name[CBI_STAT_RAWNAME_LEN + 1];
+  char raw_name[CBI_STAT_RAWNAME_MAXLEN + 1];
 } LEX_IL_OBJ, *LEX_IL_OBJ_PTR;
 
 #define CBI_IDENT_MAXLEN 256
@@ -59,7 +59,7 @@ LEX_IL_OBJ cbi_lex_def[] = {
 static CBI_LEX_SYMBOL_PTR regist_symbol ( CBI_LEX_SYMTBL_PTR psymtbl, CBI_LEX_SYMBOL_PTR ancest, char *id, int id_len ) {
   assert( psymtbl );
   assert( id );
-  assert( (id_len > 0) && (id_len <= CBI_IDENT_MAXLEN) );
+  assert( (id_len > 0) && (id_len < CBI_IDENT_MAXLEN) );
   CBI_LEX_SYMBOL_PTR pS = NULL;
   {
     int i;
@@ -92,7 +92,7 @@ static CBI_LEX_SYMBOL_PTR regist_symbol ( CBI_LEX_SYMTBL_PTR psymtbl, CBI_LEX_SY
 static CBI_LEX_SYMBOL_PTR walk_symtbl ( CBI_LEX_SYMTBL_PTR psymtbl, char *id, int id_len ) {
   assert( psymtbl );
   assert( id );
-  assert( (id_len > 0) && (id_len <= CBI_IDENT_MAXLEN) );
+  assert( (id_len > 0) && (id_len < CBI_IDENT_MAXLEN) );
   CBI_LEX_SYMBOL_PTR r = NULL;
   {
     BOOL found = FALSE;
@@ -116,11 +116,11 @@ static CBI_LEX_SYMBOL_PTR walk_symtbl ( CBI_LEX_SYMTBL_PTR psymtbl, char *id, in
 
 static char *match_name ( char *matched, int max_match_len, char *src, CBI_LEX_SYMBOL_PTR ppat ) {
   assert( matched );
-  assert( (max_match_len > 0) && (max_match_len <= CBI_MATCHED_CHRS_MAXLEN) );
+  assert( (max_match_len > 0) && (max_match_len < CBI_MATCHED_CHRS_MAXLEN) );
   assert( src );
   assert( ppat );
   
-  assert( strnlen(ppat->ident, CBI_LEX_PAT_LEN) == 1 );
+  assert( strnlen(ppat->ident, CBI_LEX_PAT_MAXLEN) == 1 );
   assert( islower(ppat->ident[0]) );
   if( *src ) {
     matched[0] = *src;
@@ -132,11 +132,12 @@ static char *match_name ( char *matched, int max_match_len, char *src, CBI_LEX_S
 }
 
 #define MATCH_PAT_COL(pHd, pCrnt) (((int)((pCrnt) - (pHd))) + 1)
-static char *lex_match_pattrn ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srclen, LEX_IL_OBJ_PTR plex ) {
+static char *lex_match_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srclen, LEX_IL_OBJ_PTR plex ) {
   assert( errfp );
+  assert( pprsf );
   assert( psymtbl );
   assert( src );
-  assert( (srclen > 0) && (srclen <= CBI_STAT_NAME_LEN) );
+  assert( (srclen > 0) && (srclen < CBI_STAT_NAME_LEN) );
   assert( plex );
   BOOL err = FALSE;
   char *psrc = src;
@@ -144,7 +145,7 @@ static char *lex_match_pattrn ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtb
   
   assert( psrc );
   assert( ppat );
-  while( *ppat && (ppat < (plex->match_pat + CBI_LEX_PAT_LEN)) ) {
+  while( *ppat && (ppat < (plex->match_pat + CBI_LEX_PAT_MAXLEN)) ) {
     if( islower(*ppat) ) {
       char var_id[2];
       int id_len = -1;
@@ -172,6 +173,9 @@ static char *lex_match_pattrn ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtb
 	  }
 	}	
       }
+      assert( pprsf->prefix.err );
+      assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
+      fprintf( errfp, "%s", pprsf->prefix.err );
       fprintf( errfp, "line: %d, matching pattern, col= %d: has no bound,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
       err = TRUE;
       break;
@@ -182,6 +186,9 @@ static char *lex_match_pattrn ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtb
 	  ppat++;
 	  continue;
 	}
+      assert( pprsf->prefix.err );
+      assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
+      fprintf( errfp, "%s", pprsf->prefix.err );
       fprintf( errfp, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
       err = TRUE;
       break;
@@ -189,11 +196,17 @@ static char *lex_match_pattrn ( FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtb
   }
   if( ! err ) {
     if( *ppat ) {
-      assert( ppat < (plex->match_pat + CBI_LEX_PAT_LEN) );
+      assert( ppat < (plex->match_pat + CBI_LEX_PAT_MAXLEN) );
+      assert( pprsf->prefix.err );
+      assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
+      fprintf( errfp, "%s", pprsf->prefix.err );
       fprintf( errfp, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
     } else {
       if( psrc < (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
 	assert( *psrc );
+	assert( pprsf->prefix.err );
+	assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
+	fprintf( errfp, "%s", pprsf->prefix.err );
 	fprintf( errfp, "line: %d, matching pattern, col= %d: excessive unmatched characters remain,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
       }
     }
@@ -238,8 +251,8 @@ static char *lex_pat_idx( int *pidx, char *digits, int rem_chrs ) {
   }
   {
     int n = -1;
-    char atoi_buf[CBI_LEX_PAT_LEN + 1];
-    atoi_buf[CBI_LEX_PAT_LEN] = 0;
+    char atoi_buf[CBI_LEX_PAT_MAXLEN + 1];
+    atoi_buf[CBI_LEX_PAT_MAXLEN] = 0;
     n = p - digits;
     assert( n >= 0 );
     if( n > 0 ) {
@@ -252,13 +265,14 @@ static char *lex_pat_idx( int *pidx, char *digits, int rem_chrs ) {
 }
 
 #define EXP_PAT_COL(pHd, pCrnt) (((int)((pCrnt) - (pHd))) + 1)
-static int lex_exp_pattrn ( FILE *errfp, int line, int patno, char *buf, int buflen, CBI_LEX_SYMTBL_PTR psymtbl, char *pat, int patlen ) {
+static int lex_exp_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, int patno, char *buf, int buflen, CBI_LEX_SYMTBL_PTR psymtbl, char *pat, int patlen ) {
   assert( errfp );
+  assert( pprsf );
   assert( buf );
-  assert( (buflen > 0) && (buflen <= CBI_EXPAND_EMIT_MAXLEN) );
+  assert( (buflen > 0) && (buflen < CBI_EXPAND_EMIT_MAXLEN) );
   assert( psymtbl );
   assert( pat );
-  assert( (patlen > 0) && (patlen <= CBI_LEX_PAT_LEN) );
+  assert( (patlen > 0) && (patlen < CBI_LEX_PAT_MAXLEN) );
   BOOL err = FALSE;
   const char *plim = pat + patlen;
   char *ppat = pat;
@@ -291,6 +305,9 @@ static int lex_exp_pattrn ( FILE *errfp, int line, int patno, char *buf, int buf
 	  if( idx < 0 ) {  // LEXERR: index must be integers in the range on registration.
 	    assert( pp2 == ppat );
 	    err = TRUE;
+	    assert( pprsf->prefix.err );
+	    assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
+	    fprintf( errfp, "%s", pprsf->prefix.err );
 	    fprintf( errfp, "line: %d, (expansion pattern, col)= (%d, %d): index must be integer, ", line, patno, EXP_PAT_COL(pat, pp2) );
 	    goto err_illegal_chr;
 	  } else {
@@ -299,7 +316,7 @@ static int lex_exp_pattrn ( FILE *errfp, int line, int patno, char *buf, int buf
 	      assert( ppat < plim );
 	      CBI_LEX_SYMBOL_PTR pS = NULL;
 	      int id_len = strnlen( id, CBI_IDENT_MAXLEN );
-	      assert( (id_len > 0) && (id_len <= CBI_IDENT_MAXLEN) );
+	      assert( (id_len > 0) && (id_len < CBI_IDENT_MAXLEN) );
 	      pS = walk_symtbl( psymtbl, id, id_len );
 	      {
 		int cnt;
@@ -312,6 +329,9 @@ static int lex_exp_pattrn ( FILE *errfp, int line, int patno, char *buf, int buf
 	      }
 	      if( !pS ) {  // LEXERR: specified index is out of scope over the variable registered on.
 		err = TRUE;
+		assert( pprsf->prefix.err );
+		assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
+		fprintf( errfp, "%s", pprsf->prefix.err );
 		fprintf( errfp, "line: %d, (expansion pattern, col)= (%d, %d): index is out of range over the variables registered on.\n", line, patno, EXP_PAT_COL(pat, ppat) );
 		break;
 	      }
@@ -330,6 +350,9 @@ static int lex_exp_pattrn ( FILE *errfp, int line, int patno, char *buf, int buf
 	      break;
 	    } else {  // LEXERR: missing closing ']' for index description over variables.
 	      err = TRUE;
+	      assert( pprsf->prefix.err );
+	      assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
+	      fprintf( errfp, "%s", pprsf->prefix.err );
 	      fprintf( errfp, "line: %d, (expansion pattern, col)= (%d, %d): missing the closing ']' for index description over the variables", line, patno, EXP_PAT_COL(pat, ppat) );
 	      if( *ppat ) {
 		assert( ppat < plim );
@@ -355,6 +378,9 @@ static int lex_exp_pattrn ( FILE *errfp, int line, int patno, char *buf, int buf
 	  break;
       } else {  // LEXERR: illegal character detected.
 	err = TRUE;
+	assert( pprsf->prefix.err );
+	assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
+	fprintf( errfp, "%s", pprsf->prefix.err );
 	fprintf( errfp, "line:%d, (expansion pattern, col)= (%d, %d): ", line, patno, EXP_PAT_COL(pat, ppat) );
 	err_illegal_chr:
 	fprintf( errfp, "illegal character detected.\n" );
@@ -379,9 +405,10 @@ static int lex_exp_pattrn ( FILE *errfp, int line, int patno, char *buf, int buf
   return( strnlen(buf, buflen) * (err ? -1 : 1) );
 }
 
-static int emit_il_instances ( FILE *fp, FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
+static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
   assert( fp );
   assert( errfp );
+  assert( pprsf );
   assert( psymtbl );
   assert( plex );
   BOOL err = FALSE;
@@ -396,8 +423,8 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, int line, CBI_LEX_SYMTBL_P
 	break;
       {
 	int n = -1;
-	n = lex_exp_pattrn( errfp, line, (i + 1), emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp[i].pat, strnlen(plex->exp[i].pat, CBI_LEX_PAT_LEN) );
-	assert( (abs(n) >= 0) && (abs(n) <= CBI_EXPAND_EMIT_MAXLEN) );
+	n = lex_exp_pattrn( errfp, pprsf, line, (i + 1), emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp[i].pat, strnlen(plex->exp[i].pat, CBI_LEX_PAT_MAXLEN) );
+	assert( (abs(n) >= 0) && (abs(n) < CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[abs(n)] = 0;
 	if( n > 0 ) {
 	  if( cnt > 0 )
@@ -418,9 +445,10 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, int line, CBI_LEX_SYMTBL_P
   return ( cnt * (err ? -1 : 1) );
 }
 
-static int emit_stat_abbrev ( FILE *fp, FILE *errfp, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
+static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
   assert( fp );
   assert( errfp );
+  assert( pprsf );
   assert( psymtbl );
   assert( plex );
   BOOL err = FALSE;
@@ -434,8 +462,8 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, int line, CBI_LEX_SYMTBL_PT
       char emit_buf[CBI_EXPAND_EMIT_MAXLEN + 1];
       int n = -1;    
       emit_buf[CBI_EXPAND_EMIT_MAXLEN] = 0;
-      n = lex_exp_pattrn( errfp, line, 0, emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp_ident_pat, strnlen(plex->exp_ident_pat, CBI_LEX_PAT_LEN) );
-      assert( (abs(n) >= 0) && (abs(n) <= CBI_EXPAND_EMIT_MAXLEN) );
+      n = lex_exp_pattrn( errfp, pprsf, line, 0, emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp_ident_pat, strnlen(plex->exp_ident_pat, CBI_LEX_PAT_MAXLEN) );
+      assert( (abs(n) >= 0) && (abs(n) < CBI_EXPAND_EMIT_MAXLEN) );
       emit_buf[abs(n)] = 0;
       if( n > 0 ) {
 	fprintf( fp, "%s: ", kind_s );
@@ -453,13 +481,13 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, int line, CBI_LEX_SYMTBL_PT
   return (err ? -1 : 1);
 }
 
-static BOOL transduce ( FILE *fp, FILE *errfp, PREFIX_SUFFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
+static BOOL transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
   assert( fp );
   assert( errfp );
   assert( pprsf );
   assert( psymtbl );
-  assert( pattr );
   assert( plex );
+  assert( pattr );  
   BOOL r = FALSE;
   
   strncpy( plex->raw_name, pattr->name, CBI_STAT_NAME_LEN );
@@ -469,13 +497,13 @@ static BOOL transduce ( FILE *fp, FILE *errfp, PREFIX_SUFFIX_PTR pprsf, int line
     strncpy( src, plex->raw_name, CBI_STAT_NAME_LEN );
     {
       char *src1;
-      src1 = lex_match_pattrn( errfp, line, psymtbl, src, strnlen(src, CBI_STAT_NAME_LEN), plex );
+      src1 = lex_match_pattrn( errfp, pprsf, line, psymtbl, src, strnlen(src, CBI_STAT_NAME_LEN), plex );
       assert( src1 );
       if( src1 >= (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
 	int r_emit = -1;
 	assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
-	if( (r_emit = emit_stat_abbrev( fp, errfp, line, psymtbl, plex )) > 0 )
-	  if( (r_emit = emit_il_instances( fp, errfp, line, psymtbl, plex )) > 0 )
+	if( (r_emit = emit_stat_abbrev( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
+	  if( (r_emit = emit_il_instances( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
 	    r = TRUE;
 	if( r_emit > 0 )
 	  fprintf( fp, "\n" );
@@ -534,11 +562,11 @@ int main ( void ) {
     while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
       int j;
       for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[j].name[0]; j++ ) {
-	PREFIX_SUFFIX prsf;
+	PREFX_SUFIX prsf;
 	memset( &prsf, 0, sizeof(prsf) );
 	assert( pS );
 	memset( pS, 0, sizeof(S) );
-	snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFIX_MAXCHRS, "%d: ", (j + 1) );
+	snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%d: ", (j + 1) );
 	transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[j] );
       }
       i++;
