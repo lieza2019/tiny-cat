@@ -2,5 +2,5 @@
  * projection for enumerative instantiation: CBI_STAT_KIND_DESC(enum, name) enum,
  * projection for its name:                  CBI_STAT_KIND_DESC(enum, name) name,
  */
-CBI_STAT_KIND_DESC(_SIGNAL, "SIGNAL")
-CBI_STAT_KIND_DESC(_ROUTE, "ROUTE")
+CBI_STAT_KIND_DESC(_SIGNAL, "_SIGNAL")
+CBI_STAT_KIND_DESC(_ROUTE, "_ROUTE")

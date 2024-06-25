@@ -48,6 +48,13 @@ typedef enum cbi_stat_bit_mask {
   END_OF_CBI_STAT_BIT_MASK
 } CBI_STAT_BIT_MASK;
 
+typedef enum cbi_stat_kind {
+#define CBI_STAT_KIND_DESC(enum, name) enum,
+#include "./cbi/cbi_stat_kind.def"
+#undef CBI_STAT_KIND_DESC
+  END_OF_CBI_STAT_KIND
+} CBI_STAT_KIND;
+
 #define CBI_STAT_IDENT_LEN 32
 #define CBI_STAT_NAME_LEN 32
 typedef struct cbi_stat_attr {
@@ -60,6 +67,7 @@ typedef struct cbi_stat_attr {
     int bits;
     CBI_STAT_BIT_MASK mask;
   } disp;
+  CBI_STAT_KIND kind;
   struct cbi_stat_attr *pNext_hsh;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
@@ -72,11 +80,11 @@ extern CBI_STAT_ATTR_PTR cbi_stat_idntify ( char *ident );
 extern int load_cbi_code_tbl ( const char *fname );
 extern void dump_cbi_stat_prof ( void );
 
-typedef enum cbi_stat_kind {
-#define CBI_STAT_KIND_DESC(enum, name) enum,
-#include "./cbi/cbi_stat_kind.def"
-#undef CBI_STAT_KIND_DESC
-  END_OF_CBI_STAT_KIND
-} CBI_STAT_KIND;
+typedef struct cbi_stat_label {
+  CBI_STAT_KIND kind;
+  char name[CBI_STAT_NAME_LEN + 1];  
+  char ident[CBI_STAT_IDENT_LEN + 1];
+} CBI_STAT_LABEL, *CBI_STAT_LABEL_PTR;
+extern CBI_STAT_LABEL cbi_stat_label[];
 
 extern char *cnv2str_cbi_stat_kind[];

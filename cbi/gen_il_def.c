@@ -428,10 +428,11 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	emit_buf[abs(n)] = 0;
 	if( n > 0 ) {
 	  if( cnt > 0 )
-	    fprintf( fp, ", %s", emit_buf );
+	    //fprintf( fp, ", %s", emit_buf );
+	    ;
 	  else {
 	    assert( cnt == 0 );
-	    fprintf( fp, "%s", emit_buf );
+	    //fprintf( fp, "%s", emit_buf );
 	  }
 	  cnt++;
 	} else {
@@ -466,15 +467,19 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
       assert( (abs(n) >= 0) && (abs(n) < CBI_EXPAND_EMIT_MAXLEN) );
       emit_buf[abs(n)] = 0;
       if( n > 0 ) {
-	fprintf( fp, "%s: ", kind_s );
-	fprintf( fp, "%s - ", plex->raw_name );
-	fprintf( fp, "%s - ", emit_buf );
+	fprintf( fp, "%s ", pprsf->prefix.emit );
+	fprintf( fp, "%s", kind_s );
+	fprintf( fp, ", \"%s\"", plex->raw_name );
+	fprintf( fp, ", \"%s\"", emit_buf );
+	fprintf( fp, " %s", pprsf->suffix.emit );
       } else
 	err = TRUE;
     } else {
-      fprintf( fp, "%s: ", kind_s );
-      fprintf( fp, "%s - ", plex->raw_name );
-      fprintf( fp, "NO_ABBREV - " );
+      fprintf( fp, "%s ", pprsf->prefix.emit );
+      fprintf( fp, "%s", kind_s );
+      fprintf( fp, ", \"%s\"", plex->raw_name );
+      fprintf( fp, ", \"%s\"", "NO_ABBREV" );
+      fprintf( fp, " %s", pprsf->suffix.emit );
     }
   }
   
@@ -502,6 +507,8 @@ static BOOL transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, 
       if( src1 >= (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
 	int r_emit = -1;
 	assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
+	strncpy( pprsf->prefix.emit, "{", CBI_LEX_EMIT_PREFX_MAXCHRS );
+	strncpy( pprsf->suffix.emit, "}," , CBI_LEX_EMIT_PREFX_MAXCHRS );
 	if( (r_emit = emit_stat_abbrev( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
 	  if( (r_emit = emit_il_instances( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
 	    r = TRUE;
@@ -534,7 +541,7 @@ int main ( void ) {
   return 0;
 }
 #else
-#define OUT_PATH_FNAME "./gendecl.h"
+#define OUT_PATH_FNAME "./cbi_stat_label.h"
 int main ( void ) {
   CBI_LEX_SYMTBL S;
   FILE *fp_err = NULL;
@@ -549,29 +556,29 @@ int main ( void ) {
     return -1;
   }
   
-#if 0
-  n = load_CBI_code_tbl ( "./test.csv" );
-  assert( n == 1 );
-#endif
   n = load_cbi_code_tbl ( "./BOTANICAL_GARDEN.csv" );
   assert( n >= 0 );
   fprintf( fp_err, "read %d entries from csv.\n", n );
   {
-    CBI_LEX_SYMTBL_PTR pS = &S;
-    int i = 0;
-    while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
-      int j;
-      for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[j].name[0]; j++ ) {
-	PREFX_SUFIX prsf;
-	memset( &prsf, 0, sizeof(prsf) );
-	assert( pS );
-	memset( pS, 0, sizeof(S) );
-	snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%d: ", (j + 1) );
-	transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[j] );
+    PREFX_SUFIX prsf;
+    memset( &prsf, 0, sizeof(prsf) );
+    fprintf( fp_out, "CBI_STAT_LABEL cbi_stat_labeling[] = {\n" );
+    {
+      CBI_LEX_SYMTBL_PTR pS = &S;
+      int i = 0;
+      while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
+	int j;
+	for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[j].name[0]; j++ ) {
+	  assert( pS );
+	  memset( pS, 0, sizeof(S) );
+	  snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%d: ", (j + 1) );
+	  transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[j] );
+	}
+	i++;
       }
-      i++;
+      fprintf( fp_err, "\n" );
     }
-    fprintf( fp_err, "\n" );
+    fprintf( fp_out, "};\n" );
   }
   fflush( fp_err );
   if( fp_out ) {

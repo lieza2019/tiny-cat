@@ -6,6 +6,8 @@
 #include "misc.h"
 #include "cbi.h"
 
+#include "./cbi/cbi_stat_label.h"
+
 char *cnv2str_cbi_stat_kind[] = {
 #define CBI_STAT_KIND_DESC(enum, name) name,
 #include "./cbi/cbi_stat_kind.def"
