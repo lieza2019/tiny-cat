@@ -116,7 +116,7 @@ static CBI_LEX_SYMBOL_PTR walk_symtbl ( CBI_LEX_SYMTBL_PTR psymtbl, char *id, in
 
 static char *match_name ( char *matched, int max_match_len, char *src, CBI_LEX_SYMBOL_PTR ppat ) {
   assert( matched );
-  assert( (max_match_len > 0) && (max_match_len < CBI_MATCHED_CHRS_MAXLEN) );
+  assert( (max_match_len > 0) && (max_match_len <= CBI_MATCHED_CHRS_MAXLEN) );
   assert( src );
   assert( ppat );
   
@@ -269,7 +269,7 @@ static int lex_exp_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, int pa
   assert( errfp );
   assert( pprsf );
   assert( buf );
-  assert( (buflen > 0) && (buflen < CBI_EXPAND_EMIT_MAXLEN) );
+  assert( (buflen > 0) && (buflen <= CBI_EXPAND_EMIT_MAXLEN) );
   assert( psymtbl );
   assert( pat );
   assert( (patlen > 0) && (patlen < CBI_LEX_PAT_MAXLEN) );
