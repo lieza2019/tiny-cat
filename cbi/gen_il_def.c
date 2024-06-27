@@ -520,27 +520,6 @@ static BOOL transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, 
   return r;
 }
 
-#if 0
-int main ( void ) {
-  int n = -1;
-  
-  n = load_cbi_code_tbl ( "./BOTANICAL_GARDEN.csv" );
-  assert( (n >= 0) && (n <= CBI_MAX_STAT_BITS) );
-  printf( "read %d entries from csv.\n", n );
-  
-  // test correctness on construction of hash-map for cbi state bits.
-  {
-    int i;
-    for( i = 0; i < n; i++ ) {
-      CBI_STAT_ATTR_PTR pE = NULL;
-      pE = cbi_stat_idntify( cbi_stat_prof[i].ident );
-      assert( pE );
-      assert( ! strncmp(pE->ident, cbi_stat_prof[i].ident, CBI_STAT_IDENT_LEN) );
-    }
-  }
-  return 0;
-}
-#else
 #define OUT_PATH_FNAME "./cbi_stat_label.h"
 int main ( void ) {
   CBI_LEX_SYMTBL S;
@@ -562,7 +541,7 @@ int main ( void ) {
   {
     PREFX_SUFIX prsf;
     memset( &prsf, 0, sizeof(prsf) );
-    fprintf( fp_out, "CBI_STAT_LABEL cbi_stat_labeling[] = {\n" );
+    fprintf( fp_out, "static CBI_STAT_LABEL cbi_stat_labeling[] = {\n" );
     {
       CBI_LEX_SYMTBL_PTR pS = &S;
       int i = 0;
@@ -578,6 +557,7 @@ int main ( void ) {
       }
       fprintf( fp_err, "\n" );
     }
+    fprintf( fp_out, "{ _CBI_KIND_NONSENS, \"\", \"\" }\n" );
     fprintf( fp_out, "};\n" );
   }
   fflush( fp_err );
@@ -588,4 +568,3 @@ int main ( void ) {
   
   return 0;
 }
-#endif

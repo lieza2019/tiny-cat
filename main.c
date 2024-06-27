@@ -20,8 +20,11 @@ int main ( void ) {
   int n;
   
   n = load_cbi_code_tbl ( "./cbi/BOTANICAL_GARDEN.csv" );
-  printf( "processed %d entries.\n", n );
-  dump_cbi_stat_prof();
+  printf( "loaded %d entries on.\n", n );
+  
+  n = reveal_cbi_code_tbl();
+  printf( "revised %d entries.\n", n );
+  //dump_cbi_stat_prof();
   
   return 0;
 }

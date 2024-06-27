@@ -101,7 +101,7 @@ static void regist_hash ( CBI_STAT_ATTR_PTR pE ) {
     *pp = pE;
   }
 }
-
+#if 0
 static CBI_STAT_ATTR_PTR re_hash ( char *ident, CBI_STAT_ATTR_PTR pE ) {
   assert( ident );
   assert( pE );
@@ -131,10 +131,42 @@ static CBI_STAT_ATTR_PTR re_hash ( char *ident, CBI_STAT_ATTR_PTR pE ) {
   }
   return r;
 }
-CBI_STAT_ATTR_PTR cbi_stat_rehash ( char *ident, CBI_STAT_ATTR_PTR pE ) {
+#else
+static CBI_STAT_ATTR_PTR re_hash ( char *ident, char *ident_new ) {
   assert( ident );
-  assert( pE );
-  return re_hash( ident, pE );
+  assert( ident_new );
+  CBI_STAT_ATTR_PTR pE = NULL;
+  CBI_STAT_ATTR_PTR *ppB = NULL;
+  
+  {
+    int h = -1;
+    h = hash_key( ident );
+    assert( (h > -1) && (h < CBI_STAT_HASH_BUDGETS_NUM) );
+    ppB = &cbi_stat_hash_budgets[h];
+  }
+  assert( ppB );
+  
+  {
+    CBI_STAT_ATTR_PTR *pp = NULL;
+    pp = walk_hash( ppB, ident );
+    assert( pp );
+    if( *pp ) {
+      pE = *pp;
+      *pp = pE->pNext_hsh;
+      assert( pE );
+      strncpy( pE->ident, ident_new, CBI_STAT_IDENT_LEN );
+      pE->ident[CBI_STAT_IDENT_LEN] = 0;
+      pE->pNext_hsh = NULL;
+      regist_hash( pE );
+    }
+  }
+  return pE;
+}
+#endif
+CBI_STAT_ATTR_PTR cbi_stat_rehash ( char *ident, char *ident_new ) {
+  assert( ident );
+  assert( ident_new );
+  return re_hash( ident, ident_new );
 }
 
 static CBI_STAT_ATTR_PTR conslt_hash ( char *ident ) {
@@ -338,6 +370,7 @@ int load_cbi_code_tbl ( const char *fname ) {
 	assert( pA );
 	strncpy( pA->name, name, CBI_STAT_NAME_LEN );
 	strncpy( pA->ident, name, CBI_STAT_NAME_LEN );
+	pA->kind = _UNKNOWN;
 	pA->group = (CBI_STAT_GROUP)group;
 	pA->disp.raw = disp;
 	{
@@ -364,15 +397,94 @@ int load_cbi_code_tbl ( const char *fname ) {
     errorF( "failed to open the file: %s.\n", fname );
     assert( FALSE );
   }
-
+  
   {
     int i;
     for( i = 0; i < frontier; i++ )
       regist_hash( &cbi_stat_prof[i] );
     assert( i == frontier );
   }
+  
   return frontier;
 }
+
+int reveal_cbi_code_tbl ( void ) {
+  int cnt = 0;
+  int j = 0;
+  
+  while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS ) {
+    CBI_STAT_ATTR_PTR pS = NULL;
+    pS = cbi_stat_idntify( cbi_stat_labeling[j].name );
+    if( pS ) {
+      CBI_STAT_ATTR_PTR pE = NULL;
+      pS->kind = cbi_stat_labeling[j].kind;
+      pE = cbi_stat_rehash( pS->ident, cbi_stat_labeling[j].ident );
+      if( pE )
+	cnt++;
+#ifdef CHK_STRICT_CONSISTENCY
+      assert( pE );
+      assert( pE == pS );
+    } else
+      assert( pS );
+#else
+    }
+#endif // CHK_STRICT_CONSISTENCY
+    j++;
+  }
+  return cnt;
+}
+
+#if 0
+int main ( void ) {
+  int cnt = 0;
+  int n = -1;
+  
+  n = load_cbi_code_tbl ( "./cbi/BOTANICAL_GARDEN.csv" );
+  assert( (n >= 0) && (n <= CBI_MAX_STAT_BITS) );
+  printf( "read %d entries on, from raw csv.\n", n );
+  {
+    int m = -1;
+    m = reveal_cbi_code_tbl();
+    assert( m > -1 );
+    printf( "revised %d entries.\n", m );
+  }
+  
+  // test correctness on construction of hash-map for cbi state bits.
+  {
+    int i;
+    for( i = 0; i < n; i++ ) {
+      CBI_STAT_ATTR_PTR pE = NULL;
+      CBI_STAT_LABEL_PTR pL = NULL;
+      int j = 0;
+      pE = &cbi_stat_prof[i];
+      while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS )  {
+	if( ! strncmp(cbi_stat_labeling[j].name, cbi_stat_prof[i].name, CBI_STAT_NAME_LEN) ) {
+	  pL = &cbi_stat_labeling[j];
+	  break;
+	}
+	j++;
+      }
+      
+      assert( pE );
+      {
+	char id[CBI_STAT_NAME_LEN + 1];
+	id[CBI_STAT_NAME_LEN] = 0;
+	if( pL )
+	  strncpy( id, pL->ident, CBI_STAT_NAME_LEN );
+	else
+	  strncpy( id, pE->name, CBI_STAT_NAME_LEN );
+	pE = cbi_stat_idntify( id );
+	assert( pE );
+	assert( ! strncmp(pE->name, cbi_stat_prof[i].name, CBI_STAT_NAME_LEN) );
+	cnt++;
+      }
+    }
+  }
+  assert( n == cnt );
+  
+  return 0;
+}
+#endif
 
 typedef enum _il_obj {
   S821B_S801B_R,
