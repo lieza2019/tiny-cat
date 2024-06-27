@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include "../cbi.h"
 
+#define CBI_STAT_LABELNG_FNAME "./cbi_stat_label.h"
+
 #define CBI_LEX_ERR_PREFX_MAXCHRS 256
 #define CBI_LEX_EMIT_PREFX_MAXCHRS 256
 #define CBI_LEX_ERR_SUFIX_MAXCHRS 256
@@ -520,7 +522,6 @@ static BOOL transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, 
   return r;
 }
 
-#define OUT_PATH_FNAME "./cbi_stat_label.h"
 int main ( void ) {
   CBI_LEX_SYMTBL S;
   FILE *fp_err = NULL;
@@ -529,9 +530,9 @@ int main ( void ) {
   
   fp_err = stdout;
   assert( fp_err );
-  fp_out = fopen( OUT_PATH_FNAME, "wb" );
+  fp_out = fopen( CBI_STAT_LABELNG_FNAME, "wb" );
   if( ! fp_out ) {
-    fprintf( fp_out, "failed to open the file of %s.\n", OUT_PATH_FNAME );
+    fprintf( fp_out, "failed to open the file of %s.\n", CBI_STAT_LABELNG_FNAME );
     return -1;
   }
   
