@@ -68,12 +68,14 @@ typedef struct cbi_stat_attr {
     CBI_STAT_BIT_MASK mask;
   } disp;
   CBI_STAT_KIND kind;
-  struct cbi_stat_attr *pNext_hsh;
+  struct cbi_stat_attr *pNext_hash;
+  struct cbi_stat_attr *pNext_decl;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
 extern CBI_STAT_ATTR cbi_stat_prof[CBI_MAX_STAT_BITS];
 
 #define CBI_STAT_HASH_BUDGETS_NUM 256
+extern CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR pE );
 extern CBI_STAT_ATTR_PTR cbi_stat_rehash ( char *ident, char *ident_new );
 extern CBI_STAT_ATTR_PTR cbi_stat_idntify ( char *ident );
 

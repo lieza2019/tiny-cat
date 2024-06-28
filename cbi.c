@@ -46,13 +46,13 @@ static BOOL chk_uniq_in_budget ( CBI_STAT_ATTR_PTR pE ) {
   strncpy( id, pE->ident, CBI_STAT_IDENT_LEN );
   assert( ! strncmp(id, pE->ident, CBI_STAT_IDENT_LEN) );
   {
-    CBI_STAT_ATTR_PTR p = pE->pNext_hsh;
+    CBI_STAT_ATTR_PTR p = pE->pNext_hash;
     while( p ) {
       if( !strncmp(p->ident, id, CBI_STAT_IDENT_LEN) ) {
 	found = TRUE;
 	break;
       }
-      p = p->pNext_hsh;
+      p = p->pNext_hash;
     }
     assert( !found );
   }
@@ -71,13 +71,14 @@ static CBI_STAT_ATTR_PTR *walk_hash ( CBI_STAT_ATTR_PTR *ppB, char *ident ) {
 #endif // CHK_STRICT_CONSISTENCY
       break;
     }
-    pp = &(*pp)->pNext_hsh;
+    pp = &(*pp)->pNext_hash;
   }
   return pp;
 }
 
-static void regist_hash ( CBI_STAT_ATTR_PTR pE ) {
+static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR pE ) {
   assert( pE );
+  CBI_STAT_ATTR_PTR r = NULL;
   CBI_STAT_ATTR_PTR *ppB = NULL;
   
   {
@@ -87,51 +88,34 @@ static void regist_hash ( CBI_STAT_ATTR_PTR pE ) {
     ppB = &cbi_stat_hash_budgets[h];
   }
   assert( ppB );
-  pE->pNext_hsh = NULL;
+
+  r = pE;
+  pE->pNext_hash = NULL;
   {
     CBI_STAT_ATTR_PTR *pp;
     pp = walk_hash( ppB, pE->ident );
     if( *pp ) {
-      //assert( FALSE );
+     //assert( FALSE );
       errorF( "redefinition of cbi condition: %s\n", (*pp)->ident );
-      pE->pNext_hsh = (*pp)->pNext_hsh;
+      pE->pNext_hash = (*pp)->pNext_hash;
+      r = *pp;
     }
     assert( pp );
-    assert( !(*pp) );
     *pp = pE;
   }
-}
-#if 0
-static CBI_STAT_ATTR_PTR re_hash ( char *ident, CBI_STAT_ATTR_PTR pE ) {
-  assert( ident );
-  assert( pE );
-  CBI_STAT_ATTR_PTR r = NULL;
-  CBI_STAT_ATTR_PTR *ppB = NULL;
-  
-  {
-    int h = -1;
-    h = hash_key( ident );
-    assert( (h > -1) && (h < CBI_STAT_HASH_BUDGETS_NUM) );
-    ppB = &cbi_stat_hash_budgets[h];
-  }
-  assert( ppB );
-  
-  {
-    CBI_STAT_ATTR_PTR *pp = NULL;
-    pp = walk_hash( ppB, ident );
-    assert( pp );
-    if( *pp ) {
-      pE->pNext_hsh = (*pp)->pNext_hsh;
-      r = *pp;
-      *pp = pE;
-    } else {
-      *pp = pE;
-      pE->pNext_hsh = NULL;
-    }
-  }
+  assert( r );
   return r;
 }
-#else
+
+CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR pE ) {
+  assert( pE );
+  CBI_STAT_ATTR_PTR r = NULL;
+  
+  r = regist_hash( pE );
+  assert( r );
+  return r;
+}
+
 static CBI_STAT_ATTR_PTR re_hash ( char *ident, char *ident_new ) {
   assert( ident );
   assert( ident_new );
@@ -152,17 +136,17 @@ static CBI_STAT_ATTR_PTR re_hash ( char *ident, char *ident_new ) {
     assert( pp );
     if( *pp ) {
       pE = *pp;
-      *pp = pE->pNext_hsh;
+      *pp = pE->pNext_hash;
       assert( pE );
       strncpy( pE->ident, ident_new, CBI_STAT_IDENT_LEN );
       pE->ident[CBI_STAT_IDENT_LEN] = 0;
-      pE->pNext_hsh = NULL;
+      pE->pNext_hash = NULL;
       regist_hash( pE );
     }
   }
   return pE;
 }
-#endif
+
 CBI_STAT_ATTR_PTR cbi_stat_rehash ( char *ident, char *ident_new ) {
   assert( ident );
   assert( ident_new );

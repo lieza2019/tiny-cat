@@ -58,6 +58,15 @@ LEX_IL_OBJ cbi_lex_def[] = {
   {END_OF_CBI_STAT_KIND, "", "", {{""}}}
 };
 
+#define IL_OBJ_HASH_BUDGETS_NUM 256
+struct {
+  CBI_STAT_ATTR_PTR budgets[IL_OBJ_HASH_BUDGETS_NUM];
+  CBI_STAT_ATTR sea[CBI_MAX_STAT_BITS];
+  int frontier;
+  CBI_STAT_ATTR_PTR ptop;
+  CBI_STAT_ATTR_PTR *pprev;
+} il_objs_hash;
+
 static CBI_LEX_SYMBOL_PTR regist_symbol ( CBI_LEX_SYMTBL_PTR psymtbl, CBI_LEX_SYMBOL_PTR ancest, char *id, int id_len ) {
   assert( psymtbl );
   assert( id );
@@ -429,6 +438,7 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	assert( (abs(n) >= 0) && (abs(n) < CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[abs(n)] = 0;
 	if( n > 0 ) {
+#if 0
 	  if( cnt > 0 )
 	    //fprintf( fp, ", %s", emit_buf );
 	    ;
@@ -436,6 +446,27 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    assert( cnt == 0 );
 	    //fprintf( fp, "%s", emit_buf );
 	  }
+#else
+	  CBI_STAT_ATTR_PTR pE = NULL;
+	  assert( il_objs_hash.frontier < CBI_MAX_STAT_BITS );
+	  pE = &il_objs_hash.sea[il_objs_hash.frontier++];
+	  assert( pE );
+	  pE->ident[CBI_STAT_IDENT_LEN] = 0;
+	  strncpy( pE->ident, emit_buf, CBI_STAT_IDENT_LEN );
+	  {
+	    CBI_STAT_ATTR_PTR w = NULL;
+	    w = cbi_stat_regist( pE );
+	    assert( w );
+	    if( il_objs_hash.pprev ) {
+	      assert( ! *(il_objs_hash.pprev) );
+	      *(il_objs_hash.pprev) = w;
+	    }
+	    il_objs_hash.pprev = &w->pNext_decl;
+	    
+	    if( ! il_objs_hash.ptop )
+	      il_objs_hash.ptop = w;
+	  }
+#endif	  
 	  cnt++;
 	} else {
 	  err = TRUE;
