@@ -5,6 +5,7 @@
 #include "../cbi.h"
 
 #define CBI_STAT_LABELNG_FNAME "./cbi_stat_label.h"
+#define IL_INSTANCES_EMIT_FNAME "./il_obj_instance_desc.h"
 
 #define CBI_LEX_ERR_PREFX_MAXCHRS 256
 #define CBI_LEX_EMIT_PREFX_MAXCHRS 256
@@ -22,7 +23,7 @@ typedef struct prefx_sufix {
 } PREFX_SUFIX, *PREFX_SUFIX_PTR;
 
 #define CBI_LEX_PAT_MAXLEN 256
-#define CBI_STAT_RAWNAME_MAXLEN 256
+#define CBI_STAT_RAWNAME_MAXLEN CBI_STAT_NAME_LEN
 #define CBI_EXPAND_PAT_MAXNUM 5
 typedef struct lex_il_obj {
   CBI_STAT_KIND kind;
@@ -416,6 +417,11 @@ static int lex_exp_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, int pa
   return( strnlen(buf, buflen) * (err ? -1 : 1) );
 }
 
+static CBI_STAT_ATTR_PTR hash_regist ( CBI_STAT_ATTR_PTR pE ) {
+  assert( pE );
+  return cbi_stat_regist( il_objs_hash.budgets, IL_OBJ_HASH_BUDGETS_NUM, pE );
+}
+
 static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
   assert( fp );
   assert( errfp );
@@ -438,25 +444,23 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	assert( (abs(n) >= 0) && (abs(n) < CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[abs(n)] = 0;
 	if( n > 0 ) {
-#if 0
-	  if( cnt > 0 )
-	    //fprintf( fp, ", %s", emit_buf );
-	    ;
-	  else {
-	    assert( cnt == 0 );
-	    //fprintf( fp, "%s", emit_buf );
-	  }
-#else
 	  CBI_STAT_ATTR_PTR pE = NULL;
 	  assert( il_objs_hash.frontier < CBI_MAX_STAT_BITS );
 	  pE = &il_objs_hash.sea[il_objs_hash.frontier++];
 	  assert( pE );
 	  pE->ident[CBI_STAT_IDENT_LEN] = 0;
 	  strncpy( pE->ident, emit_buf, CBI_STAT_IDENT_LEN );
+	  pE->name[CBI_STAT_RAWNAME_MAXLEN] = 0;
+	  strncpy( pE->name, plex->raw_name, CBI_STAT_NAME_LEN );
+	  pE->kind = plex->kind;
 	  {
 	    CBI_STAT_ATTR_PTR w = NULL;
-	    w = cbi_stat_regist( pE );
-	    assert( w );
+	    w = hash_regist( pE );
+	    if( w != pE ) {
+	      assert( w );
+	      err = TRUE;
+	      break;
+	    }
 	    if( il_objs_hash.pprev ) {
 	      assert( ! *(il_objs_hash.pprev) );
 	      *(il_objs_hash.pprev) = w;
@@ -466,7 +470,6 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    if( ! il_objs_hash.ptop )
 	      il_objs_hash.ptop = w;
 	  }
-#endif	  
 	  cnt++;
 	} else {
 	  err = TRUE;
@@ -562,14 +565,14 @@ int main ( void ) {
   fp_err = stdout;
   assert( fp_err );
   fp_out = fopen( CBI_STAT_LABELNG_FNAME, "wb" );
-  if( ! fp_out ) {
+  if( !fp_out ) {
     fprintf( fp_out, "failed to open the file of %s.\n", CBI_STAT_LABELNG_FNAME );
     return -1;
   }
-  
   n = load_cbi_code_tbl ( "./BOTANICAL_GARDEN.csv" );
   assert( n >= 0 );
   fprintf( fp_err, "read %d entries from csv.\n", n );
+  
   {
     PREFX_SUFIX prsf;
     memset( &prsf, 0, sizeof(prsf) );
@@ -596,6 +599,51 @@ int main ( void ) {
   if( fp_out ) {
     fflush( fp_out );
     fclose( fp_out );
+    fp_out = NULL;
+  }
+  
+  fp_out = fopen( IL_INSTANCES_EMIT_FNAME, "wb" );
+  if( !fp_out ) {
+    fprintf( fp_out, "failed to open the file of %s.\n", IL_INSTANCES_EMIT_FNAME );
+    return -1;
+  }
+  {
+    CBI_STAT_KIND K;
+    char name[CBI_STAT_NAME_LEN + 1];
+    CBI_STAT_ATTR_PTR p = NULL;
+    p = il_objs_hash.ptop;
+    while( p ) {
+      assert( p->ident );
+      p->ident[CBI_STAT_IDENT_LEN] = 0;
+      fprintf( fp_out, "IL_OBJ_INSTANCE_DESC( " );
+      K = p->kind;
+      fprintf( fp_out, "%s, ", cnv2str_cbi_stat_kind[K] );
+      assert( p->name );
+      p->name[CBI_STAT_NAME_LEN] = 0;
+      name[CBI_STAT_NAME_LEN] = 0;
+      strncpy( name, p->name, CBI_STAT_NAME_LEN );
+      fprintf( fp_out, "%s, ", name );
+      {
+	int cnt = 0;
+	do {
+	  assert( p );
+	  p->name[CBI_STAT_NAME_LEN] = 0;
+	  if( (p->kind != K) || strncmp(p->name, name, CBI_STAT_NAME_LEN) )
+	    break;
+	  p->ident[CBI_STAT_IDENT_LEN] = 0;
+	  fprintf( fp_out, "%s", p->ident );
+	  if( cnt < (CBI_EXPAND_PAT_MAXNUM - 1) )
+	    fprintf( fp_out, ", " );
+	  cnt++;
+	  p = p->pNext_decl;
+	} while( p && (cnt < CBI_EXPAND_PAT_MAXNUM) );
+	while( cnt < (CBI_EXPAND_PAT_MAXNUM - 1) ) {
+	  fprintf( fp_out, ", " );
+	  cnt++;
+	}
+	fprintf( fp_out, ")\n" );
+      }
+    }
   }
   
   return 0;
