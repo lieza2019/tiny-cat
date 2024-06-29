@@ -1,3 +1,8 @@
-#define IL_OBJ_INSTANCE_DESC(route, raw_name, inst_1, inst_2, inst_3, inst_4, inst_5)
+#ifndef IL_OBJ_INSTANCES_DECL
+#define IL_OBJ_INSTANCES_DECL
+typedef enum _il_obj_instances {
+#define IL_OBJ_INSTANCE_DESC(route, raw_name, exp) exp,
 #include "./il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
+} IL_OBJ_INSTANCES;
+#endif

@@ -614,7 +614,6 @@ int main ( void ) {
     p = il_objs_hash.ptop;
     while( p ) {
       assert( p->ident );
-      p->ident[CBI_STAT_IDENT_LEN] = 0;
       fprintf( fp_out, "IL_OBJ_INSTANCE_DESC( " );
       K = p->kind;
       fprintf( fp_out, "%s, ", cnv2str_cbi_stat_kind[K] );
@@ -623,6 +622,7 @@ int main ( void ) {
       name[CBI_STAT_NAME_LEN] = 0;
       strncpy( name, p->name, CBI_STAT_NAME_LEN );
       fprintf( fp_out, "%s, ", name );
+#if 0
       {
 	int cnt = 0;
 	do {
@@ -638,13 +638,20 @@ int main ( void ) {
 	  p = p->pNext_decl;
 	} while( p && (cnt < CBI_EXPAND_PAT_MAXNUM) );
 	while( cnt < (CBI_EXPAND_PAT_MAXNUM - 1) ) {
-	  fprintf( fp_out, ", " );
+	  fprintf( fp_out, "NO_EXP, " );
 	  cnt++;
 	}
+	if( cnt < CBI_EXPAND_PAT_MAXNUM )
+	  fprintf( fp_out, "NO_EXP " );
 	fprintf( fp_out, ")\n" );
       }
+#else
+      p->ident[CBI_STAT_IDENT_LEN] = 0;
+      fprintf( fp_out, "%s", p->ident );
+      fprintf( fp_out, " )\n" );
+      p = p->pNext_decl;
+#endif
     }
   }
-  
   return 0;
 }
