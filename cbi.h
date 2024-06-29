@@ -1,6 +1,7 @@
- #include "generic.h"
+#include "generic.h"
 #include "misc.h"
 #include "network.h"
+#include "./cbi/il_obj_instance_decl.h"
 
 #define CBI_MAX_STAT_BITS 65536
 #define CBI_STAT_BITS_LEXBUF_SIZE 256

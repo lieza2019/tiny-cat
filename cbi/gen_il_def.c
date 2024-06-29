@@ -608,8 +608,9 @@ int main ( void ) {
     return -1;
   }
   {
+    int cnt = 0;
+    char name[CBI_STAT_NAME_LEN + 1];   
     CBI_STAT_KIND K;
-    char name[CBI_STAT_NAME_LEN + 1];
     CBI_STAT_ATTR_PTR p = NULL;
     p = il_objs_hash.ptop;
     while( p ) {
@@ -622,35 +623,13 @@ int main ( void ) {
       name[CBI_STAT_NAME_LEN] = 0;
       strncpy( name, p->name, CBI_STAT_NAME_LEN );
       fprintf( fp_out, "%s, ", name );
-#if 0
-      {
-	int cnt = 0;
-	do {
-	  assert( p );
-	  p->name[CBI_STAT_NAME_LEN] = 0;
-	  if( (p->kind != K) || strncmp(p->name, name, CBI_STAT_NAME_LEN) )
-	    break;
-	  p->ident[CBI_STAT_IDENT_LEN] = 0;
-	  fprintf( fp_out, "%s", p->ident );
-	  if( cnt < (CBI_EXPAND_PAT_MAXNUM - 1) )
-	    fprintf( fp_out, ", " );
-	  cnt++;
-	  p = p->pNext_decl;
-	} while( p && (cnt < CBI_EXPAND_PAT_MAXNUM) );
-	while( cnt < (CBI_EXPAND_PAT_MAXNUM - 1) ) {
-	  fprintf( fp_out, "NO_EXP, " );
-	  cnt++;
-	}
-	if( cnt < CBI_EXPAND_PAT_MAXNUM )
-	  fprintf( fp_out, "NO_EXP " );
-	fprintf( fp_out, ")\n" );
-      }
-#else
       p->ident[CBI_STAT_IDENT_LEN] = 0;
-      fprintf( fp_out, "%s", p->ident );
+      fprintf( fp_out, "IL_3t( %s,", p->ident );
+      fprintf( fp_out, " \"%s\",", p->ident );
+      fprintf( fp_out, " %d)", cnt );
       fprintf( fp_out, " )\n" );
+      cnt++;
       p = p->pNext_decl;
-#endif
     }
   }
   return 0;
