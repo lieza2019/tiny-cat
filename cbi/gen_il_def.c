@@ -578,44 +578,57 @@ int main ( void ) {
   CBI_LEX_SYMTBL S;
   FILE *fp_err = NULL;
   FILE *fp_out = NULL;
-  int n = -1;
+  int oc_id = OC801;
   
   fp_err = stdout;
-  assert( fp_err );
   fp_out = fopen( CBI_STAT_LABELNG_FNAME, "wb" );
   if( !fp_out ) {
     fprintf( fp_out, "failed to open the file of %s.\n", CBI_STAT_LABELNG_FNAME );
     return -1;
   }
-  n = load_cbi_code_tbl ( END_OF_OCs, "./BOTANICAL_GARDEN.csv" );
-  assert( n >= 0 );
-  fprintf( fp_err, "read %d entries from csv.\n", n );
   
-  {
-    int oc_id = OC801;
-    PREFX_SUFIX prsf;
-    memset( &prsf, 0, sizeof(prsf) );
-    fprintf( fp_out, "static CBI_STAT_LABEL cbi_stat_labeling[] = {\n" );
-    while( oc_id != (int)END_OF_OCs ) {
-      assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
-      CBI_LEX_SYMTBL_PTR pS = &S;
-      int i = 0;
-      while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
-	int j;
-	for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[oc_id][j].name[0]; j++ ) {
-	  assert( pS );
-	  memset( pS, 0, sizeof(S) );
-	  snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%d: ", (j + 1) );
-	  transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[oc_id][j] );
-	}
-	i++;
-      }
-      fprintf( fp_err, "\n" );
+  while( oc_id < (int)END_OF_OCs ) {
+    assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
+    assert( fp_err );
+    assert( fp_out );
+    int n = -1;
+    if( ! cbi_stat_csv_fnames[oc_id].fname ) {
       oc_id++;
+      continue;
     }
-    fprintf( fp_out, "{ _CBI_KIND_NONSENS, \"\", \"\" }\n" );
-    fprintf( fp_out, "};\n" );
+    
+    assert( cbi_stat_csv_fnames[oc_id].oc_id == oc_id );
+    assert( cbi_stat_csv_fnames[oc_id].fname );
+    n = load_cbi_code_tbl ( cbi_stat_csv_fnames[oc_id].oc_id, cbi_stat_csv_fnames[oc_id].fname );
+    assert( n >= 0 );
+    fprintf( fp_err, "read %d entries from csv file of %s.\n", n, cbi_stat_csv_fnames[oc_id].fname );
+    {
+      PREFX_SUFIX prsf;
+      memset( &prsf, 0, sizeof(prsf) );
+      fprintf( fp_out, "#ifndef CBI_STAT_LABELING\n" );
+      fprintf( fp_out, "#define CBI_STAT_LABELING\n" );
+      fprintf( fp_out, "#endif\n" );
+      fprintf( fp_out, "static CBI_STAT_LABEL cbi_stat_labeling[] = {\n" );
+      {
+	CBI_LEX_SYMTBL_PTR pS = &S;
+	int i = 0;
+	while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
+	  int j;
+	  for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[oc_id][j].name[0]; j++ ) {
+	    assert( pS );
+	    memset( pS, 0, sizeof(S) );
+	    snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%d: ", (j + 1) );
+	    transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[oc_id][j] );
+	  }
+	  i++;
+	}
+	fprintf( fp_err, "\n" );
+      }
+    }
+    oc_id++;
   }
+  fprintf( fp_out, "{ _CBI_KIND_NONSENS, \"\", \"\" }\n" );
+  fprintf( fp_out, "};\n" );
   fflush( fp_err );
   if( fp_out ) {
     fflush( fp_out );

@@ -10,4 +10,4 @@ typedef enum _il_obj_instances {
   END_OF_IL_OBJ_INSTANCES
 } IL_OBJ_INSTANCES;
 
-#endif
+#endif // IL_OBJ_INSTANCES_DECL

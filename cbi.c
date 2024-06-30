@@ -7,6 +7,14 @@
 #include "cbi.h"
 
 #include "./cbi/cbi_stat_label.h"
+#ifndef CBI_STAT_LABELING
+static CBI_STAT_LABEL cbi_stat_labeling[] = {
+  { _CBI_KIND_NONSENS, "", "" }
+};
+#endif
+#ifdef CBI_STAT_LABELING
+#undef CBI_STAT_LABELING
+#endif
 
 char *cnv2str_cbi_stat_kind[] = {
 #define CBI_STAT_KIND_DESC(enum, name) name,
