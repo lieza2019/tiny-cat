@@ -1,5 +1,7 @@
 #include "generic.h"
 #include "misc.h"
+#include "network.h"
+#include "cbi.h"
 #include "srv.h"
 
 #define INTERLOCK_C
@@ -117,4 +119,26 @@ static BOOL chk_ars_triggered( ARS_ROUTE_PTR pRoute_ars ) {
     }
   }
   return r;
+}
+
+static void willing_to_recv_train_info( TINY_SOCK_PTR pS, OC_ID oc_id ) {
+  assert( pS );
+  assert( (oc_id >= 0) && (oc_id < END_OF_OCs) );
+  ;
+}
+
+static BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS ) {
+  assert( pS );
+  BOOL r = FALSE;
+  int i = (int)OC801;
+  while( i < (int)END_OF_OCs ) {
+    willing_to_recv_train_info( pS, (OC_ID)i );
+    i++;
+  }
+  r = TRUE;
+  return r;
+}
+
+BOOL establish_CBI_comm ( TINY_SOCK_PTR pS ) {
+  return FALSE;
 }

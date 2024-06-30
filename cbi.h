@@ -6,6 +6,35 @@
 #define CBI_MAX_STAT_BITS 65536
 #define CBI_STAT_BITS_LEXBUF_SIZE 256
 
+typedef enum _oc_id {
+  OC801,
+  OC802,
+  OC803,
+  OC804,
+  OC805,
+  OC806,
+  OC807,
+  OC808,
+  OC809,
+  OC810,
+  OC811,
+  END_OF_OCs
+} OC_ID;
+
+struct recv_buf_il_stat {
+  NXNS_HEADER header;
+  unsigned char arena[1328];
+};
+typedef struct CBI_stat_infoset {
+  char oc_name[6];
+  IP_ADDR_DESC oc_ipaddr;
+  struct {
+    const unsigned short dst_port;
+    TINY_SOCK_DESC d_recv_il_stat;
+    struct recv_buf_il_stat recv;
+  } oc2ats[3];
+} CBI_STAT_INFO, *CBI_STAT_INFO_PTR;
+
 typedef enum _cbi_stat_group {
   CBI_STAT_i1 = 1,
   CBI_STAT_i2,
@@ -69,6 +98,7 @@ typedef struct cbi_stat_attr {
     CBI_STAT_BIT_MASK mask;
   } disp;
   CBI_STAT_KIND kind;
+  OC_ID oc_id;
   struct cbi_stat_attr *pNext_hash;
   struct cbi_stat_attr *pNext_decl;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;

@@ -16,21 +16,6 @@
 #include "interlock.h"
 
 #if 1
-int main ( void ) {
-  int n;
-  
-  n = load_cbi_code_tbl ( "./cbi/BOTANICAL_GARDEN.csv" );
-  printf( "loaded %d entries on.\n", n );
-  
-  n = reveal_cbi_code_tbl();
-  printf( "revised %d entries.\n", n );
-  //dump_cbi_stat_prof();
-  
-  return 0;
-}
-#endif
-
-#if 0
 static int diag_tracking_train_cmd ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
@@ -109,19 +94,20 @@ int main ( void ) {
   TINY_SOCK_DESC sd_recv_srvstat = -1;
   TINY_SOCK socks;
   TINY_SOCK_CREAT( socks );
-#if 0
+#if 1
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
   printf( "sizeof TRAIN_INFO: %d.\n", (int)sizeof(TRAIN_INFO) );
   {
     struct _recv_buf_train_info {
       NXNS_HEADER header;
-      uint8_t flgs_1;
-      uint8_t spare_1;
-      uint8_t spare_2;
-      uint8_t spare_3;
-      TRAIN_INFO train_info;
+      //uint8_t flgs_1;
+      //uint8_t spare_1;
+      //uint8_t spare_2;
+      //uint8_t spare_3;
+      //TRAIN_INFO train_info;
     };
-    printf( "sizof RECV_BUF_TRAININFO: %d.\n", (int)sizeof(struct _recv_buf_train_info) );
+    //printf( "sizeof RECV_BUF_TRAININFO: %d.\n", (int)sizeof(struct _recv_buf_train_info) );
+    printf( "sizof NXHDR: %d.\n", (int)sizeof(struct _recv_buf_train_info) );
   }
   printf( "sizeof MSG_TINY_SERVER_STATUS: %d.\n", (int)sizeof(MSG_TINY_SERVER_STATUS) );
   {
