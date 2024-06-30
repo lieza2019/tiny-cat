@@ -100,14 +100,13 @@ int main ( void ) {
   {
     struct _recv_buf_train_info {
       NXNS_HEADER header;
-      //uint8_t flgs_1;
-      //uint8_t spare_1;
-      //uint8_t spare_2;
-      //uint8_t spare_3;
-      //TRAIN_INFO train_info;
+      uint8_t flgs_1;
+      uint8_t spare_1;
+      uint8_t spare_2;
+      uint8_t spare_3;
+      TRAIN_INFO train_info;
     };
-    //printf( "sizeof RECV_BUF_TRAININFO: %d.\n", (int)sizeof(struct _recv_buf_train_info) );
-    printf( "sizof NXHDR: %d.\n", (int)sizeof(struct _recv_buf_train_info) );
+    printf( "sizeof RECV_BUF_TRAININFO: %d.\n", (int)sizeof(struct _recv_buf_train_info) );
   }
   printf( "sizeof MSG_TINY_SERVER_STATUS: %d.\n", (int)sizeof(MSG_TINY_SERVER_STATUS) );
   {

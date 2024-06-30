@@ -15,8 +15,8 @@ char *cnv2str_cbi_stat_kind[] = {
   NULL
 };
 
-CBI_STAT_ATTR cbi_stat_prof[CBI_MAX_STAT_BITS];
-static int frontier;
+CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
+static int frontier[END_OF_OCs];
 
 static CBI_STAT_ATTR_PTR cbi_stat_hash_budgets[CBI_STAT_HASH_BUDGETS_NUM];
 
@@ -342,24 +342,24 @@ static void dup_CBI_code_tbl ( const char *name, int group, int disp ) { // ****
 }
 #endif
 #define CBI_STAT_MASKNAME_MAXLEN 256
-void dump_cbi_stat_prof ( void ) {
+void dump_cbi_stat_prof ( OC_ID oc_id ) {
   int i;
   for( i = 0; i < CBI_MAX_STAT_BITS; i++ ) {
-    printf( "name: %s\n", cbi_stat_prof[i].name );
-    printf( "ident: %s\n", cbi_stat_prof[i].ident );
-    printf( "disp.raw: %d\n", cbi_stat_prof[i].disp.raw );
-    printf( "disp.bytes: %d\n", cbi_stat_prof[i].disp.bytes );
-    printf( "disp.bits: %d\n", cbi_stat_prof[i].disp.bits );
+    printf( "name: %s\n", cbi_stat_prof[oc_id][i].name );
+    printf( "ident: %s\n", cbi_stat_prof[oc_id][i].ident );
+    printf( "disp.raw: %d\n", cbi_stat_prof[oc_id][i].disp.raw );
+    printf( "disp.bytes: %d\n", cbi_stat_prof[oc_id][i].disp.bytes );
+    printf( "disp.bits: %d\n", cbi_stat_prof[oc_id][i].disp.bits );
     {
       char str[CBI_STAT_MASKNAME_MAXLEN + 1];
       str[CBI_STAT_MASKNAME_MAXLEN] = 0;
-      show_cbi_stat_bit_mask( str, CBI_STAT_MASKNAME_MAXLEN, cbi_stat_prof[i].disp.mask );
+      show_cbi_stat_bit_mask( str, CBI_STAT_MASKNAME_MAXLEN, cbi_stat_prof[oc_id][i].disp.mask );
       printf( "disp.mask: %s\n", str );
     }
     printf( "\n" );
   }
 }
-int load_cbi_code_tbl ( const char *fname ) {
+int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
   assert( fname );
   FILE *fp = NULL;
   
@@ -370,7 +370,7 @@ int load_cbi_code_tbl ( const char *fname ) {
     int disp = -1;
     char name[CBI_STAT_NAME_LEN + 1];
     name[CBI_STAT_NAME_LEN] = 0;
-    while( (! feof(fp)) && (frontier < CBI_MAX_STAT_BITS) ) {
+    while( (! feof(fp)) && (frontier[oc_id] < CBI_MAX_STAT_BITS) ) {
       char buf[CBI_STAT_BITS_LEXBUF_SIZE + 1];
       buf[CBI_STAT_BITS_LEXBUF_SIZE] = 0;
       fscanf( fp, "%s\n", buf );
@@ -378,7 +378,7 @@ int load_cbi_code_tbl ( const char *fname ) {
 	errorF( "failed lexical analyzing the CBI code-table, in line num: %d.\n,", lines );
 	assert( FALSE );
       } else {
-	CBI_STAT_ATTR_PTR pA = &cbi_stat_prof[frontier];
+	CBI_STAT_ATTR_PTR pA = &cbi_stat_prof[oc_id][frontier[oc_id]];
 	assert( pA );
 	strncpy( pA->name, name, CBI_STAT_NAME_LEN );
 	strncpy( pA->ident, name, CBI_STAT_NAME_LEN );
@@ -398,7 +398,7 @@ int load_cbi_code_tbl ( const char *fname ) {
 	  pA->disp.bits = m;
 	}
 	pA->disp.mask = cbi_stat_bit_mask_pattern( pA->disp.bits );
-	frontier++;
+	frontier[oc_id]++;
       }
       lines++;
       //dup_CBI_code_tbl( name, group, disp ); // ***** for debugging.
@@ -412,12 +412,12 @@ int load_cbi_code_tbl ( const char *fname ) {
   
   {
     int i;
-    for( i = 0; i < frontier; i++ )
-      regist_hash_local( &cbi_stat_prof[i] );
-    assert( i == frontier );
+    for( i = 0; i < frontier[oc_id]; i++ )
+      regist_hash_local( &cbi_stat_prof[oc_id][i] );
+    assert( i == frontier[oc_id] );
   }
   
-  return frontier;
+  return frontier[oc_id];
 }
 
 int reveal_cbi_code_tbl ( void ) {
@@ -468,9 +468,9 @@ int main ( void ) {
       CBI_STAT_ATTR_PTR pE = NULL;
       CBI_STAT_LABEL_PTR pL = NULL;
       int j = 0;
-      pE = &cbi_stat_prof[i];
+      pE = &cbi_stat_prof[oc_id][i];
       while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS )  {
-	if( ! strncmp(cbi_stat_labeling[j].name, cbi_stat_prof[i].name, CBI_STAT_NAME_LEN) ) {
+	if( ! strncmp(cbi_stat_labeling[j].name, cbi_stat_prof[oc_id][i].name, CBI_STAT_NAME_LEN) ) {
 	  pL = &cbi_stat_labeling[j];
 	  break;
 	}
@@ -487,7 +487,7 @@ int main ( void ) {
 	  strncpy( id, pE->name, CBI_STAT_NAME_LEN );
 	pE = conslt_hash_local( id );
 	assert( pE );
-	assert( ! strncmp(pE->name, cbi_stat_prof[i].name, CBI_STAT_NAME_LEN) );
+	assert( ! strncmp(pE->name, cbi_stat_prof[oc_id][i].name, CBI_STAT_NAME_LEN) );
 	cnt++;
       }
     }

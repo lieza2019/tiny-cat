@@ -4,8 +4,23 @@
 #include <ctype.h>
 #include "../cbi.h"
 
-#define CBI_STAT_LABELNG_FNAME "./cbi_stat_label.h"
-#define IL_INSTANCES_EMIT_FNAME "./il_obj_instance_desc.h"
+static struct {
+  OC_ID oc_id;
+  char *fname;
+} cbi_stat_csv_fnames[END_OF_OCs + 1] = {
+  {OC801, "./BOTANICAL_GARDEN.csv"},
+  {OC802, NULL},
+  {OC803, NULL},
+  {OC804, NULL},
+  {OC805, NULL},
+  {OC806, NULL},
+  {OC807, NULL},
+  {OC808, NULL},
+  {OC809, NULL},
+  {OC810, NULL},
+  {OC811, NULL},
+  {END_OF_OCs, NULL}
+};
 
 #define CBI_LEX_ERR_PREFX_MAXCHRS 256
 #define CBI_LEX_EMIT_PREFX_MAXCHRS 256
@@ -49,6 +64,9 @@ typedef struct cbi_lex_symtbl {
 } CBI_LEX_SYMTBL, *CBI_LEX_SYMTBL_PTR;
 
 #define CBI_EXPAND_EMIT_MAXLEN 256
+
+#define CBI_STAT_LABELNG_FNAME "./cbi_stat_label.h"
+#define IL_INSTANCES_EMIT_FNAME "./il_obj_instance_desc.h"
 
 LEX_IL_OBJ cbi_lex_def[] = {
   /*
@@ -569,28 +587,31 @@ int main ( void ) {
     fprintf( fp_out, "failed to open the file of %s.\n", CBI_STAT_LABELNG_FNAME );
     return -1;
   }
-  n = load_cbi_code_tbl ( "./BOTANICAL_GARDEN.csv" );
+  n = load_cbi_code_tbl ( END_OF_OCs, "./BOTANICAL_GARDEN.csv" );
   assert( n >= 0 );
   fprintf( fp_err, "read %d entries from csv.\n", n );
   
   {
+    int oc_id = OC801;
     PREFX_SUFIX prsf;
     memset( &prsf, 0, sizeof(prsf) );
     fprintf( fp_out, "static CBI_STAT_LABEL cbi_stat_labeling[] = {\n" );
-    {
+    while( oc_id != (int)END_OF_OCs ) {
+      assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
       CBI_LEX_SYMTBL_PTR pS = &S;
       int i = 0;
       while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
 	int j;
-	for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[j].name[0]; j++ ) {
+	for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[oc_id][j].name[0]; j++ ) {
 	  assert( pS );
 	  memset( pS, 0, sizeof(S) );
 	  snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%d: ", (j + 1) );
-	  transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[j] );
+	  transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[oc_id][j] );
 	}
 	i++;
       }
       fprintf( fp_err, "\n" );
+      oc_id++;
     }
     fprintf( fp_out, "{ _CBI_KIND_NONSENS, \"\", \"\" }\n" );
     fprintf( fp_out, "};\n" );
