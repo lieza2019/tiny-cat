@@ -18,22 +18,85 @@ typedef enum _oc_id {
   OC809,
   OC810,
   OC811,
+  OC812,
+  OC813,
+  OC814,
+  OC815,
+  OC816,
   END_OF_OCs
 } OC_ID;
 
-struct recv_buf_il_stat {
+typedef enum {
+  ATS2OC801,
+  ATS2OC802,
+  ATS2OC803,
+  ATS2OC804,
+  ATS2OC805,
+  ATS2OC806,
+  ATS2OC807,
+  ATS2OC808,
+  ATS2OC809,
+  ATS2OC810,
+  ATS2OC811,
+  ATS2OC812,
+  ATS2OC813,
+  ATS2OC814,
+  ATS2OC815,
+  ATS2OC816,
+  END_OF_ATS2OC
+} ATS2OC_MSG;
+typedef enum {
+  OC2ATS1,
+  OC2ATS2,
+  OC2ATS3,
+  END_OF_OC2ATS
+} OC2ATS_STAT;
+
+#define UDP_BCAST_RECV_PORT_ATS2OC_801 58199
+#define UDP_BCAST_RECV_PORT_ATS2OC_802 58299
+#define UDP_BCAST_RECV_PORT_ATS2OC_803 58399
+#define UDP_BCAST_RECV_PORT_ATS2OC_804 58499
+#define UDP_BCAST_RECV_PORT_ATS2OC_805 58599
+#define UDP_BCAST_RECV_PORT_ATS2OC_806 58699
+#define UDP_BCAST_RECV_PORT_ATS2OC_807 58799
+#define UDP_BCAST_RECV_PORT_ATS2OC_808 58899
+#define UDP_BCAST_RECV_PORT_ATS2OC_809 58999
+#define UDP_BCAST_RECV_PORT_ATS2OC_810 59099
+#define UDP_BCAST_RECV_PORT_ATS2OC_811 59199
+#define UDP_BCAST_RECV_PORT_ATS2OC_812 59299
+#define UDP_BCAST_RECV_PORT_ATS2OC_813 59399
+#define UDP_BCAST_RECV_PORT_ATS2OC_814 59499
+#define UDP_BCAST_RECV_PORT_ATS2OC_815 59599
+#define UDP_BCAST_RECV_PORT_ATS2OC_816 59699
+
+#define UDP_BCAST_RECV_PORT_OC2ATS1_STAT 58198
+#define UDP_BCAST_RECV_PORT_OC2ATS2_STAT 58197
+#define UDP_BCAST_RECV_PORT_OC2ATS3_STAT 58196
+
+typedef struct recv_buf_cbi_stat {
   NXNS_HEADER header;
   unsigned char arena[1328];
-};
+} RECV_BUF_CBI_STAT, *RECV_BUF_CBI_STAT_PTR;
+extern RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
+
 typedef struct CBI_stat_infoset {
-  char oc_name[6];
-  IP_ADDR_DESC oc_ipaddr;
+  char oc_name[END_OF_OCs][6];
+  IP_ADDR_DESC oc_ipaddr[END_OF_OCs];
   struct {
     const unsigned short dst_port;
-    TINY_SOCK_DESC d_recv_il_stat;
-    struct recv_buf_il_stat recv;
-  } oc2ats[3];
+    TINY_SOCK_DESC d_recv_cbi_stat;
+    OC_ID dest_oc_id;
+    RECV_BUF_CBI_STAT sent;
+  } ats2oc;
+  struct {
+    const unsigned short dst_port;
+    TINY_SOCK_DESC d_recv_cbi_stat;
+    OC_ID sender_oc_id;
+    RECV_BUF_CBI_STAT recv;
+  } oc2ats;
 } CBI_STAT_INFO, *CBI_STAT_INFO_PTR;
+extern CBI_STAT_INFO cbi_stat_ATS2OC[END_OF_ATS2OC];
+extern CBI_STAT_INFO cbi_stat_OC2ATS[END_OF_OC2ATS];
 
 typedef enum _cbi_stat_group {
   CBI_STAT_i1 = 1,

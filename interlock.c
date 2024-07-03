@@ -121,18 +121,27 @@ static BOOL chk_ars_triggered( ARS_ROUTE_PTR pRoute_ars ) {
   return r;
 }
 
-static void willing_to_recv_train_info( TINY_SOCK_PTR pS, OC_ID oc_id ) {
+static void willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC_ID oc_id ) {
   assert( pS );
   assert( (oc_id >= 0) && (oc_id < END_OF_OCs) );
-  ;
+#if 0
+  CBI_STAT_INFO_PTR pOC = NULL;  
+  pOC = &cbi_stat_info[oc_id];
+  assert( pOC );
+  {
+    ;
+  }
+#endif
 }
 
 static BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
+  
   int i = (int)OC801;
   while( i < (int)END_OF_OCs ) {
-    willing_to_recv_train_info( pS, (OC_ID)i );
+    assert( (i >= (int)OC801) && (i < (int)END_OF_OCs) );
+    willing_to_recv_OC_stat( pS, (OC_ID)i );
     i++;
   }
   r = TRUE;
