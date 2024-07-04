@@ -6,7 +6,7 @@
 #define CBI_MAX_STAT_BITS 65536
 #define CBI_STAT_BITS_LEXBUF_SIZE 256
 
-typedef enum _oc_id {
+typedef enum oc_id {
   OC801,
   OC802,
   OC803,
@@ -25,8 +25,9 @@ typedef enum _oc_id {
   OC816,
   END_OF_OCs
 } OC_ID;
+#define OC_ID_CONV_2_INT( oc_id ) ((oc_id) + 801)
 
-typedef enum {
+typedef enum ats2oc_cmd {
   ATS2OC801,
   ATS2OC802,
   ATS2OC803,
@@ -44,13 +45,15 @@ typedef enum {
   ATS2OC815,
   ATS2OC816,
   END_OF_ATS2OC
-} ATS2OC_MSG;
-typedef enum {
+} ATS2OC_CMD;
+
+typedef enum oc2ats_stat {
   OC2ATS1,
   OC2ATS2,
   OC2ATS3,
   END_OF_OC2ATS
 } OC2ATS_STAT;
+#define OC_MSG_ID_CONV_2_INT( msg_id ) ((msg_id) + 1)
 
 #define UDP_BCAST_RECV_PORT_ATS2OC_801 58199
 #define UDP_BCAST_RECV_PORT_ATS2OC_802 58299

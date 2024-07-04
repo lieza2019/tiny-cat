@@ -35,7 +35,7 @@ typedef enum SC_ID {
   SC821,
   END_OF_SCs
 } SC_ID;
-#define SC_ID_CONV_2_INT( S ) ((S) + 801)
+#define SC_ID_CONV_2_INT( sc_id ) ((sc_id) + 801)
 
 #define UDP_BCAST_RECV_PORT_SC801_Train_command 55143
 #define UDP_BCAST_RECV_PORT_SC802_Train_command 55243

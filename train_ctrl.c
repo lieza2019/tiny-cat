@@ -125,7 +125,7 @@ static SC_STAT_INFOSET_PTR willing_to_recv_train_info ( TINY_SOCK_PTR pS, SC_ID 
   SC_STAT_INFOSET_PTR r = NULL;
   
   SC_STAT_INFOSET_PTR pSC = NULL;
-  pSC = &SC_stat_infos[sc_id];
+  pSC = &SC_stat_infos[(int)sc_id];
   assert( pSC );
   {
     TINY_SOCK_DESC d = -1;
@@ -138,7 +138,6 @@ static SC_STAT_INFOSET_PTR willing_to_recv_train_info ( TINY_SOCK_PTR pS, SC_ID 
     sock_attach_recv_buf( pS, d, (unsigned char *)&(pSC->train_information.recv), sizeof(pSC->train_information.recv) );
     r = pSC;
   }
-  
  exit:
   return r;
 }
@@ -152,19 +151,19 @@ static void expire_all_train_state ( void ) {
 static BOOL establish_SC_statinfo_recv ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
-  {
-    int i = (int)SC801;
-    while( i < (int)END_OF_SCs ) {
-      SC_STAT_INFOSET_PTR p = NULL;
-      expire_all_train_state();
-      if( ! (p = willing_to_recv_train_info( pS, (SC_ID)i )) )
-	goto exit;
-      assert( p );
-      assert( p->train_information.d_recv_train_info > -1 );
-      i++;
-    }
-    r = TRUE;
-  } 
+  
+  int i = (int)SC801;
+  while( i < (int)END_OF_SCs ) {
+    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
+    SC_STAT_INFOSET_PTR p = NULL;
+    expire_all_train_state();
+    if( !(p = willing_to_recv_train_info( pS, (SC_ID)i )) )
+      goto exit;
+    assert( p );
+    assert( p->train_information.d_recv_train_info > -1 );
+    i++;
+  }
+  r = TRUE;
  exit:
   return r;
 }
@@ -175,10 +174,10 @@ static SC_CTRL_CMDSET_PTR willing_to_send_train_cmd ( TINY_SOCK_PTR pS, SC_ID sc
   SC_CTRL_CMDSET_PTR r = NULL;
   
   SC_CTRL_CMDSET_PTR pSC = NULL;
-  pSC = &SC_ctrl_cmds[sc_id];
+  pSC = &SC_ctrl_cmds[(int)sc_id];
   assert( pSC );
   {
-    IP_ADDR_DESC bcast_dst_ipaddr = SC_ctrl_cmds[sc_id].sc_ipaddr;    
+    IP_ADDR_DESC bcast_dst_ipaddr = SC_ctrl_cmds[(int)sc_id].sc_ipaddr;
     bcast_dst_ipaddr.oct_3rd = 255;
     bcast_dst_ipaddr.oct_4th = 255;
     
@@ -202,19 +201,20 @@ static SC_CTRL_CMDSET_PTR willing_to_send_train_cmd ( TINY_SOCK_PTR pS, SC_ID sc
 static BOOL establish_SC_traincmd_send ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
-  {
-    int i = (int)SC801;
-    while( i < (int)END_OF_SCs ) {
-      SC_CTRL_CMDSET_PTR p = NULL;
-      expire_all_train_cmds();
-      if(! (p = willing_to_send_train_cmd( pS, (SC_ID)i )) )
-	goto exit;
-      assert( p );
-      assert( p->train_command.d_send_train_cmd > -1 );
-      i++;
-    }
-    r = TRUE;
+  
+  int i = (int)SC801;
+  while( i < (int)END_OF_SCs ) {
+    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
+    SC_CTRL_CMDSET_PTR p = NULL;
+    expire_all_train_cmds();
+    if(! (p = willing_to_send_train_cmd( pS, (SC_ID)i )) )
+      goto exit;
+    assert( p );
+    assert( p->train_command.d_send_train_cmd > -1 );
+    i++;
   }
+  r = TRUE;
+  
  exit:
   return r;
 }

@@ -121,33 +121,107 @@ static BOOL chk_ars_triggered( ARS_ROUTE_PTR pRoute_ars ) {
   return r;
 }
 
-static void willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC_ID oc_id ) {
+static CBI_STAT_INFO_PTR willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
   assert( pS );
-  assert( (oc_id >= 0) && (oc_id < END_OF_OCs) );
-#if 0
-  CBI_STAT_INFO_PTR pOC = NULL;  
-  pOC = &cbi_stat_info[oc_id];
+  assert( (msg_id >= 0) && (msg_id < END_OF_OC2ATS) );
+  CBI_STAT_INFO_PTR r = NULL;
+  
+  CBI_STAT_INFO_PTR pOC = NULL;
+  pOC = &cbi_stat_OC2ATS[msg_id];
   assert( pOC );
+  pOC->oc2ats.d_recv_cbi_stat = -1;
   {
-    ;
+    TINY_SOCK_DESC d = -1;
+    if( (d = creat_sock_recv( pS, pOC->oc2ats.dst_port )) < 0 ) {
+      errorF( "failed to create the socket to receive CBI status information from OC2ATS%d.\n", OC_MSG_ID_CONV_2_INT(msg_id) );
+      goto exit;
+    }
+    pOC->oc2ats.d_recv_cbi_stat = d;
+    sock_attach_recv_buf( pS, d, (unsigned char *)&(pOC->oc2ats.recv), (int)sizeof(pOC->oc2ats.recv) );
+    r = pOC;
   }
-#endif
+ exit:
+  return r;
 }
 
 static BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
   
-  int i = (int)OC801;
-  while( i < (int)END_OF_OCs ) {
-    assert( (i >= (int)OC801) && (i < (int)END_OF_OCs) );
-    willing_to_recv_OC_stat( pS, (OC_ID)i );
+  int i = (int)OC2ATS1;
+  while( i < (int)END_OF_OC2ATS ) {
+    assert( (i >= (int)OC2ATS1) && (i < (int)END_OF_OC2ATS) );
+    CBI_STAT_INFO_PTR p = NULL;
+    if( !(p = willing_to_recv_OC_stat( pS, (OC2ATS_STAT)i )) )
+      goto exit;
+    assert( p );
+    assert( p->oc2ats.d_recv_cbi_stat > -1 );
     i++;
   }
   r = TRUE;
+ exit:
+  return r;
+}
+
+static CBI_STAT_INFO_PTR willing_to_send_OC_cmd ( TINY_SOCK_PTR pS, ATS2OC_CMD msg_id ) {
+  assert( pS );
+  assert( (msg_id >= ATS2OC801) && (msg_id < END_OF_ATS2OC) );
+  CBI_STAT_INFO_PTR r = NULL;
+  
+  CBI_STAT_INFO_PTR pOC = NULL;
+  pOC = &cbi_stat_ATS2OC[(int)msg_id];
+  assert( pOC );
+  {
+    IP_ADDR_DESC bcast_dst_ipaddr = pOC->oc_ipaddr[(int)msg_id];
+    assert( bcast_dst_ipaddr.oct_1st != 0 );
+    assert( bcast_dst_ipaddr.oct_2nd != 0 );
+    assert( bcast_dst_ipaddr.oct_3rd != 0 );
+    assert( bcast_dst_ipaddr.oct_4th != 0 );
+    bcast_dst_ipaddr.oct_3rd = 255;
+    bcast_dst_ipaddr.oct_4th = 255;
+    
+    pOC->ats2oc.d_recv_cbi_stat = -1;
+    {
+      TINY_SOCK_DESC d = -1;
+      if( (d = creat_sock_sendnx( pS, pOC->ats2oc.dst_port, TRUE, &bcast_dst_ipaddr )) < 0 ) {
+	errorF( "failed to create the socket to send CBI control commands  toward OC%d.\n", OC_ID_CONV_2_INT(msg_id) );
+	goto exit;
+      }
+      pOC->ats2oc.d_recv_cbi_stat = d;
+      sock_attach_send_buf( pS, pOC->ats2oc.d_recv_cbi_stat, (unsigned char *)&(pOC->ats2oc.sent), (int)sizeof(pOC->ats2oc.sent) );
+    }
+    r = pOC;
+  }
+ exit:
+  return r;
+}
+
+static BOOL establish_OC_stat_send ( TINY_SOCK_PTR pS ) {
+  assert( pS );
+  BOOL r = FALSE;
+  
+  int i = ATS2OC801;
+  while( i < (int)END_OF_ATS2OC ) {
+    assert( (i >= ATS2OC801) && (i < (int)END_OF_ATS2OC) );
+    CBI_STAT_INFO_PTR p = NULL;
+    if( !(p = willing_to_send_OC_cmd( pS, (ATS2OC_CMD)i )) )
+      goto exit;
+    assert( p );
+    assert( p->ats2oc.d_recv_cbi_stat > -1 );
+    i++;
+  }
+  r = TRUE;
+ exit:
   return r;
 }
 
 BOOL establish_CBI_comm ( TINY_SOCK_PTR pS ) {
-  return FALSE;
+  assert( pS );
+  BOOL r = FALSE;
+
+  if( establish_OC_stat_recv( pS ) )
+    if( establish_OC_stat_send( pS ) )
+      r = TRUE;
+  
+  return r;
 }
