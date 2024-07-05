@@ -185,6 +185,7 @@ int main ( void ) {
       if( diag_tracking_train_stat( stdout ) > 0 )
 	fprintf( stdout, "\n" );
 #endif
+      reveal_il_state( &socks );
       
       {
 	unsigned char *pmsg_buf = NULL;

@@ -227,11 +227,12 @@ BOOL establish_CBI_comm ( TINY_SOCK_PTR pS ) {
   return r;
 }
 
-static void update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
+static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
   assert( pS );
   assert( (msg_id >= OC2ATS1) && (msg_id < END_OF_OC2ATS) );
-  CBI_STAT_INFO_PTR pOC = NULL;
+  RECV_BUF_CBI_STAT_PTR r = NULL;
   
+  CBI_STAT_INFO_PTR pOC = NULL;
   pOC = &cbi_stat_OC2ATS[(int)msg_id];
   assert( pOC );
   {
@@ -242,22 +243,23 @@ static void update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
     assert( sock_recv_socket_attached( pS, d ) > 0 );
     {
       OC_ID oc_id = END_OF_OCs;
-      NXNS_HEADER_PTR p = NULL;
-      p = (NXNS_HEADER_PTR)sock_recv_buf_attached( pS, d, &len );
-      assert( p );
-      assert( p == (NXNS_HEADER_PTR)&(pOC->oc2ats.recv) );
+      NXNS_HEADER_PTR precv = NULL;
+      precv = (NXNS_HEADER_PTR)sock_recv_buf_attached( pS, d, &len );
+      assert( precv );
+      assert( precv == (NXNS_HEADER_PTR)&(pOC->oc2ats.recv) );
       assert( len > 0 ? len >= sizeof(NXNS_HEADER) : TRUE );
       {
 	int i = (int)OC801;
 	while( i < (int)END_OF_OCs ) {
 	  assert( (i >= OC801) && (i < END_OF_OCs) );
-	  if( pOC->LNN[i] == p->nx_hdr.SA_LNN_srcAddrLogicNodeNum )
+	  if( pOC->LNN[i] == ntohs(precv->nx_hdr.SA_LNN_srcAddrLogicNodeNum) )
 	    break;
 	  i++;
 	}
+	assert( (i >= OC801) && (i <= END_OF_OCs) );
 	if( i >= END_OF_OCs ) {
 	  errorF( "CBI status info with UNKNOWN LNN received from OC2ATS%d, and ignored.\n",  OC_MSG_ID_CONV_2_INT(msg_id) );
-	  return;
+	  return NULL;
 	} else
 	  oc_id = (OC_ID)i;
       }
@@ -278,13 +280,14 @@ static void update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
 	break;
       msg_size_err:
 	errorF( "illegal sized CBI status info received from OC2ATS%d, and ignored.\n",  OC_MSG_ID_CONV_2_INT(msg_id) );
-	return;
+	return NULL;
       default:
 	assert( FALSE );
       }
-      memcpy( &cbi_stat_info[(int)oc_id], p, len );
+      r = (RECV_BUF_CBI_STAT_PTR)memcpy( &cbi_stat_info[(int)oc_id], precv, len );
     }
   }
+  return r;
 }
 
 void reveal_il_state ( TINY_SOCK_PTR pS ) {
