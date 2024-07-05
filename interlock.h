@@ -73,3 +73,6 @@ typedef struct ars_route {
 #define eTRSR_LOCKED( tr ) ((tr).locking.eTRSR)
 #define kTLSR_LOCKED( tr ) ((tr).locking.kTLSR)
 #define kTRSR_LOCKED( tr ) ((tr).locking.kTRSR)
+
+extern BOOL establish_CBI_comm ( TINY_SOCK_PTR pS );
+extern void reveal_il_state ( TINY_SOCK_PTR pS );

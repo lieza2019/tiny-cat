@@ -237,7 +237,7 @@ SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id ) {
       p = (NXNS_HEADER_PTR)sock_recv_buf_attached( pS, d, &len );
       //printf( "len is %d.\n", len );  // ***** for debugging.
       assert( p );
-      assert( p == (NXNS_HEADER_PTR)(&pSC->train_information.recv) );
+      assert( p == (NXNS_HEADER_PTR)&(pSC->train_information.recv) );
     }
     assert( len > 0 ? len >= sizeof(NXNS_HEADER) : TRUE );
   }

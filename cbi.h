@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include "generic.h"
 #include "misc.h"
 #include "network.h"
@@ -55,6 +56,23 @@ typedef enum oc2ats_stat {
 } OC2ATS_STAT;
 #define OC_MSG_ID_CONV_2_INT( msg_id ) ((msg_id) + 1)
 
+#define OC_LNN_801_SYS1 101
+#define OC_LNN_802_SYS1 102
+#define OC_LNN_803_SYS1 103
+#define OC_LNN_804_SYS1 104
+#define OC_LNN_805_SYS1 105
+#define OC_LNN_806_SYS1 106
+#define OC_LNN_807_SYS1 107
+#define OC_LNN_808_SYS1 108
+#define OC_LNN_809_SYS1 109
+#define OC_LNN_810_SYS1 110
+#define OC_LNN_811_SYS1 111
+#define OC_LNN_812_SYS1 112
+#define OC_LNN_813_SYS1 113
+#define OC_LNN_814_SYS1 114
+#define OC_LNN_815_SYS1 115
+#define OC_LNN_816_SYS1 116
+
 #define UDP_BCAST_RECV_PORT_ATS2OC_801 58199
 #define UDP_BCAST_RECV_PORT_ATS2OC_802 58299
 #define UDP_BCAST_RECV_PORT_ATS2OC_803 58399
@@ -76,15 +94,21 @@ typedef enum oc2ats_stat {
 #define UDP_BCAST_RECV_PORT_OC2ATS2_STAT 58197
 #define UDP_BCAST_RECV_PORT_OC2ATS3_STAT 58196
 
+#define OC_ATS2OC_MSGSIZE 286
+#define OC_OC2ATS1_MSGSIZE 1404
+#define OC_OC2ATS2_MSGSIZE 944
+#define OC_OC2ATS3_MSGSIZE 1260
+
 typedef struct recv_buf_cbi_stat {
   NXNS_HEADER header;
-  unsigned char arena[1328];
+  unsigned char arena[OC_OC2ATS1_MSGSIZE - 76]; // for OC_OC2ATS1_MSGSIZE > OC_OC2ATS3_MSGSIZE > OC_OC2ATS2_MSGSIZE
 } RECV_BUF_CBI_STAT, *RECV_BUF_CBI_STAT_PTR;
 extern RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 
 typedef struct CBI_stat_infoset {
   char oc_name[END_OF_OCs][6];
   IP_ADDR_DESC oc_ipaddr[END_OF_OCs];
+  uint16_t LNN[END_OF_OCs];
   struct {
     const unsigned short dst_port;
     TINY_SOCK_DESC d_recv_cbi_stat;

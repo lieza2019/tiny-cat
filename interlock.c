@@ -1,3 +1,4 @@
+#include <string.h>
 #include "generic.h"
 #include "misc.h"
 #include "network.h"
@@ -224,4 +225,76 @@ BOOL establish_CBI_comm ( TINY_SOCK_PTR pS ) {
       r = TRUE;
   
   return r;
+}
+
+static void update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
+  assert( pS );
+  assert( (msg_id >= OC2ATS1) && (msg_id < END_OF_OC2ATS) );
+  CBI_STAT_INFO_PTR pOC = NULL;
+  
+  pOC = &cbi_stat_OC2ATS[(int)msg_id];
+  assert( pOC );
+  {
+    TINY_SOCK_DESC d = -1;
+    int len = -1;
+    d = pOC->oc2ats.d_recv_cbi_stat;
+    assert( d > -1 );
+    assert( sock_recv_socket_attached( pS, d ) > 0 );
+    {
+      OC_ID oc_id = END_OF_OCs;
+      NXNS_HEADER_PTR p = NULL;
+      p = (NXNS_HEADER_PTR)sock_recv_buf_attached( pS, d, &len );
+      assert( p );
+      assert( p == (NXNS_HEADER_PTR)&(pOC->oc2ats.recv) );
+      assert( len > 0 ? len >= sizeof(NXNS_HEADER) : TRUE );
+      {
+	int i = (int)OC801;
+	while( i < (int)END_OF_OCs ) {
+	  assert( (i >= OC801) && (i < END_OF_OCs) );
+	  if( pOC->LNN[i] == p->nx_hdr.SA_LNN_srcAddrLogicNodeNum )
+	    break;
+	  i++;
+	}
+	if( i >= END_OF_OCs ) {
+	  errorF( "CBI status info with UNKNOWN LNN received from OC2ATS%d, and ignored.\n",  OC_MSG_ID_CONV_2_INT(msg_id) );
+	  return;
+	} else
+	  oc_id = (OC_ID)i;
+      }
+      assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
+      
+      switch( msg_id ) {
+      case OC2ATS1:
+	if( len < OC_OC2ATS1_MSGSIZE )
+	  goto msg_size_err;
+	break;
+      case OC2ATS2:
+	if( len < OC_OC2ATS2_MSGSIZE )
+	  goto msg_size_err;
+	break;
+      case OC2ATS3:
+	if( len < OC_OC2ATS3_MSGSIZE )
+	  goto msg_size_err;
+	break;
+      msg_size_err:
+	errorF( "illegal sized CBI status info received from OC2ATS%d, and ignored.\n",  OC_MSG_ID_CONV_2_INT(msg_id) );
+	return;
+      default:
+	assert( FALSE );
+      }
+      memcpy( &cbi_stat_info[(int)oc_id], p, len );
+    }
+  }
+}
+
+void reveal_il_state ( TINY_SOCK_PTR pS ) {
+  assert( pS );
+  int i = -1;
+  
+  i = (int)OC2ATS1;
+  while( i < (int)END_OF_OC2ATS ) {
+    assert( (i >= OC2ATS1) && (i < END_OF_OC2ATS) );
+    update_cbi_status( pS, (OC2ATS_STAT)i );
+    i++;
+  }
 }

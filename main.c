@@ -94,7 +94,7 @@ int main ( void ) {
   TINY_SOCK_DESC sd_recv_srvstat = -1;
   TINY_SOCK socks;
   TINY_SOCK_CREAT( socks );
-#if 1
+#if 0
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
   printf( "sizeof TRAIN_INFO: %d.\n", (int)sizeof(TRAIN_INFO) );
   {
@@ -138,6 +138,10 @@ int main ( void ) {
     errorF("%s", "failed to create the recv/send UDP ports for Train information and Train command respectively.\n");
     exit( 1 );
   }
+  if( ! establish_CBI_comm( &socks ) ) {
+    errorF("%s", "failed to create the recv/send UDP ports for CBI state information and control command respectively.\n");
+    exit( 1 );
+  }
   
   {
     const useconds_t interval = 1000 * 1000 * 0.1;
@@ -172,7 +176,7 @@ int main ( void ) {
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
       if( (nrecv = sock_recv( &socks )) < 0 ) {
-	errorF( "%s", "error on receiving CBTC status information from SCs.\n" );
+	errorF( "%s", "error on receiving CBTC/CBI status information from SC/OCs.\n" );
 	continue;
       }
       

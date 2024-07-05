@@ -92,6 +92,7 @@ void reveal_train_tracking( TINY_SOCK_PTR pS ) {
   
   expire_all_train_states();
   for( i = (int)SC801; i < END_OF_SCs; i++ ) {
+    assert( (i >= SC801) && (i < END_OF_SCs) );
     SC_STAT_INFOSET_PTR pSC = NULL;
     pSC = snif_train_info( pS, (SC_ID)i );
     if( pSC ) {
@@ -178,6 +179,10 @@ static SC_CTRL_CMDSET_PTR willing_to_send_train_cmd ( TINY_SOCK_PTR pS, SC_ID sc
   assert( pSC );
   {
     IP_ADDR_DESC bcast_dst_ipaddr = SC_ctrl_cmds[(int)sc_id].sc_ipaddr;
+    assert( bcast_dst_ipaddr.oct_1st != 0 );
+    assert( bcast_dst_ipaddr.oct_2nd != 0 );
+    assert( bcast_dst_ipaddr.oct_3rd != 0 );
+    assert( bcast_dst_ipaddr.oct_4th != 0 );
     bcast_dst_ipaddr.oct_3rd = 255;
     bcast_dst_ipaddr.oct_4th = 255;
     
