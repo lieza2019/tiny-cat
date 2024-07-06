@@ -203,6 +203,7 @@ extern CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const in
 extern CBI_STAT_ATTR_PTR cbi_stat_rehash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, char *ident, char *ident_new );
 extern CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, char *ident );
 
+extern CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( char *ident );
 extern int load_cbi_code_tbl ( OC_ID oc_id, const char *fname );
 extern int reveal_cbi_code_tbl ( void );
 extern void dump_cbi_stat_prof ( OC_ID oc_id );

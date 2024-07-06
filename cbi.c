@@ -353,6 +353,10 @@ static CBI_STAT_ATTR_PTR conslt_hash_local ( char *ident ) {
   assert( ident );
   return conslt_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, ident );
 }
+CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( char *ident ) {
+  assert( ident );
+  return conslt_hash_local( ident );
+}
 
 CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, char *ident ) {
   assert( budgets );
@@ -431,6 +435,7 @@ static CBI_STAT_BIT_MASK cbi_stat_bit_mask_pattern ( int pos ) {
   assert( mask != END_OF_CBI_STAT_BIT_MASK );
   return mask;
 }
+
 typedef enum _cbi_lex_phase {
   CBI_LEX_NAME,
   CBI_LEX_GROUP,

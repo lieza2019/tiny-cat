@@ -185,7 +185,6 @@ int main ( void ) {
 	errorF( "%s", "error on receiving CBTC/CBI status information from SC/OCs.\n" );
 	continue;
       }
-      //reveal_il_state( &socks );
       
       reveal_train_tracking( &socks );
 #if 0
