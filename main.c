@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -147,6 +148,7 @@ int main ( void ) {
     const useconds_t interval = 1000 * 1000 * 0.1;
     int nrecv = -1;
     int cnt = 0;
+    pthread_t P_il_stat;
     static MSG_TINY_HEARTBEAT msg_srv_beat;
     static MSG_TINY_SERVER_STATUS msg_srv_stat;
     TINY_SRVBEAT_HEARTBEAT_SERVERID( msg_srv_beat, 1 );
@@ -173,19 +175,23 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_LOGGER1( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
     
+    if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&socks ) ) {
+      errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
+      exit( 1 );
+    }
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
       if( (nrecv = sock_recv( &socks )) < 0 ) {
 	errorF( "%s", "error on receiving CBTC/CBI status information from SC/OCs.\n" );
 	continue;
       }
+      //reveal_il_state( &socks );
       
       reveal_train_tracking( &socks );
 #if 0
       if( diag_tracking_train_stat( stdout ) > 0 )
 	fprintf( stdout, "\n" );
 #endif
-      reveal_il_state( &socks );
       
       {
 	unsigned char *pmsg_buf = NULL;

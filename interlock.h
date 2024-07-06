@@ -76,3 +76,4 @@ typedef struct ars_route {
 
 extern BOOL establish_CBI_comm ( TINY_SOCK_PTR pS );
 extern void reveal_il_state ( TINY_SOCK_PTR pS );
+extern void *pth_reveal_il_status ( void * pS );

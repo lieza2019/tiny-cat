@@ -150,7 +150,6 @@ CBI_STAT_INFO cbi_stat_OC2ATS[END_OF_OC2ATS] = {
    {UDP_BCAST_RECV_PORT_OC2ATS3_STAT}
   }
 };
-
 RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 
 #include "./cbi/cbi_stat_label.h"

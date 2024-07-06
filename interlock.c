@@ -1,4 +1,7 @@
 #include <string.h>
+#include <unistd.h>
+#include <assert.h>
+#include <pthread.h>
 #include "generic.h"
 #include "misc.h"
 #include "network.h"
@@ -258,7 +261,8 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
 	}
 	assert( (i >= OC801) && (i <= END_OF_OCs) );
 	if( i >= END_OF_OCs ) {
-	  errorF( "CBI status info with UNKNOWN LNN received from OC2ATS%d, and ignored.\n",  OC_MSG_ID_CONV_2_INT(msg_id) );
+	  errorF( "CBI status info with UNKNOWN LNN of %d received from OC2ATS%d, and ignored.\n",
+		  ntohs(precv->nx_hdr.SA_LNN_srcAddrLogicNodeNum), OC_MSG_ID_CONV_2_INT(msg_id) );
 	  return NULL;
 	} else
 	  oc_id = (OC_ID)i;
@@ -284,20 +288,80 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
       default:
 	assert( FALSE );
       }
-      r = (RECV_BUF_CBI_STAT_PTR)memcpy( &cbi_stat_info[(int)oc_id], precv, len );
+      r = (RECV_BUF_CBI_STAT_PTR)memcpy( (void *)&cbi_stat_info[(int)oc_id].buf, precv, len );
+      cbi_stat_info[(int)oc_id].updated = TRUE;
     }
   }
   return r;
+}
+
+static void expire_cbi_status ( void ) {
+  int i = -1;
+  i = (int)OC801;
+  while( i < (int)END_OF_OCs ) {
+    assert( (i >= OC801) && (i < END_OF_OCs) );
+    cbi_stat_info[i].updated = FALSE;
+    i++;
+  }
+  assert( i == END_OF_OCs );
 }
 
 void reveal_il_state ( TINY_SOCK_PTR pS ) {
   assert( pS );
   int i = -1;
   
+  expire_cbi_status();
   i = (int)OC2ATS1;
   while( i < (int)END_OF_OC2ATS ) {
     assert( (i >= OC2ATS1) && (i < END_OF_OC2ATS) );
     update_cbi_status( pS, (OC2ATS_STAT)i );
     i++;
   }
+  assert( i == END_OF_OC2ATS );
+}
+
+void *pth_reveal_il_status ( void * pS ) {
+  assert( pS );
+  const useconds_t interval = 1000 * 1000 * 0.1;
+  int omits[END_OF_OCs];
+  {
+    int i = (int)OC801;
+    while( i < (int)END_OF_OCs ) {
+      assert( (i >= OC801) && (i < END_OF_OCs) );
+      omits[i] = 0;
+      i++;
+    }
+    assert( i == END_OF_OCs );
+  }
+  
+  while( TRUE ) {
+    reveal_il_state( (TINY_SOCK_PTR)pS );
+    {
+      const int obsolete = 10;
+      int j = (int)OC801;
+      while( j < (int)END_OF_OCs ) {
+	assert( (j >= OC801) && (j < END_OF_OCs) );
+	if( cbi_stat_info[j].updated ) {
+	  if( omits[j] < 0 )
+	    errorF( "CBI status information of OC%3d has started updating, again.\n", OC_ID_CONV_2_INT(j) );
+	  omits[j] = 0;
+	} else {
+	  if( omits[j] >= obsolete ) {
+	    errorF( "CBI status information of OC%3d has been obsoleted.\n", OC_ID_CONV_2_INT(j) );
+	    omits[j] = -1;
+	  } else
+	    if( omits[j] > -1 )
+	      omits[j]++;
+	}
+	j++;
+      }
+      assert( j == END_OF_OCs );
+    }
+    {
+      int r = 1;
+      r = usleep( interval );
+      assert( !r );
+    }
+  }
+  return NULL;
 }
