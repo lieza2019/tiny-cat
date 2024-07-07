@@ -6,10 +6,6 @@
 #include "train_info.h"
 #include "train_ctrl.h"
 
-#define BLOCK_ID_DEFINITIONS
-#include "cbtc_def.h"
-#undef BLOCK_ID_DEFINITIONS
-
 #define NUM_OF_SCs 4n
 typedef enum SC_ID {
   SC801,
@@ -120,13 +116,6 @@ typedef struct SC_stat_infoset {
     TINY_TRAIN_STATE_PTR pTrain_stat[TRAIN_INFO_ENTRIES_NUM];
   } train_information;
 } SC_STAT_INFOSET, *SC_STAT_INFOSET_PTR;
-
-typedef struct block {
-  BLOCK_ID id;
-  char *name;
-  int len;
-  BOOL occupancy;
-} BLOCK, *BLOCK_PTR;
 
 extern SC_CTRL_CMDSET SC_ctrl_cmds[END_OF_SCs];
 extern SC_STAT_INFOSET SC_stat_infos[END_OF_SCs];

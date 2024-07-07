@@ -12,15 +12,16 @@
 #include "generic.h"
 #include "misc.h"
 #include "network.h"
-#include "srv.h"
+#include "sparcs.h"
 #include "cbi.h"
 #include "interlock.h"
+#include "srv.h"
 
 #if 1
 static int diag_tracking_train_cmd ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
-
+  
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
     if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {

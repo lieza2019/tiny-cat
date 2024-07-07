@@ -1,15 +1,9 @@
 #include "generic.h"
 #include "misc.h"
-#include "sparcs.h"
-
-#define ROUTE_AND_TRACK_ID_DEFINITIONS
-#define TRACK_ID_DEFINITIONS
-#include "interlock_def.h"
-#undef ROUTE_AND_TRACK_ID_DEFINITIONS
-#undef TRACK_ID_DEFINITIONS
+#include "cbtc.h"
 
 typedef struct route_lock {
-  BOOL valid;
+  BOOL app;
   CBI_STAT_KIND kind;
   IL_OBJ_INSTANCES id;
 } ROUTE_LOCK, *ROUTE_LOCK_PTR;
@@ -30,7 +24,6 @@ typedef struct track {
     ROUTE_LOCK kTLSR, kTRSR;
   } lock;
 } TRACK, *TRACK_PTR;
-
 #define TRACK_ATTRIB_DEFINITION
 #include "interlock_def.h"
 #undef TRACK_ATTRIB_DEFINITION
@@ -51,27 +44,22 @@ typedef struct _route {
   const char *name;
   struct {
     int num_tracks;
-    TRACK_ID tracks[MAX_ROUTE_TRACKS];
+    IL_OBJ_INSTANCES tracks[MAX_ROUTE_TRACKS];
     TRACK_PTR ptracks[MAX_ROUTE_TRACKS];
   } tr;
   struct {
-    CBI_STAT_KIND kind;
-    IL_OBJ_INSTANCES src;    
-  } sig_src;
-  struct {
-    CBI_STAT_KIND kind;
+    IL_OBJ_INSTANCES src;
     IL_OBJ_INSTANCES dst;
-  } sig_dst;  
+  } sig_pair;
   struct {
-    BOOL is_ars;
+    BOOL app;
     struct {
       int num_blocks;
-      TRACK_ID trg_blks[MAX_ROUTE_TRG_BLOCKS];
+      TRACK trg_blks[MAX_ROUTE_TRG_BLOCKS];
       TRACK_PTR ptrg_blks[MAX_ROUTE_TRG_BLOCKS];
-    } trg_section;
+    } trg_sect;
   } ars_ctrl;
 } ROUTE, *ROUTE_PTR;
-
 #define ROUTE_ATTRIB_DEFINITION
 #include "interlock_def.h"
 #undef ROUTE_ATTRIB_DEFINITION
