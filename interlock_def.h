@@ -13,13 +13,13 @@ typedef enum track_id {
 #ifdef TRACK_ATTRIB_DEFINITION
 #ifdef INTERLOCK_C
 TRACK track_state[] = {
-  {T109A, "T109A"},
-  {T110A, "T110A"},
-  {T111A, "T111A"},
-  {T112A, "T112A"},
-  {T113A, "T113A"},
-  {T114A, "T114A"},
-  {END_OF_TRACKS, "END_OF_TRACKS"}
+  { _TRACK, T801A_TR, "T801A_TR", {}, {{}, {}, {}, {}} },
+  { _TRACK, T803A_TR, "T803A_TR", {}, {{}, {}, {}, {}} },
+  { _TRACK, T805A_TR, "T805A_TR", {}, {{}, {}, {}, {}} },
+  { _TRACK, T807A_TR, "T807A_TR", {}, {{}, {}, {}, {}} },
+  { _TRACK, T809A_TR, "T809A_TR", {}, {{}, {}, {}, {}} },
+  { _TRACK, T811A_TR, "T811A_TR", {}, {{}, {}, {}, {}} },
+  { END_OF_CBI_STAT_KIND }
 };
 #else
 extern TRACK track_state[];

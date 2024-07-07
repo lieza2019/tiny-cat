@@ -8,21 +8,27 @@
 #undef ROUTE_AND_TRACK_ID_DEFINITIONS
 #undef TRACK_ID_DEFINITIONS
 
+typedef struct route_lock {
+  BOOL valid;
+  CBI_STAT_KIND kind;
+  IL_OBJ_INSTANCES id;
+} ROUTE_LOCK, *ROUTE_LOCK_PTR;
+
 #define MAX_TRACK_BLOCKS 21
 typedef struct track {
-  TRACK_ID id;
+  CBI_STAT_KIND kind;
+  IL_OBJ_INSTANCES id;
   char *name;
   struct {
     int num_blocks;
     BLOCK_ID blocks[MAX_TRACK_BLOCKS];
   } cbtc;
-  BOOL occupancy;
   struct {
-    BOOL TLSR, TRSR;
-    BOOL sTLSR, sTRSR;
-    BOOL eTLSR, eTRSR;
-    BOOL kTLSR, kTRSR;
-  } locking;
+    ROUTE_LOCK TLSR, TRSR;
+    ROUTE_LOCK sTLSR, sTRSR;
+    ROUTE_LOCK eTLSR, eTRSR;
+    ROUTE_LOCK kTLSR, kTRSR;
+  } lock;
 } TRACK, *TRACK_PTR;
 
 #define TRACK_ATTRIB_DEFINITION

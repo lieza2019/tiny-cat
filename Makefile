@@ -29,7 +29,7 @@ train_ctrl.h : generic.h misc.h sparcs.h
 	$(MAKE); \
 	./$(GEN_IL_DEF_BIN)
 #cbi.h: generic.h misc.h network.h ./cbi/cbi_stat_kind.def ./cbi/cbi_pat_def.h ./cbi/cbi_stat_label.h ./cbi/il_obj_instance_decl.h
-cbi.h: generic.h misc.h network.h ./cbi/cbi_stat_kind.def ./cbi/cbi_pat_def.h ./cbi/cbi_stat_label.h ./cbi/il_obj_instance_decl.h
+cbi.h: generic.h misc.h network.h ./cbi/cbi_stat_kind.def ./cbi/cbi_pat.def ./cbi/cbi_stat_label.h ./cbi/il_obj_instance_decl.h
 	$(TOUCH) $@
 interlock.h : generic.h misc.h interlock_def.h sparcs.h
 	$(TOUCH) $@
