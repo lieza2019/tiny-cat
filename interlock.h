@@ -16,6 +16,7 @@ typedef struct track {
   struct {
     int num_blocks;
     BLOCK_ID blocks[MAX_TRACK_BLOCKS];
+    BLOCK_PTR pblocks[MAX_TRACK_BLOCKS];
   } cbtc;
   struct {
     ROUTE_LOCK TLSR, TRSR;
@@ -64,6 +65,7 @@ typedef struct _route {
 #include "interlock_def.h"
 #undef ROUTE_ATTRIB_DEFINITION
 
+#if 0
 #define TLSR_LOCKED( tr ) ((tr).locking.TLSR)
 #define TRSR_LOCKED( tr ) ((tr).locking.TRSR)
 #define sTLSR_LOCKED( tr ) ((tr).locking.sTLSR)
@@ -72,6 +74,7 @@ typedef struct _route {
 #define eTRSR_LOCKED( tr ) ((tr).locking.eTRSR)
 #define kTLSR_LOCKED( tr ) ((tr).locking.kTLSR)
 #define kTRSR_LOCKED( tr ) ((tr).locking.kTRSR)
+#endif
 
 extern BOOL establish_CBI_comm ( TINY_SOCK_PTR pS );
 extern void reveal_il_state ( TINY_SOCK_PTR pS );
