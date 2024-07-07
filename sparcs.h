@@ -1,3 +1,6 @@
+#ifndef SPARCS_H
+#define SPARCS_H
+
 #include "generic.h"
 #include "misc.h"
 #include "network.h"
@@ -6,7 +9,6 @@
 #include "train_info.h"
 #include "train_ctrl.h"
 
-#define NUM_OF_SCs 4n
 typedef enum SC_ID {
   SC801,
   SC802,
@@ -127,3 +129,5 @@ extern int alloc_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_ST
 extern int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR pTs, int rakeID, int front_blk, int back_blk );
 extern SC_CTRL_CMDSET_PTR emit_train_cmd( TINY_SOCK_PTR pS, SC_ID sc_id );
 extern SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id );
+
+#endif // SPARCS_H

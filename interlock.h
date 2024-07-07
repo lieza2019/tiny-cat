@@ -15,8 +15,8 @@ typedef struct track {
   char *name;
   struct {
     int num_blocks;
-    BLOCK_ID blocks[MAX_TRACK_BLOCKS];
-    BLOCK_PTR pblocks[MAX_TRACK_BLOCKS];
+    CBTC_BLOCK_ID blocks[MAX_TRACK_BLOCKS];
+    CBTC_BLOCK_PTR pblocks[MAX_TRACK_BLOCKS];
   } cbtc;
   struct {
     ROUTE_LOCK TLSR, TRSR;
@@ -49,15 +49,21 @@ typedef struct _route {
     TRACK_PTR ptracks[MAX_ROUTE_TRACKS];
   } tr;
   struct {
-    IL_OBJ_INSTANCES src;
-    IL_OBJ_INSTANCES dst;
+    struct {
+      CBI_STAT_KIND kind;
+      IL_OBJ_INSTANCES sig;
+    } src;
+    struct {
+      CBI_STAT_KIND kind;
+      IL_OBJ_INSTANCES sig;
+    } dst;
   } sig_pair;
   struct {
     BOOL app;
     struct {
       int num_blocks;
-      TRACK trg_blks[MAX_ROUTE_TRG_BLOCKS];
-      TRACK_PTR ptrg_blks[MAX_ROUTE_TRG_BLOCKS];
+      CBTC_BLOCK_ID trg_blks[MAX_ROUTE_TRG_BLOCKS];
+      CBTC_BLOCK_PTR ptrg_blks[MAX_ROUTE_TRG_BLOCKS];
     } trg_sect;
   } ars_ctrl;
 } ROUTE, *ROUTE_PTR;

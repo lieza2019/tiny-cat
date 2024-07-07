@@ -139,8 +139,7 @@ static void load_il_status_geometry ( void ) {
       assert( (int)sizeof(fname) > strlen(il_status_geometry_resources[oc_id].csv_fname) );
 #ifndef IN_CBI_RESOURCEDIR
       assert( (strlen("./cbi/") + (int)sizeof(fname)) > strlen(il_status_geometry_resources[oc_id].csv_fname) );
-      //strcat( strcpy(fname, "./cbi/"), il_status_geometry_resources[oc_id].csv_fname );
-      strcat( strcpy(fname, "./csv/"), il_status_geometry_resources[oc_id].csv_fname );
+      strcat( strcpy(fname, "./cbi/"), il_status_geometry_resources[oc_id].csv_fname );      
 #else
       strcpy( fname, il_status_geometry_resources[oc_id].csv_fname );
 #endif // IN_CBI_RESOURCEDRI

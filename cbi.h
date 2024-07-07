@@ -1,10 +1,12 @@
+#ifndef CBI_H
+#define CBI_H
+
 #include <sys/types.h>
 #include "generic.h"
 #include "misc.h"
 #include "network.h"
 #include "./cbi/il_obj_instance_decl.h"
 
-//#define CBI_STAT_CSV_FNAME_BCGN "./cbi/BOTANICAL_GARDEN.csv"
 #define CBI_STAT_CSV_FNAME_BCGN "BOTANICAL_GARDEN.csv"
 #define CBI_STAT_CSV_FNAME_JLA NULL
 #define CBI_STAT_CSV_FNAME_IWNA NULL
@@ -41,7 +43,6 @@ typedef enum oc_id {
   OC816,
   END_OF_OCs
 } OC_ID;
-//#define OC_ID_CONV_2_INT( oc_id ) ((oc_id) + 801)
 #define OC_ID_CONV2INT( oc_id ) ((oc_id) + 801)
 
 typedef enum ats2oc_cmd {
@@ -249,3 +250,5 @@ typedef struct cbi_stat_label {
   char name[CBI_STAT_NAME_LEN + 1];  
   char ident[CBI_STAT_IDENT_LEN + 1];
 } CBI_STAT_LABEL, *CBI_STAT_LABEL_PTR;
+
+#endif // CBI_H
