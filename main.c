@@ -63,6 +63,39 @@ static int diag_tracking_train_stat ( FILE *fp_out ) {
   return r;
 }
 
+static void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
+  assert( fp_out );
+  assert( ident );
+  CBI_STAT_ATTR_PTR pA = NULL;
+  pA = conslt_cbi_code_tbl( ident );
+  if( pA ) {
+    assert( pA );
+    fprintf( fp_out, "ident: %s\n", pA->ident );
+    fprintf( fp_out, "oc_id: OC%3d\n", OC_ID_CONV2INT(pA->oc_id) );
+    fprintf( fp_out, "name: %s\n", pA->name );
+    fprintf( fp_out, "kind: %s\n", cnv2str_cbi_stat_kind[pA->kind] );
+    fprintf( fp_out, "group of (raw, oc_from, addr): (%s, OC2ATS%d, %d)\n",
+	     CBI_STAT_GROUP_CONV2STR[pA->group.raw], OC_MSG_ID_CONV2INT(pA->group.oc_from), pA->group.addr );
+    {
+      char s[] = "CBI_STAT_BIT_x";
+      fprintf( fp_out, "disp of (raw, bytes, bits, mask): (%d, %d, %d, %s)\n",
+	      pA->disp.raw, pA->disp.bytes, pA->disp.bits, show_cbi_stat_bitmask(s, sizeof(s), pA->disp.mask) );
+    }
+    {
+      assert( pA );
+      RECV_BUF_CBI_STAT_PTR pstat = NULL;      
+      assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
+      pstat = &cbi_stat_info[pA->oc_id];      
+      {
+	assert( pstat );
+	unsigned char *pgrp = &((unsigned char*)pstat)[pA->group.addr];
+	assert( pgrp );
+	fprintf( fp_out, "value: %d\n", (pgrp[pA->disp.bytes] & pA->disp.mask) );
+      }
+    }
+  }
+}
+
 #define BUFSIZ_msgServerStatus MAX_SEND_BUFSIZ
 #define BUFSIZ_msgServerHeartbeat MAX_SEND_BUFSIZ
 static unsigned char buf_msgServerStatus[BUFSIZ_msgServerStatus];
@@ -85,8 +118,45 @@ BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_
       r = TRUE;
     }
   }
-  
   return r;
+}
+
+static void load_il_status_geometry ( void ) {
+  int oc_id = -1;
+  oc_id = (int)OC801;
+  while( oc_id < (int)END_OF_OCs ) {
+    assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
+    if( ! il_status_geometry_resources[oc_id].csv_fname ) {
+      oc_id++;
+      continue;
+    }
+    assert( il_status_geometry_resources[oc_id].csv_fname );
+    assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
+    {
+      int n = -1;
+      char fname[256];
+      assert( (int)sizeof(fname) > strlen(il_status_geometry_resources[oc_id].csv_fname) );
+#ifndef IN_CBI_RESOURCEDIR
+      assert( (strlen("./cbi/") + (int)sizeof(fname)) > strlen(il_status_geometry_resources[oc_id].csv_fname) );
+      //strcat( strcpy(fname, "./cbi/"), il_status_geometry_resources[oc_id].csv_fname );
+      strcat( strcpy(fname, "./csv/"), il_status_geometry_resources[oc_id].csv_fname );
+#else
+      strcpy( fname, il_status_geometry_resources[oc_id].csv_fname );
+#endif // IN_CBI_RESOURCEDRI
+      n = load_cbi_code_tbl ( il_status_geometry_resources[oc_id].oc_id, fname );
+      if( n < 0 ) {
+	errorF( "failed to open the CBI status csv file of %s.\n", fname );
+	exit( 1 );
+      } else {
+	int m = -1;
+	errorF( "read %d entries from raw csv file of %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
+	m = reveal_cbi_code_tbl();
+	assert( m > -1 );
+	errorF( "revised %d entries over the ones from the file of %s.\n", m, il_status_geometry_resources[oc_id].csv_fname );
+      }
+    }
+    oc_id++;
+  }
 }
 
 int main ( void ) {
@@ -139,10 +209,12 @@ int main ( void ) {
     errorF("%s", "failed to create the recv/send UDP ports for Train information and Train command respectively.\n");
     exit( 1 );
   }
+  
   if( ! establish_CBI_comm( &socks ) ) {
     errorF("%s", "failed to create the recv/send UDP ports for CBI state information and control command respectively.\n");
     exit( 1 );
-  }
+  } else
+    load_il_status_geometry();
   
   {
     const useconds_t interval = 1000 * 1000 * 0.1;
@@ -185,6 +257,9 @@ int main ( void ) {
 	errorF( "%s", "error on receiving CBTC/CBI status information from SC/OCs.\n" );
 	continue;
       }
+#if 1
+      diag_cbi_stat_attrib( stdout, "S821B_S801B" );
+#endif
       
       reveal_train_tracking( &socks );
 #if 0
@@ -241,7 +316,11 @@ int main ( void ) {
       }
 #endif
       cnt++;
-      assert( ! usleep( interval ) );
+      {
+	int r = -1;
+	r = usleep( interval );
+	assert( !r );
+      }
     }
   }
   return 0;

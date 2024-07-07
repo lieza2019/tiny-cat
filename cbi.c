@@ -6,6 +6,122 @@
 #include "misc.h"
 #include "cbi.h"
 
+CBI_STAT_CSV_FNAMES il_status_geometry_resources[END_OF_OCs + 1] = {
+  {OC801, CBI_STAT_CSV_FNAME_BCGN},
+  {OC802, CBI_STAT_CSV_FNAME_JLA},
+  {OC803, CBI_STAT_CSV_FNAME_IWNA},
+  {OC804, CBI_STAT_CSV_FNAME_RKPM},
+  {OC805, CBI_STAT_CSV_FNAME_IGDA},
+  {OC806, CBI_STAT_CSV_FNAME_JPW},
+  {OC807, CBI_STAT_CSV_FNAME_KIKD_OC1},
+  {OC808, CBI_STAT_CSV_FNAME_KIKD_OC2},
+  {OC809, CBI_STAT_CSV_FNAME_KPEN},
+  {OC810, CBI_STAT_CSV_FNAME_PAGI},
+  {OC811, CBI_STAT_CSV_FNAME_DPCK},
+  {OC812, CBI_STAT_CSV_FNAME_NPPR},
+  {OC813, CBI_STAT_CSV_FNAME_MKPR},
+  {OC814, CBI_STAT_CSV_FNAME_GAGR},
+  {OC815, CBI_STAT_CSV_FNAME_RKAM},
+  {OC816, CBI_STAT_CSV_FNAME_MKPD},
+  {END_OF_OCs, NULL}
+};
+
+const char *CBI_STAT_GROUP_CONV2STR[] = {
+  "",  // see below line.
+  "CBI_STAT_i1", //CBI_STAT_i1 = 1,
+  "CBI_STAT_i2",
+  "CBI_STAT_i3",
+  "CBI_STAT_i4",
+  "CBI_STAT_i5",
+  "CBI_STAT_i6",
+  "CBI_STAT_Li1",
+  "CBI_STAT_Li2",
+  "CBI_STAT_Li3",
+  "CBI_STAT_Li4",
+  "CBI_STAT_Si1",
+  "CBI_STAT_Si2",
+  "CBI_STAT_Si3",
+  "CBI_STAT_Si4",
+  "CBI_STAT_Si5",
+  "CBI_STAT_H",
+  "CBI_STAT_P",
+  "CBI_STAT_o1",
+  "CBI_STAT_o2",
+  "CBI_STAT_o3",
+  "CBI_STAT_o4",
+  "CBI_STAT_o5",
+  "CBI_STAT_o6",
+  "CBI_STAT_Lo",
+  "CBI_STAT_So",
+  "CBI_STAT_SRAM",
+  "CBI_STAT_M",
+  "CBI_STAT_A"
+};
+
+static OC2ATS_STAT cbi_group2msg[] = {
+  -1, // see below line.
+  OC2ATS3, // CBI_STAT_i1 = 1
+  OC2ATS3, // CBI_STAT_i2
+  OC2ATS3, // CBI_STAT_i3
+  OC2ATS3, // CBI_STAT_i4
+  OC2ATS3, // CBI_STAT_i5
+  OC2ATS3, // CBI_STAT_i6
+  OC2ATS1, // CBI_STAT_Li1
+  OC2ATS1, // CBI_STAT_Li2
+  OC2ATS1, // CBI_STAT_Li3
+  OC2ATS1, // CBI_STAT_Li4
+  OC2ATS1, // CBI_STAT_Si1
+  OC2ATS1, // CBI_STAT_Si2
+  OC2ATS1, // CBI_STAT_Si3
+  OC2ATS1, // CBI_STAT_Si4
+  OC2ATS1, // CBI_STAT_Si5
+  OC2ATS1, // CBI_STAT_H
+  OC2ATS1, // CBI_STAT_P
+  OC2ATS3, // CBI_STAT_o1
+  OC2ATS3, // CBI_STAT_o2
+  OC2ATS3, // CBI_STAT_o3
+  OC2ATS3, // CBI_STAT_o4
+  OC2ATS3, // CBI_STAT_o5
+  OC2ATS3, // CBI_STAT_o6
+  OC2ATS2, // CBI_STAT_Lo
+  OC2ATS2, // CBI_STAT_So
+  OC2ATS2, // CBI_STAT_SRAM
+  OC2ATS2, // CBI_STAT_M
+  OC2ATS3  // CBI_STAT_A
+};
+
+static int cbi_group2addr[] = {
+   -1, // see below line.
+   76, // CBI_STAT_i1 = 1, of OC2ATS3
+  100, // CBI_STAT_i2 of OC2ATS3
+  124, // CBI_STAT_i3 of OC2ATS3
+  148, // CBI_STAT_i4 of OC2ATS3
+  172, // CBI_STAT_i5 of OC2ATS3
+  196, // CBI_STAT_i6 of OC2ATS3
+   76, // CBI_STAT_Li1 of OC2ATS1
+  272, // CBI_STAT_Li2 of OC2ATS1
+  468, // CBI_STAT_Li3 of OC2ATS1
+  664, // CBI_STAT_Li4 of OC2ATS1
+  860, // CBI_STAT_Si1 of OC2ATS1
+  916, // CBI_STAT_Si2 of OC2ATS1
+  972, // CBI_STAT_Si3 of OC2ATS1
+  1028, // CBI_STAT_Si4 of OC2ATS1
+  1084, // CBI_STAT_Si5 of OC2ATS1
+  1140, // CBI_STAT_H of OC2ATS1
+  1194, // CBI_STAT_P of OC2ATS1
+  220, // CBI_STAT_o1 of OC2ATS3
+  244, // CBI_STAT_o2 of OC2ATS3
+  268, // CBI_STAT_o3 of OC2ATS3
+  292, // CBI_STAT_o4 of OC2ATS3
+  316, // CBI_STAT_o5 of OC2ATS3
+  340, // CBI_STAT_o6 of OC2ATS3
+   76, // CBI_STAT_Lo of OC2ATS2
+  272, // CBI_STAT_So of OC2ATS2
+  378, // CBI_STAT_SRAM of OC2ATS2
+  432, // CBI_STAT_M of OC2ATS2
+  364  // CBI_STAT_A of OC2ATS3
+};
+
 CBI_STAT_INFO cbi_stat_ATS2OC[END_OF_ATS2OC] = {
   {{"OC801", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""},
    {{172, 21, 51, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -150,7 +266,15 @@ CBI_STAT_INFO cbi_stat_OC2ATS[END_OF_OC2ATS] = {
    {UDP_BCAST_RECV_PORT_OC2ATS3_STAT}
   }
 };
+
 RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
+
+char *cnv2str_cbi_stat_kind[] = {
+#define CBI_STAT_KIND_DESC(enum, name) name,
+#include "./cbi/cbi_stat_kind.def"
+#undef CBI_STAT_KIND_DESC
+  NULL
+};
 
 #include "./cbi/cbi_stat_label.h"
 #ifndef CBI_STAT_LABELING
@@ -161,13 +285,6 @@ static CBI_STAT_LABEL cbi_stat_labeling[] = {
 #ifdef CBI_STAT_LABELING
 #undef CBI_STAT_LABELING
 #endif
-
-char *cnv2str_cbi_stat_kind[] = {
-#define CBI_STAT_KIND_DESC(enum, name) name,
-#include "./cbi/cbi_stat_kind.def"
-#undef CBI_STAT_KIND_DESC
-  NULL
-};
 
 CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
 static int frontier[END_OF_OCs];
@@ -365,7 +482,7 @@ CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const int budg
   return conslt_hash( budgets, budgets_num, ident );
 }
 
-static char *show_cbi_stat_bit_mask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask ) {
+char *show_cbi_stat_bitmask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask ) {
   assert( mask_name );
   assert( len > strlen("CBI_STAT_BIT_x") );
   switch( mask ) {
@@ -401,7 +518,7 @@ static char *show_cbi_stat_bit_mask ( char *mask_name, int len, CBI_STAT_BIT_MAS
   return mask_name;
 }
 
-static CBI_STAT_BIT_MASK cbi_stat_bit_mask_pattern ( int pos ) {
+CBI_STAT_BIT_MASK cbi_stat_bit_maskpat ( int pos ) {
   assert( (pos >= 0) && (pos < 8) );
   CBI_STAT_BIT_MASK mask = END_OF_CBI_STAT_BIT_MASK;
   switch( pos ) {
@@ -512,7 +629,7 @@ void dump_cbi_stat_prof ( OC_ID oc_id ) {
     {
       char str[CBI_STAT_MASKNAME_MAXLEN + 1];
       str[CBI_STAT_MASKNAME_MAXLEN] = 0;
-      show_cbi_stat_bit_mask( str, CBI_STAT_MASKNAME_MAXLEN, cbi_stat_prof[oc_id][i].disp.mask );
+      show_cbi_stat_bitmask( str, CBI_STAT_MASKNAME_MAXLEN, cbi_stat_prof[oc_id][i].disp.mask );
       printf( "disp.mask: %s\n", str );
     }
     printf( "\n" );
@@ -520,6 +637,7 @@ void dump_cbi_stat_prof ( OC_ID oc_id ) {
 }
 int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
   assert( fname );
+  BOOL err = FALSE;
   FILE *fp = NULL;
   
   fp = fopen( fname, "r" );
@@ -538,12 +656,16 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	assert( FALSE );
       } else {
 	CBI_STAT_ATTR_PTR pA = &cbi_stat_prof[oc_id][frontier[oc_id]];
-	assert( pA );
+	assert( pA );		       
+	if( (err = (BOOL)ferror( fp )) )
+	  break;
 	strncpy( pA->name, name, CBI_STAT_NAME_LEN );
 	strncpy( pA->ident, name, CBI_STAT_NAME_LEN );
 	pA->oc_id = oc_id;
 	pA->kind = _UNKNOWN;
-	pA->group = (CBI_STAT_GROUP)group;
+	pA->group.raw = (CBI_STAT_GROUP)group;
+	pA->group.oc_from = cbi_group2msg[pA->group.raw];
+	pA->group.addr = cbi_group2addr[pA->group.raw];
 	pA->disp.raw = disp;
 	{
 	  int n = disp / 8;
@@ -557,7 +679,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	  }
 	  pA->disp.bits = m;
 	}
-	pA->disp.mask = cbi_stat_bit_mask_pattern( pA->disp.bits );
+	pA->disp.mask = cbi_stat_bit_maskpat( pA->disp.bits );
 	frontier[oc_id]++;
       }
       lines++;
@@ -567,17 +689,27 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
     //fclose( fp_out ); // ***** for debugging.
   } else {
     errorF( "failed to open the file: %s.\n", fname );
-    assert( FALSE );
+    err = TRUE;
+    //assert( FALSE );
   }
   
-  {
+  if( !err ) {
     int i;
     for( i = 0; i < frontier[oc_id]; i++ )
       regist_hash_local( &cbi_stat_prof[oc_id][i] );
     assert( i == frontier[oc_id] );
   }
   
-  return frontier[oc_id];
+  {
+    int r = frontier[oc_id];
+    assert( r >= 0 );
+    if( err ) {
+      if( r == 0 )
+	r = 1;
+      r *= -1;
+    }
+    return r;
+  }
 }
 
 int reveal_cbi_code_tbl ( void ) {
@@ -665,16 +797,4 @@ char *cnv2str_il_obj_instances[] = {
 #undef IL_OBJ_INSTANCE_DESC
 #undef IL_3t
   NULL
-};
-
-//{ROUTE_CONTROL, Sxxxy, Sxxxy,
-struct attr {
-  CBI_STAT_KIND kind;
-  char ident[CBI_STAT_IDENT_LEN + 1];
-  union {
-    struct {
-      IL_OBJ_INSTANCES src;
-      IL_OBJ_INSTANCES dst;
-    } route;
-  } u;
 };

@@ -31,39 +31,44 @@ typedef struct track {
 
 typedef enum route_kind {
   MAIN_ROUTE,
-  ATP_SHUNTING_ROUTE,
+  SHUNTING_ROUTE,
   EMERGENCY_ROUTE,
   END_OF_ROUTE_KINDS
 } ROUTE_KIND;
+extern const CBI_STAT_KIND ROUTE_KIND2GENERIC[];
 
 #define MAX_ROUTE_TRACKS 21
+#define MAX_ROUTE_TRG_BLOCKS 21
 typedef struct _route {
-  ROUTE_ID id;
-  char *name;
   ROUTE_KIND kind;
+  IL_OBJ_INSTANCES id;
+  const char *name;
   struct {
     int num_tracks;
     TRACK_ID tracks[MAX_ROUTE_TRACKS];
+    TRACK_PTR ptracks[MAX_ROUTE_TRACKS];
   } tr;
+  struct {
+    CBI_STAT_KIND kind;
+    IL_OBJ_INSTANCES src;    
+  } sig_src;
+  struct {
+    CBI_STAT_KIND kind;
+    IL_OBJ_INSTANCES dst;
+  } sig_dst;  
+  struct {
+    BOOL is_ars;
+    struct {
+      int num_blocks;
+      TRACK_ID trg_blks[MAX_ROUTE_TRG_BLOCKS];
+      TRACK_PTR ptrg_blks[MAX_ROUTE_TRG_BLOCKS];
+    } trg_section;
+  } ars_ctrl;
 } ROUTE, *ROUTE_PTR;
 
 #define ROUTE_ATTRIB_DEFINITION
 #include "interlock_def.h"
 #undef ROUTE_ATTRIB_DEFINITION
-
-#define MAX_ROUTE_TRG_BLOCKS 21
-typedef struct ars_route {
-  //ROUTE route;
-  ROUTE_ID route;
-  struct {
-    int num_blocks;
-    TRACK_ID trg_blocks[MAX_ROUTE_TRG_BLOCKS];
-  } trg_section;
-} ARS_ROUTE, *ARS_ROUTE_PTR;
-
-#define ARS_ROUTES_DEFINITIONS
-#include "interlock_def.h"
-#undef ARS_ROUTES_DEFINITIONS
 
 #define TLSR_LOCKED( tr ) ((tr).locking.TLSR)
 #define TRSR_LOCKED( tr ) ((tr).locking.TRSR)

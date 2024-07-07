@@ -4,24 +4,6 @@
 #include <ctype.h>
 #include "../cbi.h"
 
-static struct {
-  OC_ID oc_id;
-  char *fname;
-} cbi_stat_csv_fnames[END_OF_OCs + 1] = {
-  {OC801, "./BOTANICAL_GARDEN.csv"},
-  {OC802, NULL},
-  {OC803, NULL},
-  {OC804, NULL},
-  {OC805, NULL},
-  {OC806, NULL},
-  {OC807, NULL},
-  {OC808, NULL},
-  {OC809, NULL},
-  {OC810, NULL},
-  {OC811, NULL},
-  {END_OF_OCs, NULL}
-};
-
 #define CBI_LEX_ERR_PREFX_MAXCHRS 256
 #define CBI_LEX_EMIT_PREFX_MAXCHRS 256
 #define CBI_LEX_ERR_SUFIX_MAXCHRS 256
@@ -73,7 +55,7 @@ LEX_IL_OBJ cbi_lex_def[] = {
    * grammar:  {{kind, match_pattern, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}, raw-stat-name}}
    * grammar': {{kind, match_pattern, expand_pat_4ident, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}}}
    */
-#include "cbi_pat_def.h"
+#include "cbi_pat.def"
   {END_OF_CBI_STAT_KIND, "", "", {{""}}}
 };
 
@@ -592,16 +574,16 @@ int main ( void ) {
     assert( fp_err );
     assert( fp_out );
     int n = -1;
-    if( ! cbi_stat_csv_fnames[oc_id].fname ) {
+    if( ! il_status_geometry_resources[oc_id].csv_fname ) {
       oc_id++;
       continue;
     }
+    assert( il_status_geometry_resources[oc_id].csv_fname );
+    assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
     
-    assert( cbi_stat_csv_fnames[oc_id].oc_id == oc_id );
-    assert( cbi_stat_csv_fnames[oc_id].fname );
-    n = load_cbi_code_tbl ( cbi_stat_csv_fnames[oc_id].oc_id, cbi_stat_csv_fnames[oc_id].fname );
+    n = load_cbi_code_tbl ( il_status_geometry_resources[oc_id].oc_id, il_status_geometry_resources[oc_id].csv_fname );
     assert( n >= 0 );
-    fprintf( fp_err, "read %d entries from csv file of %s.\n", n, cbi_stat_csv_fnames[oc_id].fname );
+    fprintf( fp_err, "read %d entries from csv file of %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
     {
       PREFX_SUFIX prsf;
       memset( &prsf, 0, sizeof(prsf) );

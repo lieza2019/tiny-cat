@@ -12,6 +12,14 @@
 #include "interlock.h"
 #undef INTERLOCK_C
 
+const CBI_STAT_KIND ROUTE_KIND2GENERIC[] = {
+  _SIGNAL, // MAIN_ROUTE,
+  _SIGNAL, // SHUNTING_ROUTE,
+  _SIGNAL, // EMERGENCY_ROUTE,
+  _CBI_KIND_NONSENS // END_OF_ROUTE_KINDS
+};
+
+#if 0
 static TRACK_PTR ask_track_status( TRACK_ID track_id ) {
   TRACK_PTR r = NULL;
   int i;
@@ -27,7 +35,7 @@ static TRACK_PTR ask_track_status( TRACK_ID track_id ) {
   return r;
 }
 
-static ROUTE_PTR ask_route_status( ROUTE_ID route_id ) {
+static ROUTE_PTR ask_route_status( IL_OBJ_INSTANCES route_id ) { 
   ROUTE_PTR r = NULL;
   int i;
   
@@ -42,7 +50,7 @@ static ROUTE_PTR ask_route_status( ROUTE_ID route_id ) {
   return r;
 }
 
-static BOOL chk_ars_tracks_occupancy( ROUTE_ID route_id ) {
+static BOOL chk_ars_tracks_occupancy( IL_OBJ_INSTANCES route_id ) {
   BOOL r = FALSE;
   ROUTE_PTR pAttrib = NULL;
   
@@ -65,7 +73,7 @@ static BOOL chk_ars_tracks_occupancy( ROUTE_ID route_id ) {
   return r;
 }
 
-static BOOL chk_ars_tracks_lock( ROUTE_ID route_id ) {
+static BOOL chk_ars_tracks_lock( IL_OBJ_INSTANCES route_id ) {
   BOOL r = FALSE;
   ROUTE_PTR pAttrib = NULL;
   
@@ -94,7 +102,7 @@ static BOOL chk_ars_tracks_lock( ROUTE_ID route_id ) {
   return r;
 }
 
-ARS_REJECTED_REASON chk_ars_condition( ROUTE_ID route_id ) {
+ARS_REJECTED_REASON chk_ars_condition( IL_OBJ_INSTANCES route_id ) {
   ARS_REJECTED_REASON r = ARS_WELL_CONDITION;
   
   if( chk_ars_tracks_occupancy( route_id ) )
@@ -124,6 +132,7 @@ static BOOL chk_ars_triggered( ARS_ROUTE_PTR pRoute_ars ) {
   }
   return r;
 }
+#endif
 
 static CBI_STAT_INFO_PTR willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
   assert( pS );
@@ -137,7 +146,7 @@ static CBI_STAT_INFO_PTR willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT
   {
     TINY_SOCK_DESC d = -1;
     if( (d = creat_sock_recv( pS, pOC->oc2ats.dst_port )) < 0 ) {
-      errorF( "failed to create the socket to receive CBI status information from OC2ATS%d.\n", OC_MSG_ID_CONV_2_INT(msg_id) );
+      errorF( "failed to create the socket to receive CBI status information from OC2ATS%d.\n", OC_MSG_ID_CONV2INT(msg_id) );
       goto exit;
     }
     pOC->oc2ats.d_recv_cbi_stat = d;
@@ -188,7 +197,7 @@ static CBI_STAT_INFO_PTR willing_to_send_OC_cmd ( TINY_SOCK_PTR pS, ATS2OC_CMD m
     {
       TINY_SOCK_DESC d = -1;
       if( (d = creat_sock_sendnx( pS, pOC->ats2oc.dst_port, TRUE, &bcast_dst_ipaddr )) < 0 ) {
-	errorF( "failed to create the socket to send CBI control commands  toward OC%d.\n", OC_ID_CONV_2_INT(msg_id) );
+	errorF( "failed to create the socket to send CBI control commands  toward OC%d.\n", OC_ID_CONV2INT(msg_id) );
 	goto exit;
       }
       pOC->ats2oc.d_recv_cbi_stat = d;
@@ -262,7 +271,7 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
 	assert( (i >= OC801) && (i <= END_OF_OCs) );
 	if( i >= END_OF_OCs ) {
 	  errorF( "CBI status info with UNKNOWN LNN of %d received from OC2ATS%d, and ignored.\n",
-		  ntohs(precv->nx_hdr.SA_LNN_srcAddrLogicNodeNum), OC_MSG_ID_CONV_2_INT(msg_id) );
+		  ntohs(precv->nx_hdr.SA_LNN_srcAddrLogicNodeNum), OC_MSG_ID_CONV2INT(msg_id) );
 	  return NULL;
 	} else
 	  oc_id = (OC_ID)i;
@@ -283,7 +292,7 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
 	  goto msg_size_err;
 	break;
       msg_size_err:
-	errorF( "illegal sized CBI status info received from OC2ATS%d, and ignored.\n",  OC_MSG_ID_CONV_2_INT(msg_id) );
+	errorF( "illegal sized CBI status info received from OC2ATS%d, and ignored.\n",  OC_MSG_ID_CONV2INT(msg_id) );
 	return NULL;
       default:
 	assert( FALSE );
@@ -343,11 +352,11 @@ void *pth_reveal_il_status ( void * pS ) {
 	assert( (j >= OC801) && (j < END_OF_OCs) );
 	if( cbi_stat_info[j].updated ) {
 	  if( omits[j] < 0 )
-	    errorF( "CBI status information of OC%3d has started updating, again.\n", OC_ID_CONV_2_INT(j) );
+	    errorF( "CBI status information of OC%3d has started updating, again.\n", OC_ID_CONV2INT(j) );
 	  omits[j] = 0;
 	} else {
 	  if( omits[j] >= obsolete ) {
-	    errorF( "CBI status information of OC%3d has been obsoleted.\n", OC_ID_CONV_2_INT(j) );
+	    errorF( "CBI status information of OC%3d has been obsoleted.\n", OC_ID_CONV2INT(j) );
 	    omits[j] = -1;
 	  } else
 	    if( omits[j] > -1 )

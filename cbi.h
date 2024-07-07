@@ -4,8 +4,23 @@
 #include "network.h"
 #include "./cbi/il_obj_instance_decl.h"
 
-#define CBI_MAX_STAT_BITS 65536
-#define CBI_STAT_BITS_LEXBUF_SIZE 256
+//#define CBI_STAT_CSV_FNAME_BCGN "./cbi/BOTANICAL_GARDEN.csv"
+#define CBI_STAT_CSV_FNAME_BCGN "BOTANICAL_GARDEN.csv"
+#define CBI_STAT_CSV_FNAME_JLA NULL
+#define CBI_STAT_CSV_FNAME_IWNA NULL
+#define CBI_STAT_CSV_FNAME_RKPM NULL
+#define CBI_STAT_CSV_FNAME_IGDA NULL
+#define CBI_STAT_CSV_FNAME_JPW NULL
+#define CBI_STAT_CSV_FNAME_KIKD_OC1 NULL
+#define CBI_STAT_CSV_FNAME_KIKD_OC2 NULL
+#define CBI_STAT_CSV_FNAME_KPEN NULL
+#define CBI_STAT_CSV_FNAME_PAGI NULL
+#define CBI_STAT_CSV_FNAME_DPCK NULL
+#define CBI_STAT_CSV_FNAME_NPPR NULL
+#define CBI_STAT_CSV_FNAME_MKPR NULL
+#define CBI_STAT_CSV_FNAME_GAGR NULL
+#define CBI_STAT_CSV_FNAME_RKAM NULL
+#define CBI_STAT_CSV_FNAME_MKPD NULL
 
 typedef enum oc_id {
   OC801,
@@ -26,7 +41,8 @@ typedef enum oc_id {
   OC816,
   END_OF_OCs
 } OC_ID;
-#define OC_ID_CONV_2_INT( oc_id ) ((oc_id) + 801)
+//#define OC_ID_CONV_2_INT( oc_id ) ((oc_id) + 801)
+#define OC_ID_CONV2INT( oc_id ) ((oc_id) + 801)
 
 typedef enum ats2oc_cmd {
   ATS2OC801,
@@ -54,7 +70,7 @@ typedef enum oc2ats_stat {
   OC2ATS3,
   END_OF_OC2ATS
 } OC2ATS_STAT;
-#define OC_MSG_ID_CONV_2_INT( msg_id ) ((msg_id) + 1)
+#define OC_MSG_ID_CONV2INT( msg_id ) ((msg_id) + 1)
 
 #define OC_LNN_801_SYS1 101
 #define OC_LNN_802_SYS1 102
@@ -158,6 +174,7 @@ typedef enum _cbi_stat_group {
   CBI_STAT_M,
   CBI_STAT_A
 } CBI_STAT_GROUP;
+extern const char *CBI_STAT_GROUP_CONV2STR[];
 
 typedef enum cbi_stat_bit_mask {
   CBI_STAT_BIT_0 = 1,
@@ -178,12 +195,24 @@ typedef enum cbi_stat_kind {
   END_OF_CBI_STAT_KIND
 } CBI_STAT_KIND;
 
+typedef struct cbi_stat_csv_fnames {
+  OC_ID oc_id;
+  //char *fname;
+  char *csv_fname;
+} CBI_STAT_CSV_FNAMES, *CBI_STAT_CSV_FNAMES_PTR;
+
+extern CBI_STAT_CSV_FNAMES il_status_geometry_resources[END_OF_OCs + 1];
+
 #define CBI_STAT_IDENT_LEN 32
 #define CBI_STAT_NAME_LEN 32
 typedef struct cbi_stat_attr {
   char ident[CBI_STAT_IDENT_LEN + 1];
   char name[CBI_STAT_NAME_LEN + 1];
-  CBI_STAT_GROUP group;
+  struct {
+    CBI_STAT_GROUP raw;
+    OC2ATS_STAT oc_from;
+    int addr;
+  } group;
   struct {
     int raw;
     int bytes;
@@ -196,6 +225,7 @@ typedef struct cbi_stat_attr {
   struct cbi_stat_attr *pNext_decl;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
+#define CBI_MAX_STAT_BITS 65536
 extern CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
 
 #define CBI_STAT_HASH_BUDGETS_NUM 256
@@ -203,10 +233,14 @@ extern CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const in
 extern CBI_STAT_ATTR_PTR cbi_stat_rehash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, char *ident, char *ident_new );
 extern CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, char *ident );
 
-extern CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( char *ident );
+#define CBI_STAT_BITS_LEXBUF_SIZE 256
 extern int load_cbi_code_tbl ( OC_ID oc_id, const char *fname );
+extern CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( char *ident );
 extern int reveal_cbi_code_tbl ( void );
 extern void dump_cbi_stat_prof ( OC_ID oc_id );
+
+extern char *show_cbi_stat_bitmask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask );
+extern CBI_STAT_BIT_MASK cbi_stat_bit_maskpat ( int pos );
 
 extern char *cnv2str_cbi_stat_kind[];
 
