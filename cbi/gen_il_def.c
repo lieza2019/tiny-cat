@@ -144,7 +144,8 @@ static char *match_name ( char *matched, int max_match_len, char *src, CBI_LEX_S
 }
 
 #define MATCH_PAT_COL(pHd, pCrnt) (((int)((pCrnt) - (pHd))) + 1)
-static char *lex_match_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srclen, LEX_IL_OBJ_PTR plex ) {
+static char *lex_match_pattrn ( BOOL *pr, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, char *src, int srclen, LEX_IL_OBJ_PTR plex ) {
+  assert( pr );
   assert( errfp );
   assert( pprsf );
   assert( psymtbl );
@@ -157,6 +158,7 @@ static char *lex_match_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CB
   
   assert( psrc );
   assert( ppat );
+  *pr = FALSE;
   while( *ppat && (ppat < (plex->match_pat + CBI_LEX_PAT_MAXLEN)) ) {
     if( islower(*ppat) ) {
       char var_id[2];
@@ -220,7 +222,8 @@ static char *lex_match_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CB
 	assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
 	fprintf( errfp, "%s", pprsf->prefix.err );
 	fprintf( errfp, "line: %d, matching pattern, col= %d: excessive unmatched characters remain,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
-      }
+      } else
+	*pr = TRUE;
     }
   }
   return psrc;
@@ -537,20 +540,22 @@ static BOOL transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, 
     src[CBI_STAT_NAME_LEN] = 0;
     strncpy( src, plex->raw_name, CBI_STAT_NAME_LEN );
     {
-      char *src1;
-      src1 = lex_match_pattrn( errfp, pprsf, line, psymtbl, src, strnlen(src, CBI_STAT_NAME_LEN), plex );
+      BOOL r_lex = FALSE;
+      char *src1 = NULL;
+      src1 = lex_match_pattrn( &r_lex, errfp, pprsf, line, psymtbl, src, strnlen(src, CBI_STAT_NAME_LEN), plex );
       assert( src1 );
-      if( src1 >= (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
-	int r_emit = -1;
-	assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
-	strncpy( pprsf->prefix.emit, "{", CBI_LEX_EMIT_PREFX_MAXCHRS );
-	strncpy( pprsf->suffix.emit, "}," , CBI_LEX_EMIT_PREFX_MAXCHRS );
-	if( (r_emit = emit_stat_abbrev( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
-	  if( (r_emit = emit_il_instances( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
-	    r = TRUE;
-	if( r_emit > 0 )
-	  fprintf( fp, "\n" );
-      }
+      if( r_lex )
+	if( src1 >= (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
+	  int r_emit = -1;
+	  assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
+	  strncpy( pprsf->prefix.emit, "{", CBI_LEX_EMIT_PREFX_MAXCHRS );
+	  strncpy( pprsf->suffix.emit, "}," , CBI_LEX_EMIT_PREFX_MAXCHRS );
+	  if( (r_emit = emit_stat_abbrev( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
+	    if( (r_emit = emit_il_instances( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
+	      r = TRUE;
+	  if( r_emit > 0 )
+	    fprintf( fp, "\n" );
+	}
     }
   }
   return r;
