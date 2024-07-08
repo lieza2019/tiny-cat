@@ -574,53 +574,61 @@ int main ( void ) {
     return -1;
   }
   
-  while( oc_id < (int)END_OF_OCs ) {
-    assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
-    assert( fp_err );
-    assert( fp_out );
-    int n = -1;
-    if( ! il_status_geometry_resources[oc_id].csv_fname ) {
-      oc_id++;
-      continue;
-    }
-    assert( il_status_geometry_resources[oc_id].csv_fname );
-    assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
-    
-    n = load_cbi_code_tbl ( il_status_geometry_resources[oc_id].oc_id, il_status_geometry_resources[oc_id].csv_fname );
-    assert( n >= 0 );
-    fprintf( fp_err, "read %d entries from csv file of %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
-    {
-      PREFX_SUFIX prsf;
-      memset( &prsf, 0, sizeof(prsf) );
-      fprintf( fp_out, "#ifndef CBI_STAT_LABELING\n" );
-      fprintf( fp_out, "#define CBI_STAT_LABELING\n" );
-      fprintf( fp_out, "#endif\n" );
-      fprintf( fp_out, "static CBI_STAT_LABEL cbi_stat_labeling[] = {\n" );
-      {
-	CBI_LEX_SYMTBL_PTR pS = &S;
-	int i = 0;
-	while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
-	  int j;
-	  for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[oc_id][j].name[0]; j++ ) {
-	    assert( pS );
-	    memset( pS, 0, sizeof(S) );
-	    snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%d: ", (j + 1) );
-	    transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[oc_id][j] );
-	  }
-	  i++;
-	}
-	fprintf( fp_err, "\n" );
+  {
+    BOOL prolog = TRUE;
+    int oc_id = -1;
+    oc_id = OC801;
+    while( oc_id < (int)END_OF_OCs ) {
+      assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
+      assert( fp_err );
+      assert( fp_out );
+      int n = -1;
+      if( ! il_status_geometry_resources[oc_id].csv_fname ) {
+	oc_id++;
+	continue;
       }
+      assert( il_status_geometry_resources[oc_id].csv_fname );
+      assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
+    
+      n = load_cbi_code_tbl ( il_status_geometry_resources[oc_id].oc_id, il_status_geometry_resources[oc_id].csv_fname );
+      assert( n >= 0 );
+      fprintf( fp_err, "read %d entries from csv file of %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
+      {
+	PREFX_SUFIX prsf;
+	memset( &prsf, 0, sizeof(prsf) );
+	if( prolog ) {
+	  fprintf( fp_out, "#ifndef CBI_STAT_LABELING\n" );
+	  fprintf( fp_out, "#define CBI_STAT_LABELING\n" );
+	  fprintf( fp_out, "#endif\n" );
+	  fprintf( fp_out, "static CBI_STAT_LABEL cbi_stat_labeling[] = {\n" );
+	  prolog = FALSE;
+	}
+	{
+	  CBI_LEX_SYMTBL_PTR pS = &S;
+	  int i = 0;
+	  while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
+	    int j;
+	    for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[oc_id][j].name[0]; j++ ) {
+	      assert( pS );
+	      memset( pS, 0, sizeof(S) );
+	      snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%d: ", (j + 1) );
+	      transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[oc_id][j] );
+	    }
+	    i++;
+	  }
+	  fprintf( fp_err, "\n" );
+	}
+      }
+      oc_id++;
     }
-    oc_id++;
-  }
-  fprintf( fp_out, "{ _CBI_KIND_NONSENS, \"\", \"\" }\n" );
-  fprintf( fp_out, "};\n" );
-  fflush( fp_err );
-  if( fp_out ) {
-    fflush( fp_out );
-    fclose( fp_out );
-    fp_out = NULL;
+    fprintf( fp_out, "{ _CBI_KIND_NONSENS, \"\", \"\" }\n" );
+    fprintf( fp_out, "};\n" );
+    fflush( fp_err );
+    if( fp_out ) {
+      fflush( fp_out );
+      fclose( fp_out );
+      fp_out = NULL;
+    }
   }
   
   fp_out = fopen( IL_INSTANCES_EMIT_FNAME, "wb" );

@@ -31,8 +31,8 @@ typedef struct track {
 
 typedef enum route_kind {
   MAIN_ROUTE,
-  SHUNTING_ROUTE,
-  EMERGENCY_ROUTE,
+  SHUNT_ROUTE,
+  EMERGE_ROUTE,
   END_OF_ROUTE_KINDS
 } ROUTE_KIND;
 extern const CBI_STAT_KIND ROUTE_KIND2GENERIC[];

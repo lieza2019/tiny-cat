@@ -1,4 +1,5 @@
 {_ROUTE, "Sxxxy_Sxxxy_R", "Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]", {{"Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]"}}},
+{_ROUTE, "Sxxxy_VSxxxy_R", "Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]", {{"Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]"}}},
 {_SIGNAL, "Sxxxy_HR", "Sx[1]x[2]x[3]y[1]", {{"Sx[1]x[2]x[3]y[1]"}}},
 {_TRACK, "Txxxy_TR", "Tx[1]x[2]x[3]y[1]_TR", {{"Tx[1]x[2]x[3]y[1]_TR"}}},
 {_TLSR, "Txxxy_TLSR", "Tx[1]x[2]x[3]y[1]_TLSR", {{"Tx[1]x[2]x[3]y[1]_TLSR"}}},
