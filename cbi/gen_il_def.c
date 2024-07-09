@@ -160,7 +160,7 @@ static char *lex_match_pattrn ( BOOL *pr, FILE *errfp, PREFX_SUFIX_PTR pprsf, in
   assert( ppat );
   *pr = FALSE;
   while( *ppat && (ppat < (plex->match_pat + CBI_LEX_PAT_MAXLEN)) ) {
-    if( islower(*ppat) ) {
+    if( (*ppat != '\\') && islower(*ppat) ) {
       char var_id[2];
       int id_len = -1;
       var_id[0] = *ppat;
@@ -194,12 +194,23 @@ static char *lex_match_pattrn ( BOOL *pr, FILE *errfp, PREFX_SUFIX_PTR pprsf, in
       err = TRUE;
       break;
     } else {
-      if( *psrc && (psrc < (src + srclen)) )
-	if( *psrc == *ppat ) {
+      assert( *ppat && (ppat < (plex->match_pat + CBI_LEX_PAT_MAXLEN)) );
+      if( *psrc && (psrc < (src + srclen)) ) {
+	if( *ppat == '\\' ) {
+	  ppat++;
+	  if( !(*ppat && (ppat < (plex->match_pat + CBI_LEX_PAT_MAXLEN))) ) {
+	    fprintf( errfp, "%s", pprsf->prefix.err );
+	    fprintf( errfp, "line: %d, matching pattern, col= %d: escaping character has no meanings,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
+	    break;
+	  }
+	  /* fall thru. */
+	}
+	if( *ppat == *psrc ) {
 	  psrc++;
 	  ppat++;
 	  continue;
 	}
+      }
       assert( pprsf->prefix.err );
       assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
       fprintf( errfp, "%s", pprsf->prefix.err );
