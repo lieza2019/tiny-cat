@@ -47,7 +47,7 @@ typedef struct _route {
     int num_tracks;
     IL_OBJ_INSTANCES tracks[MAX_ROUTE_TRACKS];
     TRACK_PTR ptracks[MAX_ROUTE_TRACKS];
-  } tr;
+  } trks;
   struct {
     struct {
       CBI_STAT_KIND kind;
@@ -65,6 +65,11 @@ typedef struct _route {
       CBTC_BLOCK_ID trg_blks[MAX_ROUTE_TRG_BLOCKS];
       CBTC_BLOCK_PTR ptrg_blks[MAX_ROUTE_TRG_BLOCKS];
     } trg_sect;
+    struct {
+      int num_tracks;
+      IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRG_BLOCKS];
+      TRACK_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
+    } ctrl_tracks;
   } ars_ctrl;
 } ROUTE, *ROUTE_PTR;
 #define ROUTE_ATTRIB_DEFINITION

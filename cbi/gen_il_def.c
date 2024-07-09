@@ -456,6 +456,9 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	  pE->name[CBI_STAT_RAWNAME_MAXLEN] = 0;
 	  strncpy( pE->name, plex->raw_name, CBI_STAT_NAME_LEN );
 	  pE->kind = plex->kind;
+#if 0
+	  printf( "HIT: (line: pat, name, ident) = (%d: %s, %s, %s)\n", line, plex->exp[i].pat, plex->raw_name, emit_buf ); // ***** for debugging.
+#else
 	  {
 	    CBI_STAT_ATTR_PTR w = NULL;
 	    w = hash_regist( pE );
@@ -472,7 +475,8 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    
 	    if( ! il_objs_hash.ptop )
 	      il_objs_hash.ptop = w;
-	  }
+	  }	  
+#endif
 	  cnt++;
 	} else {
 	  err = TRUE;
@@ -481,7 +485,6 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
       }
     }
   }
-  
   return ( cnt * (err ? -1 : 1) );
 }
 
@@ -521,7 +524,6 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
       fprintf( fp, " %s", pprsf->suffix.emit );
     }
   }
-  
   return (err ? -1 : 1);
 }
 
@@ -546,14 +548,15 @@ static BOOL transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, 
       assert( src1 );
       if( r_lex )
 	if( src1 >= (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
-	  int r_emit = -1;
+	  int r_emit_abb = -1;
+	  int r_emit_ins = -1;
 	  assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
 	  strncpy( pprsf->prefix.emit, "{", CBI_LEX_EMIT_PREFX_MAXCHRS );
 	  strncpy( pprsf->suffix.emit, "}," , CBI_LEX_EMIT_PREFX_MAXCHRS );
-	  if( (r_emit = emit_stat_abbrev( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
-	    if( (r_emit = emit_il_instances( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
+	  if( (r_emit_abb = emit_stat_abbrev( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
+	    if( (r_emit_ins = emit_il_instances( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
 	      r = TRUE;
-	  if( r_emit > 0 )
+	  if( (abs(r_emit_abb) + abs(r_emit_ins)) > 0 )
 	    fprintf( fp, "\n" );
 	}
     }
@@ -565,7 +568,6 @@ int main ( void ) {
   CBI_LEX_SYMTBL S;
   FILE *fp_err = NULL;
   FILE *fp_out = NULL;
-  int oc_id = OC801;
   
   fp_err = stdout;
   fp_out = fopen( CBI_STAT_LABELNG_FNAME, "wb" );
