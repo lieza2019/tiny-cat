@@ -664,7 +664,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	pA->oc_id = oc_id;
 	pA->kind = _UNKNOWN;
 	pA->group.raw = (CBI_STAT_GROUP)group;
-	pA->group.oc_from = cbi_group2msg[pA->group.raw];
+	pA->group.msg_id = cbi_group2msg[pA->group.raw];
 	pA->group.addr = cbi_group2addr[pA->group.raw];
 	pA->disp.raw = disp;
 	{

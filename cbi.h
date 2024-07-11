@@ -117,15 +117,7 @@ typedef enum oc2ats_stat {
 #define OC_OC2ATS2_MSGSIZE 944
 #define OC_OC2ATS3_MSGSIZE 1260
 
-#if 1
-typedef struct recv_buf_cbi_stat {
-  struct {
-    NXNS_HEADER header;
-    unsigned char arena[OC_OC2ATS1_MSGSIZE - 76]; // for OC_OC2ATS1_MSGSIZE > OC_OC2ATS3_MSGSIZE > OC_OC2ATS2_MSGSIZE
-  } buf;
-  BOOL updated;
-} RECV_BUF_CBI_STAT, *RECV_BUF_CBI_STAT_PTR;
-#else
+#define OC_OC2ATS_MSGS_NUM 3
 typedef struct recv_buf_cbi_stat {
   struct {
     struct {
@@ -133,9 +125,8 @@ typedef struct recv_buf_cbi_stat {
       unsigned char arena[OC_OC2ATS1_MSGSIZE - 76]; // for OC_OC2ATS1_MSGSIZE > OC_OC2ATS3_MSGSIZE > OC_OC2ATS2_MSGSIZE
     } buf;
     BOOL updated;
-  } msgs[3];
+  } msgs[OC_OC2ATS_MSGS_NUM];
 } RECV_BUF_CBI_STAT, *RECV_BUF_CBI_STAT_PTR;
-#endif
 extern RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 
 typedef struct CBI_stat_infoset {
@@ -224,7 +215,8 @@ typedef struct cbi_stat_attr {
   char name[CBI_STAT_NAME_LEN + 1];
   struct {
     CBI_STAT_GROUP raw;
-    OC2ATS_STAT oc_from;
+    //OC2ATS_STAT oc_from;
+    OC2ATS_STAT msg_id;
     int addr;
   } group;
   struct {

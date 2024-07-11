@@ -78,7 +78,7 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
     fprintf( fp_out, "name: %s\n", pA->name );
     fprintf( fp_out, "kind: %s\n", cnv2str_cbi_stat_kind[pA->kind] );
     fprintf( fp_out, "group of (raw, oc_from, addr): (%s, OC2ATS%d, %d)\n",
-	     CBI_STAT_GROUP_CONV2STR[pA->group.raw], OC_MSG_ID_CONV2INT(pA->group.oc_from), pA->group.addr );
+	     CBI_STAT_GROUP_CONV2STR[pA->group.raw], OC_MSG_ID_CONV2INT(pA->group.msg_id), pA->group.addr );
     {
       char s[] = "CBI_STAT_BIT_x";
       fprintf( fp_out, "disp of (raw, bytes, bits, mask): (%d, %d, %d, %s)\n",
@@ -91,7 +91,7 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
       pstat = &cbi_stat_info[pA->oc_id];
       {
 	assert( pstat );
-	unsigned char *pgrp = &((unsigned char*)pstat)[pA->group.addr];
+	unsigned char *pgrp = &((unsigned char *)&pstat->msgs[pA->group.msg_id])[pA->group.addr];
 	assert( pgrp );
 	fprintf( fp_out, "value: %d\n", (pgrp[pA->disp.bytes] & pA->disp.mask) );
       }
