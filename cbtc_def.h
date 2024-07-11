@@ -9,7 +9,7 @@ typedef enum cbtc_block_id {
 #ifdef BLOCK_ATTRIB_DEFINITION
 #ifdef CBTC_C
 CBTC_BLOCK block_state[] = {
-  {ABC, "ABC", 1234, TRUE}
+  {ABC, "ABC", 1234, NULL}
 };
 #else
 extern CBTC_BLOCK block_state[];

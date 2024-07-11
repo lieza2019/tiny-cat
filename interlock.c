@@ -19,6 +19,8 @@ const CBI_STAT_KIND ROUTE_KIND2GENERIC[] = {
   _CBI_KIND_NONSENS // END_OF_ROUTE_KINDS
 };
 
+pthread_mutex_t cbi_stat_info_mutex;
+
 #if 0
 static TRACK_PTR ask_track_status( TRACK_ID track_id ) {
   TRACK_PTR r = NULL;
@@ -344,9 +346,10 @@ void *pth_reveal_il_status ( void * pS ) {
   }
   
   while( TRUE ) {
+    assert( ! pthread_mutex_lock( &cbi_stat_info_mutex ) );
     reveal_il_state( (TINY_SOCK_PTR)pS );
     {
-      const int obsolete = 10;
+      const int obsolete = 1000;
       int j = (int)OC801;
       while( j < (int)END_OF_OCs ) {
 	assert( (j >= OC801) && (j < END_OF_OCs) );
@@ -366,6 +369,8 @@ void *pth_reveal_il_status ( void * pS ) {
       }
       assert( j == END_OF_OCs );
     }
+    diag_cbi_stat_attrib ( stdout, "S821B_S801B" );
+    assert( ! pthread_mutex_unlock( &cbi_stat_info_mutex ) );
     {
       int r = 1;
       r = usleep( interval );

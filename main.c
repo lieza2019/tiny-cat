@@ -64,10 +64,12 @@ static int diag_tracking_train_stat ( FILE *fp_out ) {
   return r;
 }
 
-static void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
+void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
   assert( fp_out );
   assert( ident );
   CBI_STAT_ATTR_PTR pA = NULL;
+  
+  //assert( ! pthread_mutex_lock( &cbi_stat_info_mutex ) );
   pA = conslt_cbi_code_tbl( ident );
   if( pA ) {
     assert( pA );
@@ -86,7 +88,7 @@ static void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
       assert( pA );
       RECV_BUF_CBI_STAT_PTR pstat = NULL;      
       assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
-      pstat = &cbi_stat_info[pA->oc_id];      
+      pstat = &cbi_stat_info[pA->oc_id];
       {
 	assert( pstat );
 	unsigned char *pgrp = &((unsigned char*)pstat)[pA->group.addr];
@@ -95,6 +97,7 @@ static void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
       }
     }
   }
+  //assert( ! pthread_mutex_unlock( &cbi_stat_info_mutex ) );
 }
 
 #define BUFSIZ_msgServerStatus MAX_SEND_BUFSIZ
@@ -246,11 +249,14 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_SCADA( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER1( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
-    
+
+#if 0
+    pthread_mutex_init( &cbi_stat_info_mutex, NULL );
     if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&socks ) ) {
       errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
       exit( 1 );
     }
+#endif
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
       if( (nrecv = sock_recv( &socks )) < 0 ) {
@@ -258,6 +264,7 @@ int main ( void ) {
 	continue;
       }
 #if 1
+      reveal_il_state( &socks );
       diag_cbi_stat_attrib( stdout, "S821B_S801B" );
 #endif
       

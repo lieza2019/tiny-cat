@@ -8,8 +8,8 @@
 #include "./cbi/il_obj_instance_decl.h"
 
 #define CBI_STAT_CSV_FNAME_BCGN "BOTANICAL_GARDEN.csv"
-#define CBI_STAT_CSV_FNAME_JLA "JASOLA_VIHAR.csv"
-//#define CBI_STAT_CSV_FNAME_JLA NULL
+//#define CBI_STAT_CSV_FNAME_JLA "JASOLA_VIHAR.csv"
+#define CBI_STAT_CSV_FNAME_JLA NULL
 #define CBI_STAT_CSV_FNAME_IWNA NULL
 #define CBI_STAT_CSV_FNAME_RKPM NULL
 #define CBI_STAT_CSV_FNAME_IGDA NULL
@@ -117,6 +117,7 @@ typedef enum oc2ats_stat {
 #define OC_OC2ATS2_MSGSIZE 944
 #define OC_OC2ATS3_MSGSIZE 1260
 
+#if 1
 typedef struct recv_buf_cbi_stat {
   struct {
     NXNS_HEADER header;
@@ -124,6 +125,17 @@ typedef struct recv_buf_cbi_stat {
   } buf;
   BOOL updated;
 } RECV_BUF_CBI_STAT, *RECV_BUF_CBI_STAT_PTR;
+#else
+typedef struct recv_buf_cbi_stat {
+  struct {
+    struct {
+      NXNS_HEADER header;
+      unsigned char arena[OC_OC2ATS1_MSGSIZE - 76]; // for OC_OC2ATS1_MSGSIZE > OC_OC2ATS3_MSGSIZE > OC_OC2ATS2_MSGSIZE
+    } buf;
+    BOOL updated;
+  } msgs[3];
+} RECV_BUF_CBI_STAT, *RECV_BUF_CBI_STAT_PTR;
+#endif
 extern RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 
 typedef struct CBI_stat_infoset {
