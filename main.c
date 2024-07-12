@@ -167,7 +167,7 @@ int main ( void ) {
   TINY_SOCK_DESC sd_send_srvstat = -1;
   TINY_SOCK_DESC sd_recv_srvstat = -1;
   TINY_SOCK socks;
-  TINY_SOCK_CREAT( socks );
+  TINY_SOCK socks_cbi;
 #if 0
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
   printf( "sizeof TRAIN_INFO: %d.\n", (int)sizeof(TRAIN_INFO) );
@@ -193,6 +193,7 @@ int main ( void ) {
   exit( 0 );
 #endif
   
+  TINY_SOCK_CREAT( socks );  
   if( ! launch_msg_srv_stat( &socks, &sd_send_srvbeat, &sd_send_srvstat ) ) {
     errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
     exit( 1 );
@@ -213,11 +214,19 @@ int main ( void ) {
     exit( 1 );
   }
   
+#if 0
   if( ! establish_CBI_comm( &socks ) ) {
+    errorF("%s", "failed to create the recv/send UDP ports for CBI state information and control command respectively.\n");
+    exit( 1 );
+  }
+#else
+  TINY_SOCK_CREAT( socks_cbi );
+  if( ! establish_CBI_comm( &socks_cbi ) ) {
     errorF("%s", "failed to create the recv/send UDP ports for CBI state information and control command respectively.\n");
     exit( 1 );
   } else
     load_il_status_geometry();
+#endif
   
   {
     const useconds_t interval = 1000 * 1000 * 0.1;
@@ -249,10 +258,10 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_SCADA( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER1( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
-
-#if 0
+    
+#if 1
     pthread_mutex_init( &cbi_stat_info_mutex, NULL );
-    if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&socks ) ) {
+    if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&socks_cbi ) ) {
       errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
       exit( 1 );
     }
@@ -263,8 +272,9 @@ int main ( void ) {
 	errorF( "%s", "error on receiving CBTC/CBI status information from SC/OCs.\n" );
 	continue;
       }
-#if 1
-      reveal_il_state( &socks );
+#if 0
+      //reveal_il_state( &socks );  // N.G.
+      reveal_il_state( &socks_cbi );  // Just it!
       diag_cbi_stat_attrib( stdout, "S821B_S801B" );
 #endif
       

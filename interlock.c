@@ -233,7 +233,7 @@ static BOOL establish_OC_stat_send ( TINY_SOCK_PTR pS ) {
 BOOL establish_CBI_comm ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
-
+  
   if( establish_OC_stat_recv( pS ) )
     if( establish_OC_stat_send( pS ) )
       r = TRUE;
@@ -272,8 +272,10 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
 	}
 	assert( (i >= OC801) && (i <= END_OF_OCs) );
 	if( i >= END_OF_OCs ) {
-	  errorF( "CBI status info with UNKNOWN LNN of %d received from OC2ATS%d, and ignored.\n",
-		  ntohs(precv->nx_hdr.SA_LNN_srcAddrLogicNodeNum), OC_MSG_ID_CONV2INT(msg_id) );
+	  if( pOC->LNN[i] > 0 ) {
+	    errorF( "CBI status info with UNKNOWN LNN of %d received from OC2ATS%d, and ignored.\n",
+		    ntohs(precv->nx_hdr.SA_LNN_srcAddrLogicNodeNum), OC_MSG_ID_CONV2INT(msg_id) );
+	  }
 	  return NULL;
 	} else
 	  oc_id = (OC_ID)i;
@@ -333,9 +335,10 @@ void reveal_il_state ( TINY_SOCK_PTR pS ) {
   assert( i == END_OF_OC2ATS );
 }
 
-void *pth_reveal_il_status ( void * pS ) {
-  assert( pS );
-  const useconds_t interval = 1000 * 1000 * 0.1;
+void *pth_reveal_il_status ( void *arg ) {
+  assert( arg );  
+  const useconds_t interval = 1000 * 1000 * 0.01;;
+  TINY_SOCK_PTR pS = NULL;
   int omits[END_OF_OCs][OC_OC2ATS_MSGS_NUM];
   {
     int i = (int)OC801;
@@ -349,11 +352,17 @@ void *pth_reveal_il_status ( void * pS ) {
     assert( i == END_OF_OCs );
   }
   
+  pS = (TINY_SOCK_PTR)arg;
   while( TRUE ) {
-    assert( ! pthread_mutex_lock( &cbi_stat_info_mutex ) );
-    reveal_il_state( (TINY_SOCK_PTR)pS );
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbi_stat_info_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    }
+    
+    reveal_il_state( pS );
     {
-      const int obsolete = 1000;
+      const int obsolete = 100;
       int j = (int)OC801;
       while( j < (int)END_OF_OCs ) {	
 	assert( (j >= OC801) && (j < END_OF_OCs) );
@@ -375,8 +384,13 @@ void *pth_reveal_il_status ( void * pS ) {
       }
       assert( j == END_OF_OCs );
     }
-    diag_cbi_stat_attrib ( stdout, "S821B_S801B" );
-    assert( ! pthread_mutex_unlock( &cbi_stat_info_mutex ) );
+    
+    r_mutex = -1;
+    r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    }
+    
     {
       int r = 1;
       r = usleep( interval );

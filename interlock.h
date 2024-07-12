@@ -89,7 +89,7 @@ typedef struct _route {
 
 extern BOOL establish_CBI_comm ( TINY_SOCK_PTR pS );
 extern void reveal_il_state ( TINY_SOCK_PTR pS );
-extern void *pth_reveal_il_status ( void * pS );
+extern void *pth_reveal_il_status ( void *arg );
 
 extern pthread_mutex_t cbi_stat_info_mutex;
 
