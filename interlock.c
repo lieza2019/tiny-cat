@@ -354,12 +354,18 @@ void *pth_reveal_il_status ( void *arg ) {
   
   pS = (TINY_SOCK_PTR)arg;
   while( TRUE ) {
+    assert( pS );
     int r_mutex = -1;
+    
+    if( sock_recv( pS ) < 0 ) {
+      errorF( "%s", "error on receiving CBI status information from OCs.\n" );
+      continue;
+    }
+    
     r_mutex = pthread_mutex_lock( &cbi_stat_info_mutex );
     if( r_mutex ) {
       assert( FALSE );
     }
-    
     reveal_il_state( pS );
     {
       const int obsolete = 100;

@@ -277,6 +277,7 @@ int main ( void ) {
       reveal_il_state( &socks_cbi );  // Just it!
       diag_cbi_stat_attrib( stdout, "S821B_S801B" );
 #endif
+      diag_cbi_stat_attrib( stdout, "S821B_S801B" );
       
       reveal_train_tracking( &socks );
 #if 0
