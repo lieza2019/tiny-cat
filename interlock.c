@@ -159,7 +159,7 @@ static CBI_STAT_INFO_PTR willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT
   return r;
 }
 
-static BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS ) {
+BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
   
@@ -211,7 +211,7 @@ static CBI_STAT_INFO_PTR willing_to_send_OC_cmd ( TINY_SOCK_PTR pS, ATS2OC_CMD m
   return r;
 }
 
-static BOOL establish_OC_stat_send ( TINY_SOCK_PTR pS ) {
+BOOL establish_OC_stat_send ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
   
@@ -245,8 +245,13 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
   assert( pS );
   assert( (msg_id >= OC2ATS1) && (msg_id < END_OF_OC2ATS) );
   RECV_BUF_CBI_STAT_PTR r = NULL;
-  
   CBI_STAT_INFO_PTR pOC = NULL;
+  
+  int r_mutex = -1;
+  r_mutex = pthread_mutex_lock( &cbi_stat_info_mutex );
+  if( r_mutex ) {
+    assert( FALSE );
+  }
   pOC = &cbi_stat_OC2ATS[(int)msg_id];
   assert( pOC );
   {
@@ -276,7 +281,7 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
 	    errorF( "CBI status info with UNKNOWN LNN of %d received from OC2ATS%d, and ignored.\n",
 		    ntohs(precv->nx_hdr.SA_LNN_srcAddrLogicNodeNum), OC_MSG_ID_CONV2INT(msg_id) );
 	  }
-	  return NULL;
+	  goto exit;
 	} else
 	  oc_id = (OC_ID)i;
       }
@@ -297,7 +302,7 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
 	break;
       msg_size_err:
 	errorF( "illegal sized CBI status info received from OC2ATS%d, and ignored.\n",  OC_MSG_ID_CONV2INT(msg_id) );
-	return NULL;
+	goto exit;
       default:
 	assert( FALSE );
       }
@@ -305,6 +310,13 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
       cbi_stat_info[(int)oc_id].msgs[msg_id].updated = TRUE;
     }
   }
+ exit:
+  r_mutex = -1;
+  r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
+  if( r_mutex ) {
+    assert( FALSE );
+  }
+  
   return r;
 }
 
@@ -321,7 +333,7 @@ static void expire_cbi_status ( void ) {
   assert( i == END_OF_OCs );
 }
 
-void reveal_il_state ( TINY_SOCK_PTR pS ) {
+void reveal_il_status ( TINY_SOCK_PTR pS ) {
   assert( pS );
   int i = -1;
   
@@ -337,7 +349,7 @@ void reveal_il_state ( TINY_SOCK_PTR pS ) {
 
 void *pth_reveal_il_status ( void *arg ) {
   assert( arg );  
-  const useconds_t interval = 1000 * 1000 * 0.01;;
+  const useconds_t interval = 1000 * 1000 * 0.01;
   TINY_SOCK_PTR pS = NULL;
   int omits[END_OF_OCs][OC_OC2ATS_MSGS_NUM];
   {
@@ -355,18 +367,12 @@ void *pth_reveal_il_status ( void *arg ) {
   pS = (TINY_SOCK_PTR)arg;
   while( TRUE ) {
     assert( pS );
-    int r_mutex = -1;
-    
     if( sock_recv( pS ) < 0 ) {
       errorF( "%s", "error on receiving CBI status information from OCs.\n" );
       continue;
     }
     
-    r_mutex = pthread_mutex_lock( &cbi_stat_info_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    }
-    reveal_il_state( pS );
+    reveal_il_status( pS );
     {
       const int obsolete = 100;
       int j = (int)OC801;
@@ -389,12 +395,6 @@ void *pth_reveal_il_status ( void *arg ) {
 	j++;
       }
       assert( j == END_OF_OCs );
-    }
-    
-    r_mutex = -1;
-    r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
     }
     
     {

@@ -87,7 +87,9 @@ typedef struct _route {
 #define kTRSR_LOCKED( tr ) ((tr).locking.kTRSR)
 #endif
 
-extern BOOL establish_CBI_comm ( TINY_SOCK_PTR pS );
+extern BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS );
+extern BOOL establish_OC_stat_send ( TINY_SOCK_PTR pS );
+
 extern void reveal_il_state ( TINY_SOCK_PTR pS );
 extern void *pth_reveal_il_status ( void *arg );
 

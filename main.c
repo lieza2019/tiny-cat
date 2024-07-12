@@ -63,13 +63,18 @@ static int diag_tracking_train_stat ( FILE *fp_out ) {
     }
   return r;
 }
-
+#if 0
 void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
   assert( fp_out );
   assert( ident );
   CBI_STAT_ATTR_PTR pA = NULL;
   
-  //assert( ! pthread_mutex_lock( &cbi_stat_info_mutex ) );
+  int r_mutex = -1;
+  r_mutex = pthread_mutex_lock( &cbi_stat_info_mutex );
+  if( r_mutex ) {
+    assert( FALSE);
+  }
+  
   pA = conslt_cbi_code_tbl( ident );
   if( pA ) {
     assert( pA );
@@ -82,12 +87,13 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
     {
       char s[] = "CBI_STAT_BIT_x";
       fprintf( fp_out, "disp of (raw, bytes, bits, mask): (%d, %d, %d, %s)\n",
-	      pA->disp.raw, pA->disp.bytes, pA->disp.bits, show_cbi_stat_bitmask(s, sizeof(s), pA->disp.mask) );
+	       pA->disp.raw, pA->disp.bytes, pA->disp.bits, show_cbi_stat_bitmask(s, sizeof(s), pA->disp.mask) );
     }
     {
       assert( pA );
-      RECV_BUF_CBI_STAT_PTR pstat = NULL;      
       assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
+      RECV_BUF_CBI_STAT_PTR pstat = NULL;
+
       pstat = &cbi_stat_info[pA->oc_id];
       {
 	assert( pstat );
@@ -97,8 +103,56 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
       }
     }
   }
-  //assert( ! pthread_mutex_unlock( &cbi_stat_info_mutex ) );
+  r_mutex = -1;
+    r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
+  if( r_mutex ) {
+    assert( FALSE );
+  }
 }
+#else
+void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
+  assert( fp_out );
+  assert( ident );
+  CBI_STAT_ATTR_PTR pA = NULL;
+  
+  pA = conslt_cbi_code_tbl( ident );
+  if( pA ) {
+    assert( pA );
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_trylock( &cbi_stat_info_mutex );
+    if( !r_mutex ) {
+      fprintf( fp_out, "ident: %s\n", pA->ident );
+      fprintf( fp_out, "oc_id: OC%3d\n", OC_ID_CONV2INT(pA->oc_id) );
+      fprintf( fp_out, "name: %s\n", pA->name );
+      fprintf( fp_out, "kind: %s\n", cnv2str_cbi_stat_kind[pA->kind] );
+      fprintf( fp_out, "group of (raw, oc_from, addr): (%s, OC2ATS%d, %d)\n",
+	       CBI_STAT_GROUP_CONV2STR[pA->group.raw], OC_MSG_ID_CONV2INT(pA->group.msg_id), pA->group.addr );
+      {
+	char s[] = "CBI_STAT_BIT_x";
+	fprintf( fp_out, "disp of (raw, bytes, bits, mask): (%d, %d, %d, %s)\n",
+		 pA->disp.raw, pA->disp.bytes, pA->disp.bits, show_cbi_stat_bitmask(s, sizeof(s), pA->disp.mask) );
+      }
+      {
+	assert( pA );
+	assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
+	RECV_BUF_CBI_STAT_PTR pstat = NULL;
+
+	pstat = &cbi_stat_info[pA->oc_id];
+	{
+	  assert( pstat );
+	  unsigned char *pgrp = &((unsigned char *)&pstat->msgs[pA->group.msg_id])[pA->group.addr];
+	  assert( pgrp );
+	  fprintf( fp_out, "value: %d\n", (pgrp[pA->disp.bytes] & pA->disp.mask) );
+	}
+      }
+      r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
+      if( r_mutex ) {
+	assert( FALSE );
+      }
+    }
+  }
+}
+#endif
 
 #define BUFSIZ_msgServerStatus MAX_SEND_BUFSIZ
 #define BUFSIZ_msgServerHeartbeat MAX_SEND_BUFSIZ
@@ -167,7 +221,7 @@ int main ( void ) {
   TINY_SOCK_DESC sd_send_srvstat = -1;
   TINY_SOCK_DESC sd_recv_srvstat = -1;
   TINY_SOCK socks;
-  TINY_SOCK socks_cbi;
+  TINY_SOCK socks_cbi_stat;
 #if 0
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
   printf( "sizeof TRAIN_INFO: %d.\n", (int)sizeof(TRAIN_INFO) );
@@ -213,19 +267,25 @@ int main ( void ) {
     errorF("%s", "failed to create the recv/send UDP ports for Train information and Train command respectively.\n");
     exit( 1 );
   }
-  
 #if 0
-  if( ! establish_CBI_comm( &socks ) ) {
-    errorF("%s", "failed to create the recv/send UDP ports for CBI state information and control command respectively.\n");
-    exit( 1 );
-  }
-#else
-  TINY_SOCK_CREAT( socks_cbi );
-  if( ! establish_CBI_comm( &socks_cbi ) ) {
+  TINY_SOCK_CREAT( socks_cbi_stat );
+  if( ! establish_CBI_comm( &socks_cbi_stat ) ) {
     errorF("%s", "failed to create the recv/send UDP ports for CBI state information and control command respectively.\n");
     exit( 1 );
   } else
     load_il_status_geometry();
+#else
+  if( establish_OC_stat_send( &socks ) ) {
+    TINY_SOCK_CREAT( socks_cbi_stat );
+    if( establish_OC_stat_recv( &socks_cbi_stat ) )
+      load_il_status_geometry();
+    else
+      goto err_OC_sockets;
+  } else {
+  err_OC_sockets:
+      errorF("%s", "failed to create the recv/send UDP ports for CBI state information and control command respectively.\n");
+      exit( 1 );
+  }
 #endif
   
   {
@@ -259,13 +319,11 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_LOGGER1( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
     
-#if 1
     pthread_mutex_init( &cbi_stat_info_mutex, NULL );
-    if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&socks_cbi ) ) {
+    if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&socks_cbi_stat ) ) {
       errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
       exit( 1 );
     }
-#endif
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
       if( (nrecv = sock_recv( &socks )) < 0 ) {
@@ -274,10 +332,11 @@ int main ( void ) {
       }
 #if 0
       //reveal_il_state( &socks );  // N.G.
-      reveal_il_state( &socks_cbi );  // Just it!
+      reveal_il_state( &socks_cbi_stat );  // Just it!
+      diag_cbi_stat_attrib( stdout, "S821B_S801B" );
+#else
       diag_cbi_stat_attrib( stdout, "S821B_S801B" );
 #endif
-      diag_cbi_stat_attrib( stdout, "S821B_S801B" );
       
       reveal_train_tracking( &socks );
 #if 0
