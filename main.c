@@ -17,6 +17,7 @@
 #include "interlock.h"
 #include "srv.h"
 
+#if 1
 static int diag_tracking_train_cmd ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
@@ -311,3 +312,4 @@ int main ( void ) {
   }
   return 0;
 }
+#endif

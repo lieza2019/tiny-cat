@@ -553,27 +553,59 @@ CBI_STAT_BIT_MASK cbi_stat_bit_maskpat ( int pos ) {
   return mask;
 }
 
+static int lex_shname ( char *pshname, int shname_len ) {
+  assert( pshname );
+  assert( (shname_len > 0) && (shname_len <= CBI_STAT_NAME_LEN) );
+  int disp_in_shname = -1;
+  
+  char *p = NULL;
+  p = pshname;
+  while( *p && (p < (pshname + shname_len)) ) {
+    assert( *p && (p < (pshname + shname_len)) );
+    if( *p == '_' ) {
+      *p = 0;
+      assert( strnlen( pshname, shname_len ) < shname_len );
+      disp_in_shname = atoi( ++p );
+      break;
+    }
+    p++;
+  }
+  return disp_in_shname;
+}
+
 typedef enum _cbi_lex_phase {
   CBI_LEX_NAME,
   CBI_LEX_GROUP,
   CBI_LEX_DISP,
+  CBI_LEX_SHEETNAME,
   END_OF_CBI_LEX
 } CBI_LEX_PHASE;
-static BOOL cbi_lex ( char *src, int src_len, char *name, int name_len, int *pgroup, int *pdisp ) {
+static BOOL cbi_lex ( char *src, int src_len, char *name, int name_len, int *pgroup, int *pdisp, char *pshname, int shname_len ) {
   assert( src );
   assert( (src_len > 0) && (src_len <= CBI_STAT_BITS_LEXBUF_SIZE) );
   assert( name );
   assert( (name_len > 0) && (name_len <= CBI_STAT_NAME_LEN) );
   assert( pgroup );
   assert( pdisp );
+  assert( pshname );
+  assert( (shname_len > 0) && (shname_len <= CBI_STAT_NAME_LEN) );
+  
   BOOL r = TRUE;
   CBI_LEX_PHASE ph = CBI_LEX_NAME;
   char *pword = src;
   char *p = src;
   while( (p - src) < src_len ) {
+    assert( pword <= p );
     if( !(*p) ) {
-      if( ph == CBI_LEX_DISP ) {
-	*pdisp = atoi( pword );
+      if( ph == CBI_LEX_SHEETNAME ) {
+	int d = -1;
+	d = lex_shname( pword, shname_len );
+	r = FALSE;
+	if( d > 0 )
+	  if( d == *pdisp ) {
+	    strncpy( pshname, pword, shname_len );
+	    r = TRUE;
+	  }
 	ph = END_OF_CBI_LEX;
       } else
 	break;
@@ -587,6 +619,10 @@ static BOOL cbi_lex ( char *src, int src_len, char *name, int name_len, int *pgr
       case CBI_LEX_GROUP:
 	*pgroup = atoi( pword );
 	ph = CBI_LEX_DISP;
+	break;
+      case CBI_LEX_DISP:
+	*pdisp = atoi( pword );
+	ph = CBI_LEX_SHEETNAME;
 	break;
       default:
 	r = FALSE;
@@ -642,16 +678,18 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
   
   fp = fopen( fname, "r" );
   if( fp ) {
-    int lines = 0;
+    int lines = 1;
     int group = -1;
     int disp = -1;
-    char name[CBI_STAT_NAME_LEN + 1];
-    name[CBI_STAT_NAME_LEN] = 0;
+    char bit_name[CBI_STAT_NAME_LEN + 1];
+    char sh_name[CBI_STAT_NAME_LEN + 1];
+    bit_name[CBI_STAT_NAME_LEN] = 0;
+    sh_name[CBI_STAT_NAME_LEN] = 0;
     while( (! feof(fp)) && (frontier[oc_id] < CBI_MAX_STAT_BITS) ) {
       char buf[CBI_STAT_BITS_LEXBUF_SIZE + 1];
       buf[CBI_STAT_BITS_LEXBUF_SIZE] = 0;
       fscanf( fp, "%s\n", buf );
-      if( ! cbi_lex( buf, CBI_STAT_BITS_LEXBUF_SIZE, name, CBI_STAT_NAME_LEN, &group, &disp ) ) {
+      if( ! cbi_lex( buf, CBI_STAT_BITS_LEXBUF_SIZE, bit_name, CBI_STAT_NAME_LEN, &group, &disp, sh_name, CBI_STAT_NAME_LEN ) ) {
 	errorF( "failed lexical analyzing the CBI code-table, in line num: %d.\n,", lines );
 	assert( FALSE );
       } else {
@@ -659,8 +697,22 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	assert( pA );		       
 	if( (err = (BOOL)ferror( fp )) )
 	  break;
-	strncpy( pA->name, name, CBI_STAT_NAME_LEN );
-	strncpy( pA->ident, name, CBI_STAT_NAME_LEN );
+#if 0
+	strncpy( pA->name, bit_name, CBI_STAT_NAME_LEN );
+	strncpy( pA->ident, bit_name, CBI_STAT_NAME_LEN );
+#else
+	{
+	  char *p = NULL;
+	  p = stpncpy( pA->name, "[", 1 );
+	  assert( p && !(*p) );
+	  p = stpncpy( p, sh_name, CBI_STAT_NAME_LEN );
+	  assert( p && !(*p) );
+	  p = stpncpy( p, "]", 1 );
+	  assert( p && !(*p) );
+	  strncpy( p, bit_name, CBI_STAT_NAME_LEN );
+	}
+	strncpy( pA->ident, pA->name, CBI_STAT_NAME_LEN );
+#endif
 	pA->oc_id = oc_id;
 	pA->kind = _UNKNOWN;
 	pA->group.raw = (CBI_STAT_GROUP)group;
@@ -740,10 +792,11 @@ int reveal_cbi_code_tbl ( void ) {
 
 #if 0
 int main ( void ) {
+  const OC_ID oc_id = OC801;
   int cnt = 0;
   int n = -1;
   
-  n = load_cbi_code_tbl ( "./cbi/BOTANICAL_GARDEN.csv" );
+  n = load_cbi_code_tbl ( oc_id, "./cbi/BOTANICAL_GARDEN.csv" );
   assert( (n >= 0) && (n <= CBI_MAX_STAT_BITS) );
   printf( "read %d entries on, from raw csv.\n", n );
   {

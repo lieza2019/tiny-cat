@@ -666,7 +666,7 @@ int main ( void ) {
       strncpy( name, p->name, CBI_STAT_NAME_LEN );
       fprintf( fp_out, "%s, ", name );
       p->ident[CBI_STAT_IDENT_LEN] = 0;
-      fprintf( fp_out, "IL_3t( %s,", p->ident );
+      fprintf( fp_out, "IL_3t(%s,", p->ident );
       fprintf( fp_out, " \"%s\",", p->ident );
       fprintf( fp_out, " %d)", cnt );
       fprintf( fp_out, " )\n" );
