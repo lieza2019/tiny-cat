@@ -405,3 +405,95 @@ void *pth_reveal_il_status ( void *arg ) {
   }
   return NULL;
 }
+
+
+#if 0
+void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
+  assert( fp_out );
+  assert( ident );
+  CBI_STAT_ATTR_PTR pA = NULL;
+  
+  int r_mutex = -1;
+  r_mutex = pthread_mutex_lock( &cbi_stat_info_mutex );
+  if( r_mutex ) {
+    assert( FALSE);
+  }
+  
+  pA = conslt_cbi_code_tbl( ident );
+  if( pA ) {
+    assert( pA );
+    fprintf( fp_out, "ident: %s\n", pA->ident );
+    fprintf( fp_out, "oc_id: OC%3d\n", OC_ID_CONV2INT(pA->oc_id) );
+    fprintf( fp_out, "name: %s\n", pA->name );
+    fprintf( fp_out, "kind: %s\n", cnv2str_cbi_stat_kind[pA->kind] );
+    fprintf( fp_out, "group of (raw, oc_from, addr): (%s, OC2ATS%d, %d)\n",
+	     CBI_STAT_GROUP_CONV2STR[pA->group.raw], OC_MSG_ID_CONV2INT(pA->group.msg_id), pA->group.addr );
+    {
+      char s[] = "CBI_STAT_BIT_x";
+      fprintf( fp_out, "disp of (raw, bytes, bits, mask): (%d, %d, %d, %s)\n",
+	       pA->disp.raw, pA->disp.bytes, pA->disp.bits, show_cbi_stat_bitmask(s, sizeof(s), pA->disp.mask) );
+    }
+    {
+      assert( pA );
+      assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
+      RECV_BUF_CBI_STAT_PTR pstat = NULL;
+
+      pstat = &cbi_stat_info[pA->oc_id];
+      {
+	assert( pstat );
+	unsigned char *pgrp = &((unsigned char *)&pstat->msgs[pA->group.msg_id])[pA->group.addr];
+	assert( pgrp );
+	fprintf( fp_out, "value: %d\n", (pgrp[pA->disp.bytes] & pA->disp.mask) );
+      }
+    }
+  }
+  r_mutex = -1;
+    r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
+  if( r_mutex ) {
+    assert( FALSE );
+  }
+}
+#else
+void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
+  assert( fp_out );
+  assert( ident );
+  CBI_STAT_ATTR_PTR pA = NULL;
+  
+  pA = conslt_cbi_code_tbl( ident );
+  if( pA ) {
+    assert( pA );
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_trylock( &cbi_stat_info_mutex );
+    if( !r_mutex ) {
+      fprintf( fp_out, "ident: %s\n", pA->ident );
+      fprintf( fp_out, "oc_id: OC%3d\n", OC_ID_CONV2INT(pA->oc_id) );
+      fprintf( fp_out, "name: %s\n", pA->name );
+      fprintf( fp_out, "kind: %s\n", cnv2str_cbi_stat_kind[pA->kind] );
+      fprintf( fp_out, "group of (raw, oc_from, addr): (%s, OC2ATS%d, %d)\n",
+	       CBI_STAT_GROUP_CONV2STR[pA->group.raw], OC_MSG_ID_CONV2INT(pA->group.msg_id), pA->group.addr );
+      {
+	char s[] = "CBI_STAT_BIT_x";
+	fprintf( fp_out, "disp of (raw, bytes, bits, mask): (%d, %d, %d, %s)\n",
+		 pA->disp.raw, pA->disp.bytes, pA->disp.bits, show_cbi_stat_bitmask(s, sizeof(s), pA->disp.mask) );
+      }
+      {
+	assert( pA );
+	assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
+	RECV_BUF_CBI_STAT_PTR pstat = NULL;
+
+	pstat = &cbi_stat_info[pA->oc_id];
+	{
+	  assert( pstat );
+	  unsigned char *pgrp = &((unsigned char *)&pstat->msgs[pA->group.msg_id])[pA->group.addr];
+	  assert( pgrp );
+	  fprintf( fp_out, "value: %d\n", (pgrp[pA->disp.bytes] & pA->disp.mask) );
+	}
+      }
+      r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
+      if( r_mutex ) {
+	assert( FALSE );
+      }
+    }
+  }
+}
+#endif
