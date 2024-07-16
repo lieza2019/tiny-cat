@@ -1,6 +1,7 @@
 #include "generic.h"
 #include "misc.h"
 #include "cbtc.h"
+#include "cbi.h"
 
 typedef struct route_lock {
   BOOL app;
