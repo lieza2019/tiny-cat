@@ -3,12 +3,12 @@ RM = rm
 CP = cp
 CD = cd
 TOUCH = touch
-CC = gcc
+CC = /usr/bin/gcc
 CFLAGS = -Wall -Wno-unused-value  -g -DCHK_STRICT_CONSISTENCY -DIN_CBI_RESOURCEDIR
 GEN_IL_DEF_NAME = gen_il_def
 GEN_IL_DEF_BIN = $(GEN_IL_DEF_NAME)
 
-$(GEN_IL_DEF_BIN) : cbi.o gen_il_def.o
+$(GEN_IL_DEF_BIN) : ../cbi.o gen_il_def.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 #il_obj_instance_decl.h: ./il_obj_instance_desc.h
@@ -21,7 +21,7 @@ cbi.o : ../generic.h ../misc.h ../cbi.h ../cbi.c
 	$(TOUCH) ./il_obj_instance_desc.h
 	$(CD) ../; \
 	$(MAKE) $@; \
-	$(CP) ./$@ ./cbi
+#	$(CP) ./$@ ./cbi
 
 gen_il_def.o : ../cbi.h gen_il_def.c
 
@@ -31,6 +31,7 @@ clean:
 	$(RM) -f ./*.o
 	$(RM) -f ./*~
 	$(RM) -f ./#*#
+	$(RM) -f ./*.stackdump
 	$(RM) -f $(GEN_IL_DEF_BIN)
 	$(RM) -f ./cbi_stat_label.h
 	$(RM) -f ./il_obj_instance_desc.h

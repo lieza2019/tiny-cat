@@ -607,8 +607,8 @@ static BOOL cbi_lex ( char *src, int src_len, char *name, int name_len, int *pgr
 	    r = TRUE;
 	  }
 	ph = END_OF_CBI_LEX;
-      } else
-	break;
+      }
+      break;
     } else if( *p == ',' ) {
       *p = 0;
       switch( ph ) {
@@ -690,7 +690,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
       buf[CBI_STAT_BITS_LEXBUF_SIZE] = 0;
       fscanf( fp, "%s\n", buf );
       if( ! cbi_lex( buf, CBI_STAT_BITS_LEXBUF_SIZE, bit_name, CBI_STAT_NAME_LEN, &group, &disp, sh_name, CBI_STAT_NAME_LEN ) ) {
-	errorF( "failed lexical analyzing the CBI code-table, in line num: %d.\n,", lines );
+	errorF( "failed lexical analyzing the CBI OC%3d code-table of %s, in the line: %d.\n,", OC_ID_CONV2INT(oc_id), fname, lines );
 	assert( FALSE );
       } else {
 	CBI_STAT_ATTR_PTR pA = &cbi_stat_prof[oc_id][frontier[oc_id]];

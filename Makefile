@@ -1,7 +1,7 @@
 RM = rm
 TOUCH = touch
 CD = cd
-CC = gcc
+CC = /usr/bin/gcc
 CFLAGS = -Wall -Wno-unused-value  -g -DCHK_STRICT_CONSISTENCY
 MAKE = make
 TINY_NAME = tiny_cat
@@ -51,4 +51,5 @@ clean:
 	$(RM) -f ./*.o
 	$(RM) -f ./*~
 	$(RM) -f ./#*#
+	$(RM) -f ./*.stackdump
 	$(RM) -f $(TINY_NAME_BIN)
