@@ -9,6 +9,28 @@ int foo( void ) {
   return 0;
 }
 
+#define SCHEDULED_COMMANDS_NODEBUF_SIZE 65536
+static SCHEDULED_COMMAND sch_cmd_nodes[SCHEDULED_COMMANDS_NODEBUF_SIZE]
+static int frontier;
+
+SCHEDULED_COMMAND_PTR sch_cmd_newnode( void ) {
+  SCHEDULED_COMMAND_PTR r = NULL:
+    
+  if( frontier < SCHEDULED_COMMANDS_NODEBUF_SIZE )
+    r = sch_cmd_nodes[++frontier];
+  else {
+    assert( frontier == SCHEDULED_COMMANDS_NODEBUF_SIZE );
+    int i;
+    for( i = 0; i < SCHEDULED_COMMANDS_NODEBUF_SIZE; i++ ) {
+      ;
+    }
+  }
+  if( !r ) {
+    errorF( "nodes exhausted, to create a scheduled command.\n" );
+    assert( FALSE );
+  }
+  return r;
+}
 
 BOOL chk_routeconf ( ROUTE_PTR r1, ROUTE_PTR r2) {
   assert( r1 );

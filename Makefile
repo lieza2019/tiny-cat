@@ -9,7 +9,7 @@ TINY_NAME_BIN = $(TINY_NAME)
 GEN_IL_DEF_NAME = gen_il_def
 GEN_IL_DEF_BIN = $(GEN_IL_DEF_NAME)
 
-$(TINY_NAME_BIN) : misc.o network.o sparcs.o train_cmd.o cbtc.o train_ctrl.o cbi.o interlock.o ars.o main.o
+$(TINY_NAME_BIN) : misc.o network.o sparcs.o train_cmd.o cbtc.o train_ctrl.o cbi.o interlock.o ars.o timetable.o main.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 train_info.h : sparcs_def.h
@@ -36,6 +36,8 @@ interlock.h : generic.h misc.h cbtc.h interlock_def.h
 	$(TOUCH) $@
 ars.h : generic.h misc.h cbi.h
 	$(TOUCH) $@
+timetable.h : generic.h misc.h ars.h
+	$(TOUCH) $@
 
 misc.o : generic.h misc.h misc.c
 network.o : generic.h misc.h network.h network.c
@@ -47,6 +49,7 @@ cbi.o: generic.h misc.h cbi.h ./cbi/cbi_stat_label.h ./cbi/cbi_stat_kind.def cbi
 interlock.o : generic.h misc.h network.h cbi.h srv.h interlock.h interlock.c
 ars.o : generic.h misc.h ars.h
 main.o : generic.h misc.h network.h srv.h interlock.h sparcs.h main.c
+timetable.o : generic.h misc.h timetable.h
 
 .PHONY : clean
 clean:

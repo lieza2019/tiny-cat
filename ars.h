@@ -1,3 +1,6 @@
+#ifndef ARS_H
+#define ARS_H
+
 #include <time.h>
 #include "generic.h"
 #include "misc.h"
@@ -101,4 +104,7 @@ typedef struct _scheduled_command {
       CREW_ID crew_id;
     } sch_skip;
   } attr;
+  struct _scheduled_command *pNext;
 } SCHEDULED_COMMAND, *SCHEDULED_COMMAND_PTR;
+
+#endif // ARS_H
