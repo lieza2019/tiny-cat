@@ -31,7 +31,8 @@ typedef struct track {
 #undef TRACK_ATTRIB_DEFINITION
 
 typedef enum route_kind {
-  MAIN_ROUTE,
+  DEPT_ROUTE,
+  ENT_ROUTE,
   SHUNT_ROUTE,
   EMERGE_ROUTE,
   END_OF_ROUTE_KINDS
