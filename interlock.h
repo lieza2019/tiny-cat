@@ -97,5 +97,5 @@ extern void *pth_reveal_il_status ( void *arg );
 
 extern pthread_mutex_t cbi_stat_info_mutex;
 
+extern int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, char *ident );
 void diag_cbi_stat_attrib ( FILE *fp_out, char *ident );
-

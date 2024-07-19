@@ -255,4 +255,6 @@ typedef struct cbi_stat_label {
   char ident[CBI_STAT_IDENT_LEN + 1];
 } CBI_STAT_LABEL, *CBI_STAT_LABEL_PTR;
 
+extern char *cnv2str_il_obj_instances[];
+
 #endif // CBI_H

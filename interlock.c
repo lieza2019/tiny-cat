@@ -406,6 +406,62 @@ void *pth_reveal_il_status ( void *arg ) {
   return NULL;
 }
 
+void cons_route_state ( ROUTE_PTR proute ) {
+  assert( proute );
+  assert( proute->kind < END_OF_ROUTE_KINDS );
+  int i;
+  
+  for( i = 0; i < proute->trks.num_tracks; i++ ) {
+    int j = 0;
+    while( track_state[j].kind != END_OF_CBI_STAT_KIND ) {
+      assert( track_state[j].kind == _TRACK );
+      if( track_state[j].id == proute->trks.tracks[i] ) {
+	proute->trks.ptracks[i] = &track_state[j];
+	break;
+      }
+      j++;
+    }
+    assert( track_state[j].kind == _TRACK );
+  }
+}
+
+int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, char *ident ) {
+  assert( poc_id );
+  assert( pkind );
+  assert( ident );
+  int r = -1;
+  CBI_STAT_ATTR_PTR pA = NULL;
+  
+  *poc_id = -1;
+  *pkind = -1;
+  pA = conslt_cbi_code_tbl( ident );
+  if( pA ) {
+    assert( pA );
+    assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_trylock( &cbi_stat_info_mutex );
+    if( !r_mutex ) {
+      assert( ! strncmp(pA->ident, ident, CBI_STAT_IDENT_LEN) );
+      *poc_id = pA->oc_id;
+      *pkind = pA->kind;
+      {
+	RECV_BUF_CBI_STAT_PTR pstat = NULL;
+	pstat = &cbi_stat_info[pA->oc_id];
+	assert( pstat );
+	{ 
+	  unsigned char *pgrp = &((unsigned char *)&pstat->msgs[pA->group.msg_id])[pA->group.addr];
+	  assert( pgrp );
+	  r = pgrp[pA->disp.bytes] & pA->disp.mask;
+	}
+      }
+      r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
+      if( r_mutex ) {
+	assert( FALSE );
+      }
+    }
+  }
+  return r;
+}
 
 #if 0
 void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
