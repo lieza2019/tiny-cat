@@ -26,6 +26,7 @@ typedef struct track {
     ROUTE_LOCK kTLSR, kTRSR;
   } lock;
 } TRACK, *TRACK_PTR;
+typedef const struct track *TRACK_C_PTR;
 #define TRACK_ATTRIB_DEFINITION
 #include "interlock_def.h"
 #undef TRACK_ATTRIB_DEFINITION
@@ -41,7 +42,7 @@ extern const CBI_STAT_KIND ROUTE_KIND2GENERIC[];
 
 #define MAX_ROUTE_TRACKS 21
 #define MAX_ROUTE_TRG_BLOCKS 21
-typedef struct _route {
+typedef struct route {
   CBI_STAT_KIND kind_cbi;
   ROUTE_KIND kind_route;
   IL_OBJ_INSTANCES id;
@@ -49,7 +50,12 @@ typedef struct _route {
   struct {
     int num_tracks;
     IL_OBJ_INSTANCES tracks[MAX_ROUTE_TRACKS];
-    TRACK_PTR ptracks[MAX_ROUTE_TRACKS];
+#if 0
+    const TRACK_PTR ptracks[MAX_ROUTE_TRACKS];
+#else
+    //const struct track *ptracks[MAX_ROUTE_TRACKS];
+    TRACK_C_PTR ptracks[MAX_ROUTE_TRACKS];
+#endif
   } body;
   struct {
     struct {
@@ -71,10 +77,15 @@ typedef struct _route {
     struct {
       int num_tracks;
       IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRG_BLOCKS];
+#if 0
       TRACK_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
+#else
+      TRACK_C_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
+#endif
     } ctrl_tracks;
   } ars_ctrl;
 } ROUTE, *ROUTE_PTR;
+typedef const struct route *ROUTE_C_PTR;
 #define ROUTE_ATTRIB_DEFINITION
 #include "interlock_def.h"
 #undef ROUTE_ATTRIB_DEFINITION
@@ -96,7 +107,7 @@ extern BOOL establish_OC_stat_send ( TINY_SOCK_PTR pS );
 extern pthread_mutex_t cbi_stat_info_mutex;
 extern void reveal_il_state ( TINY_SOCK_PTR pS );
 extern void *pth_reveal_il_status ( void *arg );
-extern int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, char *ident );
+extern int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
 extern void diag_cbi_stat_attrib ( FILE *fp_out, char *ident );
 
-extern BOOL chk_routeconf ( ROUTE_PTR r1, ROUTE_PTR r2 );
+extern BOOL chk_routeconf ( ROUTE_C_PTR r1, ROUTE_C_PTR r2 );

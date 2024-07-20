@@ -6,14 +6,14 @@
 #include "misc.h"
 #include "cbi.h"
 
-char *cnv2str_cbi_stat_kind[] = {
+const char *cnv2str_cbi_stat_kind[] = {
 #define CBI_STAT_KIND_DESC(enum, name) name,
 #include "./cbi/cbi_stat_kind.def"
 #undef CBI_STAT_KIND_DESC
   NULL
 };
 
-CBI_STAT_CSV_FNAMES il_status_geometry_resources[END_OF_OCs + 1] = {
+const CBI_STAT_CSV_FNAMES il_status_geometry_resources[END_OF_OCs + 1] = {
   {OC801, CBI_STAT_CSV_FNAME_BCGN},
   {OC802, CBI_STAT_CSV_FNAME_JLA},
   {OC803, CBI_STAT_CSV_FNAME_IWNA},
@@ -65,7 +65,7 @@ const char *CBI_STAT_GROUP_CONV2STR[] = {
   "CBI_STAT_A"
 };
 
-static OC2ATS_STAT cbi_group2msg[] = {
+const static OC2ATS_STAT cbi_group2msg[] = {
   -1, // see below line.
   OC2ATS3, // CBI_STAT_i1 = 1
   OC2ATS3, // CBI_STAT_i2
@@ -97,7 +97,7 @@ static OC2ATS_STAT cbi_group2msg[] = {
   OC2ATS3  // CBI_STAT_A
 };
 
-static int cbi_group2addr[] = {
+const static int cbi_group2addr[] = {
    -1, // see below line.
    76, // CBI_STAT_i1 = 1, of OC2ATS3
   100, // CBI_STAT_i2 of OC2ATS3
@@ -278,7 +278,7 @@ RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 
 #include "./cbi/cbi_stat_label.h"
 #ifndef CBI_STAT_LABELING
-static CBI_STAT_LABEL cbi_stat_labeling[] = {
+static const CBI_STAT_LABEL cbi_stat_labeling[] = {
   { _CBI_KIND_NONSENS, "", "" }
 };
 #endif
@@ -291,7 +291,7 @@ static int frontier[END_OF_OCs];
 
 static CBI_STAT_ATTR_PTR cbi_stat_hash_budgets[CBI_STAT_HASH_BUDGETS_NUM];
 
-static int hash_key ( const int budgets_num, char *ident ) {
+static int hash_key ( const int budgets_num, const char *ident ) {
   assert( budgets_num > 0 );
   assert( ident );
   const int n = 5;
@@ -331,7 +331,7 @@ static BOOL chk_uniq_in_budget ( CBI_STAT_ATTR_PTR pE ) {
   }
   return( !found );
 }
-static CBI_STAT_ATTR_PTR *walk_hash ( CBI_STAT_ATTR_PTR *ppB, char *ident ) {
+static CBI_STAT_ATTR_PTR *walk_hash ( CBI_STAT_ATTR_PTR *ppB, const char *ident ) {
   assert( ppB );
   assert( ident );
   CBI_STAT_ATTR_PTR *pp = ppB;
@@ -443,7 +443,7 @@ CBI_STAT_ATTR_PTR cbi_stat_rehash ( CBI_STAT_ATTR_PTR budgets[], const int budge
   return re_hash( budgets, budgets_num, ident, ident_new );
 }
 
-static CBI_STAT_ATTR_PTR conslt_hash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, char *ident ) {
+static CBI_STAT_ATTR_PTR conslt_hash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident ) {
   assert( budgets );
   assert( budgets_num > 0 );
   assert( ident );
@@ -466,11 +466,11 @@ static CBI_STAT_ATTR_PTR conslt_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
   }
   return r;
 }
-static CBI_STAT_ATTR_PTR conslt_hash_local ( char *ident ) {
+static CBI_STAT_ATTR_PTR conslt_hash_local ( const char *ident ) {
   assert( ident );
   return conslt_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, ident );
 }
-CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( char *ident ) {
+CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( const char *ident ) {
   assert( ident );
   return conslt_hash_local( ident );
 }
@@ -843,20 +843,20 @@ int main ( void ) {
 }
 #endif
 
-CBI_STAT_KIND il_obj_kind[] = {
+const CBI_STAT_KIND il_obj_kind[] = {
 #define IL_OBJ_INSTANCE_DESC(kind, raw_name, exp) kind,
 #include "./cbi/il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
   _CBI_KIND_NONSENS
 };
-CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj ) {
+const CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj ) {
   assert( (obj >= 0) && (obj < END_OF_IL_OBJ_INSTANCES) );
   CBI_STAT_KIND r = _CBI_KIND_NONSENS;
   r = il_obj_kind[obj];
   return r;
 }
 
-char *cnv2str_il_obj_instances[] = {
+const char *cnv2str_il_obj_instances[] = {
 #define IL_3t(exp, str, code) str
 #define IL_OBJ_INSTANCE_DESC(kind, raw_name, exp) exp,
 #include "./cbi/il_obj_instance_desc.h"

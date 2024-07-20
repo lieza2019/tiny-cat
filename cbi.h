@@ -7,7 +7,7 @@
 #include "network.h"
 
 #include "./cbi/il_obj_instance_decl.h"
-extern char *cnv2str_il_obj_instances[];
+extern const char *cnv2str_il_obj_instances[];
 const char *cnv2str_il_obj ( IL_OBJ_INSTANCES obj );
 
 #define CBI_STAT_CSV_FNAME_BCGN "BOTANICAL_GARDEN.csv"
@@ -201,11 +201,10 @@ typedef enum cbi_stat_kind {
 #undef CBI_STAT_KIND_DESC
   END_OF_CBI_STAT_KIND
 } CBI_STAT_KIND;
+extern const char *cnv2str_cbi_stat_kind[];
 
-extern char *cnv2str_cbi_stat_kind[];
-
-extern CBI_STAT_KIND il_obj_kind[];
-extern CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj );
+extern const CBI_STAT_KIND il_obj_kind[];
+extern const CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj );
   
 typedef struct cbi_stat_csv_fnames {
   OC_ID oc_id;
@@ -213,7 +212,7 @@ typedef struct cbi_stat_csv_fnames {
   char *csv_fname;
 } CBI_STAT_CSV_FNAMES, *CBI_STAT_CSV_FNAMES_PTR;
 
-extern CBI_STAT_CSV_FNAMES il_status_geometry_resources[END_OF_OCs + 1];
+extern const CBI_STAT_CSV_FNAMES il_status_geometry_resources[END_OF_OCs + 1];
 
 #define CBI_STAT_IDENT_LEN 32
 #define CBI_STAT_NAME_LEN 32
@@ -248,7 +247,7 @@ extern CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const i
 
 #define CBI_STAT_BITS_LEXBUF_SIZE 256
 extern int load_cbi_code_tbl ( OC_ID oc_id, const char *fname );
-extern CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( char *ident );
+extern CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( const char *ident );
 extern int reveal_cbi_code_tbl ( void );
 extern void dump_cbi_stat_prof ( OC_ID oc_id );
 

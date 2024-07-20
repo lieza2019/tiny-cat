@@ -509,7 +509,7 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
   
   assert( plex->raw_name );
   {
-    char *kind_s = NULL;
+    const char *kind_s = NULL;
     kind_s = cnv2str_cbi_stat_kind[plex->kind];
     assert( kind_s );
     if( plex->exp_ident_pat[0] ) {

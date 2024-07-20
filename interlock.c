@@ -428,7 +428,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
   }
 }
 
-int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, char *ident ) {
+int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   assert( poc_id );
   assert( pkind );
   assert( ident );
@@ -557,7 +557,7 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
 }
 #endif
 
-BOOL chk_routeconf ( ROUTE_PTR r1, ROUTE_PTR r2 ) {
+BOOL chk_routeconf ( ROUTE_C_PTR r1, ROUTE_C_PTR r2 ) {
   assert( r1 );
   assert( r2 );
   BOOL r = FALSE;

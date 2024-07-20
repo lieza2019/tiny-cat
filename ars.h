@@ -107,6 +107,28 @@ typedef struct _scheduled_command {
   struct _scheduled_command *pNext;
 } SCHEDULED_COMMAND, *SCHEDULED_COMMAND_PTR;
 
+typedef enum ars_reasons {
+  ARS_OTHER_TRAINS_AHEAD,
+  ARS_CTRL_TRACKS_OCCUPIED,
+  ARS_CTRL_TRACKS_ROUTELOCKED,
+  ARS_MUTEX_BLOCKED,
+  ARS_NO_ROUTESET_CMD,
+  ARS_CONTROLLED_NORMALLY,
+  END_OF_ARS_REASONS
+} ARS_REASONS;
+extern const char *cnv2str_ars_reasons[];
+
+typedef struct journey {
+  time_t start_time;
+  time_t finish_time;
+  SCHEDULED_COMMAND_PTR past_commands;
+  struct {
+    SCHEDULED_COMMAND_PTR pcmds;
+    SCHEDULED_COMMAND_PTR pNext;
+  } scheduled_commands;
+} JOURNEY, *JOURNEY_PTR;
+
 extern SCHEDULED_COMMAND_PTR sch_cmd_newnode( void );
+extern ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ );
 
 #endif // ARS_H
