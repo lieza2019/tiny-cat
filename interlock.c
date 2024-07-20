@@ -406,22 +406,25 @@ void *pth_reveal_il_status ( void *arg ) {
   return NULL;
 }
 
+/*
+ * requirements: should the form allows access the table with IL_OBJ_INSTANCES, e.g. S803B_S831B, as the key.
+ */
 void cons_route_state ( ROUTE_PTR proute ) {
   assert( proute );
-  assert( proute->kind < END_OF_ROUTE_KINDS );
+  assert( (proute->kind_cbi == _ROUTE) && (proute->kind_route < END_OF_ROUTE_KINDS) );
   int i;
   
-  for( i = 0; i < proute->trks.num_tracks; i++ ) {
+  for( i = 0; i < proute->body.num_tracks; i++ ) {
     int j = 0;
-    while( track_state[j].kind != END_OF_CBI_STAT_KIND ) {
-      assert( track_state[j].kind == _TRACK );
-      if( track_state[j].id == proute->trks.tracks[i] ) {
-	proute->trks.ptracks[i] = &track_state[j];
+    while( track_state[j].kind_cbi != END_OF_CBI_STAT_KIND ) {
+      assert( track_state[j].kind_cbi == _TRACK );
+      if( track_state[j].id == proute->body.tracks[i] ) {
+	proute->body.ptracks[i] = &track_state[j];
 	break;
       }
       j++;
     }
-    assert( track_state[j].kind == _TRACK );
+    assert( track_state[j].kind_cbi == _TRACK );
   }
 }
 
@@ -553,3 +556,21 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
   }
 }
 #endif
+
+BOOL chk_routeconf ( ROUTE_PTR r1, ROUTE_PTR r2 ) {
+  assert( r1 );
+  assert( r2 );
+  BOOL r = FALSE;
+  
+  int i;
+  for( i = 0; i < r1->body.num_tracks; i++ ) {
+    int j;
+    for( j = 0; j < r2->body.num_tracks; j++ )
+      if( r1->body.tracks[i] == r2->body.tracks[j] ) {
+	r = TRUE;
+	goto found;
+      }
+  }
+ found:
+  return r;
+}

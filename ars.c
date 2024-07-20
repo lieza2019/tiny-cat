@@ -2,26 +2,9 @@
 #include "generic.h"
 #include "misc.h"
 #include "cbi.h"
-#include "ars.h"
 #include "interlock.h"
-
-BOOL chk_routeconf ( ROUTE_PTR r1, ROUTE_PTR r2) {
-  assert( r1 );
-  assert( r2 );
-  BOOL r = FALSE;
-  
-  int i;
-  for( i = 0; i < r1->trks.num_tracks; i++ ) {
-    int j;
-    for( j = 0; j < r2->trks.num_tracks; j++ )
-      if( r1->trks.tracks[i] == r2->trks.tracks[j] ) {
-	r = TRUE;
-	goto found;
-      }
-  }
- found:
-  return r;
-}
+#include "ars.h"
+#include "timetable.h"
 
 #define SCHEDULED_COMMANDS_NODEBUF_SIZE 65536
 static SCHEDULED_COMMAND sch_cmd_nodes[SCHEDULED_COMMANDS_NODEBUF_SIZE];
@@ -36,7 +19,7 @@ SCHEDULED_COMMAND_PTR sch_cmd_newnode( void ) {
   return r;
 };
 
-BOOL chk_ars_cond_routelock ( ROUTE_PTR proute ) {
+static BOOL ars_chk_cond_routelok ( ROUTE_PTR proute ) {
   assert( proute );
   assert( proute->ars_ctrl.app );
   BOOL r = FALSE;
@@ -48,7 +31,7 @@ BOOL chk_ars_cond_routelock ( ROUTE_PTR proute ) {
     TRACK_PTR ptr = NULL;
     ptr = proute->ars_ctrl.ctrl_tracks.pchk_trks[i];
     assert( ptr );
-    assert( ptr->kind == _TRACK );
+    assert( ptr->kind_cbi == _TRACK );
     { 
       int stat = -1;
       if( ptr->lock.TLSR.app ) {
@@ -124,7 +107,7 @@ BOOL chk_ars_cond_routelock ( ROUTE_PTR proute ) {
   return r;
 }
 
-BOOL chk_ars_cond_trackstat ( ROUTE_PTR proute ) {
+static BOOL ars_chk_cond_trackcirc ( ROUTE_PTR proute ) {
   assert( proute );
   BOOL r = FALSE;
   
@@ -137,7 +120,7 @@ BOOL chk_ars_cond_trackstat ( ROUTE_PTR proute ) {
     TRACK_PTR ptr = NULL;
     ptr = proute->ars_ctrl.ctrl_tracks.pchk_trks[i];
     assert( ptr );
-    assert( ptr->kind == _TRACK );
+    assert( ptr->kind_cbi == _TRACK );
     assert( ! strncmp(cnv2str_il_obj_instances[ptr->id], ptr->name, CBI_STAT_IDENT_LEN) );
     stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj_instances[ptr->id] );
     if( stat <= 0 ) {
@@ -154,4 +137,49 @@ BOOL chk_ars_cond_trackstat ( ROUTE_PTR proute ) {
   }
   
   return r;
+}
+
+static SCHEDULED_COMMAND_PTR *fetch_cmd_routeset ( SCHEDULED_COMMAND_PTR *ppNext_cmd ) {
+  assert( ppNext_cmd );
+  SCHEDULED_COMMAND_PTR *r = NULL;
+  
+  SCHEDULED_COMMAND_PTR *ppC = NULL;
+  ppC = ppNext_cmd;
+  assert( ppC );
+  while( *ppC ) {
+    assert( ppC );
+    assert( *ppC );
+    if( (*ppC)->cmd == ARS_SCHEDULED_ROUTESET ) {
+      r = ppC;
+      break;
+    } else {
+      if( ((*ppC)->cmd == ARS_SCHEDULED_DEPT) || ((*ppC)->cmd == ARS_SCHEDULED_SKIP) )
+	break;
+    }
+    ppC = &(*ppC)->pNext;
+  }
+  assert( ppC );
+  assert( (r != NULL) ? ((r == ppC) && ((*ppC)->cmd == ARS_SCHEDULED_ROUTESET)) : (*ppC ? (((*ppC)->cmd == ARS_SCHEDULED_DEPT) || ((*ppC)->cmd == ARS_SCHEDULED_SKIP)) : (r == NULL)) );
+  return r;
+}
+
+void ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
+  assert( pJ );
+  SCHEDULED_COMMAND_PTR *ppC = NULL;
+  
+  ppC = fetch_cmd_routeset( &pJ->scheduled_commands.pNext );
+  if( ppC ) {
+    assert( (*ppC)->cmd == ARS_SCHEDULED_ROUTESET );
+    SCHEDULED_COMMAND_PTR pC = *ppC;
+    assert( pC );
+    assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+    {
+      assert( whats_kind_of_il_obj( pC->attr.sch_routeset.route_id ) == _ROUTE );
+      ROUTE_PTR pR = NULL;
+      pR = &route_state[pC->attr.sch_routeset.route_id];
+      assert( pR );
+      assert( (pR->kind_cbi == _ROUTE) && (pR->kind_route < END_OF_ROUTE_KINDS) );
+      ars_chk_cond_trackcirc( pR );
+    }
+  }
 }

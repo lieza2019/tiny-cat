@@ -47,7 +47,7 @@ cbtc.o : generic.h misc.h cbtc.h
 train_ctrl.o : generic.h misc.h network.h sparcs.h train_ctrl.c
 cbi.o: generic.h misc.h cbi.h ./cbi/cbi_stat_label.h ./cbi/cbi_stat_kind.def cbi.c
 interlock.o : generic.h misc.h network.h cbi.h srv.h interlock.h interlock.c
-ars.o : generic.h misc.h ars.h
+ars.o : generic.h misc.h cbi.h interlock.h ars.h timetable.h
 main.o : generic.h misc.h network.h srv.h interlock.h sparcs.h main.c
 timetable.o : generic.h misc.h timetable.h
 

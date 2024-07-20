@@ -5,7 +5,10 @@
 #include "generic.h"
 #include "misc.h"
 #include "network.h"
+
 #include "./cbi/il_obj_instance_decl.h"
+extern char *cnv2str_il_obj_instances[];
+const char *cnv2str_il_obj ( IL_OBJ_INSTANCES obj );
 
 #define CBI_STAT_CSV_FNAME_BCGN "BOTANICAL_GARDEN.csv"
 #define CBI_STAT_CSV_FNAME_JLA "JASOLA_VIHAR.csv"
@@ -199,6 +202,11 @@ typedef enum cbi_stat_kind {
   END_OF_CBI_STAT_KIND
 } CBI_STAT_KIND;
 
+extern char *cnv2str_cbi_stat_kind[];
+
+extern CBI_STAT_KIND il_obj_kind[];
+extern CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj );
+  
 typedef struct cbi_stat_csv_fnames {
   OC_ID oc_id;
   //char *fname;
@@ -247,14 +255,10 @@ extern void dump_cbi_stat_prof ( OC_ID oc_id );
 extern char *show_cbi_stat_bitmask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask );
 extern CBI_STAT_BIT_MASK cbi_stat_bit_maskpat ( int pos );
 
-extern char *cnv2str_cbi_stat_kind[];
-
 typedef struct cbi_stat_label {
   CBI_STAT_KIND kind;
   char name[CBI_STAT_NAME_LEN + 1];  
   char ident[CBI_STAT_IDENT_LEN + 1];
 } CBI_STAT_LABEL, *CBI_STAT_LABEL_PTR;
-
-extern char *cnv2str_il_obj_instances[];
 
 #endif // CBI_H

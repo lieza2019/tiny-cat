@@ -12,8 +12,16 @@ typedef struct journey {
   SCHEDULED_COMMAND_PTR past_commands;
   struct {
     SCHEDULED_COMMAND_PTR pcmds;
-    SCHEDULED_COMMAND_PTR pnext;
+    SCHEDULED_COMMAND_PTR pNext;
   } scheduled_commands;
 } JOURNEY, *JOURNEY_PTR;
+
+#define MAX_JOURNEYS_IN_TIMETABLE 1024
+typedef struct timetable {
+  struct {
+    JOURNEY journey;
+    int rake_id;
+  } journeys[MAX_JOURNEYS_IN_TIMETABLE];
+} TIMETABLE, *TIMETABLE_PTR;
 
 #endif // TIMETABLE_H

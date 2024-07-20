@@ -6,6 +6,13 @@
 #include "misc.h"
 #include "cbi.h"
 
+char *cnv2str_cbi_stat_kind[] = {
+#define CBI_STAT_KIND_DESC(enum, name) name,
+#include "./cbi/cbi_stat_kind.def"
+#undef CBI_STAT_KIND_DESC
+  NULL
+};
+
 CBI_STAT_CSV_FNAMES il_status_geometry_resources[END_OF_OCs + 1] = {
   {OC801, CBI_STAT_CSV_FNAME_BCGN},
   {OC802, CBI_STAT_CSV_FNAME_JLA},
@@ -268,13 +275,6 @@ CBI_STAT_INFO cbi_stat_OC2ATS[END_OF_OC2ATS] = {
 };
 
 RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
-
-char *cnv2str_cbi_stat_kind[] = {
-#define CBI_STAT_KIND_DESC(enum, name) name,
-#include "./cbi/cbi_stat_kind.def"
-#undef CBI_STAT_KIND_DESC
-  NULL
-};
 
 #include "./cbi/cbi_stat_label.h"
 #ifndef CBI_STAT_LABELING
@@ -843,11 +843,28 @@ int main ( void ) {
 }
 #endif
 
+CBI_STAT_KIND il_obj_kind[] = {
+#define IL_OBJ_INSTANCE_DESC(kind, raw_name, exp) kind,
+#include "./cbi/il_obj_instance_desc.h"
+#undef IL_OBJ_INSTANCE_DESC
+  _CBI_KIND_NONSENS
+};
+CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj ) {
+  assert( (obj >= 0) && (obj < END_OF_IL_OBJ_INSTANCES) );
+  CBI_STAT_KIND r = _CBI_KIND_NONSENS;
+  r = il_obj_kind[obj];
+  return r;
+}
+
 char *cnv2str_il_obj_instances[] = {
 #define IL_3t(exp, str, code) str
-#define IL_OBJ_INSTANCE_DESC(route, raw_name, exp) exp,
+#define IL_OBJ_INSTANCE_DESC(kind, raw_name, exp) exp,
 #include "./cbi/il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
 #undef IL_3t
   NULL
 };
+const char *cnv2str_il_obj ( IL_OBJ_INSTANCES obj ) {
+  assert( (obj >= 0) && (obj < END_OF_IL_OBJ_INSTANCES) );
+  return cnv2str_il_obj_instances[obj];
+}

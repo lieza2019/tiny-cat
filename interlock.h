@@ -11,7 +11,7 @@ typedef struct route_lock {
 
 #define MAX_TRACK_BLOCKS 21
 typedef struct track {
-  CBI_STAT_KIND kind;
+  CBI_STAT_KIND kind_cbi;
   IL_OBJ_INSTANCES id;
   char *name;
   struct {
@@ -42,14 +42,15 @@ extern const CBI_STAT_KIND ROUTE_KIND2GENERIC[];
 #define MAX_ROUTE_TRACKS 21
 #define MAX_ROUTE_TRG_BLOCKS 21
 typedef struct _route {
-  ROUTE_KIND kind;
+  CBI_STAT_KIND kind_cbi;
+  ROUTE_KIND kind_route;
   IL_OBJ_INSTANCES id;
   const char *name;
   struct {
     int num_tracks;
     IL_OBJ_INSTANCES tracks[MAX_ROUTE_TRACKS];
     TRACK_PTR ptracks[MAX_ROUTE_TRACKS];
-  } trks;
+  } body;
   struct {
     struct {
       CBI_STAT_KIND kind;
@@ -92,10 +93,10 @@ typedef struct _route {
 extern BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS );
 extern BOOL establish_OC_stat_send ( TINY_SOCK_PTR pS );
 
+extern pthread_mutex_t cbi_stat_info_mutex;
 extern void reveal_il_state ( TINY_SOCK_PTR pS );
 extern void *pth_reveal_il_status ( void *arg );
-
-extern pthread_mutex_t cbi_stat_info_mutex;
-
 extern int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, char *ident );
-void diag_cbi_stat_attrib ( FILE *fp_out, char *ident );
+extern void diag_cbi_stat_attrib ( FILE *fp_out, char *ident );
+
+extern BOOL chk_routeconf ( ROUTE_PTR r1, ROUTE_PTR r2 );

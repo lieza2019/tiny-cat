@@ -107,4 +107,6 @@ typedef struct _scheduled_command {
   struct _scheduled_command *pNext;
 } SCHEDULED_COMMAND, *SCHEDULED_COMMAND_PTR;
 
+extern SCHEDULED_COMMAND_PTR sch_cmd_newnode( void );
+
 #endif // ARS_H
