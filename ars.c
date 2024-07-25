@@ -34,7 +34,7 @@ static int ars_chk_cond_routelok ( ROUTE_PTR proute ) {
   int r = -1;
   
   int i = -1;  
-  for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks; i++ ) {
+  for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks_lok; i++ ) {
     OC_ID oc_id;
     CBI_STAT_KIND kind;   
     TRACK_C_PTR ptr = NULL;
@@ -118,7 +118,7 @@ static int ars_chk_cond_routelok ( ROUTE_PTR proute ) {
       r = stat;
     }
   }
-  assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks) ? (r == 1) : (r <= 0) );
+  assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks_lok) ? (r == 1) : (r <= 0) );
   
   return r;
 }
@@ -128,7 +128,8 @@ static int ars_chk_cond_trackcirc ( ROUTE_PTR proute ) {
   int r = -1;
   
   int i = -1;
-  for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks; i++ ) {
+  //for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks; i++ ) {
+  for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks_ctrl; i++ ) {
     OC_ID oc_id;
     CBI_STAT_KIND kind;
     int stat = -1;
@@ -149,7 +150,7 @@ static int ars_chk_cond_trackcirc ( ROUTE_PTR proute ) {
     assert( kind == _TRACK );
     r = stat;
   }
-  assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks) ? (r == 1) : (r <= 0) );
+  assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks_ctrl) ? (r == 1) : (r <= 0) );
   
   return r;
 }
@@ -204,15 +205,19 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
 	  else
 	    r = ARS_CTRL_TRACKS_OCCUPIED;
 	} else {
-	  cond = ars_chk_cond_routelok( pR );
-	  if( cond <= 0 ) {
-	    if( cond < 0 )
-	      r = ARS_MUTEX_BLOCKED;
-	    else
-	      r = ARS_CTRL_TRACKS_ROUTELOCKED;
-	  } else {
+	  if( pC->attr.sch_routeset.is_dept_route )
 	    r = ARS_CONTROLLED_NORMALLY;
-	    ;
+	  else {
+	    cond = ars_chk_cond_routelok( pR );
+	    if( cond <= 0 ) {
+	      if( cond < 0 )
+		r = ARS_MUTEX_BLOCKED;
+	      else
+		r = ARS_CTRL_TRACKS_ROUTELOCKED;
+	    } else {
+	      r = ARS_CONTROLLED_NORMALLY;
+	      ;
+	    }
 	  }
 	}
       }
@@ -222,4 +227,31 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
   
   assert( r != END_OF_ARS_REASONS );
   return r;
+}
+
+void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
+  assert( pJ );
+  SCHEDULED_COMMAND_PTR pC = NULL;
+  pC = pJ->scheduled_commands.pNext;
+  while( pC ) {
+    switch ( pC->cmd ) {
+    case ARS_SCHEDULED_ROUTESET:
+      //pC->attr.sch_routeset.route_id
+      break;
+    case ARS_SCHEDULED_ROUTEREL:
+      break;
+    case ARS_SCHEDULED_ARRIVAL:
+      break;
+    case ARS_SCHEDULED_DEPT:
+      break;
+    case ARS_SCHEDULED_SKIP:
+      break;
+    case END_OF_SCHEDULED_CMDS:
+      break;
+    default:
+      assert( FALSE );
+    }
+    pC = pC->pNext;
+  }
+  pJ->scheduled_commands.pNext = pC;
 }

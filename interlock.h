@@ -75,11 +75,12 @@ typedef struct route {
       CBTC_BLOCK_PTR ptrg_blks[MAX_ROUTE_TRG_BLOCKS];
     } trg_sect;
     struct {
-      int num_tracks;
+      int num_tracks_lok;
       IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRG_BLOCKS];
 #if 0
       TRACK_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
 #else
+      int num_tracks_ctrl;
       TRACK_C_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
 #endif
     } ctrl_tracks;
