@@ -128,8 +128,7 @@ static int ars_chk_cond_trackcirc ( ROUTE_PTR proute ) {
   int r = -1;
   
   int i = -1;
-  //for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks; i++ ) {
-  for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks_ctrl; i++ ) {
+  for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks_ctl; i++ ) {
     OC_ID oc_id;
     CBI_STAT_KIND kind;
     int stat = -1;
@@ -150,7 +149,7 @@ static int ars_chk_cond_trackcirc ( ROUTE_PTR proute ) {
     assert( kind == _TRACK );
     r = stat;
   }
-  assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks_ctrl) ? (r == 1) : (r <= 0) );
+  assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks_ctl) ? (r == 1) : (r <= 0) );
   
   return r;
 }
@@ -234,11 +233,46 @@ void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
   SCHEDULED_COMMAND_PTR pC = NULL;
   pC = pJ->scheduled_commands.pNext;
   while( pC ) {
+    OC_ID oc_id;    CBI_STAT_KIND kind;
+    int stat = -1;
     switch ( pC->cmd ) {
     case ARS_SCHEDULED_ROUTESET:
-      //pC->attr.sch_routeset.route_id
+      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_routeset.route_id) );
+      assert( stat >= 0 );
+      if( stat > 0 ) {
+	SCHEDULED_COMMAND_PTR *pp = NULL;
+	pp = &pJ->past_commands;
+	assert( pp );
+	while( *pp ) {
+	  assert( *pp );
+	  pp = &(*pp)->pNext;
+	  assert( pp );
+	}
+	assert( pp );
+	assert( ! *pp );
+	*pp = pC;
+	pJ->scheduled_commands.pNext = pC->pNext;
+	pC->pNext = NULL;
+      }
       break;
     case ARS_SCHEDULED_ROUTEREL:
+      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_routeset.route_id) );
+      assert( stat >= 0 );
+      if( stat < 1 ) {
+	assert( stat == 0 );
+	SCHEDULED_COMMAND_PTR *pp = NULL;
+	pp = &pJ->past_commands;
+	assert( pp );
+	while( *pp ) {
+	  pp = &(*pp)->pNext;
+	  assert( pp );
+	}
+	assert( pp );
+	assert( ! *pp );
+	*pp = pC;
+	pJ->scheduled_commands.pNext = pC->pNext;
+	pC->pNext = NULL;
+      }
       break;
     case ARS_SCHEDULED_ARRIVAL:
       break;

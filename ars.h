@@ -48,7 +48,7 @@ typedef int TIME_DIFF;
 typedef int JOURNEY_ID;
 typedef int DWELL_ID;
 
-typedef struct _scheduled_command {
+typedef struct scheduled_command {
   ARS_SCHEDULED_CMD cmd;
   union {
     struct { // for ARS_SCHEDULED_ROUTESET
@@ -104,7 +104,7 @@ typedef struct _scheduled_command {
       CREW_ID crew_id;
     } sch_skip;
   } attr;
-  struct _scheduled_command *pNext;
+  struct scheduled_command *pNext;
 } SCHEDULED_COMMAND, *SCHEDULED_COMMAND_PTR;
 
 typedef enum ars_reasons {

@@ -76,11 +76,11 @@ typedef struct route {
     } trg_sect;
     struct {
       int num_tracks_lok;
+      int num_tracks_ctl;
       IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRG_BLOCKS];
 #if 0
       TRACK_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
 #else
-      int num_tracks_ctrl;
       TRACK_C_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
 #endif
     } ctrl_tracks;
