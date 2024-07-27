@@ -213,10 +213,8 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
 		r = ARS_MUTEX_BLOCKED;
 	      else
 		r = ARS_CTRL_TRACKS_ROUTELOCKED;
-	    } else {
+	    } else
 	      r = ARS_CONTROLLED_NORMALLY;
-	      ;
-	    }
 	  }
 	}
       }
@@ -225,6 +223,24 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
     r = ARS_NO_ROUTESET_CMD;
   
   assert( r != END_OF_ARS_REASONS );
+  return r;
+}
+
+BOOL ars_judge_arriv ( TINY_TRAIN_STATE_PTR pT, SP_ID sp ) {
+  assert( pT );
+  assert( sp < END_OF_SPs );
+  BOOL r = FALSE;
+  TRAIN_INFO_ENTRY_PTR pI = NULL;
+  pI = pT->pTI;
+  assert( pI );
+  {
+    unsigned short blk_occ_front = 0;
+    unsigned short blk_occ_rear = 0;
+    blk_occ_front = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI );
+    blk_occ_rear = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI );
+    assert( blk_occ_front > 0 );
+    assert( blk_occ_rear > 0 );
+  }
   return r;
 }
 
