@@ -7,16 +7,19 @@
 #include "cbi.h"
 
 typedef enum sp_id {
-  SP_73, // JLA_PL1
-  SP_74, // JLA_PL2
-  SP_76, // KIKJ_PL2
-  SP_77, // KIKJ_PL1
-  SP_78, // OKBS_PL2
-  SP_79, // OKBS_PL1
-  SP_80, // BTGD_PL2
-  SP_81, // BTGD_PL1
-  SP_D4, // KIKJ_TB4
-  SP_D9, // KIKJ_TB3
+    SP_73, // JLA_PL1
+    SP_74, // JLA_PL2
+  SP_75, // JLA_PL3
+  SP_D4, // JLA_TB4
+  SP_D9, // JLA_TB3
+    SP_76, // KIKJ_PL2
+    SP_77, // KIKJ_PL1
+    SP_78, // OKBS_PL2
+    SP_79, // OKBS_PL1
+    SP_80, // BTGD_PL2
+    SP_81, // BTGD_PL1
+    SP_D5, // BTGD_TB1
+    SP_D0, // BTGD_TB2
   END_OF_SPs
 } SP_ID;
 

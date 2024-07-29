@@ -790,7 +790,7 @@ int reveal_cbi_code_tbl ( void ) {
   return cnt;
 }
 
-#if 0
+#if 0 // for MODULE-TEST
 int main ( void ) {
   const OC_ID oc_id = OC801;
   int cnt = 0;
