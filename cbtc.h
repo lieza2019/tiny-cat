@@ -22,8 +22,8 @@ typedef struct block {
   struct {
     BOOL has_sp;
     SP_ID sp_id;
-  } sp;
-  TINY_TRAIN_STATE_PTR occupancy; // the link to the train which FRONT_BLOCK-ID bites this block.
+  } sp; 
+  //TINY_TRAIN_STATE_PTR residents; // the link to the train which FRONT_BLOCK-ID bites this block.
   struct {
     BOOL msc_flg1;
     BOOL msc_flg2;

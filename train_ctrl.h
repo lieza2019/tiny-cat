@@ -21,6 +21,12 @@ typedef struct tiny_train_state {
     unsigned char cmd_args[OCC_REMOTE_CMD_ARGS_SIZE];
   } occ_remote_cmd;
   TRAIN_COMMAND_ENTRY_PTR pTC[2];
+  struct {
+    struct {
+      //CBTC_BLOCK_PTR pblock;
+      struct tiny_train_state *pNext;
+    } front;
+  } occupancy;
   TRAIN_INFO_ENTRY_PTR  pTI;
   BOOL updated;
   BOOL omit;
