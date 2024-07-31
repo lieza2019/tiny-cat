@@ -1,6 +1,3 @@
-#include "generic.h"
-#include "misc.h"
-
 #if 1
 typedef enum dst_st_plcode {
   DPL_INVALID_TB_SECTION,

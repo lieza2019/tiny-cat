@@ -11,6 +11,10 @@ GEN_IL_DEF_BIN = $(GEN_IL_DEF_NAME)
 $(GEN_IL_DEF_BIN) : ../cbi.o gen_il_def.o
 	$(CC) $(CFLAGS) $^ -o $@
 
+il_obj_instance_desc.h:
+	$(TOUCH) $@
+il_obj_instance_decl.h: il_obj_instance_desc.h
+	$(TOUCH) $@
 ../cbi.h: ../generic.h ../misc.h ../network.h ./cbi_stat_kind.def ./cbi_pat.def ./il_obj_instance_decl.h
 	$(TOUCH) $@
 
@@ -21,7 +25,7 @@ $(GEN_IL_DEF_BIN) : ../cbi.o gen_il_def.o
 	$(MAKE) $(@F); \
 #	$(CP) ./$@ ./cbi
 
-gen_il_def.o : ../cbi.h gen_il_def.c
+gen_il_def.o : ../cbi.h gen_il_def.c ./cbi_pat.def
 
 .PHONY : clean
 clean:
