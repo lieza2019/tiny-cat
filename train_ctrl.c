@@ -7,6 +7,54 @@
 TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 static int frontier;
 
+static void elide_block_restrain ( TINY_TRAIN_STATE_PTR pT ) {
+  assert( pT );
+  if( pT->pTI ) {
+    assert( pT->rakeID == TRAIN_INFO_RAKEID(*pT->pTI) );
+    CBTC_BLOCK_PTR pblk_front = NULL;
+    const unsigned short blk_name = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pT->pTI );
+    pblk_front = lookup_cbtc_block_prof( blk_name );
+    if( pblk_front ) {
+      BOOL found_and_elided = FALSE;
+      TINY_TRAIN_STATE_PTR *pp = NULL;
+      pp = addr_residents_CBTC_BLOCK ( pblk_front );
+      assert( pp );
+      while( *pp ) {
+	assert( *pp );
+	assert( pT );
+	if( *pp == pT ) {
+	  assert( !found_and_elided );
+	  *pp = pT->occupancy.front.pNext;
+	  pT->occupancy.front.pNext = NULL;
+	  found_and_elided = TRUE;
+	  continue;
+	}
+	pp = &(*pp)->occupancy.front.pNext;
+	assert( pp );
+      }
+    } else
+      errorF( "%d: unknown cbtc block detected as occupied forward one, of train %3d.\n", blk_name, pT->rakeID );
+  }
+}
+
+static TINY_TRAIN_STATE_PTR put_block_restrain ( TINY_TRAIN_STATE_PTR pT ) {
+  assert( pT );
+  TINY_TRAIN_STATE_PTR r = NULL;
+  
+  if( pT->pTI ) {
+    assert( pT->rakeID == TRAIN_INFO_RAKEID(*pT->pTI) );
+    CBTC_BLOCK_PTR pblk_front = NULL;
+    const unsigned short blk_name = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pT->pTI );
+    pblk_front = lookup_cbtc_block_prof( blk_name );
+    if( pblk_front ) {
+      pT->occupancy.front.pNext = read_residents_CBTC_BLOCK( pblk_front );
+      r = write_residents_CBTC_BLOCK( pblk_front, pT );
+    } else
+    errorF( "%d: unknown cbtc block detected as occupied forward one, of train %3d.\n", blk_name, pT->rakeID );  
+  }
+  return r;
+}
+
 static TINY_TRAIN_STATE_PTR enum_orphant_trains ( void ) {
   TINY_TRAIN_STATE_PTR r = NULL;
   {
@@ -38,7 +86,7 @@ static void retrieve_from_train_info ( TINY_TRAIN_STATE_PTR pS, TRAIN_INFO_ENTRY
   pS->perf_regime = TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( *pI );
 }
 
-static TINY_TRAIN_STATE_PTR update_train_state( TRAIN_INFO_ENTRY_PTR pI ) {
+static TINY_TRAIN_STATE_PTR update_train_state ( TRAIN_INFO_ENTRY_PTR pI ) {
   assert( pI );
   TINY_TRAIN_STATE_PTR pE = NULL;
   unsigned short rID = 0;
@@ -102,8 +150,10 @@ void reveal_train_tracking( TINY_SOCK_PTR pS ) {
 	unsigned short rakeID = TRAIN_INFO_RAKEID(pSC->train_information.recv.train_info.entries[j]);
 	if( rakeID != 0 ) {
 	  //printf( "received rakeID in the %2d th Train info.: %3d.\n", (i + 1), rakeID );  // ***** for debugging.
+	  elide_block_restrain( pE );
 	  pE = update_train_state( &pSC->train_information.recv.train_info.entries[j] );
 	  assert( pE );
+	  put_block_restrain( pE );
 	  pSC->train_information.pTrain_stat[i] = pE;
 	}
       }

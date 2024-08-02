@@ -12,9 +12,9 @@ TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
   return (TINY_TRAIN_STATE_PTR)pB->residents;
 }
 
-TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
+TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
   assert( pB );
-  pB->residents = (void *)pB;
+  pB->residents = (void *)pT;
   return (TINY_TRAIN_STATE_PTR)pB->residents;
 }
 
