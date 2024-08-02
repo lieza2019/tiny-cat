@@ -3,7 +3,7 @@
 
 #include "generic.h"
 #include "misc.h"
-#include "sparcs.h"
+//#include "sparcs.h"
 #include "ars.h"
 
 #define BLOCK_ID_DEFINITIONS
@@ -22,8 +22,15 @@ typedef struct block {
   struct {
     BOOL has_sp;
     SP_ID sp_id;
-  } sp; 
-  //TINY_TRAIN_STATE_PTR residents; // the link to the train which FRONT_BLOCK-ID bites this block.
+  } sp;
+  /* the link to the train which FRONT_BLOCK-ID bites this block, should be accessed with the type of TINY_TRAIN_STATE_PTR,
+     via the designated access-methods of,
+       TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ),
+       TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ),
+       TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ),
+     declared in train_ctrl.h
+  */
+  void *residents; 
   struct {
     BOOL msc_flg1;
     BOOL msc_flg2;

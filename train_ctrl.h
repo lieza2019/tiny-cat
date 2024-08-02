@@ -1,5 +1,6 @@
 #include "generic.h"
 #include "misc.h"
+#include "cbtc.h"
 
 #define TRAINID_MAX_LEN 4
 typedef struct tiny_train_state {
@@ -23,7 +24,7 @@ typedef struct tiny_train_state {
   TRAIN_COMMAND_ENTRY_PTR pTC[2];
   struct {
     struct {
-      //CBTC_BLOCK_PTR pblock;
+      CBTC_BLOCK_PTR pblock;
       struct tiny_train_state *pNext;
     } front;
   } occupancy;
@@ -45,3 +46,7 @@ extern void reveal_train_tracking( TINY_SOCK_PTR pS );
 extern BOOL establish_SC_comm ( TINY_SOCK_PTR pS );
 extern int load_train_command ( void );
 extern void chk_solid_train_cmds ( void );
+
+extern TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB );
+extern TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB );
+extern TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB );

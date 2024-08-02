@@ -1,6 +1,7 @@
 #include <string.h>
 #include "generic.h"
 #include "misc.h"
+#include "sparcs.h"
 #include "cbi.h"
 #include "interlock.h"
 #include "ars.h"

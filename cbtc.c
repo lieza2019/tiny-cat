@@ -5,6 +5,24 @@
 #include "cbtc.h"
 #undef CBTC_C
 
+#include "sparcs.h"
+
+TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
+  assert( pB );
+  return (TINY_TRAIN_STATE_PTR)pB->residents;
+}
+
+TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
+  assert( pB );
+  pB->residents = (void *)pB;
+  return (TINY_TRAIN_STATE_PTR)pB->residents;
+}
+
+TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
+  assert( pB );
+  return (TINY_TRAIN_STATE_PTR *)(&pB->residents);
+}
+
 static CBTC_BLOCK_PTR blkname2_cbtc_block_prof[65536];
 static CBTC_BLOCK_PTR virtblk2_cbtc_block_prof[65536];
 
