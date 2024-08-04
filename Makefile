@@ -41,7 +41,7 @@ interlock.h : generic.h misc.h cbi.h cbtc.h interlock_def.h
 	$(TOUCH) $@
 ars.h : generic.h misc.h cbi.h
 	$(TOUCH) $@
-timetable.h : generic.h misc.h ars.h
+timetable.h : generic.h misc.h sparcs.h cbtc.h
 	$(TOUCH) $@
 network.h : generic.h
 	$(TOUCH) $@

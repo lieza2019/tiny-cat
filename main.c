@@ -249,6 +249,7 @@ int main ( void ) {
 #endif
       
       reveal_train_tracking( &socks );
+      purge_block_restrains();
 #if 0
       if( diag_tracking_train_stat( stdout ) > 0 )
 	fprintf( stdout, "\n" );

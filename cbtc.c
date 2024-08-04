@@ -74,6 +74,32 @@ CBTC_BLOCK_PTR conslt_cbtc_block_prof ( CBTC_BLOCK_ID virt_blkname ) {
   return virtblk2_cbtc_block_prof[virt_blkname];
 }
 
+void purge_block_restrains ( void ) {
+  int i = 0;
+  while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+    CBTC_BLOCK_PTR pB = &block_state[i];
+    assert( pB );
+    assert( (pB->block_name > 0) && (pB->virt_block_name != END_OF_CBTC_BLOCKs) );
+    TINY_TRAIN_STATE_PTR *pp = NULL;
+    pp = addr_residents_CBTC_BLOCK( pB );
+    assert( pp );
+    while( *pp ) {
+      assert( *pp );
+      if( (*pp)->omit ) {
+	TINY_TRAIN_STATE_PTR w = NULL;
+	w = *pp;
+	assert( w );
+	*pp = w->occupancy.front.pNext;
+	w->occupancy.front.pNext = NULL;
+	continue;
+      }
+      pp = &(*pp)->occupancy.front.pNext;
+      assert( pp );
+    }
+    i++;
+  }
+}	
+
 #if 0 // for MODULE-TEST
 int main( void ) {
   const CBTC_BLOCK_PTR plim_sup = (CBTC_BLOCK_PTR)((unsigned char *)block_state + (int)sizeof(block_state));

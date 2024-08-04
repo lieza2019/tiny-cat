@@ -179,8 +179,41 @@ static SCHEDULED_COMMAND_PTR *fetch_cmd_routeset ( SCHEDULED_COMMAND_PTR *ppNext
   return r;
 }
 
+static int ars_chk_enter_trgsection ( ROUTE_PTR proute, TINY_TRAIN_STATE_PTR ptrain_ctrl) {
+  assert( proute );
+  assert( proute->ars_ctrl.app );
+  assert( ptrain_ctrl );
+  int r = -1;
+  ROUTE_PTR pR = proute;
+  int i;
+  
+  assert( pR );
+  r = 0;
+  for( i = 0; i < pR->ars_ctrl.trg_sect.num_blocks; i++ ) {
+    TINY_TRAIN_STATE_PTR pT = NULL;
+    pT = read_residents_CBTC_BLOCK( pR->ars_ctrl.trg_sect.ptrg_blks[i] );
+    while( pT ) {
+      if( pT == ptrain_ctrl ) {
+	r = 1;
+	break;
+      }
+      pT = pT->occupancy.front.pNext;
+    }
+  }
+  
+  return r;
+}
+
+static int ars_chk_ahead_trgsection ( ROUTE_PTR proute ) {
+  assert( proute );
+  assert( proute->ars_ctrl.app );
+  
+  return 0;
+}
+
 ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
   assert( pJ );
+  assert( pJ->ptrain_ctrl );
   ARS_REASONS r = END_OF_ARS_REASONS;
   SCHEDULED_COMMAND_PTR *ppC = NULL;
   
@@ -188,37 +221,57 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
   if( ppC ) {
     assert( (*ppC)->cmd == ARS_SCHEDULED_ROUTESET );
     SCHEDULED_COMMAND_PTR pC = *ppC;
-    assert( pC );
-    assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+    assert( pC );    
     {
+      assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
       assert( whats_kind_of_il_obj( pC->attr.sch_routeset.route_id ) == _ROUTE );
       ROUTE_PTR pR = NULL;
       pR = &route_state[pC->attr.sch_routeset.route_id];
       assert( pR );
       assert( (pR->kind_cbi == _ROUTE) && (pR->kind_route < END_OF_ROUTE_KINDS) );
+      assert( pR->ars_ctrl.app );
       {
 	int cond = -1;
-	cond = ars_chk_cond_trackcirc( pR );
+	cond = ars_chk_enter_trgsection( pR, pJ->ptrain_ctrl );
 	if( cond <= 0 ) {
 	  if( cond < 0 )
 	    r = ARS_MUTEX_BLOCKED;
 	  else
-	    r = ARS_CTRL_TRACKS_OCCUPIED;
+	    r = ARS_NO_TRIGGERED;
 	} else {
-	  if( pC->attr.sch_routeset.is_dept_route )
-	    r = ARS_CONTROLLED_NORMALLY;
-	  else {
-	    cond = ars_chk_cond_routelok( pR );
+	  cond = ars_chk_ahead_trgsection( pR );
+	  if( cond <= 0 ) {
+	    if( cond < 0 )
+	      r = ARS_MUTEX_BLOCKED;
+	    else
+	      r = ARS_OTHER_TRAINS_AHEAD;
+	  } else {
+	    cond = ars_chk_cond_trackcirc( pR );
 	    if( cond <= 0 ) {
 	      if( cond < 0 )
 		r = ARS_MUTEX_BLOCKED;
 	      else
-		r = ARS_CTRL_TRACKS_ROUTELOCKED;
-	    } else
-	      r = ARS_CONTROLLED_NORMALLY;
+		r = ARS_CTRL_TRACKS_OCCUPIED;
+	    } else {
+	      if( pC->attr.sch_routeset.is_dept_route )
+		r = ARS_ROUTE_CONTROLLED_NORMALLY;
+	      else {
+		cond = ars_chk_cond_routelok( pR );
+		if( cond <= 0 ) {
+		  if( cond < 0 )
+		    r = ARS_MUTEX_BLOCKED;
+		  else
+		    r = ARS_CTRL_TRACKS_ROUTELOCKED;
+		} else {
+		  ;
+		  r = ARS_ROUTE_CONTROLLED_NORMALLY;
+		}
+	      }
+	    }
 	  }
 	}
       }
+      
     }
   } else
     r = ARS_NO_ROUTESET_CMD;
