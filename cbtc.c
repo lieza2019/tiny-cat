@@ -7,20 +7,26 @@
 
 #include "sparcs.h"
 
-TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
+TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
   assert( pB );
-  return (TINY_TRAIN_STATE_PTR)pB->residents;
+  pB->residents.edge = (void *)pT;
+  return (TINY_TRAIN_STATE_PTR)pB->residents.edge;
 }
 
 TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
   assert( pB );
-  pB->residents = (void *)pT;
-  return (TINY_TRAIN_STATE_PTR)pB->residents;
+  pB->residents.ptrains = (void *)pT;
+  return (TINY_TRAIN_STATE_PTR)pB->residents.ptrains;
+}
+
+TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
+  assert( pB );
+  return (TINY_TRAIN_STATE_PTR)pB->residents.ptrains;
 }
 
 TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
   assert( pB );
-  return (TINY_TRAIN_STATE_PTR *)(&pB->residents);
+  return (TINY_TRAIN_STATE_PTR *)&(pB->residents.ptrains);
 }
 
 static CBTC_BLOCK_PTR blkname2_cbtc_block_prof[65536];
@@ -89,11 +95,13 @@ void purge_block_restrains ( void ) {
 	TINY_TRAIN_STATE_PTR w = NULL;
 	w = *pp;
 	assert( w );
-	*pp = w->occupancy.front.pNext;
-	w->occupancy.front.pNext = NULL;
+	*pp = w->occupancy.pNext;
+	w->occupancy.pNext = NULL;
+	w->occupancy.pblk_forward = NULL;
+	w->occupancy.pblk_back = NULL;
 	continue;
       }
-      pp = &(*pp)->occupancy.front.pNext;
+      pp = &(*pp)->occupancy.pNext;
       assert( pp );
     }
     i++;

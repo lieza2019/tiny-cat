@@ -23,10 +23,9 @@ typedef struct tiny_train_state {
   } occ_remote_cmd;
   TRAIN_COMMAND_ENTRY_PTR pTC[2];
   struct {
-    struct {
-      CBTC_BLOCK_PTR pblock;
-      struct tiny_train_state *pNext;
-    } front;
+    CBTC_BLOCK_PTR pblk_forward;
+    CBTC_BLOCK_PTR pblk_back;
+    struct tiny_train_state *pNext;
   } occupancy;
   TRAIN_INFO_ENTRY_PTR  pTI;
   BOOL updated;
@@ -47,6 +46,7 @@ extern BOOL establish_SC_comm ( TINY_SOCK_PTR pS );
 extern int load_train_command ( void );
 extern void chk_solid_train_cmds ( void );
 
-extern TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB );
+extern TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );
 extern TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );
+extern TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB );
 extern TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB );

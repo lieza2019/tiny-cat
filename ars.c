@@ -197,7 +197,7 @@ static int ars_chk_enter_trgsection ( ROUTE_PTR proute, TINY_TRAIN_STATE_PTR ptr
 	r = 1;
 	break;
       }
-      pT = pT->occupancy.front.pNext;
+      pT = pT->occupancy.pNext;
     }
   }
   

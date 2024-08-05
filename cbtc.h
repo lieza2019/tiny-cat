@@ -22,14 +22,22 @@ typedef struct block {
     BOOL has_sp;
     SP_ID sp_id;
   } sp;
-  /* the link to the train which FRONT_BLOCK-ID bites this block, should be accessed with the type of TINY_TRAIN_STATE_PTR,
+  /* the link to the train which FRONT_BLOCK-ID/REAR_BLOCK_ID bite this block, should be accessed with the type of TINY_TRAIN_STATE_PTR,
      via the designated access-methods of,
-       TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ),
-       TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ),
-       TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ),
+       TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );
+       TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );
+       TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB );
+       TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB )
      declared in train_ctrl.h
   */
-  void *residents; 
+  struct {
+    void *ptrains;
+#if 0
+    void *edge_L, *edge_R;
+#else
+    void *edge;
+#endif
+  } residents;
   struct {
     BOOL msc_flg1;
     BOOL msc_flg2;
