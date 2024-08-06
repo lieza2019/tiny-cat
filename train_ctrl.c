@@ -8,36 +8,6 @@ TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 static int frontier;
 
 #if 0
-static void elide_block_restrain ( TINY_TRAIN_STATE_PTR pT ) {
-  assert( pT );
-  if( pT->pTI ) {
-    assert( pT->rakeID == TRAIN_INFO_RAKEID(*pT->pTI) );
-    const unsigned short blk_name = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pT->pTI );
-    CBTC_BLOCK_PTR pblk_front = NULL;    
-    pblk_front = lookup_cbtc_block_prof( blk_name );
-    if( pblk_front ) {
-      BOOL found_and_elided = FALSE;
-      TINY_TRAIN_STATE_PTR *pp = NULL;
-      pp = addr_residents_CBTC_BLOCK( pblk_front );
-      assert( pp );
-      while( *pp ) {
-	assert( *pp );
-	assert( pT );
-	if( *pp == pT ) {
-	  assert( !found_and_elided );
-	  *pp = pT->occupancy.front.pNext;
-	  pT->occupancy.front.pNext = NULL;
-	  found_and_elided = TRUE;
-	  continue;
-	}
-	pp = &(*pp)->occupancy.front.pNext;
-	assert( pp );
-      }
-    } else
-      errorF( "%d: unknown cbtc block detected as forward occupied, of train %3d.\n", blk_name, pT->rakeID );
-  }
-}
-
 static TINY_TRAIN_STATE_PTR push_block_restrain ( TINY_TRAIN_STATE_PTR pT ) {
   assert( pT );
   TINY_TRAIN_STATE_PTR r = NULL;
@@ -96,7 +66,7 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 		goto no_elide;
 	    }
 	  } else {
-	    errorF( "%d: unknown cbtc block detected as back occupied, of train %3d.\n", blk_name_forward, pT->rakeID );
+	    errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_forward, pT->rakeID );
 	    pT->occupancy.pblk_back = NULL;
 	  }
 	  {
@@ -132,7 +102,7 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
       assert( pblk_forward );
       assert( pT->occupancy.pblk_forward == pblk_forward );
     } else
-      errorF( "%d: unknown cbtc block detected as forward occupied, of train %3d.\n", blk_name_forward, pT->rakeID );
+      errorF( "%d: unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
   }
   return r;
 }
@@ -177,7 +147,7 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 		goto no_elide;
 	    }
 	  } else {
-	    errorF( "%d: unknown cbtc block detected as back occupied, of train %3d.\n", blk_name_back, pT->rakeID );
+	    errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
 	    pT->occupancy.pblk_back = NULL;
 	    updated_pblk_back = TRUE;
 	  }
@@ -227,13 +197,13 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 	    if( r != pT )
 	      ;
 	  } else {
-	    errorF( "%d: unknown cbtc block detected as back occupied, of train %3d.\n", blk_name_back, pT->rakeID );
+	    errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
 	    pT->occupancy.pblk_back = NULL;
 	  }
 	}
       }
     } else
-      errorF( "%d: unknown cbtc block detected as forward occupied, of train %3d.\n", blk_name_forward, pT->rakeID );
+      errorF( "%d: unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
   }
   return crnt_forward_blk;
 }

@@ -40,7 +40,6 @@ typedef struct block {
       void *edge;
 #endif  
     } u;
-    
   } residents;
   struct {
     BOOL msc_flg1;

@@ -7,21 +7,26 @@
 
 #include "sparcs.h"
 
-TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
+TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
   assert( pB );
-  pB->residents.u.edge = (void *)pT;
   return (TINY_TRAIN_STATE_PTR)pB->residents.u.edge;
 }
 
-TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
+TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
   assert( pB );
-  pB->residents.ptrains = (void *)pT;
-  return (TINY_TRAIN_STATE_PTR)pB->residents.ptrains;
+  pB->residents.u.edge = (void *)pT;
+  return read_edge_of_residents_CBTC_BLOCK( pB );
 }
 
 TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
   assert( pB );
   return (TINY_TRAIN_STATE_PTR)pB->residents.ptrains;
+}
+
+TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
+  assert( pB );
+  pB->residents.ptrains = (void *)pT;
+  return read_residents_CBTC_BLOCK( pB );
 }
 
 TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
@@ -39,7 +44,7 @@ void cons_lkuptbl_cbtc_block_prof ( void ) {
   {
     int i = 0;
     assert( i == 0 );
-    while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+    while( block_state[i].virt_block_name < END_OF_CBTC_BLOCKs ) {
       CBTC_BLOCK_PTR p = &block_state[i];
       assert( (p >= block_state) && (p < plim_sup) );
       int idx = p->block_name;
@@ -51,13 +56,14 @@ void cons_lkuptbl_cbtc_block_prof ( void ) {
       i++;
     }
     assert( (i >= 0) && (i < 65536) );
+    assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
   }
   
   // for the lookup-table of virtblk2_cbtc_block_prof: virtual_block_name -> block_prof
   {
     int i = 0;
     assert( i == 0 );
-    while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+    while( block_state[i].virt_block_name < END_OF_CBTC_BLOCKs ) {
       CBTC_BLOCK_PTR p = &block_state[i];
       assert( (p >= block_state) && (p < plim_sup) );
       int idx = (int)p->virt_block_name;
@@ -69,6 +75,7 @@ void cons_lkuptbl_cbtc_block_prof ( void ) {
       i++;
     }
     assert( (i >= 0) && (i < 65536) );
+    assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
   }
 }
 
@@ -80,18 +87,57 @@ CBTC_BLOCK_PTR conslt_cbtc_block_prof ( CBTC_BLOCK_ID virt_blkname ) {
   return virtblk2_cbtc_block_prof[virt_blkname];
 }
 
+static BOOL creteria_2_elide ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
+  assert( pB );
+  assert( pB->block_name > 0 );
+  assert( pB->virt_block_name < END_OF_CBTC_BLOCKs );
+  assert( pT );
+  BOOL r = FALSE;
+  
+  if( pT->omit )
+    r = TRUE;
+  else {
+    if( ! pT->pTI )
+      r = TRUE;
+    else {
+      const unsigned short blk_name_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pT->pTI );
+      const unsigned short blk_name_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pT->pTI );
+      CBTC_BLOCK_PTR pblk_forward = NULL;
+      CBTC_BLOCK_PTR pblk_back = NULL;
+      pblk_forward = lookup_cbtc_block_prof( blk_name_forward );
+      if( pblk_forward ) {
+	pblk_back = lookup_cbtc_block_prof( blk_name_back );
+	if( pblk_back ) {
+	  assert( pblk_forward );
+	  assert( pblk_back );
+	  assert( pB );
+	  r = !((pB->block_name == pblk_forward->block_name) || (pB->block_name == pblk_back->block_name));
+	} else {
+	  errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
+	  r = pB->block_name != pblk_forward->block_name;
+	}
+      } else {
+	errorF( "%d: unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
+	r = TRUE;
+      }
+    }
+  }
+  
+  return r;
+}
+
 void purge_block_restrains ( void ) {
   int i = 0;
-  while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+  while( block_state[i].virt_block_name < END_OF_CBTC_BLOCKs ) {
     CBTC_BLOCK_PTR pB = &block_state[i];
     assert( pB );
-    assert( (pB->block_name > 0) && (pB->virt_block_name != END_OF_CBTC_BLOCKs) );
+    assert( (pB->block_name > 0) && (pB->virt_block_name < END_OF_CBTC_BLOCKs) );
     TINY_TRAIN_STATE_PTR *pp = NULL;
     pp = addr_residents_CBTC_BLOCK( pB );
     assert( pp );
     while( *pp ) {
       assert( *pp );
-      if( (*pp)->omit ) {
+      if( creteria_2_elide( pB, *pp ) ) {
 	TINY_TRAIN_STATE_PTR w = NULL;
 	w = *pp;
 	assert( w );
@@ -103,6 +149,11 @@ void purge_block_restrains ( void ) {
       }
       pp = &(*pp)->occupancy.pNext;
       assert( pp );
+    } 
+    assert( pB );
+    if( read_edge_of_residents_CBTC_BLOCK(pB) ) {
+      if( creteria_2_elide( pB, pB->residents.u.edge ) )
+	pB->residents.u.edge = NULL;
     }
     i++;
   }
@@ -126,18 +177,19 @@ int main( void ) {
       } else {
 	int j = 0;
 	assert( j == 0 );
-	while( block_state[j].virt_block_name != END_OF_CBTC_BLOCKs ) {
+	while( block_state[j].virt_block_name < END_OF_CBTC_BLOCKs ) {
 	  CBTC_BLOCK_PTR q = &block_state[j];
 	  assert( (q >= block_state) && (q < plim_sup) );
 	  assert( q->block_name != (unsigned short)i );
 	  j++;
 	}
+	assert( block_state[j].virt_block_name == END_OF_CBTC_BLOCKs );
       }
     }
     {
       int k = 0;
       assert( k == 0 );
-      while( block_state[k].virt_block_name != END_OF_CBTC_BLOCKs ) {
+      while( block_state[k].virt_block_name < END_OF_CBTC_BLOCKs ) {
 	assert( block_state[k].misc.msc_flg1 );
 	k++;
       }
@@ -157,18 +209,19 @@ int main( void ) {
       } else {
 	int j = 0;
 	assert( j == 0 );
-	while( block_state[j].virt_block_name != END_OF_CBTC_BLOCKs ) {
+	while( block_state[j].virt_block_name < END_OF_CBTC_BLOCKs ) {
 	  CBTC_BLOCK_PTR q = &block_state[j];
 	  assert( (q >= block_state) && (q < plim_sup) );
 	  assert( q->virt_block_name != (CBTC_BLOCK_ID)i );
 	  j++;
 	}
+	assert( block_state[j].virt_block_name == END_OF_CBTC_BLOCKs );
       }
     }
     {
       int k = 0;
       assert( k == 0 );
-      while( block_state[k].virt_block_name != END_OF_CBTC_BLOCKs ) {
+      while( block_state[k].virt_block_name < END_OF_CBTC_BLOCKs ) {
 	assert( block_state[k].misc.msc_flg2 );
 	k++;
       }

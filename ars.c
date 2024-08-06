@@ -179,7 +179,7 @@ static SCHEDULED_COMMAND_PTR *fetch_cmd_routeset ( SCHEDULED_COMMAND_PTR *ppNext
   return r;
 }
 
-static int ars_chk_enter_trgsection ( ROUTE_PTR proute, TINY_TRAIN_STATE_PTR ptrain_ctrl) {
+static int ars_chk_hit_trgsection ( ROUTE_PTR proute, TINY_TRAIN_STATE_PTR ptrain_ctrl) {
   assert( proute );
   assert( proute->ars_ctrl.app );
   assert( ptrain_ctrl );
@@ -232,7 +232,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
       assert( pR->ars_ctrl.app );
       {
 	int cond = -1;
-	cond = ars_chk_enter_trgsection( pR, pJ->ptrain_ctrl );
+	cond = ars_chk_hit_trgsection( pR, pJ->ptrain_ctrl );
 	if( cond <= 0 ) {
 	  if( cond < 0 )
 	    r = ARS_MUTEX_BLOCKED;
@@ -271,7 +271,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
 	  }
 	}
       }
-      
+      ;
     }
   } else
     r = ARS_NO_ROUTESET_CMD;
