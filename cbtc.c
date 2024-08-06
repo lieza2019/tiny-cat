@@ -9,8 +9,8 @@
 
 TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
   assert( pB );
-  pB->residents.edge = (void *)pT;
-  return (TINY_TRAIN_STATE_PTR)pB->residents.edge;
+  pB->residents.u.edge = (void *)pT;
+  return (TINY_TRAIN_STATE_PTR)pB->residents.u.edge;
 }
 
 TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {

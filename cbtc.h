@@ -32,11 +32,15 @@ typedef struct block {
   */
   struct {
     void *ptrains;
+    union {
 #if 0
-    void *edge_L, *edge_R;
+      void * overlayed;
+      void *edge_L, *edge_R;
 #else
-    void *edge;
-#endif
+      void *edge;
+#endif  
+    } u;
+    
   } residents;
   struct {
     BOOL msc_flg1;

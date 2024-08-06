@@ -57,6 +57,7 @@ static TINY_TRAIN_STATE_PTR push_block_restrain ( TINY_TRAIN_STATE_PTR pT ) {
 }
 #endif
 
+#if 0
 static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
   assert( pT );
   CBTC_BLOCK_PTR r = NULL;
@@ -135,6 +136,108 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
   }
   return r;
 }
+#else
+static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
+  assert( pT );
+  CBTC_BLOCK_PTR crnt_forward_blk = NULL;
+  
+  if( pT->pTI ) {
+    assert( pT->rakeID == TRAIN_INFO_RAKEID(*pT->pTI) );
+    const unsigned short blk_name_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pT->pTI );
+    const unsigned short blk_name_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pT->pTI );
+    CBTC_BLOCK_PTR pblk_forward = NULL;
+    CBTC_BLOCK_PTR pblk_back = NULL;
+    pblk_forward = lookup_cbtc_block_prof( blk_name_forward );
+    if( pblk_forward ) {
+      BOOL updated_pblk_back = FALSE;
+      BOOL stil_there = FALSE;
+      TINY_TRAIN_STATE_PTR p = NULL;
+      p = read_residents_CBTC_BLOCK( pblk_forward );
+      while( p ) {
+	assert( pT );
+	if( p == pT ) {
+	  assert( pT->occupancy.pblk_forward == pblk_forward );
+	  stil_there = TRUE;
+	  crnt_forward_blk = pblk_forward;
+	  break;
+	}
+	p = p->occupancy.pNext;
+      }
+      if( !stil_there ) {
+	assert( pT );
+	if( pT->occupancy.pblk_forward ) {	  
+	  pblk_back = lookup_cbtc_block_prof( blk_name_back );
+	  if( pblk_back ) {
+	    if( pblk_back == pT->occupancy.pblk_forward ) {
+	      TINY_TRAIN_STATE_PTR r = NULL;
+	      pT->occupancy.pblk_back = pT->occupancy.pblk_forward;
+	      updated_pblk_back = TRUE;
+	      r = border_residents_CBTC_BLOCK(pblk_back, pT);
+	      if( r != pT )
+		goto no_elide;
+	    }
+	  } else {
+	    errorF( "%d: unknown cbtc block detected as back occupied, of train %3d.\n", blk_name_back, pT->rakeID );
+	    pT->occupancy.pblk_back = NULL;
+	    updated_pblk_back = TRUE;
+	  }
+	  {
+	    BOOL elided = FALSE;
+	    TINY_TRAIN_STATE_PTR *pp = NULL;
+	    pp = addr_residents_CBTC_BLOCK( pT->occupancy.pblk_forward );
+	    assert( pp );
+	    while( *pp ) {
+	      assert( *pp );
+	      assert( pT );
+	      if( *pp == pT ) {
+		assert( !elided );
+		*pp = pT->occupancy.pNext;
+		pT->occupancy.pNext = NULL;
+		elided = TRUE;
+		continue;
+	      }
+	      pp = &(*pp)->occupancy.pNext;
+	      assert( pp );
+	    }
+	  }
+	no_elide:
+	  pT->occupancy.pblk_forward = NULL;
+	}
+	assert( pblk_forward );
+	assert( pT );
+	pT->occupancy.pNext = read_residents_CBTC_BLOCK( pblk_forward );
+	write_residents_CBTC_BLOCK( pblk_forward, pT );
+	pT->occupancy.pblk_forward = pblk_forward;
+	crnt_forward_blk = pblk_forward;
+      }
+      assert( pT );
+      assert( pblk_forward );
+      assert( pT->occupancy.pblk_forward == pblk_forward );
+
+      if( !updated_pblk_back ) {
+	if( blk_name_forward == blk_name_back )
+	  pT->occupancy.pblk_back = NULL;
+	else {
+	  assert( blk_name_forward != blk_name_back );
+	  pblk_back = lookup_cbtc_block_prof( blk_name_back );
+	  if( pblk_back ) {
+	    TINY_TRAIN_STATE_PTR r = NULL;
+	    pT->occupancy.pblk_back = pblk_back;
+	    r = border_residents_CBTC_BLOCK(pblk_back, pT);
+	    if( r != pT )
+	      ;
+	  } else {
+	    errorF( "%d: unknown cbtc block detected as back occupied, of train %3d.\n", blk_name_back, pT->rakeID );
+	    pT->occupancy.pblk_back = NULL;
+	  }
+	}
+      }
+    } else
+      errorF( "%d: unknown cbtc block detected as forward occupied, of train %3d.\n", blk_name_forward, pT->rakeID );
+  }
+  return crnt_forward_blk;
+}
+#endif
 
 static TINY_TRAIN_STATE_PTR enum_orphant_trains ( void ) {
   TINY_TRAIN_STATE_PTR r = NULL;
