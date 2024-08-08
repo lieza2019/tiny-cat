@@ -132,6 +132,9 @@ int main ( void ) {
   TINY_SOCK_DESC sd_recv_srvstat = -1;
   TINY_SOCK socks;
   TINY_SOCK socks_cbi_stat;
+  
+  //cons_il_obj_tables();
+  
 #if 0
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
   printf( "sizeof TRAIN_INFO: %d.\n", (int)sizeof(TRAIN_INFO) );

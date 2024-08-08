@@ -136,6 +136,138 @@ static BOOL chk_ars_triggered( ARS_ROUTE_PTR pRoute_ars ) {
 }
 #endif
 
+void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
+  assert( pblock );
+  
+  assert( pblock->block_name > 0 );
+  assert( pblock->virt_block_name < END_OF_CBTC_BLOCKs );
+  assert( pblock->virt_blkname_str != NULL );
+  int found = -1;
+  int i = 0;
+  while( track_state[i].kind_cbi != END_OF_CBI_STAT_KIND ) {
+    assert( track_state[i].kind_cbi == _TRACK );
+    if( track_state[i].id == pblock->belonging_tr.track ) {
+      assert( found < 0 );
+      //pblock->belonging_tr.ptrack = &track_state[i];
+      found = i;
+    }
+    i++;
+  }
+  assert( track_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
+  assert( found > -1 );
+  //assert( pblock->belonging_tr.ptrack == &track_state[found] );
+}
+
+void cons_track_state ( TRACK_PTR ptrack ) {
+  assert( ptrack );
+  
+  assert( ptrack->kind_cbi == _TRACK );
+  assert( ptrack->id < END_OF_IL_OBJ_INSTANCES );
+  assert( ptrack->name != NULL );
+  int i;
+  for( i = 0; i < ptrack->cbtc.num_blocks; i++ ) {
+    int found = -1;
+    int j = 0;
+    while( block_state[j].virt_block_name != END_OF_CBTC_BLOCKs ) {
+      assert( block_state[j].block_name > 0 );
+      if( block_state[j].virt_block_name == ptrack->cbtc.blocks[i] ) {
+	assert( found < 0 );
+	ptrack->cbtc.pblocks[i] = &block_state[j];
+	found = j;
+      }
+      j++;
+    }
+    assert( block_state[j].virt_block_name == END_OF_CBTC_BLOCKs );
+    assert( found > -1 );
+    assert( ptrack->cbtc.pblocks[i] == &block_state[found] );
+  }
+}
+
+void cons_route_state ( ROUTE_PTR proute ) {
+  assert( proute );
+  
+  assert( (proute->kind_cbi == _ROUTE) && (proute->kind_route < END_OF_ROUTE_KINDS) );
+  assert( proute->id < END_OF_IL_OBJ_INSTANCES );
+  assert( proute->name != NULL );
+  {
+    int i;
+    for( i = 0; i < proute->body.num_tracks; i++ ) {
+      int found = -1;
+      int j = 0;
+      while( track_state[j].kind_cbi != END_OF_CBI_STAT_KIND ) {
+	assert( track_state[j].kind_cbi == _TRACK );
+	if( track_state[j].id == proute->body.tracks[i] ) {
+	  assert( found < 0 );
+	  proute->body.ptracks[i] = &track_state[j];
+	  found = j;
+	}
+	j++;
+      }
+      assert( track_state[j].kind_cbi == END_OF_CBI_STAT_KIND );
+      assert( found > -1 );
+      assert( proute->body.ptracks[i] == &track_state[found] );
+    }
+  }
+  
+  if( proute->ars_ctrl.app ) {
+    int i;
+    for( i = 0; i < proute->ars_ctrl.trg_sect.num_blocks; i++ ) {
+      int found = -1;
+      int j = 0;
+      while( block_state[j].virt_block_name != END_OF_CBTC_BLOCKs ) {
+	assert( block_state[j].block_name > 0 );
+	if( block_state[j].virt_block_name == proute->ars_ctrl.trg_sect.trg_blks[i] ) {
+	  assert( found < 0 );
+	  proute->ars_ctrl.trg_sect.ptrg_blks[i] = &block_state[j];
+	  found = j;
+	}
+	j++;
+      }
+      assert( block_state[j].virt_block_name == END_OF_CBTC_BLOCKs );
+      assert( found > -1 );      
+      assert( proute->ars_ctrl.trg_sect.ptrg_blks[i] == &block_state[found] );
+    }
+    
+    {
+      int i;
+      for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks_occ; i++ ) {
+	int found = -1;
+	int j = 0;
+	while( track_state[j].kind_cbi != END_OF_CBI_STAT_KIND ) {
+	  assert( track_state[j].kind_cbi == _TRACK );
+	  if( track_state[j].id == proute->ars_ctrl.ctrl_tracks.chk_trks[i] ) {
+	    assert( found < 0 );
+	    proute->ars_ctrl.ctrl_tracks.pchk_trks[i] = &track_state[j];
+	    found = j;
+	  }
+	  j++;
+	}
+	assert( track_state[j].kind_cbi == END_OF_CBI_STAT_KIND );
+	assert( found > -1 );
+	assert( proute->ars_ctrl.ctrl_tracks.pchk_trks[i] == &track_state[found] );
+      }
+    }
+  }
+}
+
+void cons_il_obj_tables ( void ) {
+  int i = 0;
+  while( route_state[i].kind_route != END_OF_ROUTE_KINDS ) {
+    cons_route_state( &route_state[i] );
+    i++;
+  }
+  assert( route_state[i].kind_route == END_OF_ROUTE_KINDS );
+  
+  {
+    int i = 0;
+    while( track_state[i].kind_cbi != END_OF_CBI_STAT_KIND ) {
+      cons_track_state( &track_state[i] );
+      i++;
+    }
+    assert( track_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
+  }
+}
+
 static CBI_STAT_INFO_PTR willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
   assert( pS );
   assert( (msg_id >= 0) && (msg_id < END_OF_OC2ATS) );
@@ -404,28 +536,6 @@ void *pth_reveal_il_status ( void *arg ) {
     }
   }
   return NULL;
-}
-
-/*
- * requirements: should the form allows access the table with IL_OBJ_INSTANCES, e.g. S803B_S831B, as the key.
- */
-void cons_route_state ( ROUTE_PTR proute ) {
-  assert( proute );
-  assert( (proute->kind_cbi == _ROUTE) && (proute->kind_route < END_OF_ROUTE_KINDS) );
-  int i;
-  
-  for( i = 0; i < proute->body.num_tracks; i++ ) {
-    int j = 0;
-    while( track_state[j].kind_cbi != END_OF_CBI_STAT_KIND ) {
-      assert( track_state[j].kind_cbi == _TRACK );
-      if( track_state[j].id == proute->body.tracks[i] ) {
-	proute->body.ptracks[i] = &track_state[j];
-	break;
-      }
-      j++;
-    }
-    assert( track_state[j].kind_cbi == _TRACK );
-  }
 }
 
 int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {

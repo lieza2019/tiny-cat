@@ -129,7 +129,7 @@ static int ars_chk_cond_trackcirc ( ROUTE_PTR proute ) {
   int r = -1;
   
   int i = -1;
-  for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks_ctl; i++ ) {
+  for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks_occ; i++ ) {
     OC_ID oc_id;
     CBI_STAT_KIND kind;
     int stat = -1;
@@ -150,7 +150,7 @@ static int ars_chk_cond_trackcirc ( ROUTE_PTR proute ) {
     assert( kind == _TRACK );
     r = stat;
   }
-  assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks_ctl) ? (r == 1) : (r <= 0) );
+  assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks_occ) ? (r == 1) : (r <= 0) );
   
   return r;
 }

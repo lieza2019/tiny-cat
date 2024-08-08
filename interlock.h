@@ -76,7 +76,7 @@ typedef struct route {
     } trg_sect;
     struct {
       int num_tracks_lok;
-      int num_tracks_ctl;
+      int num_tracks_occ;
       IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRG_BLOCKS];
 #if 0
       TRACK_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
@@ -102,6 +102,10 @@ typedef const struct route *ROUTE_C_PTR;
 #define kTRSR_LOCKED( tr ) ((tr).locking.kTRSR)
 #endif
 
+extern void cons_track_state ( TRACK_PTR ptrack );
+extern void cons_route_state ( ROUTE_PTR proute );
+extern void cons_il_obj_tables ( void );
+
 extern BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS );
 extern BOOL establish_OC_stat_send ( TINY_SOCK_PTR pS );
 
@@ -112,3 +116,4 @@ extern int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *id
 extern void diag_cbi_stat_attrib ( FILE *fp_out, char *ident );
 
 extern BOOL chk_routeconf ( ROUTE_C_PTR r1, ROUTE_C_PTR r2 );
+
