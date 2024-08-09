@@ -104,6 +104,7 @@ typedef const struct route *ROUTE_C_PTR;
 
 extern void cons_track_state ( TRACK_PTR ptrack );
 extern void cons_route_state ( ROUTE_PTR proute );
+extern void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock );
 extern void cons_il_obj_tables ( void );
 
 extern BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS );
@@ -116,4 +117,3 @@ extern int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *id
 extern void diag_cbi_stat_attrib ( FILE *fp_out, char *ident );
 
 extern BOOL chk_routeconf ( ROUTE_C_PTR r1, ROUTE_C_PTR r2 );
-

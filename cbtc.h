@@ -15,8 +15,8 @@ typedef struct block {
   char *virt_blkname_str;
   int len;
   struct {
-    IL_OBJ_INSTANCES track;
-    //TRACK_PTR ptrack;
+    IL_OBJ_INSTANCES track;   
+    struct track *ptrack;
   } belonging_tr;
   struct {
     BOOL has_sp;

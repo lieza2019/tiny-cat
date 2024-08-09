@@ -136,28 +136,6 @@ static BOOL chk_ars_triggered( ARS_ROUTE_PTR pRoute_ars ) {
 }
 #endif
 
-void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
-  assert( pblock );
-  
-  assert( pblock->block_name > 0 );
-  assert( pblock->virt_block_name < END_OF_CBTC_BLOCKs );
-  assert( pblock->virt_blkname_str != NULL );
-  int found = -1;
-  int i = 0;
-  while( track_state[i].kind_cbi != END_OF_CBI_STAT_KIND ) {
-    assert( track_state[i].kind_cbi == _TRACK );
-    if( track_state[i].id == pblock->belonging_tr.track ) {
-      assert( found < 0 );
-      //pblock->belonging_tr.ptrack = &track_state[i];
-      found = i;
-    }
-    i++;
-  }
-  assert( track_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
-  assert( found > -1 );
-  //assert( pblock->belonging_tr.ptrack == &track_state[found] );
-}
-
 void cons_track_state ( TRACK_PTR ptrack ) {
   assert( ptrack );
   
@@ -173,6 +151,7 @@ void cons_track_state ( TRACK_PTR ptrack ) {
       if( block_state[j].virt_block_name == ptrack->cbtc.blocks[i] ) {
 	assert( found < 0 );
 	ptrack->cbtc.pblocks[i] = &block_state[j];
+	assert( ptrack->cbtc.pblocks[i] );
 	found = j;
       }
       j++;
@@ -199,6 +178,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	if( track_state[j].id == proute->body.tracks[i] ) {
 	  assert( found < 0 );
 	  proute->body.ptracks[i] = &track_state[j];
+	  assert( proute->body.ptracks[i] );
 	  found = j;
 	}
 	j++;
@@ -219,6 +199,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	if( block_state[j].virt_block_name == proute->ars_ctrl.trg_sect.trg_blks[i] ) {
 	  assert( found < 0 );
 	  proute->ars_ctrl.trg_sect.ptrg_blks[i] = &block_state[j];
+	  assert( proute->ars_ctrl.trg_sect.ptrg_blks[i] );
 	  found = j;
 	}
 	j++;
@@ -238,6 +219,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	  if( track_state[j].id == proute->ars_ctrl.ctrl_tracks.chk_trks[i] ) {
 	    assert( found < 0 );
 	    proute->ars_ctrl.ctrl_tracks.pchk_trks[i] = &track_state[j];
+	    assert( proute->ars_ctrl.ctrl_tracks.pchk_trks[i] );
 	    found = j;
 	  }
 	  j++;
@@ -248,6 +230,39 @@ void cons_route_state ( ROUTE_PTR proute ) {
       }
     }
   }
+}
+
+void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
+  assert( pblock );
+  
+  assert( pblock->block_name > 0 );
+  assert( pblock->virt_block_name < END_OF_CBTC_BLOCKs );
+  assert( pblock->virt_blkname_str != NULL );
+  int found = -1;
+  int i = 0;
+  while( track_state[i].kind_cbi != END_OF_CBI_STAT_KIND ) {
+    assert( track_state[i].kind_cbi == _TRACK );
+    if( track_state[i].id == pblock->belonging_tr.track ) {
+      assert( found < 0 );
+      pblock->belonging_tr.ptrack = &track_state[i];
+      assert( pblock->belonging_tr.ptrack );
+      {
+	int f = -1;
+	int j;
+	for( j = 0; j < pblock->belonging_tr.ptrack->cbtc.num_blocks; j++ ) {
+	  if( pblock == pblock->belonging_tr.ptrack->cbtc.pblocks[j] )
+	    f = j;
+	}
+	assert( j == pblock->belonging_tr.ptrack->cbtc.num_blocks );
+	assert( (f > -1) && (f < pblock->belonging_tr.ptrack->cbtc.num_blocks) );
+      }
+      found = i;
+    }
+    i++;
+  }
+  assert( track_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
+  assert( found > -1 );
+  assert( pblock->belonging_tr.ptrack == &track_state[found] );
 }
 
 void cons_il_obj_tables ( void ) {
@@ -266,8 +281,24 @@ void cons_il_obj_tables ( void ) {
     }
     assert( track_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
   }
+  
+  {
+    int i = 0;
+    while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+      cons_cbtc_block_state ( &block_state[i] );
+      i++;
+    }
+    assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
+    assert( block_state[i].block_name == 0 );
+  }
 }
 
+#if 1 // for MODULE-TEST
+int main( void ) {
+  cons_il_obj_tables();
+  return 0;
+}
+#endif
 static CBI_STAT_INFO_PTR willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
   assert( pS );
   assert( (msg_id >= 0) && (msg_id < END_OF_OC2ATS) );
