@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <assert.h>
 #include <pthread.h>
 #include <sys/types.h>
@@ -17,7 +18,7 @@
 #include "interlock.h"
 #include "srv.h"
 
-#if 0
+#if 1
 static int diag_tracking_train_cmd ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
@@ -132,8 +133,9 @@ int main ( void ) {
   TINY_SOCK_DESC sd_recv_srvstat = -1;
   TINY_SOCK socks;
   TINY_SOCK socks_cbi_stat;
-  
-  //cons_il_obj_tables();
+
+  tzset();
+  cons_il_obj_tables();
   
 #if 0
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );

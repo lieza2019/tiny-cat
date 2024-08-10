@@ -23,6 +23,19 @@ typedef enum sp_id {
   END_OF_SPs
 } SP_ID;
 
+#define DEFALUT_ROUTESET_OFFSET 30
+#define DEFAULT_DEPARTURE_OFFSET 7
+typedef struct system_params {
+  int routeset_offset;
+  int departure_offset; 
+} SYSTEM_PARAMS, *SYSTEM_PARAMS_PTR;
+
+typedef enum offset_time_to_fire {
+  OFFSET_TO_ROUTESET,
+  OFFSET_TO_DEPARTURE,
+  END_OF_OFFSET_TIMES
+} OFFSET_TIME_TO_FIRE;
+
 typedef enum perfreg_level {
   PERFREG_SLOW,
   PERFREG_NORMAL,
@@ -62,7 +75,7 @@ typedef struct scheduled_command {
       IL_OBJ_INSTANCES route_id;
       BOOL is_dept_route;
       struct {
-	int year, month, day, hour, minute, second;
+	int hour, minute, second, year, month, day;
       } dept_time;
     } sch_routeset;
     struct { // for ARS_SCHEDULED_ROUTEREL
@@ -72,14 +85,14 @@ typedef struct scheduled_command {
       } seq_in_journey;
       IL_OBJ_INSTANCES route_id;
       struct {
-	int year, month, day, hour, minute, second;
+	int hour, minute, second, year, month, day;
       } dept_time;
     } sch_routerel;
     struct { // for ARS_SCHEDULED_ARRIVAL
       DWELL_ID dw_id;
       SP_ID arr_sp;
       struct {
-	int year, month, day, hour, minute, second;
+	int hour, minute, second, year, month, day;
       } arr_time;
     } sch_arriv;
     struct { // for ARS_SCHEDULED_DEPT
@@ -87,7 +100,7 @@ typedef struct scheduled_command {
       TIME_DIFF dwell;
       SP_ID dept_sp;
       struct {
-	int year, month, day, hour, minute, second;
+	int hour, minute, second, year, month, day;
       } dept_time;
       BOOL is_revenue;
       PERFREG_LEVEL perf_lev;
@@ -100,7 +113,7 @@ typedef struct scheduled_command {
       DWELL_ID dw_id;
       SP_ID ss_sp;
       struct {
-	int year, month, day, hour, minute, second;
+	int hour, minute, second, year, month, day;
       } pass_time;
       BOOL is_revenue;
       PERFREG_LEVEL perf_lev;
@@ -113,13 +126,16 @@ typedef struct scheduled_command {
 typedef enum ars_reasons {
   ARS_NO_TRIGGERED,
   ARS_OTHER_TRAINS_AHEAD,
-  ARS_CTRL_TRACKS_OCCUPIED,
+  ARS_CTRL_TRACKS_DROP,
   ARS_CTRL_TRACKS_ROUTELOCKED,
   ARS_MUTEX_BLOCKED,
   ARS_NO_ROUTESET_CMD,
+  ARS_WAITING_ROUTESET_TIME,
   ARS_ROUTE_CONTROLLED_NORMALLY,
   END_OF_ARS_REASONS
 } ARS_REASONS;
 extern const char *cnv2str_ars_reasons[];
+
+extern SYSTEM_PARAMS tiny_system_params;
 
 #endif // ARS_H

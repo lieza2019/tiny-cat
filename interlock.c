@@ -293,12 +293,13 @@ void cons_il_obj_tables ( void ) {
   }
 }
 
-#if 1 // for MODULE-TEST
+#if 0 // for MODULE-TEST
 int main( void ) {
   cons_il_obj_tables();
   return 0;
 }
 #endif
+
 static CBI_STAT_INFO_PTR willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
   assert( pS );
   assert( (msg_id >= 0) && (msg_id < END_OF_OC2ATS) );

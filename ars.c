@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "generic.h"
 #include "misc.h"
 #include "sparcs.h"
@@ -8,12 +10,20 @@
 #include "timetable.h"
 
 const char *cnv2str_ars_reasons[] = {
+  "ARS_NO_TRIGGERED",
   "ARS_OTHER_TRAINS_AHEAD",
-  "ARS_CTRL_TRACKS_OCCUPIED",
+  "ARS_CTRL_TRACKS_DROP",
   "ARS_CTRL_TRACKS_ROUTELOCKED",
-  "ARS_BLOCKED",
-  "ARS_CONTROLLED_NORMALLY",
+  "ARS_MUTEX_BLOCKED",
+  "ARS_NO_ROUTESET_CMD",
+  "ARS_WAITING_ROUTESET_TIME",
+  "ARS_ROUTE_CONTROLLED_NORMALLY",
   NULL
+};
+
+SYSTEM_PARAMS tiny_system_params = {
+  DEFALUT_ROUTESET_OFFSET,
+  DEFAULT_DEPARTURE_OFFSET
 };
 
 #define SCHEDULED_COMMANDS_NODEBUF_SIZE 65536
@@ -221,6 +231,72 @@ static int ars_chk_hit_trgsection ( ROUTE_PTR proute, TINY_TRAIN_STATE_PTR ptrai
   return r;
 }
 
+static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, int hour, int minute, int second ) {
+  assert( (offset_kind >= 0) && (offset_kind < END_OF_OFFSET_TIMES) );
+  assert( (hour >= 0) && (hour < 24) );
+  assert( (minute >= 0) && (minute < 60) );
+  assert( (second >= 0) && (second < 60) );
+  
+  int r = -1;
+  struct tm *pT_crnt = NULL;
+  time_t crnt_time = 0;
+  
+  crnt_time = time( NULL );
+  pT_crnt = localtime( &crnt_time );
+  if( pT_crnt ) {
+    struct tm T_trg = {};
+    T_trg.tm_year = pT_crnt->tm_year;
+    T_trg.tm_mon = pT_crnt->tm_mon;
+    T_trg.tm_mday = pT_crnt->tm_mday;
+    T_trg.tm_hour = hour;
+    T_trg.tm_min = minute;
+    T_trg.tm_sec = second;
+#if 0 // ***** for debugging.
+    tzset();
+    printf( "crnt_localtime: yyyy/mm/dd, HH:MM:SS => %d/%02d/%02d, %02d:%02d:%02d\n",
+	    (pT_crnt->tm_year + 1900), (pT_crnt->tm_mon + 1), pT_crnt->tm_mday, pT_crnt->tm_hour, pT_crnt->tm_min, pT_crnt->tm_sec );
+#endif
+    {
+      struct tm *pT_trg = NULL;
+      time_t crnt_local = 0;
+      time_t trg_time = 0;
+      crnt_local = mktime( pT_crnt );
+      trg_time = mktime( &T_trg );
+      switch( offset_kind ) {
+      case OFFSET_TO_ROUTESET:
+	{
+	  time_t w = trg_time - tiny_system_params.routeset_offset;
+	  pT_trg = localtime( &w );
+	  if( pT_trg )
+	    trg_time = mktime( pT_trg );
+	}
+	break;
+      case OFFSET_TO_DEPARTURE:
+	{
+	  time_t w = trg_time - tiny_system_params.departure_offset;
+	  pT_trg = localtime( &w );
+	  if( pT_trg )
+	    trg_time = mktime( pT_trg );
+	}
+	break;
+      default:
+	assert( FALSE );
+	/* fall thru. */
+      }
+      if( pT_trg ) {
+	r = (difftime( trg_time, crnt_local ) < (double)0) ? 1 : 0;
+#if 0 // ***** for debugging.
+	tzset();
+	printf( "trig_localtime: yyyy/mm/dd, HH:MM:SS => %d/%02d/%02d, %02d:%02d:%02d\n",
+		(pT_trg->tm_year + 1900), (pT_trg->tm_mon + 1), pT_trg->tm_mday, pT_trg->tm_hour, pT_trg->tm_min, pT_trg->tm_sec );
+	printf( "judgement: %s\n", (r ? "TRIGGERED!" : "STANDING-BY") );
+#endif
+      }
+    }
+  }
+  return r;
+}
+
 ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
   assert( pJ );
   assert( pJ->ptrain_ctrl );
@@ -257,10 +333,17 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
 	    if( cond < 0 )
 	      r = ARS_MUTEX_BLOCKED;
 	    else
-	      r = ARS_CTRL_TRACKS_OCCUPIED;
+	      r = ARS_CTRL_TRACKS_DROP;
 	  } else {
+	    assert( pC );
+	    const int hour_to_set = pC->attr.sch_routeset.dept_time.hour;
+	    const int minute_to_set = pC->attr.sch_routeset.dept_time.minute;
+	    const int second_to_set = pC->attr.sch_routeset.dept_time.second;
+	    assert( (hour_to_set >= 0) && (hour_to_set < 24) );
+	    assert( (minute_to_set >= 0) && (minute_to_set < 60) );
+	    assert( (second_to_set >= 0) && (second_to_set < 60) );
 	    if( pC->attr.sch_routeset.is_dept_route )
-	      r = ARS_ROUTE_CONTROLLED_NORMALLY;
+	      goto is_the_time_to_fire;
 	    else {
 	      cond = ars_chk_cond_routelok( pR );
 	      if( cond <= 0 ) {
@@ -269,8 +352,17 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
 		else
 		  r = ARS_CTRL_TRACKS_ROUTELOCKED;
 	      } else {
-		;
-		r = ARS_ROUTE_CONTROLLED_NORMALLY;
+	      is_the_time_to_fire:
+		cond = ars_chk_trgtime( OFFSET_TO_ROUTESET, hour_to_set, minute_to_set, second_to_set );
+		if( cond <= 0 ) {
+		  if( cond < 0 )
+		    r = ARS_MUTEX_BLOCKED;
+		  else
+		    r = ARS_WAITING_ROUTESET_TIME;
+		} else {
+		  ;
+		  r = ARS_ROUTE_CONTROLLED_NORMALLY;
+		}
 	      }
 	    }
 	  }
