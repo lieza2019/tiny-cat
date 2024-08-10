@@ -11,22 +11,23 @@ typedef struct route_lock {
 
 #define MAX_TRACK_BLOCKS 21
 typedef struct track {
-  CBI_STAT_KIND kind_cbi;
-  IL_OBJ_INSTANCES id;
-  char *name;
+  const CBI_STAT_KIND kind_cbi;
+  const IL_OBJ_INSTANCES id;
+  const char *name;
   struct {
-    int num_blocks;
-    CBTC_BLOCK_ID blocks[MAX_TRACK_BLOCKS];
-    CBTC_BLOCK_PTR pblocks[MAX_TRACK_BLOCKS];
+    const int num_blocks;
+    const CBTC_BLOCK_ID blocks[MAX_TRACK_BLOCKS];
+    CBTC_BLOCK_C_PTR pblocks[MAX_TRACK_BLOCKS];
   } cbtc;
   struct {
     ROUTE_LOCK TLSR, TRSR;
     ROUTE_LOCK sTLSR, sTRSR;
     ROUTE_LOCK eTLSR, eTRSR;
     ROUTE_LOCK kTLSR, kTRSR;
-  } lock;
+  } const lock;
 } TRACK, *TRACK_PTR;
 typedef const struct track *TRACK_C_PTR;
+
 #define TRACK_ATTRIB_DEFINITION
 #include "interlock_def.h"
 #undef TRACK_ATTRIB_DEFINITION
@@ -43,19 +44,14 @@ extern const CBI_STAT_KIND ROUTE_KIND2GENERIC[];
 #define MAX_ROUTE_TRACKS 21
 #define MAX_ROUTE_TRG_BLOCKS 21
 typedef struct route {
-  CBI_STAT_KIND kind_cbi;
-  ROUTE_KIND kind_route;
-  IL_OBJ_INSTANCES id;
+  const CBI_STAT_KIND kind_cbi;
+  const ROUTE_KIND kind_route;
+  const IL_OBJ_INSTANCES id;
   const char *name;
   struct {
-    int num_tracks;
-    IL_OBJ_INSTANCES tracks[MAX_ROUTE_TRACKS];
-#if 0
-    const TRACK_PTR ptracks[MAX_ROUTE_TRACKS];
-#else
-    //const struct track *ptracks[MAX_ROUTE_TRACKS];
+    const int num_tracks;
+    const IL_OBJ_INSTANCES tracks[MAX_ROUTE_TRACKS];
     TRACK_C_PTR ptracks[MAX_ROUTE_TRACKS];
-#endif
   } body;
   struct {
     struct {
@@ -66,27 +62,24 @@ typedef struct route {
       CBI_STAT_KIND kind;
       IL_OBJ_INSTANCES sig;
     } dst;
-  } sig_pair;
+  } const sig_pair;
   struct {
-    BOOL app;
+    const BOOL app;
     struct {
-      int num_blocks;
-      CBTC_BLOCK_ID trg_blks[MAX_ROUTE_TRG_BLOCKS];
+      const int num_blocks;
+      const CBTC_BLOCK_ID trg_blks[MAX_ROUTE_TRG_BLOCKS];
       CBTC_BLOCK_PTR ptrg_blks[MAX_ROUTE_TRG_BLOCKS];
     } trg_sect;
     struct {
-      int num_tracks_lok;
-      int num_tracks_occ;
-      IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRG_BLOCKS];
-#if 0
-      TRACK_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
-#else
+      const int num_tracks_lok;
+      const int num_tracks_occ;
+      const IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRG_BLOCKS];
       TRACK_C_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
-#endif
     } ctrl_tracks;
   } ars_ctrl;
 } ROUTE, *ROUTE_PTR;
 typedef const struct route *ROUTE_C_PTR;
+
 #define ROUTE_ATTRIB_DEFINITION
 #include "interlock_def.h"
 #undef ROUTE_ATTRIB_DEFINITION

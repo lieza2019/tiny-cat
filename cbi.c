@@ -397,7 +397,7 @@ CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const int budge
   return r;
 }
 
-static CBI_STAT_ATTR_PTR re_hash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, char *ident, char *ident_new ) {
+static CBI_STAT_ATTR_PTR re_hash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident, const char *ident_new ) {
   assert( budgets );
   assert( budgets_num > 0 );
   assert( ident );
@@ -429,13 +429,13 @@ static CBI_STAT_ATTR_PTR re_hash ( CBI_STAT_ATTR_PTR budgets[], const int budget
   }
   return pE;
 }
-static CBI_STAT_ATTR_PTR re_hash_local ( char *ident, char *ident_new ) {
+static CBI_STAT_ATTR_PTR re_hash_local ( const char *ident, const char *ident_new ) {
   assert( ident );
   assert( ident_new );
   return re_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, ident, ident_new );
 }
 
-CBI_STAT_ATTR_PTR cbi_stat_rehash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, char *ident, char *ident_new ) {
+CBI_STAT_ATTR_PTR cbi_stat_rehash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident, const char *ident_new ) {
   assert( budgets );
   assert( budgets_num > 0 );
   assert( ident );
@@ -475,7 +475,7 @@ CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( const char *ident ) {
   return conslt_hash_local( ident );
 }
 
-CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, char *ident ) {
+CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident ) {
   assert( budgets );
   assert( budgets_num );
   assert( ident );

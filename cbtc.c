@@ -10,12 +10,12 @@
 
 TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
   assert( pB );
-  return (TINY_TRAIN_STATE_PTR)pB->residents.u.edge;
+  return (TINY_TRAIN_STATE_PTR)pB->residents.edge;
 }
 
 TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
   assert( pB );
-  pB->residents.u.edge = (void *)pT;
+  pB->residents.edge = (void *)pT;
   return read_edge_of_residents_CBTC_BLOCK( pB );
 }
 
@@ -153,8 +153,8 @@ void purge_block_restrains ( void ) {
     } 
     assert( pB );
     if( read_edge_of_residents_CBTC_BLOCK(pB) ) {
-      if( creteria_2_elide( pB, pB->residents.u.edge ) )
-	pB->residents.u.edge = NULL;
+      if( creteria_2_elide( pB, pB->residents.edge ) )
+	pB->residents.edge = NULL;
     }
     i++;
   }

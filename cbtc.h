@@ -10,18 +10,18 @@
 #undef BLOCK_ID_DEFINITIONS
 
 typedef struct block {
-  unsigned short block_name;
-  CBTC_BLOCK_ID virt_block_name;
-  char *virt_blkname_str;
-  int len;
+  const unsigned short block_name;
+  const CBTC_BLOCK_ID virt_block_name;
+  const char *virt_blkname_str;
+  const int len;
   struct {
-    IL_OBJ_INSTANCES track;   
-    struct track *ptrack;
+    const IL_OBJ_INSTANCES track;
+    const struct track *ptrack;
   } belonging_tr;
   struct {
     BOOL has_sp;
     SP_ID sp_id;
-  } sp;
+  } const sp;
   /* the link to the train which FRONT_BLOCK-ID/REAR_BLOCK_ID bite this block, should be accessed with the type of TINY_TRAIN_STATE_PTR,
      via the designated access-methods of,
        TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );
@@ -31,15 +31,14 @@ typedef struct block {
      declared in train_ctrl.h
   */
   struct {
-    void *ptrains;
-    union {
 #if 0
-      void * overlayed;
-      void *edge_L, *edge_R;
+    void *overlayed;
+    void *ptrains_from_L, *ptrains_from_R;
+    void *edge_L, *edge_R;
 #else
-      void *edge;
-#endif  
-    } u;
+    void *ptrains;
+    void *edge;
+#endif
   } residents;
   struct {
     BOOL msc_flg1;
@@ -47,6 +46,8 @@ typedef struct block {
     BOOL msc_flg3;
   } misc; // flags available for miscelleous purposes, e.g. debugging, testing and so forth.
 } CBTC_BLOCK, *CBTC_BLOCK_PTR;
+typedef const struct block *CBTC_BLOCK_C_PTR;
+
 #define BLOCK_ATTRIB_DEFINITION
 #include "cbtc_def.h"
 #undef BLOCK_ATTRIB_DEFINITION
