@@ -25,9 +25,10 @@ typedef struct timetable {
     JOURNEY journey;
     int rake_id;
   } journeys[MAX_JOURNEYS_IN_TIMETABLE];
+  SCHEDULED_COMMAND_PTR schedule_at_sp[END_OF_SPs];
 } TIMETABLE, *TIMETABLE_PTR;
 
 extern SCHEDULED_COMMAND_PTR sch_cmd_newnode( void );
-extern ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ );
+extern ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ );
 
 #endif // TIMETABLE_H

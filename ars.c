@@ -39,6 +39,72 @@ SCHEDULED_COMMAND_PTR sch_cmd_newnode( void ) {
   return r;
 };
 
+static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, int hour, int minute, int second ) {
+  assert( (offset_kind >= 0) && (offset_kind < END_OF_OFFSET_TIMES) );
+  assert( (hour >= 0) && (hour < 24) );
+  assert( (minute >= 0) && (minute < 60) );
+  assert( (second >= 0) && (second < 60) );
+  
+  int r = -1;
+  struct tm *pT_crnt = NULL;
+  time_t crnt_time = 0;
+  
+  crnt_time = time( NULL );
+  pT_crnt = localtime( &crnt_time );
+  if( pT_crnt ) {
+    struct tm T_trg = {};
+    T_trg.tm_year = pT_crnt->tm_year;
+    T_trg.tm_mon = pT_crnt->tm_mon;
+    T_trg.tm_mday = pT_crnt->tm_mday;
+    T_trg.tm_hour = hour;
+    T_trg.tm_min = minute;
+    T_trg.tm_sec = second;
+#if 0 // ***** for debugging.
+    tzset();
+    printf( "crnt_localtime: yyyy/mm/dd, HH:MM:SS => %d/%02d/%02d, %02d:%02d:%02d\n",
+	    (pT_crnt->tm_year + 1900), (pT_crnt->tm_mon + 1), pT_crnt->tm_mday, pT_crnt->tm_hour, pT_crnt->tm_min, pT_crnt->tm_sec );
+#endif
+    {
+      struct tm *pT_trg = NULL;
+      time_t crnt_local = 0;
+      time_t trg_time = 0;
+      crnt_local = mktime( pT_crnt );
+      trg_time = mktime( &T_trg );
+      switch( offset_kind ) {
+      case OFFSET_TO_ROUTESET:
+	{
+	  time_t w = trg_time - tiny_system_params.routeset_offset;
+	  pT_trg = localtime( &w );
+	  if( pT_trg )
+	    trg_time = mktime( pT_trg );
+	}
+	break;
+      case OFFSET_TO_DEPARTURE:
+	{
+	  time_t w = trg_time - tiny_system_params.departure_offset;
+	  pT_trg = localtime( &w );
+	  if( pT_trg )
+	    trg_time = mktime( pT_trg );
+	}
+	break;
+      default:
+	assert( FALSE );
+	/* fall thru. */
+      }
+      if( pT_trg ) {
+	r = (difftime( trg_time, crnt_local ) < (double)0) ? 1 : 0;
+#if 0 // ***** for debugging.
+	tzset();
+	printf( "trig_localtime: yyyy/mm/dd, HH:MM:SS => %d/%02d/%02d, %02d:%02d:%02d\n",
+		(pT_trg->tm_year + 1900), (pT_trg->tm_mon + 1), pT_trg->tm_mday, pT_trg->tm_hour, pT_trg->tm_min, pT_trg->tm_sec );
+	printf( "judgement: %s\n", (r ? "TRIGGERED!" : "STANDING-BY") );
+#endif
+      }
+    }
+  }
+  return r;
+}
+
 static int ars_chk_cond_routelok ( ROUTE_PTR proute ) {
   assert( proute );
   assert( proute->ars_ctrl.app );
@@ -231,73 +297,42 @@ static int ars_chk_hit_trgsection ( ROUTE_PTR proute, TINY_TRAIN_STATE_PTR ptrai
   return r;
 }
 
-static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, int hour, int minute, int second ) {
-  assert( (offset_kind >= 0) && (offset_kind < END_OF_OFFSET_TIMES) );
-  assert( (hour >= 0) && (hour < 24) );
-  assert( (minute >= 0) && (minute < 60) );
-  assert( (second >= 0) && (second < 60) );
-  
+static int ars_chk_dstschedule ( SCHEDULED_COMMAND_PTR sch_sp[END_OF_SPs], SCHEDULED_COMMAND_PTR pC ) {
+  assert( sch_sp );
+  assert( pC );
+  assert( pC->cmd == ARS_SCHEDULED_ROUTESET );  
   int r = -1;
-  struct tm *pT_crnt = NULL;
-  time_t crnt_time = 0;
   
-  crnt_time = time( NULL );
-  pT_crnt = localtime( &crnt_time );
-  if( pT_crnt ) {
-    struct tm T_trg = {};
-    T_trg.tm_year = pT_crnt->tm_year;
-    T_trg.tm_mon = pT_crnt->tm_mon;
-    T_trg.tm_mday = pT_crnt->tm_mday;
-    T_trg.tm_hour = hour;
-    T_trg.tm_min = minute;
-    T_trg.tm_sec = second;
-#if 0 // ***** for debugging.
-    tzset();
-    printf( "crnt_localtime: yyyy/mm/dd, HH:MM:SS => %d/%02d/%02d, %02d:%02d:%02d\n",
-	    (pT_crnt->tm_year + 1900), (pT_crnt->tm_mon + 1), pT_crnt->tm_mday, pT_crnt->tm_hour, pT_crnt->tm_min, pT_crnt->tm_sec );
-#endif
+  if( pC->attr.sch_routeset.is_dept_route )
+    r = 1;
+  else {
+    assert( whats_kind_of_il_obj( pC->attr.sch_routeset.route_id ) == _ROUTE );
+    ROUTE_PTR pR = NULL;
+    pR = &route_state[pC->attr.sch_routeset.route_id];
+    assert( pR );
+    assert( pR->kind_cbi == _ROUTE );
+    assert( (pR->kind_route == ENT_ROUTE) || (pR->kind_route == SHUNT_ROUTE) );
+    assert( pR->ars_ctrl.app );
     {
-      struct tm *pT_trg = NULL;
-      time_t crnt_local = 0;
-      time_t trg_time = 0;
-      crnt_local = mktime( pT_crnt );
-      trg_time = mktime( &T_trg );
-      switch( offset_kind ) {
-      case OFFSET_TO_ROUTESET:
-	{
-	  time_t w = trg_time - tiny_system_params.routeset_offset;
-	  pT_trg = localtime( &w );
-	  if( pT_trg )
-	    trg_time = mktime( pT_trg );
+      TRACK_C_PTR ptr_dst = NULL;
+      assert( pR->body.num_tracks > 0 );
+      ptr_dst = pR->body.ptracks[pR->body.num_tracks];
+      assert( ptr_dst );
+      {
+	int i;
+	for( i = 0; i < ptr_dst->cbtc.num_blocks; i++ ) {
+	  CBTC_BLOCK_C_PTR pblk_dst = NULL;
+	  pblk_dst = ptr_dst->cbtc.pblocks[i];
+	  assert( pblk_dst );
 	}
-	break;
-      case OFFSET_TO_DEPARTURE:
-	{
-	  time_t w = trg_time - tiny_system_params.departure_offset;
-	  pT_trg = localtime( &w );
-	  if( pT_trg )
-	    trg_time = mktime( pT_trg );
-	}
-	break;
-      default:
-	assert( FALSE );
-	/* fall thru. */
-      }
-      if( pT_trg ) {
-	r = (difftime( trg_time, crnt_local ) < (double)0) ? 1 : 0;
-#if 0 // ***** for debugging.
-	tzset();
-	printf( "trig_localtime: yyyy/mm/dd, HH:MM:SS => %d/%02d/%02d, %02d:%02d:%02d\n",
-		(pT_trg->tm_year + 1900), (pT_trg->tm_mon + 1), pT_trg->tm_mday, pT_trg->tm_hour, pT_trg->tm_min, pT_trg->tm_sec );
-	printf( "judgement: %s\n", (r ? "TRIGGERED!" : "STANDING-BY") );
-#endif
       }
     }
   }
   return r;
 }
 
-ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
+ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
+  assert( pT );
   assert( pJ );
   assert( pJ->ptrain_ctrl );
   ARS_REASONS r = END_OF_ARS_REASONS;
@@ -314,7 +349,8 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
       ROUTE_PTR pR = NULL;
       pR = &route_state[pC->attr.sch_routeset.route_id];
       assert( pR );
-      assert( (pR->kind_cbi == _ROUTE) && (pR->kind_route < END_OF_ROUTE_KINDS) );
+      assert( pR->kind_cbi == _ROUTE );
+      assert( (pR->kind_route < END_OF_ROUTE_KINDS) && (pR->kind_route != EMERGE_ROUTE) );
       assert( pR->ars_ctrl.app );
       {
 	int cond = -1;
@@ -360,7 +396,9 @@ ARS_REASONS ars_ctrl_route_on_journey ( JOURNEY_PTR pJ ) {
 		  else
 		    r = ARS_WAITING_ROUTESET_TIME;
 		} else {
-		  ;
+		  assert( pC );
+		  assert( pT );
+		  ars_chk_dstschedule( pT->schedule_at_sp, pC );
 		  r = ARS_ROUTE_CONTROLLED_NORMALLY;
 		}
 	      }

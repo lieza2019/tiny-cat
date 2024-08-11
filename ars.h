@@ -68,10 +68,15 @@ typedef struct scheduled_command {
   ARS_SCHEDULED_CMD cmd;
   union {
     struct { // for ARS_SCHEDULED_ROUTESET
+#if 0
       struct {
 	JOURNEY_ID jid;
 	int nth_routeset;
       } seq_in_journey;
+#else
+      JOURNEY_ID jid;
+      int nth_routeset;
+#endif
       IL_OBJ_INSTANCES route_id;
       BOOL is_dept_route;
       struct {
@@ -79,16 +84,22 @@ typedef struct scheduled_command {
       } dept_time;
     } sch_routeset;
     struct { // for ARS_SCHEDULED_ROUTEREL
+#if 0
       struct {
 	JOURNEY_ID jid;
 	int nth_routerel;
       } seq_in_journey;
+#else
+      JOURNEY_ID jid;
+      int nth_routerel;
+#endif
       IL_OBJ_INSTANCES route_id;
       struct {
 	int hour, minute, second, year, month, day;
       } dept_time;
     } sch_routerel;
     struct { // for ARS_SCHEDULED_ARRIVAL
+      JOURNEY_ID jid;
       DWELL_ID dw_id;
       SP_ID arr_sp;
       struct {
@@ -96,6 +107,7 @@ typedef struct scheduled_command {
       } arr_time;
     } sch_arriv;
     struct { // for ARS_SCHEDULED_DEPT
+      JOURNEY_ID jid;
       DWELL_ID dw_id;
       TIME_DIFF dwell;
       SP_ID dept_sp;
@@ -110,6 +122,7 @@ typedef struct scheduled_command {
       } dept_dir;
     } sch_dept;
     struct { // ARS_SCHEDULED_SKIP
+      JOURNEY_ID jid;
       DWELL_ID dw_id;
       SP_ID ss_sp;
       struct {
