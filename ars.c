@@ -297,8 +297,8 @@ static int ars_chk_hit_trgsection ( ROUTE_PTR proute, TINY_TRAIN_STATE_PTR ptrai
   return r;
 }
 
-static int ars_chk_dstschedule ( SCHEDULED_COMMAND_PTR sch_sp[END_OF_SPs], SCHEDULED_COMMAND_PTR pC ) {
-  assert( sch_sp );
+static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_PTR pC ) {
+  assert( sch_dst );
   assert( pC );
   assert( pC->cmd == ARS_SCHEDULED_ROUTESET );  
   int r = -1;
@@ -313,6 +313,7 @@ static int ars_chk_dstschedule ( SCHEDULED_COMMAND_PTR sch_sp[END_OF_SPs], SCHED
     assert( pR->kind_cbi == _ROUTE );
     assert( (pR->kind_route == ENT_ROUTE) || (pR->kind_route == SHUNT_ROUTE) );
     assert( pR->ars_ctrl.app );
+#if 0
     {
       TRACK_C_PTR ptr_dst = NULL;
       assert( pR->body.num_tracks > 0 );
@@ -327,6 +328,36 @@ static int ars_chk_dstschedule ( SCHEDULED_COMMAND_PTR sch_sp[END_OF_SPs], SCHED
 	}
       }
     }
+#else
+    {
+      assert( pR->ars_ctrl.trip_info.dst.pblk );
+      CBTC_BLOCK_C_PTR pblk_dst = pR->ars_ctrl.trip_info.dst.pblk;
+      assert( pblk_dst );
+      assert( pblk_dst->sp.has_sp );
+      assert( (pblk_dst->sp.sp_id >= 0) && (pblk_dst->sp.sp_id < END_OF_SPs) );
+      SCHEDULED_COMMAND_PTR pdst_next = NULL;
+      pdst_next = sch_dst[pblk_dst->sp.sp_id].pnext;
+      if( pdst_next ) {
+	assert( pC );
+	if( pdst_next->cmd == ARS_SCHEDULED_ARRIVAL ) {
+	  SCHEDULED_COMMAND_PTR pnext_of_next = pdst_next->attr.sch_arriv.pNext_on_arriv;
+	  r = pdst_next->jid == pC->jid;
+	  if( pnext_of_next ) {
+	    if( pnext_of_next->cmd == ARS_SCHEDULED_DEPT )
+	      r = r ? (pnext_of_next->jid == pC->jid) : FALSE;
+	    else {
+	      r = -1;
+	      assert( FALSE );
+	    }
+	  }
+	} else if( pdst_next->cmd == ARS_SCHEDULED_SKIP )
+	  r = pdst_next->jid == pC->jid;
+	else {
+	  assert( FALSE );
+	}
+      }
+    }
+#endif
   }
   return r;
 }
@@ -398,7 +429,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
 		} else {
 		  assert( pC );
 		  assert( pT );
-		  ars_chk_dstschedule( pT->schedule_at_sp, pC );
+		  ars_chk_dstschedule( pT->sp_schedule, pC );
 		  r = ARS_ROUTE_CONTROLLED_NORMALLY;
 		}
 	      }

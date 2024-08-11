@@ -20,12 +20,16 @@ typedef struct journey {
   TINY_TRAIN_STATE_PTR ptrain_ctrl;
 } JOURNEY, *JOURNEY_PTR;
 
+typedef struct schedule_at_sp {
+  SCHEDULED_COMMAND_PTR pfirst;
+  SCHEDULED_COMMAND_PTR pnext;
+} SCHEDULE_AT_SP, *SCHEDULE_AT_SP_PTR;
 typedef struct timetable {
   struct {
     JOURNEY journey;
     int rake_id;
   } journeys[MAX_JOURNEYS_IN_TIMETABLE];
-  SCHEDULED_COMMAND_PTR schedule_at_sp[END_OF_SPs];
+  SCHEDULE_AT_SP sp_schedule[END_OF_SPs];
 } TIMETABLE, *TIMETABLE_PTR;
 
 extern SCHEDULED_COMMAND_PTR sch_cmd_newnode( void );

@@ -9,6 +9,12 @@
 #include "cbtc_def.h"
 #undef BLOCK_ID_DEFINITIONS
 
+typedef enum stop_detection_cond {
+  PO0_DETECTION,
+  VIRTUAL_P0,
+  FORWARD_BACK_BLOCKS,
+} STOP_DETECTION_COND;
+
 typedef struct block {
   const unsigned short block_name;
   const CBTC_BLOCK_ID virt_block_name;
@@ -21,6 +27,13 @@ typedef struct block {
   struct {
     BOOL has_sp;
     SP_ID sp_id;
+    STOP_DETECTION_COND stop_detect_cond;
+    union {
+      struct {
+	CBTC_BLOCK_ID forward, back;
+	struct block *pforward, *pback;
+      } forward_back;
+    } u;
   } const sp;
   /* the link to the train which FRONT_BLOCK-ID/REAR_BLOCK_ID bite this block, should be accessed with the type of TINY_TRAIN_STATE_PTR,
      via the designated access-methods of,

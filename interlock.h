@@ -76,6 +76,17 @@ typedef struct route {
       const IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRG_BLOCKS];
       TRACK_C_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
     } ctrl_tracks;
+    struct {
+      struct {
+	SP_ID sp;
+	CBTC_BLOCK_C_PTR pblk;
+      } dep;
+      struct {
+	SP_ID sp;
+	CBTC_BLOCK_C_PTR pblk;
+      } dst;
+      time_t trip_time;
+    } trip_info;
   } ars_ctrl;
 } ROUTE, *ROUTE_PTR;
 typedef const struct route *ROUTE_C_PTR;
