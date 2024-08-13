@@ -6,7 +6,8 @@
 #include "misc.h"
 #include "cbi.h"
 
-typedef enum sp_id {
+typedef enum stopping_point_code {
+  SP_NONE,
     SP_73, // JLA_PL1
     SP_74, // JLA_PL2
   SP_75, // JLA_PL3
@@ -21,7 +22,8 @@ typedef enum sp_id {
     SP_D5, // BTGD_TB1
     SP_D0, // BTGD_TB2
   END_OF_SPs
-} SP_ID;
+} STOPPING_POINT_CODE;
+  //} SP_ID;
 
 #define DEFALUT_ROUTESET_OFFSET 30
 #define DEFAULT_DEPARTURE_OFFSET 7
@@ -84,7 +86,7 @@ typedef struct scheduled_command {
     } sch_routerel;
     struct { // for ARS_SCHEDULED_ARRIVAL
       DWELL_ID dw_id;
-      SP_ID arr_sp;
+      STOPPING_POINT_CODE arr_sp;
       struct {
 	int hour, minute, second, year, month, day;
       } arr_time;
@@ -93,7 +95,7 @@ typedef struct scheduled_command {
     struct { // for ARS_SCHEDULED_DEPT
       DWELL_ID dw_id;
       TIME_DIFF dwell;
-      SP_ID dept_sp;
+      STOPPING_POINT_CODE dept_sp;
       struct {
 	int hour, minute, second, year, month, day;
       } dept_time;
@@ -107,7 +109,7 @@ typedef struct scheduled_command {
     } sch_dept;
     struct { // ARS_SCHEDULED_SKIP
       DWELL_ID dw_id;
-      SP_ID ss_sp;
+      STOPPING_POINT_CODE ss_sp;
       struct {
 	int hour, minute, second, year, month, day;
       } pass_time;
@@ -123,7 +125,7 @@ typedef struct scheduled_command {
 
 typedef enum ars_reasons {
   ARS_NO_TRIGGERED,
-  ARS_OTHER_TRAINS_AHEAD,
+  ARS_FOUND_TRAINS_AHEAD,
   ARS_CTRL_TRACKS_DROP,
   ARS_CTRL_TRACKS_ROUTELOCKED,
   ARS_MUTEX_BLOCKED,

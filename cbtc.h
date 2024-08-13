@@ -10,10 +10,11 @@
 #undef BLOCK_ID_DEFINITIONS
 
 typedef enum stop_detection_cond {
-  PO0_DETECTION,
+  P0_COUPLING,
   VIRTUAL_P0,
   FORWARD_BACK_BLOCKS,
-} STOP_DETECTION_COND;
+  END_OF_STOP_DETECTION_TYPES
+} STOP_DETECTION_TYPE;
 
 typedef struct block {
   const unsigned short block_name;
@@ -25,16 +26,14 @@ typedef struct block {
     const struct track *ptrack;
   } belonging_tr;
   struct {
-    BOOL has_sp;
-    SP_ID sp_id;
-    STOP_DETECTION_COND stop_detect_cond;
-    union {
-      struct {
-	CBTC_BLOCK_ID forward, back;
-	struct block *pforward, *pback;
-      } forward_back;
-    } u;
-  } const sp;
+    const BOOL has_sp;
+    const STOPPING_POINT_CODE sp_code;
+    const STOP_DETECTION_TYPE stop_detect_type;
+    struct {
+      const CBTC_BLOCK_ID forward, back;
+      struct block *pforward, *pback;
+    } stop_detect_cond;
+  } sp;
   /* the link to the train which FRONT_BLOCK-ID/REAR_BLOCK_ID bite this block, should be accessed with the type of TINY_TRAIN_STATE_PTR,
      via the designated access-methods of,
        TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );

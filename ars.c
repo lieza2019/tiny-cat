@@ -11,7 +11,7 @@
 
 const char *cnv2str_ars_reasons[] = {
   "ARS_NO_TRIGGERED",
-  "ARS_OTHER_TRAINS_AHEAD",
+  "ARS_FOUND_TRAINS_AHEAD",
   "ARS_CTRL_TRACKS_DROP",
   "ARS_CTRL_TRACKS_ROUTELOCKED",
   "ARS_MUTEX_BLOCKED",
@@ -334,9 +334,9 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
       CBTC_BLOCK_C_PTR pblk_dst = pR->ars_ctrl.trip_info.dst.pblk;
       assert( pblk_dst );
       assert( pblk_dst->sp.has_sp );
-      assert( (pblk_dst->sp.sp_id >= 0) && (pblk_dst->sp.sp_id < END_OF_SPs) );
+      assert( (pblk_dst->sp.sp_code > 0) && (pblk_dst->sp.sp_code < END_OF_SPs) );
       SCHEDULED_COMMAND_PTR pdst_next = NULL;
-      pdst_next = sch_dst[pblk_dst->sp.sp_id].pnext;
+      pdst_next = sch_dst[pblk_dst->sp.sp_code].pnext;
       if( pdst_next ) {
 	assert( pC );
 	if( pdst_next->cmd == ARS_SCHEDULED_ARRIVAL ) {
@@ -392,7 +392,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
 	  else
 	    r = ARS_NO_TRIGGERED;
 	} else if( cond == 1 )
-	  r = ARS_OTHER_TRAINS_AHEAD;
+	  r = ARS_FOUND_TRAINS_AHEAD;
 	else {
 	  assert( cond >= 2 );
 	  cond = ars_chk_cond_trackcirc( pR );
@@ -446,9 +446,9 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
   return r;
 }
 
-BOOL ars_judge_arriv ( TINY_TRAIN_STATE_PTR pT, SP_ID sp ) {
+BOOL ars_judge_arriv ( TINY_TRAIN_STATE_PTR pT, STOPPING_POINT_CODE sp ) {
   assert( pT );
-  assert( sp < END_OF_SPs );
+  assert( (sp > 0) && (sp < END_OF_SPs) );
   BOOL r = FALSE;
   TRAIN_INFO_ENTRY_PTR pI = NULL;
   pI = pT->pTI;

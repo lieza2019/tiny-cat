@@ -78,11 +78,13 @@ typedef struct route {
     } ctrl_tracks;
     struct {
       struct {
-	SP_ID sp;
+	CBTC_BLOCK_ID blk;
+	STOPPING_POINT_CODE sp;	
 	CBTC_BLOCK_C_PTR pblk;
       } dep;
       struct {
-	SP_ID sp;
+	CBTC_BLOCK_ID blk;
+	STOPPING_POINT_CODE sp;
 	CBTC_BLOCK_C_PTR pblk;
       } dst;
       time_t trip_time;

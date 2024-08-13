@@ -229,6 +229,34 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	assert( proute->ars_ctrl.ctrl_tracks.pchk_trks[i] == &track_state[found] );
       }
     }
+    
+    {
+      int found = -1;
+      int i = 0;
+      while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+	assert( block_state[i].block_name > 0 );
+	if( block_state[i].virt_block_name == proute->ars_ctrl.trip_info.dep.blk ) {
+	  assert( found < 0 );
+	  proute->ars_ctrl.trip_info.dep.pblk = &block_state[i];
+	  assert( proute->ars_ctrl.trip_info.dep.pblk );
+	  assert( (proute->ars_ctrl.trip_info.dep.sp >= 0) && (proute->ars_ctrl.trip_info.dep.sp < END_OF_SPs) );
+	  if( proute->ars_ctrl.trip_info.dep.sp != SP_NONE ) {
+	    CBTC_BLOCK_C_PTR p = proute->ars_ctrl.trip_info.dep.pblk;
+	    assert( p );
+	    assert( p->sp.has_sp );
+	    assert( p->sp.stop_detect_cond.forward == proute->ars_ctrl.trip_info.dep.blk );
+	    assert( p->sp.sp_code == proute->ars_ctrl.trip_info.dep.sp );
+	    assert( p->sp.stop_detect_cond.forward == p->virt_block_name );
+	  }
+	  found = i;
+	}
+	i++;
+      }
+      assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
+      assert( found > -1 );
+      assert( proute->ars_ctrl.trip_info.dep.pblk = &block_state[found] );
+    }
+    ;
   }
 }
 
@@ -263,6 +291,98 @@ void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
   assert( track_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
   assert( found > -1 );
   assert( pblock->belonging_tr.ptrack == &track_state[found] );
+  
+  if( pblock->sp.has_sp ) {
+    assert( (pblock->sp.sp_code > 0) && (pblock->sp.sp_code < END_OF_SPs) );
+    assert( (pblock->sp.stop_detect_type >= 0) && (pblock->sp.stop_detect_type < END_OF_STOP_DETECTION_TYPES) );
+    pblock->sp.stop_detect_cond.pforward = NULL;
+    pblock->sp.stop_detect_cond.pback = NULL;
+    if( pblock->sp.stop_detect_cond.forward != pblock->virt_block_name ) {
+      assert( pblock->sp.stop_detect_cond.back == pblock->virt_block_name );
+      int found = -1;
+      int i = 0;
+      while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+	assert( block_state[i].block_name > 0 );
+	if( block_state[i].virt_block_name == pblock->sp.stop_detect_cond.forward ) {
+	  assert( found < 0 );
+	  pblock->sp.stop_detect_cond.pforward = &block_state[i];
+	  assert( pblock->sp.stop_detect_cond.pforward );
+	  found = i;
+	}
+	i++;
+      }
+      assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
+      assert( found > -1 );
+      assert( pblock->sp.stop_detect_cond.pforward == &block_state[found] );
+    }
+    if( pblock->sp.stop_detect_cond.back != pblock->virt_block_name ) {
+      assert( pblock->sp.stop_detect_cond.forward == pblock->virt_block_name );
+      int found = -1;
+      int i = 0;
+      while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+	assert( block_state[i].block_name > 0 );
+	if( block_state[i].virt_block_name == pblock->sp.stop_detect_cond.back ) {
+	  assert( found < 0 );
+	  pblock->sp.stop_detect_cond.pback = &block_state[i];
+	  assert( pblock->sp.stop_detect_cond.pback );
+	  found = i;
+	}
+	i++;
+      }
+      assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
+      assert( found > -1 );
+      assert( pblock->sp.stop_detect_cond.pback == &block_state[found] );
+    }
+  }
+}
+
+static void chk_consistency_over_sp_links ( void ) {
+  int i = 0;
+  while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+    assert( block_state[i].block_name > 0 );
+    assert( (block_state[i].virt_block_name >= 0) && (block_state[i].virt_block_name < END_OF_CBTC_BLOCKs) );
+    assert( block_state[i].virt_blkname_str );
+    if( block_state[i].sp.has_sp ) {
+      CBTC_BLOCK_C_PTR pblock = NULL;
+      pblock = &block_state[i];
+      assert( pblock );
+      if( pblock->sp.stop_detect_cond.forward != pblock->virt_block_name ) {
+	assert( pblock->sp.stop_detect_cond.back == pblock->virt_block_name );
+	assert( ! pblock->sp.stop_detect_cond.pback );
+	CBTC_BLOCK_C_PTR pblk_forward = pblock->sp.stop_detect_cond.pforward;
+	assert( pblk_forward );
+	assert( pblk_forward->sp.has_sp );
+	assert( pblk_forward->sp.sp_code == pblock->sp.sp_code );
+	assert( pblk_forward->sp.stop_detect_type == pblock->sp.stop_detect_type );
+      
+	assert( pblk_forward->sp.stop_detect_cond.forward == pblk_forward->virt_block_name );
+	assert( ! pblk_forward->sp.stop_detect_cond.pforward );
+	assert( pblk_forward->sp.stop_detect_cond.back == pblock->virt_block_name );
+	assert( pblk_forward->sp.stop_detect_cond.pback == pblock );
+      } else if( pblock->sp.stop_detect_cond.back != pblock->virt_block_name ) {
+	assert( pblock->sp.stop_detect_cond.forward == pblock->virt_block_name );      
+	assert( ! pblock->sp.stop_detect_cond.pforward );
+	CBTC_BLOCK_C_PTR pblk_back = pblock->sp.stop_detect_cond.pback;      
+	assert( pblk_back );
+	assert( pblk_back->sp.has_sp );
+	assert( pblk_back->sp.sp_code == pblock->sp.sp_code );
+	assert( pblk_back->sp.stop_detect_type == pblock->sp.stop_detect_type );
+      
+	assert( pblk_back->sp.stop_detect_cond.back == pblk_back->virt_block_name );
+	assert( ! pblk_back->sp.stop_detect_cond.pback );
+	assert( pblk_back->sp.stop_detect_cond.forward == pblock->virt_block_name );
+	assert( pblk_back->sp.stop_detect_cond.pforward == pblock );
+      } else {
+	assert( pblock->sp.stop_detect_cond.forward == pblock->virt_block_name );
+	assert( pblock->sp.stop_detect_cond.back == pblock->virt_block_name );
+	assert( ! pblock->sp.stop_detect_cond.pforward );
+	assert( ! pblock->sp.stop_detect_cond.pback );
+      }
+    }
+    i++;
+  }
+  assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
+  assert( block_state[i].block_name == 0 );
 }
 
 void cons_il_obj_tables ( void ) {
@@ -290,10 +410,11 @@ void cons_il_obj_tables ( void ) {
     }
     assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
     assert( block_state[i].block_name == 0 );
+    chk_consistency_over_sp_links();
   }
 }
 
-#if 0 // for MODULE-TEST
+#if 1 // for MODULE-TEST
 int main( void ) {
   cons_il_obj_tables();
   return 0;
