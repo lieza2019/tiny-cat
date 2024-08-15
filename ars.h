@@ -115,6 +115,7 @@ typedef struct scheduled_command {
     } sch_skip;
   } attr;
   JOURNEY_ID jid;
+  BOOL check;
   struct {
     struct scheduled_command *pNext_cmd;
     struct scheduled_command *pNext_sp;

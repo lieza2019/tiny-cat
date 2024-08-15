@@ -156,7 +156,7 @@ static int cmp_over_journeys ( const void *pJ1, const void *pJ2 ) {
   if( ! ((JOURNEY_C_PTR)pJ1)->valid )
     r = ((JOURNEY_C_PTR)pJ2)->valid ? -1 : 0;
   else if( ! ((JOURNEY_C_PTR)pJ2)->valid )
-    r = ((JOURNEY_C_PTR)pJ1)->valid ? 1 : 0;
+    r = 1;
   else {
     assert( ((JOURNEY_C_PTR)pJ1)->valid && ((JOURNEY_C_PTR)pJ2)->valid );
     double d;
@@ -184,16 +184,114 @@ static int cmp_over_journeys ( const void *pJ1, const void *pJ2 ) {
   return r;
 }
 
-void shuffl_online_timetable ( void ) {
+
+static void cons_sp_schedule ( void ) {
+  int i;
+  
+  assert( (online_timetable.num_journeys >= 0) && (online_timetable.num_journeys < MAX_JOURNEYS_IN_TIMETABLE) );
+  for( i = 0; i < online_timetable.num_journeys; i++ ) {
+    scattr_over_sp_schedule( (JOURNEY_C_PTR)&online_timetable.journeys[i] );
+  }
+#ifdef CHK_STRICT_CONSISTENCY
+  assert( (i >= 0) && (i < MAX_JOURNEYS_IN_TIMETABLE) );
+  while( i < MAX_JOURNEYS_IN_TIMETABLE ) {
+    assert( ! online_timetable.journeys[i].journey.valid );
+    i++;
+  }
+  assert( i == MAX_JOURNEYS_IN_TIMETABLE );
+#endif // CHK_STRICT_CONSISTENCY
+    
+  for( i = 0; i < END_OF_SPs; i++ ) {
+    int cnt = 0;
+    SCHEDULED_COMMAND_PTR pC_sp = events_at_sp[i];   
+    while( pC_sp ) {
+      assert( cnt < SCHEDULED_COMMANDS_NODEBUF_SIZE );
+      sortbuf_at_sp[cnt++] = pC_sp;
+      pC_sp = pC_sp->ln.pNext_sp;
+    }
+    assert( (cnt >= 0) && (cnt < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
+#ifdef CHK_STRICT_CONSISTENCY
+    {
+      int k = cnt;
+      while( k < SCHEDULED_COMMANDS_NODEBUF_SIZE ) {
+	sortbuf_at_sp[k] = NULL;
+	k++;
+      }
+      assert( k == SCHEDULED_COMMANDS_NODEBUF_SIZE );
+    }
+#endif // CHK_STRICT_CONSISTENCY
+    
+    qsort( sortbuf_at_sp, cnt, sizeof(SCHEDULED_COMMAND_PTR), cmp_over_sp_cmds );
+#ifdef CHK_STRICT_CONSISTENCY
+    { 
+      int k = 0;
+      while( k < cnt ) {	
+	assert( sortbuf_at_sp[k] );
+	k++;
+      }
+      assert( k == cnt );
+      while( k < SCHEDULED_COMMANDS_NODEBUF_SIZE ) {
+	assert( ! sortbuf_at_sp[k] );
+	k++;
+      }
+    }
+#endif // CHK_STRICT_CONSISTENCY
+    {
+      int k;
+      for( k = 0; k < cnt; k++ ) {
+	pC_sp = sortbuf_at_sp[k];
+	assert( pC_sp );	
+	pC_sp->ln.pNext_sp = (k + 1) < cnt ? sortbuf_at_sp[k + 1] : NULL;
+      }
+      assert( k == cnt );
+#ifdef CHK_STRICT_CONSISTENCY
+      {
+	SCHEDULED_COMMAND_PTR p = sortbuf_at_sp[0];
+	while( p ) {
+	  k--;
+	  p = p->ln.pNext_sp;
+	}
+	assert( k == 0 );
+      }
+#endif // CHK_STRICT_CONSISTENCY
+    }
+    events_at_sp[i] = sortbuf_at_sp[0];
+  }
+  
+  for( i = 0; i < END_OF_SPs; i++ ) {
+    SCHEDULED_COMMAND_PTR p = NULL;
+    online_timetable.sp_schedule[i].pFirst = events_at_sp[i];
+    p = online_timetable.sp_schedule[i].pFirst;
+    while( p ) {
+      assert( p );
+      if( ! p->check ) {
+	online_timetable.sp_schedule[i].pNext = p;
+	break;
+      }
+      p = p->ln.pNext_sp;
+    }
+#ifdef CHK_STRICT_CONSISTENCY
+    while( p ) {
+      assert( ! p->check );
+      p = p->ln.pNext_sp;
+    }
+#endif // CHK_STRICT_CONSISTENCY
+  }
+  assert( i == END_OF_SPs );
+}
+
+void makeup_online_timetable ( void ) {
+  int cnt = 0;
+  
   qsort( online_timetable.journeys, MAX_JOURNEYS_IN_TIMETABLE, sizeof(struct journeys), cmp_over_journeys );
   {
-    int cnt = 0;
     int i;
     for( i = 0; i < MAX_JOURNEYS_IN_TIMETABLE; i++ ) {
       if( ! online_timetable.journeys[i].journey.valid )
 	break;
       cnt++;
     }
+    online_timetable.num_journeys = cnt;
 #ifdef CHK_STRICT_CONSISTENCY
     assert( (i >= 0) && (i < MAX_JOURNEYS_IN_TIMETABLE) );
     while( i < MAX_JOURNEYS_IN_TIMETABLE ) {
@@ -202,89 +300,7 @@ void shuffl_online_timetable ( void ) {
     }
     assert( i == MAX_JOURNEYS_IN_TIMETABLE );
 #endif // CHK_STRICT_CONSISTENCY
-    online_timetable.num_journeys = cnt;
   }
   
-  assert( (online_timetable.num_journeys >= 0) && (online_timetable.num_journeys < MAX_JOURNEYS_IN_TIMETABLE) );
-  { 
-    int i;
-    for( i = 0; i < online_timetable.num_journeys; i++ ) {
-      scattr_over_sp_schedule( (JOURNEY_C_PTR)&online_timetable.journeys[i] );
-    }
-#ifdef CHK_STRICT_CONSISTENCY
-    assert( (i >= 0) && (i < MAX_JOURNEYS_IN_TIMETABLE) );
-    while( i < MAX_JOURNEYS_IN_TIMETABLE ) {
-      assert( ! online_timetable.journeys[i].journey.valid );
-      i++;
-    }
-    assert( i == MAX_JOURNEYS_IN_TIMETABLE );
-#endif // CHK_STRICT_CONSISTENCY
-    
-    for( i = 0; i < END_OF_SPs; i++ ) {
-      SCHEDULED_COMMAND_PTR pC_sp = events_at_sp[i];
-      int cnt = 0;
-      while( pC_sp ) {
-	assert( cnt < SCHEDULED_COMMANDS_NODEBUF_SIZE );
-	sortbuf_at_sp[cnt++] = pC_sp;
-	pC_sp = pC_sp->ln.pNext_sp;
-      }
-#ifdef CHK_STRICT_CONSISTENCY
-      {
-	int k = cnt;
-	while( k < SCHEDULED_COMMANDS_NODEBUF_SIZE ) {
-	  sortbuf_at_sp[k] = NULL;
-	  k++;
-	}
-	assert( k == SCHEDULED_COMMANDS_NODEBUF_SIZE );
-      }
-#endif // CHK_STRICT_CONSISTENCY
-      qsort( sortbuf_at_sp, cnt, sizeof(SCHEDULED_COMMAND_PTR), cmp_over_sp_cmds );
-#ifdef CHK_STRICT_CONSISTENCY
-      {
-	assert( (cnt >= 0) && (cnt < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
-	int k = 0;
-	while( k < cnt ) {
-	  assert( sortbuf_at_sp[k] );
-	  k++;
-	}
-	assert( k == cnt );
-	while( k < SCHEDULED_COMMANDS_NODEBUF_SIZE ) {
-	  assert( ! sortbuf_at_sp[k] );
-	  k++;
-	}
-      }
-#endif // CHK_STRICT_CONSISTENCY
-      {
-	int k;
-	for( k = 0; k < cnt; k++ ) {
-	  pC_sp = sortbuf_at_sp[k];
-	  assert( pC_sp );	
-	  pC_sp->ln.pNext_sp = (k + 1) < cnt ? sortbuf_at_sp[k + 1] : NULL;
-	}
-	assert( k == cnt );
-#ifdef CHK_STRICT_CONSISTENCY
-	{
-	  SCHEDULED_COMMAND_PTR p = sortbuf_at_sp[0];
-	  while( p ) {
-	    k--;
-	    p = p->ln.pNext_sp;
-	  }
-	  assert( k == 0 );
-	}
-#endif // CHK_STRICT_CONSISTENCY
-      }
-      events_at_sp[i] = sortbuf_at_sp[0];
-    }
-    
-    for( i = 0; i < END_OF_SPs; i++ ) {
-      SCHEDULED_COMMAND_PTR p = NULL;
-      online_timetable.sp_schedule[i].pFirst = events_at_sp[i];
-      p = online_timetable.sp_schedule[i].pFirst;
-      while( p ) {
-	;
-	p = p->ln.pNext_sp;
-      }
-    }
-    assert( i == END_OF_SPs );
-  }
+  cons_sp_schedule();
 }

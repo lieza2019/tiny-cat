@@ -34,8 +34,9 @@ struct journeys {
   int rake_id;
 };
 typedef struct timetable {
-  struct journeys journeys[MAX_JOURNEYS_IN_TIMETABLE];
+  struct journeys journeys[MAX_JOURNEYS_IN_TIMETABLE];  
   int num_journeys;
+  struct journeys *jid2_lkup[MAX_JOURNEYS_IN_TIMETABLE];
   SCHEDULE_AT_SP sp_schedule[END_OF_SPs];
 } TIMETABLE, *TIMETABLE_PTR;
 
