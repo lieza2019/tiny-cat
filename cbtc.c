@@ -8,7 +8,7 @@
 
 #include "sparcs.h"
 
-TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
+TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
   assert( pB );
   return (TINY_TRAIN_STATE_PTR)pB->residents.edge;
 }
@@ -19,7 +19,7 @@ TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN
   return read_edge_of_residents_CBTC_BLOCK( pB );
 }
 
-TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
+TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
   assert( pB );
   return (TINY_TRAIN_STATE_PTR)pB->residents.ptrains;
 }
@@ -30,7 +30,7 @@ TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_
   return read_residents_CBTC_BLOCK( pB );
 }
 
-TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB ) {
+TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
   assert( pB );
   return (TINY_TRAIN_STATE_PTR *)&(pB->residents.ptrains);
 }

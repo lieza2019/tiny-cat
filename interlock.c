@@ -21,120 +21,103 @@ const CBI_STAT_KIND ROUTE_KIND2GENERIC[] = {
 
 pthread_mutex_t cbi_stat_info_mutex;
 
-#if 0
-static TRACK_PTR ask_track_status( TRACK_ID track_id ) {
-  TRACK_PTR r = NULL;
-  int i;
-  
-  i = 0;
-  while( track_state[i].id != END_OF_TRACKS ) {
-    if( track_state[i].id == track_id ) {
-      r = &track_state[i];
-      break;
-    }
+static TRACK_C_PTR lkup_track_prof[END_OF_IL_OBJ_INSTANCES];
+static void cons_track_prof_lkup_tbl ( void ) {
+  int i = 0;
+  while( track_state[i].kind_cbi != END_OF_CBI_STAT_KIND ) {
+    assert( track_state[i].kind_cbi == _TRACK );
+    assert( (track_state[i].id >= 0) && (track_state[i].id < END_OF_IL_OBJ_INSTANCES) );
+    lkup_track_prof[track_state[i].id] = &track_state[i];
+    assert( lkup_track_prof[track_state[i].id] );
     i++;
   }
-  return r;
-}
-
-static ROUTE_PTR ask_route_status( IL_OBJ_INSTANCES route_id ) { 
-  ROUTE_PTR r = NULL;
-  int i;
-  
-  i = 0;
-  while( route_state[i].id != END_OF_ROUTES ) {
-    if( route_state[i].id == route_id ) {
-      r = &route_state[i];
-      break;
-    }
-    i++;
-  }
-  return r;
-}
-
-static BOOL chk_ars_tracks_occupancy( IL_OBJ_INSTANCES route_id ) {
-  BOOL r = FALSE;
-  ROUTE_PTR pAttrib = NULL;
-  
-  pAttrib = ask_route_status( route_id );
-  assert( pAttrib );
+  assert( track_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
+#ifdef CHK_STRICT_CONSISTENCY
   {
-    int i;
-    for( i = 0; i < pAttrib->tr.num_tracks; i++ ) {
-      TRACK_PTR ptr = NULL;
-      ptr = ask_track_status( pAttrib->tr.tracks[i] );
-      assert( ptr );
-      if( ptr->occupancy ) {
-	r = TRUE;
-	break;
-      } else
-	continue;
+    int cnt = 0;
+    int j;
+    for( j = 0; j < END_OF_IL_OBJ_INSTANCES; j++ ) {
+      if( lkup_track_prof[j] )
+	cnt++;
     }
-    assert( i <= pAttrib->tr.num_tracks );
-  }
-  return r;
-}
-
-static BOOL chk_ars_tracks_lock( IL_OBJ_INSTANCES route_id ) {
-  BOOL r = FALSE;
-  ROUTE_PTR pAttrib = NULL;
-  
-  pAttrib = ask_route_status( route_id );
-  assert( pAttrib );
-  {
-    int i;
-    for( i = 0; i < pAttrib->tr.num_tracks; i++ ) {
-      TRACK_PTR ptr = NULL;
-      ptr = ask_track_status( pAttrib->tr.tracks[i] );
-      assert( ptr );
-      if( TLSR_LOCKED( *ptr )
-	  || TRSR_LOCKED( *ptr )
-	  || sTLSR_LOCKED( *ptr )
-	  || sTRSR_LOCKED( *ptr )
-	  || eTLSR_LOCKED( *ptr )
-	  || eTRSR_LOCKED( *ptr )
-	  || kTLSR_LOCKED( *ptr )
-	  || kTRSR_LOCKED( *ptr ) ) {
-	r = TRUE;
-	break;
+    assert( cnt == i );
+    {
+      int k = 0;
+      while( track_state[k].kind_cbi != END_OF_CBI_STAT_KIND ) {
+	int found = -1;
+	int l;
+	for( l = 0; l < END_OF_IL_OBJ_INSTANCES; l++ ) {
+	  if( lkup_track_prof[l] == &track_state[k] ) {
+	    assert( found < 0 );
+	    found = l;
+	  }
+	}
+	assert( found >= 0 );
+	assert( lkup_track_prof[found] == &track_state[k] );
+	cnt--;
+	k++;
       }
-    }
-    assert( i <= pAttrib->tr.num_tracks );
-  }
-  return r;
-}
-
-ARS_REJECTED_REASON chk_ars_condition( IL_OBJ_INSTANCES route_id ) {
-  ARS_REJECTED_REASON r = ARS_WELL_CONDITION;
-  
-  if( chk_ars_tracks_occupancy( route_id ) )
-    r = ARS_TRACKS_OCCUPIED;
-  else {
-    if( chk_ars_tracks_lock( route_id ) )
-      r = ARS_TRACKS_LOCKED;
-    else
-      r = ARS_WELL_CONDITION;
-  }
-  return r;
-}
-
-static BOOL chk_ars_triggered( ARS_ROUTE_PTR pRoute_ars ) {
-  assert( pRoute_ars );
-  BOOL r = FALSE;
-  int i;
-  
-  for( i = 0; i < pRoute_ars->trg_section.num_blocks; i++ ) {
-    TRACK_PTR ptr = NULL;
-    ptr = ask_track_status( pRoute_ars->trg_section.trg_blocks[i] );
-    assert( ptr );
-    if( ptr->occupancy ) {
-      r = TRUE;
-      break;
+      assert( track_state[k].kind_cbi == END_OF_CBI_STAT_KIND );
+      assert( cnt == 0 );
     }
   }
-  return r;
+#endif // CHK_STRICT_CONSISTENCY
 }
-#endif
+
+TRACK_C_PTR conslt_track_prof ( IL_OBJ_INSTANCES track_id ) {
+  assert( (track_id >= 0) && (track_id < END_OF_IL_OBJ_INSTANCES) );
+  return lkup_track_prof[track_id];
+}
+
+static ROUTE_C_PTR lkup_route_prof[END_OF_IL_OBJ_INSTANCES];
+static void cons_route_prof_lkup_tbl ( void ) {
+  int i = 0;
+  while( route_state[i].kind_route != END_OF_ROUTE_KINDS ) {
+    assert( route_state[i].kind_cbi == _ROUTE );
+    assert( (route_state[i].id >= 0) && (route_state[i].id < END_OF_IL_OBJ_INSTANCES) );
+    lkup_route_prof[route_state[i].id] = &route_state[i];
+    assert( lkup_route_prof[route_state[i].id] );
+    i++;
+  }
+  assert( route_state[i].kind_route == END_OF_ROUTE_KINDS );
+  assert( route_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
+#ifdef CHK_STRICT_CONSISTENCY
+  {
+    int cnt = 0;
+    int j;
+    for( j = 0; j < END_OF_IL_OBJ_INSTANCES; j++ ) {
+      if( lkup_route_prof[j] )
+	cnt++;
+    }
+    assert( cnt == i );
+    {
+      int k = 0;
+      while( route_state[k].kind_route != END_OF_ROUTE_KINDS ) {
+	int found = -1;
+	int l;
+	for( l = 0; l < END_OF_IL_OBJ_INSTANCES; l++ ) {
+	  if( lkup_route_prof[l] && (lkup_route_prof[l] == &route_state[k]) ) {
+	    assert( found < 0 );
+	    found = l;
+	  }
+	}
+	assert( found >= 0 );
+	assert( lkup_route_prof[found] == &route_state[k] );
+	cnt--;
+	k++;
+      }
+      assert( route_state[k].kind_route == END_OF_ROUTE_KINDS );
+      assert( route_state[k].kind_cbi == END_OF_CBI_STAT_KIND );
+      assert( cnt == 0 );
+    }
+  }
+#endif // CHK_STRICT_CONSISTENCY
+}
+
+ROUTE_C_PTR conslt_route_prof ( IL_OBJ_INSTANCES route_id ) {
+  assert( (route_id >= 0) && (route_id < END_OF_IL_OBJ_INSTANCES) );
+  return lkup_route_prof[route_id];
+}
 
 void cons_track_state ( TRACK_PTR ptrack ) {
   assert( ptrack );
@@ -256,7 +239,6 @@ void cons_route_state ( ROUTE_PTR proute ) {
       assert( found > -1 );
       assert( proute->ars_ctrl.trip_info.dep.pblk = &block_state[found] );
     }
-    ;
   }
 }
 
@@ -392,6 +374,7 @@ void cons_il_obj_tables ( void ) {
     i++;
   }
   assert( route_state[i].kind_route == END_OF_ROUTE_KINDS );
+  cons_route_prof_lkup_tbl();
   
   {
     int i = 0;
@@ -400,6 +383,7 @@ void cons_il_obj_tables ( void ) {
       i++;
     }
     assert( track_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
+    cons_track_prof_lkup_tbl();
   }
   
   {

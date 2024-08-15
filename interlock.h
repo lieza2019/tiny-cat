@@ -33,7 +33,8 @@ typedef const struct track *TRACK_C_PTR;
 #undef TRACK_ATTRIB_DEFINITION
 
 typedef enum route_kind {
-  DEPT_ROUTE,
+  //DEPT_ROUTE,
+  DEP_ROUTE,
   ENT_ROUTE,
   SHUNT_ROUTE,
   EMERGE_ROUTE,
@@ -107,6 +108,9 @@ typedef const struct route *ROUTE_C_PTR;
 #define kTLSR_LOCKED( tr ) ((tr).locking.kTLSR)
 #define kTRSR_LOCKED( tr ) ((tr).locking.kTRSR)
 #endif
+
+extern TRACK_C_PTR conslt_track_prof ( IL_OBJ_INSTANCES track_id );
+extern ROUTE_C_PTR conslt_route_prof ( IL_OBJ_INSTANCES route_id );
 
 extern void cons_track_state ( TRACK_PTR ptrack );
 extern void cons_route_state ( ROUTE_PTR proute );

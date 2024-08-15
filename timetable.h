@@ -8,10 +8,14 @@
 #include "cbtc.h"
 
 #define MAX_JOURNEYS_IN_TIMETABLE 1024
+#define SCHEDULED_COMMANDS_NODEBUF_SIZE 65536
 
+typedef int JOURNEY_ID;
 typedef struct journey {
+  BOOL valid;
   time_t start_time;
   time_t finish_time;
+  JOURNEY_ID jid;
   SCHEDULED_COMMAND_PTR past_commands;
   struct {
     SCHEDULED_COMMAND_PTR pcmds;
@@ -19,16 +23,19 @@ typedef struct journey {
   } scheduled_commands;
   TINY_TRAIN_STATE_PTR ptrain_ctrl;
 } JOURNEY, *JOURNEY_PTR;
+typedef const struct journey *JOURNEY_C_PTR;
 
 typedef struct schedule_at_sp {
-  SCHEDULED_COMMAND_PTR pfirst;
-  SCHEDULED_COMMAND_PTR pnext;
+  SCHEDULED_COMMAND_PTR pFirst;
+  SCHEDULED_COMMAND_PTR pNext;
 } SCHEDULE_AT_SP, *SCHEDULE_AT_SP_PTR;
+struct journeys {
+  JOURNEY journey;
+  int rake_id;
+};
 typedef struct timetable {
-  struct {
-    JOURNEY journey;
-    int rake_id;
-  } journeys[MAX_JOURNEYS_IN_TIMETABLE];
+  struct journeys journeys[MAX_JOURNEYS_IN_TIMETABLE];
+  int num_journeys;
   SCHEDULE_AT_SP sp_schedule[END_OF_SPs];
 } TIMETABLE, *TIMETABLE_PTR;
 

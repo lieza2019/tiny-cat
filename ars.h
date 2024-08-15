@@ -66,6 +66,9 @@ typedef int TIME_DIFF;
 typedef int JOURNEY_ID;
 typedef int DWELL_ID;
 
+typedef struct ars_assoc_time {
+  int hour, minute, second, year, month, day;
+} ARS_ASSOC_TIME, *ARS_ASSOC_TIME_PTR;
 typedef struct scheduled_command {
   ARS_SCHEDULED_CMD cmd;
   union {
@@ -73,55 +76,47 @@ typedef struct scheduled_command {
       int nth_routeset;
       IL_OBJ_INSTANCES route_id;
       BOOL is_dept_route;
-      struct {
-	int hour, minute, second, year, month, day;
-      } dept_time;
+      ARS_ASSOC_TIME dept_time;
     } sch_routeset;
     struct { // for ARS_SCHEDULED_ROUTEREL
       int nth_routerel;
       IL_OBJ_INSTANCES route_id;
-      struct {
-	int hour, minute, second, year, month, day;
-      } dept_time;
+      ARS_ASSOC_TIME dept_time;
     } sch_routerel;
     struct { // for ARS_SCHEDULED_ARRIVAL
       DWELL_ID dw_id;
       STOPPING_POINT_CODE arr_sp;
-      struct {
-	int hour, minute, second, year, month, day;
-      } arr_time;
-      struct scheduled_command *pNext_on_arriv;
+      ARS_ASSOC_TIME arr_time;
+      struct scheduled_command *pNext_sp_arriv;
     } sch_arriv;
     struct { // for ARS_SCHEDULED_DEPT
       DWELL_ID dw_id;
       TIME_DIFF dwell;
       STOPPING_POINT_CODE dept_sp;
-      struct {
-	int hour, minute, second, year, month, day;
-      } dept_time;
+      ARS_ASSOC_TIME dept_time;
       BOOL is_revenue;
       PERFREG_LEVEL perf_lev;
       CREW_ID crew_id;
       struct {
 	BOOL L, R;
       } dept_dir;
-      struct scheduled_command *pNext_of_dept;
+      struct scheduled_command *pNext_sp_dept;
     } sch_dept;
     struct { // ARS_SCHEDULED_SKIP
       DWELL_ID dw_id;
       STOPPING_POINT_CODE ss_sp;
-      struct {
-	int hour, minute, second, year, month, day;
-      } pass_time;
+      ARS_ASSOC_TIME pass_time;
+      STOPPING_POINT_CODE pass_sp;
       BOOL is_revenue;
       PERFREG_LEVEL perf_lev;
       CREW_ID crew_id;
-      struct scheduled_command *pNext_of_skip;
+      struct scheduled_command *pNext_sp_skip;
     } sch_skip;
   } attr;
   JOURNEY_ID jid;
-  struct scheduled_command *pNext;
+  struct scheduled_command *pNext_cmd;
 } SCHEDULED_COMMAND, *SCHEDULED_COMMAND_PTR;
+typedef const struct scheduled_command *SCHEDULED_COMMAND_C_PTR;
 
 typedef enum ars_reasons {
   ARS_NO_TRIGGERED,
@@ -131,6 +126,8 @@ typedef enum ars_reasons {
   ARS_MUTEX_BLOCKED,
   ARS_NO_ROUTESET_CMD,
   ARS_WAITING_ROUTESET_TIME,
+  ARS_FOUND_PRED_DEP_TRAIN_HERE,
+  ARS_WAINTING_PRED_DEP_AT_DST,
   ARS_ROUTE_CONTROLLED_NORMALLY,
   END_OF_ARS_REASONS
 } ARS_REASONS;
