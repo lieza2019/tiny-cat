@@ -249,7 +249,7 @@ static SCHEDULED_COMMAND_PTR *fetch_cmd_routeset ( SCHEDULED_COMMAND_PTR *ppNext
       if( ((*ppC)->cmd == ARS_SCHEDULED_DEPT) || ((*ppC)->cmd == ARS_SCHEDULED_SKIP) )
 	break;
     }
-    ppC = &(*ppC)->pNext_cmd;
+    ppC = &(*ppC)->ln.pNext_cmd;
   }
   assert( ppC );
   assert( (r != NULL) ? ((r == ppC) && ((*ppC)->cmd == ARS_SCHEDULED_ROUTESET)) : (*ppC ? (((*ppC)->cmd == ARS_SCHEDULED_DEPT) || ((*ppC)->cmd == ARS_SCHEDULED_SKIP)) : (r == NULL)) );
@@ -337,7 +337,7 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
 	    r = 0;
 	  else {
 	    assert( pdst_next_sch->jid == pC->jid );
-	    SCHEDULED_COMMAND_C_PTR pdst_next_next = pdst_next_sch->attr.sch_arriv.pNext_sp_arriv;
+	    SCHEDULED_COMMAND_C_PTR pdst_next_next = pdst_next_sch->ln.pNext_sp;
 	    if( pdst_next_next ) {
 	      assert( (pdst_next_next->cmd == ARS_SCHEDULED_ARRIVAL) || (pdst_next_next->cmd == ARS_SCHEDULED_DEPT) || (pdst_next_next->cmd == ARS_SCHEDULED_SKIP) );
 	      if( pdst_next_next->cmd == ARS_SCHEDULED_DEPT ) {
@@ -559,14 +559,14 @@ void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
 	assert( pp );
 	while( *pp ) {
 	  assert( *pp );
-	  pp = &(*pp)->pNext_cmd;
+	  pp = &(*pp)->ln.pNext_cmd;
 	  assert( pp );
 	}
 	assert( pp );
 	assert( ! *pp );
 	*pp = pC;
-	pJ->scheduled_commands.pNext = pC->pNext_cmd;
-	pC->pNext_cmd = NULL;
+	pJ->scheduled_commands.pNext = pC->ln.pNext_cmd;
+	pC->ln.pNext_cmd = NULL;
       }
       break;
     case ARS_SCHEDULED_ROUTEREL:
@@ -578,14 +578,14 @@ void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
 	pp = &pJ->past_commands;
 	assert( pp );
 	while( *pp ) {
-	  pp = &(*pp)->pNext_cmd;
+	  pp = &(*pp)->ln.pNext_cmd;
 	  assert( pp );
 	}
 	assert( pp );
 	assert( ! *pp );
 	*pp = pC;
-	pJ->scheduled_commands.pNext = pC->pNext_cmd;
-	pC->pNext_cmd = NULL;
+	pJ->scheduled_commands.pNext = pC->ln.pNext_cmd;
+	pC->ln.pNext_cmd = NULL;
       }
       break;
     case ARS_SCHEDULED_ARRIVAL:
@@ -599,7 +599,7 @@ void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
     default:
       assert( FALSE );
     }
-    pC = pC->pNext_cmd;
+    pC = pC->ln.pNext_cmd;
   }
   pJ->scheduled_commands.pNext = pC;
 }

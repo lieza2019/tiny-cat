@@ -23,7 +23,6 @@ typedef enum stopping_point_code {
     SP_D0, // BTGD_TB2
   END_OF_SPs
 } STOPPING_POINT_CODE;
-  //} SP_ID;
 
 #define DEFALUT_ROUTESET_OFFSET 30
 #define DEFAULT_DEPARTURE_OFFSET 7
@@ -67,7 +66,12 @@ typedef int JOURNEY_ID;
 typedef int DWELL_ID;
 
 typedef struct ars_assoc_time {
-  int hour, minute, second, year, month, day;
+  int hour;
+  int minute;
+  int second;
+  int year;
+  int month;
+  int day;
 } ARS_ASSOC_TIME, *ARS_ASSOC_TIME_PTR;
 typedef struct scheduled_command {
   ARS_SCHEDULED_CMD cmd;
@@ -87,7 +91,6 @@ typedef struct scheduled_command {
       DWELL_ID dw_id;
       STOPPING_POINT_CODE arr_sp;
       ARS_ASSOC_TIME arr_time;
-      struct scheduled_command *pNext_sp_arriv;
     } sch_arriv;
     struct { // for ARS_SCHEDULED_DEPT
       DWELL_ID dw_id;
@@ -100,7 +103,6 @@ typedef struct scheduled_command {
       struct {
 	BOOL L, R;
       } dept_dir;
-      struct scheduled_command *pNext_sp_dept;
     } sch_dept;
     struct { // ARS_SCHEDULED_SKIP
       DWELL_ID dw_id;
@@ -110,11 +112,13 @@ typedef struct scheduled_command {
       BOOL is_revenue;
       PERFREG_LEVEL perf_lev;
       CREW_ID crew_id;
-      struct scheduled_command *pNext_sp_skip;
     } sch_skip;
   } attr;
   JOURNEY_ID jid;
-  struct scheduled_command *pNext_cmd;
+  struct {
+    struct scheduled_command *pNext_cmd;
+    struct scheduled_command *pNext_sp;
+  } ln;
 } SCHEDULED_COMMAND, *SCHEDULED_COMMAND_PTR;
 typedef const struct scheduled_command *SCHEDULED_COMMAND_C_PTR;
 
