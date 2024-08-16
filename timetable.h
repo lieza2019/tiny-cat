@@ -36,7 +36,7 @@ struct journeys {
 typedef struct timetable {
   struct journeys journeys[MAX_JOURNEYS_IN_TIMETABLE];  
   int num_journeys;
-  struct journeys *jid2_lkup[MAX_JOURNEYS_IN_TIMETABLE];
+  struct journeys *lkup[MAX_JOURNEYS_IN_TIMETABLE + 1]; // 1 origin, for jid > 0.
   SCHEDULE_AT_SP sp_schedule[END_OF_SPs];
 } TIMETABLE, *TIMETABLE_PTR;
 

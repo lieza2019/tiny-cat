@@ -286,9 +286,15 @@ void makeup_online_timetable ( void ) {
   qsort( online_timetable.journeys, MAX_JOURNEYS_IN_TIMETABLE, sizeof(struct journeys), cmp_over_journeys );
   {
     int i;
+    for( i = 1; i <= MAX_JOURNEYS_IN_TIMETABLE; i++ )
+      online_timetable.lkup[i] = NULL;
+    
     for( i = 0; i < MAX_JOURNEYS_IN_TIMETABLE; i++ ) {
+      JOURNEY_ID jid = online_timetable.journeys[i].journey.jid;
       if( ! online_timetable.journeys[i].journey.valid )
 	break;
+      assert( (jid > 0) && (jid <= MAX_JOURNEYS_IN_TIMETABLE) );
+      online_timetable.lkup[jid] = &online_timetable.journeys[i];
       cnt++;
     }
     online_timetable.num_journeys = cnt;
