@@ -19,19 +19,19 @@ static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) {
     case ARS_SCHEDULED_ARRIVAL:
       sp = pcmd->attr.sch_arriv.arr_sp;
       assert( (sp >= 0) && (sp < END_OF_SPs) );
-      pcmd->ln.pNext_sp =  events_at_sp[sp];
+      pcmd->ln.sp_sch.pNext =  events_at_sp[sp];
       events_at_sp[sp] = pcmd;
       break;
     case ARS_SCHEDULED_DEPT:
       sp = pcmd->attr.sch_dept.dept_sp;
       assert( (sp >= 0) && (sp < END_OF_SPs) );
-      pcmd->ln.pNext_sp = events_at_sp[sp];
+      pcmd->ln.sp_sch.pNext = events_at_sp[sp];
       events_at_sp[sp] = pcmd;
       break;
     case ARS_SCHEDULED_SKIP:
       sp = pcmd->attr.sch_skip.ss_sp;
       assert( (sp >= 0) && (sp < END_OF_SPs) );
-      pcmd->ln.pNext_sp = events_at_sp[sp];
+      pcmd->ln.sp_sch.pNext = events_at_sp[sp];
       events_at_sp[sp] = pcmd;
       break;
     case ARS_SCHEDULED_ROUTESET:
@@ -44,7 +44,7 @@ static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) {
       assert( FALSE );
       break;
     }
-    pcmd = pcmd->ln.pNext_cmd;
+    pcmd = pcmd->ln.journey.pNext;
   }
 }
 
@@ -185,7 +185,17 @@ static int cmp_over_journeys ( const void *pJ1, const void *pJ2 ) {
 }
 
 
-static void cons_sp_schedule ( void ) {
+BOOL is_simultaneous ( ARS_ASSOC_TIME_PTR pT1, ARS_ASSOC_TIME_PTR pT2 ) {
+  assert( pT1 );
+  assert( pT2 );
+  BOOL r = FALSE;
+  
+  r = (pT1->year == pT2->year) && (pT1->month == pT2->month) && (pT1->day == pT2->day) &&
+    (pT1->hour == pT2->hour) && (pT1->minute == pT2->minute) && (pT1->second == pT2->second);
+  return r;
+}
+
+void cons_sp_schedule ( void ) {
   int i;
   
   assert( (online_timetable.num_journeys >= 0) && (online_timetable.num_journeys < MAX_JOURNEYS_IN_TIMETABLE) );
@@ -207,7 +217,7 @@ static void cons_sp_schedule ( void ) {
     while( pC_sp ) {
       assert( cnt < SCHEDULED_COMMANDS_NODEBUF_SIZE );
       sortbuf_at_sp[cnt++] = pC_sp;
-      pC_sp = pC_sp->ln.pNext_sp;
+      pC_sp = pC_sp->ln.sp_sch.pNext;
     }
     assert( (cnt >= 0) && (cnt < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
 #ifdef CHK_STRICT_CONSISTENCY
@@ -237,11 +247,60 @@ static void cons_sp_schedule ( void ) {
     }
 #endif // CHK_STRICT_CONSISTENCY
     {
+      ARS_ASSOC_TIME_PTR psenior_fellow_t = NULL;
       int k;
-      for( k = 0; k < cnt; k++ ) {
+      for( pC_sp = NULL, k = 0; k < cnt; k++ ) {
+	if( psenior_fellow_t ) {
+	  assert( pC_sp );
+	  ARS_ASSOC_TIME_PTR pjunior_fellow_t = NULL;
+	  switch( sortbuf_at_sp[k]->cmd ) {
+	  case ARS_SCHEDULED_ARRIVAL:
+	    pjunior_fellow_t = &sortbuf_at_sp[k]->attr.sch_arriv.arr_time;
+	    break;
+	  case ARS_SCHEDULED_DEPT:
+	    pjunior_fellow_t = &sortbuf_at_sp[k]->attr.sch_dept.dept_time;
+	    break;
+	  case ARS_SCHEDULED_SKIP:
+	    pjunior_fellow_t = &sortbuf_at_sp[k]->attr.sch_skip.pass_time;
+	    break;
+	  case ARS_SCHEDULED_ROUTESET:
+	    /* fall thru. */
+	  case ARS_SCHEDULED_ROUTEREL:
+	    /* fall thru. */
+	  case END_OF_SCHEDULED_CMDS:
+	    /* fall thru. */
+	  default:
+	    assert( FALSE );
+	  }
+	  if( pjunior_fellow_t ) {
+	    if( is_simultaneous(psenior_fellow_t, pjunior_fellow_t) )
+	      pC_sp->ln.sp_sch.pFellow = sortbuf_at_sp[k];
+	  }
+	  psenior_fellow_t = pjunior_fellow_t;
+	} else
+	  switch( sortbuf_at_sp[k]->cmd ) {
+	  case ARS_SCHEDULED_ARRIVAL:
+	    psenior_fellow_t = &sortbuf_at_sp[k]->attr.sch_arriv.arr_time;
+	    break;
+	  case ARS_SCHEDULED_DEPT:
+	    psenior_fellow_t = &sortbuf_at_sp[k]->attr.sch_dept.dept_time;
+	    break;
+	  case ARS_SCHEDULED_SKIP:
+	    psenior_fellow_t = &sortbuf_at_sp[k]->attr.sch_skip.pass_time;
+	    break;
+	  case ARS_SCHEDULED_ROUTESET:
+	    /* fall thru. */
+	  case ARS_SCHEDULED_ROUTEREL:
+	    /* fall thru. */
+	  case END_OF_SCHEDULED_CMDS:
+	    /* fall thru. */
+	  default:
+	    assert( FALSE );
+	  }
 	pC_sp = sortbuf_at_sp[k];
-	assert( pC_sp );	
-	pC_sp->ln.pNext_sp = (k + 1) < cnt ? sortbuf_at_sp[k + 1] : NULL;
+	assert( pC_sp );
+	pC_sp->ln.sp_sch.pFellow = NULL;
+	pC_sp->ln.sp_sch.pNext = (k + 1) < cnt ? sortbuf_at_sp[k + 1] : NULL;
       }
       assert( k == cnt );
 #ifdef CHK_STRICT_CONSISTENCY
@@ -249,7 +308,7 @@ static void cons_sp_schedule ( void ) {
 	SCHEDULED_COMMAND_PTR p = sortbuf_at_sp[0];
 	while( p ) {
 	  k--;
-	  p = p->ln.pNext_sp;
+	  p = p->ln.sp_sch.pNext;
 	}
 	assert( k == 0 );
       }
@@ -268,12 +327,12 @@ static void cons_sp_schedule ( void ) {
 	online_timetable.sp_schedule[i].pNext = p;
 	break;
       }
-      p = p->ln.pNext_sp;
+      p = p->ln.sp_sch.pNext;
     }
 #ifdef CHK_STRICT_CONSISTENCY
     while( p ) {
       assert( ! p->check );
-      p = p->ln.pNext_sp;
+      p = p->ln.sp_sch.pNext;
     }
 #endif // CHK_STRICT_CONSISTENCY
   }
@@ -281,10 +340,9 @@ static void cons_sp_schedule ( void ) {
 }
 
 void makeup_online_timetable ( void ) {
-  int cnt = 0;
-  
   qsort( online_timetable.journeys, MAX_JOURNEYS_IN_TIMETABLE, sizeof(struct journeys), cmp_over_journeys );
   {
+    int cnt = 0;
     int i;
     for( i = 1; i <= MAX_JOURNEYS_IN_TIMETABLE; i++ )
       online_timetable.lkup[i] = NULL;

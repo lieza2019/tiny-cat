@@ -40,6 +40,7 @@ typedef struct timetable {
   SCHEDULE_AT_SP sp_schedule[END_OF_SPs];
 } TIMETABLE, *TIMETABLE_PTR;
 
+extern void cons_sp_schedule ( void );
 extern SCHEDULED_COMMAND_PTR sch_cmd_newnode( void );
 extern ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ );
 
