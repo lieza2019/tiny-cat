@@ -117,19 +117,14 @@ typedef struct scheduled_command {
   JOURNEY_ID jid;
   BOOL check;
   struct {
-#if 0
-    struct scheduled_command *pNext_cmd;
-    struct scheduled_command *pNext_sp;
-#else
     struct {
       struct scheduled_command *pNext;
       struct scheduled_command *pSucc;
     } journey;
     struct {
       struct scheduled_command *pNext;
-      struct scheduled_command *pFellow;;
+      struct scheduled_command *pFellow;
     } sp_sch;
-#endif
   } ln;
 } SCHEDULED_COMMAND, *SCHEDULED_COMMAND_PTR;
 typedef const struct scheduled_command *SCHEDULED_COMMAND_C_PTR;

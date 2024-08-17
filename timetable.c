@@ -63,20 +63,24 @@ static time_t mktime_of_cmd ( struct tm *pT, ARS_ASSOC_TIME_PTR ptime_cmd ) {
   return r;
 }
 
-static int cmp_with_cmd2 ( time_t time_c1, SCHEDULED_COMMAND_PTR pC2 ) {
+static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID *pdw_id2, SCHEDULED_COMMAND_PTR pC2 ) {
   assert( pC2 );
+  assert( pdw_id2 );
   int r = 0;
   struct tm T2 = {};
   time_t time_c2 = 0;
   
   switch( pC2->cmd ) {
   case ARS_SCHEDULED_ARRIVAL:
+    *pdw_id2 = pC2->attr.sch_arriv.dw_id;
     time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_arriv.arr_time );
     break;
   case ARS_SCHEDULED_DEPT:
+    *pdw_id2 = pC2->attr.sch_dept.dw_id;
     time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_dept.dept_time );
     break;
   case ARS_SCHEDULED_SKIP:
+    *pdw_id2 = pC2->attr.sch_skip.dw_id;
     time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_skip.pass_time );
     break;
   case ARS_SCHEDULED_ROUTESET:
@@ -88,6 +92,8 @@ static int cmp_with_cmd2 ( time_t time_c1, SCHEDULED_COMMAND_PTR pC2 ) {
   default:
     assert( FALSE );
   }
+  assert( pdw_id2 );
+  assert( *pdw_id2 > -1 );
   
   {
     double d;      
@@ -107,17 +113,23 @@ static int cmp_over_sp_cmds ( const void *pC1, const void *pC2 ) {
   assert( pC1 );
   assert( pC2 );
   int r = 0;
+  DWELL_ID dw_id1 = -1;
+  DWELL_ID dw_id2 = -1;
+  
   struct tm T1 = {};
   time_t t1 = 0;
   
   switch( ((SCHEDULED_COMMAND_PTR)pC1)->cmd ) {
   case ARS_SCHEDULED_ARRIVAL:
-    t1 = mktime_of_cmd( &T1, &((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_arriv.arr_time );
+    dw_id1 = ((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_arriv.dw_id;
+    t1 = mktime_of_cmd( &T1, &((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_arriv.arr_time );   
     break;
   case ARS_SCHEDULED_DEPT:
+    dw_id1 = ((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_dept.dw_id;
     t1 = mktime_of_cmd( &T1, &((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_dept.dept_time );
     break;
   case ARS_SCHEDULED_SKIP:
+    dw_id1 = ((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_skip.dw_id;
     t1 = mktime_of_cmd( &T1, &((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_skip.pass_time );
     break;
   case ARS_SCHEDULED_ROUTESET:
@@ -129,8 +141,10 @@ static int cmp_over_sp_cmds ( const void *pC1, const void *pC2 ) {
   default:
     assert( FALSE );
   }
+  assert( dw_id1 > -1 );
   
-  r = cmp_with_cmd2( t1, (SCHEDULED_COMMAND_PTR)pC2 );
+  r = cmp_with_cmd2( t1, &dw_id2, (SCHEDULED_COMMAND_PTR)pC2 );
+  assert( dw_id2 > -1 );
   if( r == 0 ) {
     JOURNEY_ID jid1 = ((SCHEDULED_COMMAND_PTR)pC1)->jid;
     JOURNEY_ID jid2 = ((SCHEDULED_COMMAND_PTR)pC2)->jid;
@@ -140,10 +154,17 @@ static int cmp_over_sp_cmds ( const void *pC1, const void *pC2 ) {
       r = 1;
     else {
       assert( jid1 == jid2 );
-      r = 0;
+      if( dw_id1 < dw_id2 )
+	r = -1;
+      else if( dw_id1 > dw_id2 )
+	r = 1;
+      else {
+	assert( dw_id1 == dw_id2 );
+	r = 0;
 #ifdef CHK_STRICT_CONSISTENCY
-      assert( FALSE );
+	assert( FALSE );
 #endif // CHK_STRICT_CONSISTENCY
+      }
     }
   }
   return r;

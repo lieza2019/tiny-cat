@@ -298,6 +298,7 @@ static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptr
   return r;
 }
 
+#if 0
 static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
   assert( sch_dst );
   assert( pC );
@@ -371,6 +372,94 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
   }
   return r;
 }
+#else
+static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
+  assert( sch_dst );
+  assert( pC );
+  assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+  assert( whats_kind_of_il_obj( pC->attr.sch_routeset.route_id ) == _ROUTE );
+  int r = -1;
+  
+  ROUTE_C_PTR pR = NULL;
+  pR = conslt_route_prof( pC->attr.sch_routeset.route_id );
+  assert( pR );
+  assert( pR->kind_cbi == _ROUTE );
+  assert( pR->ars_ctrl.app );
+  assert( pR->ars_ctrl.trip_info.dst.pblk );
+  if( pC->attr.sch_routeset.is_dept_route ) {
+    assert( pR->kind_route == DEP_ROUTE );
+    r = 1;
+  } else {
+    assert( ! pC->attr.sch_routeset.is_dept_route );
+    assert( (pR->kind_route == ENT_ROUTE) || (pR->kind_route == SHUNT_ROUTE) );
+    CBTC_BLOCK_C_PTR pdst_blk = pR->ars_ctrl.trip_info.dst.pblk;
+    assert( pdst_blk );
+    assert( pdst_blk->sp.has_sp );
+    assert( (pdst_blk->sp.sp_code > 0) && (pdst_blk->sp.sp_code < END_OF_SPs) );
+    SCHEDULED_COMMAND_C_PTR pdst_next_sch = sch_dst[pdst_blk->sp.sp_code].pNext;
+    
+    BOOL judged = FALSE;
+    while( pdst_next_sch ) {
+      assert( pdst_next_sch );
+      assert( (pdst_next_sch->cmd == ARS_SCHEDULED_ARRIVAL) || (pdst_next_sch->cmd == ARS_SCHEDULED_DEPT) || (pdst_next_sch->cmd == ARS_SCHEDULED_SKIP) );
+      switch( pdst_next_sch->cmd ) {
+      case ARS_SCHEDULED_ARRIVAL:
+#ifdef CHK_STRICT_CONSISTENCY
+	assert( pdst_next_sch->attr.sch_arriv.arr_sp == pdst_blk->sp.sp_code );
+#endif // CHK_STRICT_CONSISTENCY
+	if( pdst_next_sch->jid == pC->jid ) {
+	  SCHEDULED_COMMAND_C_PTR pdst_next_next = pdst_next_sch->ln.sp_sch.pNext;
+	  if( pdst_next_next ) {
+	    r = 0;
+	    do { 
+	      assert( pdst_next_next );
+	      assert( (pdst_next_next->cmd == ARS_SCHEDULED_ARRIVAL) || (pdst_next_next->cmd == ARS_SCHEDULED_DEPT) || (pdst_next_next->cmd == ARS_SCHEDULED_SKIP) );
+	      if( pdst_next_next->cmd == ARS_SCHEDULED_DEPT ) {
+#ifdef CHK_STRICT_CONSISTENCY
+		assert( pdst_next_next->attr.sch_dept.dept_sp == pdst_blk->sp.sp_code );
+#endif // CHK_STRICT_CONSISTENCY
+		if( pdst_next_next->jid == pC->jid ) {
+		  //assert();
+		  r = 1;	  
+		  break;
+		}
+	      }
+	      pdst_next_next = pdst_next_next->ln.sp_sch.pFellow;
+	    } while( pdst_next_next );
+	  } else
+	    r = 1;
+	  judged = TRUE;
+	} else
+	  r = 0;
+	break;
+      case ARS_SCHEDULED_DEPT:
+#ifdef CHK_STRICT_CONSISTENCY
+	assert( pdst_next_sch->attr.sch_dept.dept_sp == pdst_blk->sp.sp_code );
+#endif // CHK_STRICT_CONSISTENCY
+	r = 0;
+	break;
+      case ARS_SCHEDULED_SKIP:
+#ifdef CHK_STRICT_CONSISTENCY
+	assert( pdst_next_sch->attr.sch_skip.ss_sp == pdst_blk->sp.sp_code );
+#endif // CHK_STRICT_CONSISTENCY
+	if( pdst_next_sch->jid == pC->jid ) {
+	  r = 1;
+	  judged = TRUE;
+	} else
+	  r = 0;
+	break;
+      default:
+	assert( FALSE );
+      }
+      if( judged )
+	break;
+      else
+	pdst_next_sch = pdst_next_sch->ln.sp_sch.pFellow;
+    }
+  }
+  return r;
+}
+#endif
 
 static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
   assert( sch_dep );
@@ -392,9 +481,9 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
     assert( pdep_blk->sp.has_sp );
     assert( (pdep_blk->sp.sp_code > 0) && (pdep_blk->sp.sp_code < END_OF_SPs) );
     SCHEDULED_COMMAND_C_PTR pdep_next_sch = sch_dep[pdep_blk->sp.sp_code].pNext;
-    if( ! pdep_next_sch )
-      r = 0;
-    else {
+    
+    BOOL judged = FALSE;
+    while( pdep_next_sch ) {
       assert( pdep_next_sch );
       assert( (pdep_next_sch->cmd == ARS_SCHEDULED_ARRIVAL) || (pdep_next_sch->cmd == ARS_SCHEDULED_DEPT) || (pdep_next_sch->cmd == ARS_SCHEDULED_SKIP) );
       switch( pdep_next_sch->cmd ) {
@@ -408,17 +497,29 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
 #ifdef CHK_STRICT_CONSISTENCY
 	assert( pdep_next_sch->attr.sch_dept.dept_sp == pdep_blk->sp.sp_code );
 #endif // CHK_STRICT_CONSISTENCY
-	r = pdep_next_sch->jid != pC->jid;
+	if( pdep_next_sch->jid != pC->jid ) {
+	  r = 1;
+	  judged = TRUE;
+	} else
+	  r = 0;
 	break;
       case ARS_SCHEDULED_SKIP:
 #ifdef CHK_STRICT_CONSISTENCY
 	assert( pdep_next_sch->attr.sch_skip.ss_sp == pdep_blk->sp.sp_code );
 #endif // CHK_STRICT_CONSISTENCY
-	r = pdep_next_sch->jid == pC->jid;
+	if( pdep_next_sch->jid == pC->jid ) {
+	  r = 1;
+	  judged = TRUE;
+	} else
+	  r = 0;
 	break;
       default:
-	assert( FALSE );
+	assert( FALSE );	
       }
+      if( judged )
+	break;
+      else
+	pdep_next_sch = pdep_next_sch->ln.sp_sch.pFellow;
     }
   }
   return r;
