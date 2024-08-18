@@ -9,17 +9,18 @@
 #include "ars.h"
 #include "timetable.h"
 
-const char *cnv2str_ars_reasons[] = {
+const char *cnv2str_ars_reasons[] = {  
+  "ARS_NO_ROUTESET_CMD",
   "ARS_NO_TRIGGERED",
   "ARS_FOUND_TRAINS_AHEAD",
-  "ARS_CTRL_TRACKS_DROP",
   "ARS_CTRL_TRACKS_ROUTELOCKED",
-  "ARS_MUTEX_BLOCKED",
-  "ARS_NO_ROUTESET_CMD",
+  "ARS_CTRL_TRACKS_DROP",
   "ARS_WAITING_ROUTESET_TIME",
-  "ARS_FOUND_PRED_DEP_TRAIN_HERE",
-  "ARS_WAINTING_PRED_DEP_AT_DST",
+  "ARS_PRED_DEPTRAINS_FOUND",
+  "ARS_WAITING_PRED_DEPTRAINS_AT_DST",
   "ARS_ROUTE_CONTROLLED_NORMALLY",
+  "ARS_MUTEX_BLOCKED",
+  "END_OF_ARS_REASONS",
   NULL,
 };
 
@@ -408,6 +409,7 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
 	assert( pdst_next_sch->attr.sch_arriv.arr_sp == pdst_blk->sp.sp_code );
 #endif // CHK_STRICT_CONSISTENCY
 	if( pdst_next_sch->jid == pC->jid ) {
+	  const DWELL_ID dw_seq_arriv = pdst_next_sch->attr.sch_arriv.dw_seq;
 	  SCHEDULED_COMMAND_C_PTR pdst_next_next = pdst_next_sch->ln.sp_sch.pNext;
 	  if( pdst_next_next ) {
 	    r = 0;
@@ -419,9 +421,11 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
 		assert( pdst_next_next->attr.sch_dept.dept_sp == pdst_blk->sp.sp_code );
 #endif // CHK_STRICT_CONSISTENCY
 		if( pdst_next_next->jid == pC->jid ) {
-		  //assert();
-		  r = 1;	  
-		  break;
+		  const DWELL_ID dw_seq_dept = pdst_next_next->attr.sch_dept.dw_seq;
+		  if( dw_seq_dept == (dw_seq_arriv + 1) ) {
+		    r = 1;	  
+		    break;
+		  }
 		}
 	      }
 	      pdst_next_next = pdst_next_next->ln.sp_sch.pFellow;
@@ -597,14 +601,14 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
 		    if( cond < 0 )
 		      r = ARS_MUTEX_BLOCKED;
 		    else
-		      r = ARS_FOUND_PRED_DEP_TRAIN_HERE;
+		      r = ARS_PRED_DEPTRAINS_FOUND;
 		  } else {
 		    cond = ars_chk_dstschedule( pT->sp_schedule, pC );
 		    if( cond <= 0 ) {
 		      if( cond < 0 )
 			r = ARS_MUTEX_BLOCKED;
 		      else
-			r = ARS_WAINTING_PRED_DEP_AT_DST;
+			r = ARS_WAITING_PRED_DEPTRAINS_AT_DST;
 		    } else {
 		      ;
 		      r = ARS_ROUTE_CONTROLLED_NORMALLY;

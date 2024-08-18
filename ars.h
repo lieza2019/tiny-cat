@@ -88,12 +88,12 @@ typedef struct scheduled_command {
       ARS_ASSOC_TIME dept_time;
     } sch_routerel;
     struct { // for ARS_SCHEDULED_ARRIVAL
-      DWELL_ID dw_id;
+      DWELL_ID dw_seq;
       STOPPING_POINT_CODE arr_sp;
       ARS_ASSOC_TIME arr_time;
     } sch_arriv;
     struct { // for ARS_SCHEDULED_DEPT
-      DWELL_ID dw_id;
+      DWELL_ID dw_seq;
       TIME_DIFF dwell;
       STOPPING_POINT_CODE dept_sp;
       ARS_ASSOC_TIME dept_time;
@@ -105,7 +105,7 @@ typedef struct scheduled_command {
       } dept_dir;
     } sch_dept;
     struct { // ARS_SCHEDULED_SKIP
-      DWELL_ID dw_id;
+      DWELL_ID dw_seq;
       STOPPING_POINT_CODE ss_sp;
       ARS_ASSOC_TIME pass_time;
       STOPPING_POINT_CODE pass_sp;
@@ -130,16 +130,16 @@ typedef struct scheduled_command {
 typedef const struct scheduled_command *SCHEDULED_COMMAND_C_PTR;
 
 typedef enum ars_reasons {
+  ARS_NO_ROUTESET_CMD,
   ARS_NO_TRIGGERED,
   ARS_FOUND_TRAINS_AHEAD,
-  ARS_CTRL_TRACKS_DROP,
   ARS_CTRL_TRACKS_ROUTELOCKED,
-  ARS_MUTEX_BLOCKED,
-  ARS_NO_ROUTESET_CMD,
+  ARS_CTRL_TRACKS_DROP,
   ARS_WAITING_ROUTESET_TIME,
-  ARS_FOUND_PRED_DEP_TRAIN_HERE,
-  ARS_WAINTING_PRED_DEP_AT_DST,
+  ARS_PRED_DEPTRAINS_FOUND,
+  ARS_WAITING_PRED_DEPTRAINS_AT_DST,
   ARS_ROUTE_CONTROLLED_NORMALLY,
+  ARS_MUTEX_BLOCKED,
   END_OF_ARS_REASONS
 } ARS_REASONS;
 extern const char *cnv2str_ars_reasons[];
