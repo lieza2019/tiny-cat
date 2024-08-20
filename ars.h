@@ -7,7 +7,7 @@
 #include "cbi.h"
 
 typedef enum stopping_point_code {
-  SP_NONE,
+  SP_NONSENS,
     SP_73, // JLA_PL1
     SP_74, // JLA_PL2
   SP_75, // JLA_PL3

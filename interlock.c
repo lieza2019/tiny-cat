@@ -223,7 +223,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	  proute->ars_ctrl.trip_info.dep.pblk = &block_state[i];
 	  assert( proute->ars_ctrl.trip_info.dep.pblk );
 	  assert( (proute->ars_ctrl.trip_info.dep.sp >= 0) && (proute->ars_ctrl.trip_info.dep.sp < END_OF_SPs) );
-	  if( proute->ars_ctrl.trip_info.dep.sp != SP_NONE ) {
+	  if( proute->ars_ctrl.trip_info.dep.sp != SP_NONSENS ) {
 	    CBTC_BLOCK_C_PTR p = proute->ars_ctrl.trip_info.dep.pblk;
 	    assert( p );
 	    assert( p->sp.has_sp );
@@ -285,7 +285,7 @@ void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
     pblock->sp.stop_detect_cond.pforward = NULL;
     pblock->sp.stop_detect_cond.pback = NULL;
 #else
-    pblock->sp.stop_detect_cond.passoc_blk = NULL;      
+    pblock->sp.stop_detect_cond.ppaired_blk = NULL;
 #endif
     
 #if 0
@@ -326,22 +326,22 @@ void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
       assert( pblock->sp.stop_detect_cond.pback == &block_state[found] );
     }
 #else
-    if( pblock->sp.stop_detect_cond.assoc_blk != VB_NONSENS ) {
+    if( pblock->sp.stop_detect_cond.paired_blk != VB_NONSENS ) {
       int found = -1;
       int i = 0;
       while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
 	assert( block_state[i].block_name > 0 );
-	if( block_state[i].virt_block_name == pblock->sp.stop_detect_cond.assoc_blk ) {
+	if( block_state[i].virt_block_name == pblock->sp.stop_detect_cond.paired_blk ) {
 	  assert( found < 0 );
-	  pblock->sp.stop_detect_cond.passoc_blk = &block_state[i];
-	  assert( pblock->sp.stop_detect_cond.passoc_blk );
+	  pblock->sp.stop_detect_cond.ppaired_blk = &block_state[i];
+	  assert( pblock->sp.stop_detect_cond.ppaired_blk );
 	  found = i;
 	}
 	i++;
       }
       assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
       assert( found > -1 );
-      assert( pblock->sp.stop_detect_cond.passoc_blk == &block_state[found] );
+      assert( pblock->sp.stop_detect_cond.ppaired_blk == &block_state[found] );
     }
 #endif
   }
@@ -392,19 +392,19 @@ static void chk_consistency_over_sp_links ( void ) {
 	assert( ! pblock->sp.stop_detect_cond.pback );
       }
 #else
-      if( pblock->sp.stop_detect_cond.assoc_blk != VB_NONSENS ) {
-	CBTC_BLOCK_C_PTR pblk_assoc = pblock->sp.stop_detect_cond.passoc_blk;
+      if( pblock->sp.stop_detect_cond.paired_blk != VB_NONSENS ) {
+	CBTC_BLOCK_C_PTR pblk_assoc = pblock->sp.stop_detect_cond.ppaired_blk;
 	assert( pblk_assoc );
 	assert( pblk_assoc->sp.has_sp );
 	assert( pblk_assoc->sp.sp_code == pblock->sp.sp_code );
 	assert( pblk_assoc->sp.stop_detect_type == pblock->sp.stop_detect_type );
 	
-	assert( pblk_assoc->sp.stop_detect_cond.assoc_blk == pblock->virt_block_name );
-	assert( ! pblk_assoc->sp.stop_detect_cond.passoc_blk );
-	assert( pblk_assoc->sp.stop_detect_cond.passoc_blk == pblock );
+	assert( pblk_assoc->sp.stop_detect_cond.paired_blk == pblock->virt_block_name );
+	assert( ! pblk_assoc->sp.stop_detect_cond.ppaired_blk );
+	assert( pblk_assoc->sp.stop_detect_cond.ppaired_blk == pblock );
       } else {
-	assert( pblock->sp.stop_detect_cond.assoc_blk == VB_NONSENS );
-	assert( ! pblock->sp.stop_detect_cond.passoc_blk );
+	assert( pblock->sp.stop_detect_cond.paired_blk == VB_NONSENS );
+	assert( ! pblock->sp.stop_detect_cond.ppaired_blk );
       }
 #endif
     }

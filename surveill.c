@@ -13,7 +13,7 @@ typedef enum invaid_occpied_block_cond {
 STOPPING_POINT_CODE judge_train_arriv_major ( TINY_TRAIN_STATE_PTR pT, STOPPING_POINT_CODE sp ) {
   assert( pT );
   assert( (sp > 0) && (sp < END_OF_SPs) );
-  STOPPING_POINT_CODE r = SP_NONE;
+  STOPPING_POINT_CODE r = SP_NONSENS;
   
   TRAIN_INFO_ENTRY_PTR pI = NULL;
   pI = pT->pTI;
@@ -30,11 +30,11 @@ STOPPING_POINT_CODE judge_train_arriv_major ( TINY_TRAIN_STATE_PTR pT, STOPPING_
 	if( pB_forward->sp.has_sp || pB_back->sp.has_sp ) {
 	  if( ! pB_back->sp.has_sp ) {
 	    assert( pB_forward->sp.has_sp );
-	    if( pB_forward->sp.stop_detect_cond.assoc_blk == VB_NONSENS )
+	    if( pB_forward->sp.stop_detect_cond.paired_blk == VB_NONSENS )
 	      r = pB_forward->sp.sp_code;
 	  } else if( ! pB_forward->sp.has_sp ) {
 	    assert( pB_back->sp.has_sp );
-	    if( pB_back->sp.stop_detect_cond.assoc_blk == VB_NONSENS )
+	    if( pB_back->sp.stop_detect_cond.paired_blk == VB_NONSENS )
 	      r = pB_back->sp.has_sp;
 	  } else {
 	    assert( pB_forward->sp.has_sp && pB_back->sp.has_sp );
@@ -44,8 +44,8 @@ STOPPING_POINT_CODE judge_train_arriv_major ( TINY_TRAIN_STATE_PTR pT, STOPPING_
 	    } else {
 	      assert( pB_forward != pB_back );
 	      if( pB_forward->sp.sp_code == pB_back->sp.sp_code ) {
-		CBTC_BLOCK_C_PTR pB_forward_assoc = pB_forward->sp.stop_detect_cond.passoc_blk;
-		CBTC_BLOCK_C_PTR pB_back_assoc = pB_back->sp.stop_detect_cond.passoc_blk;
+		CBTC_BLOCK_C_PTR pB_forward_assoc = pB_forward->sp.stop_detect_cond.ppaired_blk;
+		CBTC_BLOCK_C_PTR pB_back_assoc = pB_back->sp.stop_detect_cond.ppaired_blk;
 		if( (pB_forward_assoc != NULL) && (pB_back_assoc != NULL) )
 		  if( (pB_forward_assoc == pB_back) && (pB_back_assoc == pB_forward) ) {
 		    assert( pB_forward->sp.sp_code == pB_back->sp.sp_code );
