@@ -629,24 +629,6 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
   return r;
 }
 
-BOOL ars_judge_arriv ( TINY_TRAIN_STATE_PTR pT, STOPPING_POINT_CODE sp ) {
-  assert( pT );
-  assert( (sp > 0) && (sp < END_OF_SPs) );
-  BOOL r = FALSE;
-  TRAIN_INFO_ENTRY_PTR pI = NULL;
-  pI = pT->pTI;
-  assert( pI );
-  {
-    unsigned short blk_occ_front = 0;
-    unsigned short blk_occ_rear = 0;
-    blk_occ_front = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI );
-    blk_occ_rear = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI );
-    assert( blk_occ_front > 0 );
-    assert( blk_occ_rear > 0 );
-  }
-  return r;
-}
-
 void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
   assert( pJ );
   SCHEDULED_COMMAND_PTR pC = NULL;
