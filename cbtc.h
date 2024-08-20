@@ -12,7 +12,7 @@
 typedef enum stop_detection_cond {
   P0_COUPLING,
   VIRTUAL_P0,
-  FORWARD_BACK_BLOCKS,
+  //FORWARD_BACK_BLOCKS,
   END_OF_STOP_DETECTION_TYPES
 } STOP_DETECTION_TYPE;
 
@@ -29,10 +29,17 @@ typedef struct block {
     const BOOL has_sp;
     const STOPPING_POINT_CODE sp_code;
     const STOP_DETECTION_TYPE stop_detect_type;
+#if 0
     struct {
       const CBTC_BLOCK_ID forward, back;
       struct block *pforward, *pback;
     } stop_detect_cond;
+#else
+    struct {
+      const CBTC_BLOCK_ID assoc_blk;
+      struct block *passoc_blk;
+    } stop_detect_cond;
+#endif
   } sp;
   /* the link to the train which FRONT_BLOCK-ID/REAR_BLOCK_ID bite this block, should be accessed with the type of TINY_TRAIN_STATE_PTR,
      via the designated access-methods of,

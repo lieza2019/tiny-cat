@@ -17,6 +17,7 @@ typedef struct tiny_train_state {
   BOOL releasing_emergency_stop;
   BOOL ordering_emergency_stop;
   BOOL ATB_cmd;
+  STOPPING_POINT_CODE stop_detected;
   struct {
     unsigned char cmd_id;
     unsigned char cmd_args[OCC_REMOTE_CMD_ARGS_SIZE];
