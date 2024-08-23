@@ -9,7 +9,8 @@ typedef enum dock_detect_directive {
   DOCK_DETECT_MINOR
 } DOCK_DETECT_DIRECTIVE;
 
-STOPPING_POINT_CODE judge_train_docked ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_STATE_PTR pT ) {
+STOPPING_POINT_CODE detect_train_docked ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_STATE_PTR pT ) {
+  assert( (mode == DOCK_DETECT_MAJOR) || (mode == DOCK_DETECT_MINOR) );
   assert( pT );
   STOPPING_POINT_CODE r = SP_NONSENS;
   
@@ -55,28 +56,45 @@ STOPPING_POINT_CODE judge_train_docked ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_
 	}
       }
     } else {
-      INVALID_OCCUPIED_BLOCK_COND cond_invalid;
       if( !pB_forward ) {
 	if( !pB_back ) {
 	  assert( !pB_forward );
 	  assert( !pB_back );
-	  cond_invalid = INVALID_FORWARD_BACK_BLOCK;
+	  errorF( "detected invalid occupied block (forward): %d.\n", blk_occ_forward );
+	  errorF( "detected invalid occupied block (back): %d.\n", blk_occ_back );
 	} else {
 	  assert( !pB_forward );
 	  assert( pB_back );
-	  cond_invalid = INVALID_FORWARD_BLOCK;
+	  errorF( "detected invalid occupied block (forward): %d.\n", blk_occ_forward );	  
 	}
       } else {
 	assert( pB_forward );
 	assert( !pB_back );
-	cond_invalid = INVALID_BACK_BLOCK;
+	errorF( "detected invalid occupied block (back): %d.\n", blk_occ_back );
       }
-      ;
     }     
     if( r != SP_NONSENS ) {
       assert( pB_forward );
       assert( pB_back );
-      if( pB_forward->sp.has_sp || pB_back->sp.has_sp ) {
+      BOOL has_p0 = FALSE;
+      assert( pB_forward->sp.has_sp || pB_back->sp.has_sp );
+      if( pB_forward->sp.has_sp && !pB_back->sp.has_sp )
+	has_p0 = pB_forward->sp.stop_detect_type == P0_COUPLING;
+      else if( !pB_forward->sp.has_sp && pB_back->sp.has_sp )
+	has_p0 = pB_back->sp.stop_detect_type == P0_COUPLING;
+      else {
+	assert( pB_forward->sp.has_sp && pB_back->sp.has_sp );
+	if( pB_forward == pB_back ) {
+	   assert( pB_forward->sp.sp_code == pB_back->sp.sp_code );
+	   has_p0 = pB_forward->sp.stop_detect_type == P0_COUPLING;
+	} else {
+	  if( pB_forward->sp.sp_code == pB_back->sp.sp_code )
+	    has_p0 = (pB_forward->sp.stop_detect_type == P0_COUPLING) || (pB_back->sp.stop_detect_type == P0_COUPLING);
+	  else
+	    has_p0 = FALSE;
+	}
+      }
+      if( has_p0 ) {
 	assert( pI );
 	switch( mode ) {
 	case DOCK_DETECT_MAJOR:
@@ -124,6 +142,20 @@ STOPPING_POINT_CODE judge_train_docked ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_
 	}
       }
     }
+  }
+  return r;
+}
+
+STOPPING_POINT_CODE detect_train_leave ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_STATE_PTR pT ) {
+  assert( (mode == DOCK_DETECT_MAJOR) || (mode == DOCK_DETECT_MINOR) );
+  assert( pT );
+  STOPPING_POINT_CODE r = SP_NONSENS;
+
+  TRAIN_INFO_ENTRY_PTR pI = NULL;
+  pI = pT->pTI;
+  if( pT->stop_detected != SP_NONSENS ) {
+    assert( pI );
+    ;
   }
   return r;
 }
