@@ -4,6 +4,43 @@
 #include "cbi.h"
 #include "interlock.h"
 
+static STOPPING_POINT_CODE sp_with_p0 ( CBTC_BLOCK_C_PTR pblk_forward, CBTC_BLOCK_C_PTR pblk_back ) {
+  assert( pblk_forward );
+  assert( pblk_back );
+  STOPPING_POINT_CODE r = SP_NONSENS;
+  
+  if( pblk_forward->sp.has_sp && !pblk_back->sp.has_sp )
+    r = (pblk_forward->sp.stop_detect_type == P0_COUPLING) ? pblk_forward->sp.sp_code : SP_NONSENS;
+  else if( !pblk_forward->sp.has_sp && pblk_back->sp.has_sp )    
+    r = (pblk_back->sp.stop_detect_type == P0_COUPLING) ? pblk_back->sp.sp_code : SP_NONSENS;
+  else if( pblk_forward->sp.has_sp && pblk_back->sp.has_sp ) {
+    if( pblk_forward == pblk_back ) {
+      assert( pblk_forward->sp.sp_code == pblk_back->sp.sp_code );
+      if( pblk_forward->sp.stop_detect_type == P0_COUPLING ) {
+	assert( pblk_back->sp.stop_detect_type == P0_COUPLING );
+	r = pblk_forward->sp.sp_code;
+      } else {
+	assert( pblk_back->sp.stop_detect_type != P0_COUPLING );
+	r = SP_NONSENS;
+      }
+    } else {
+      if( pblk_forward->sp.sp_code == pblk_back->sp.sp_code )	  
+	if( (pblk_forward->sp.stop_detect_type == P0_COUPLING) || (pblk_back->sp.stop_detect_type == P0_COUPLING) )
+	  r = pblk_forward->sp.sp_code;
+	else {
+	  assert( (pblk_forward->sp.stop_detect_type != P0_COUPLING) && (pblk_back->sp.stop_detect_type != P0_COUPLING) );
+	  r = SP_NONSENS;
+	}
+      else
+	r = SP_NONSENS;
+    }
+  } else {
+    assert( !pblk_forward->sp.has_sp && !pblk_back->sp.has_sp );
+    r = SP_NONSENS;
+  }
+  return r;
+}
+
 typedef enum dock_detect_directive {
   DOCK_DETECT_MAJOR,
   DOCK_DETECT_MINOR
@@ -60,41 +97,25 @@ STOPPING_POINT_CODE detect_train_docked ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN
 	if( !pB_back ) {
 	  assert( !pB_forward );
 	  assert( !pB_back );
-	  errorF( "detected invalid occupied block (forward): %d.\n", blk_occ_forward );
-	  errorF( "detected invalid occupied block (back): %d.\n", blk_occ_back );
+	  errorF( "invalid occupied block (forward): %d, detected.\n", blk_occ_forward );
+	  errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back );
 	} else {
 	  assert( !pB_forward );
 	  assert( pB_back );
-	  errorF( "detected invalid occupied block (forward): %d.\n", blk_occ_forward );	  
+	  errorF( "invalid occupied block (forward): %d, detected.\n", blk_occ_forward );	  
 	}
       } else {
 	assert( pB_forward );
 	assert( !pB_back );
-	errorF( "detected invalid occupied block (back): %d.\n", blk_occ_back );
+	errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back );
       }
-    }     
+    }
     if( r != SP_NONSENS ) {
+      const STOPPING_POINT_CODE sp_now = r;
       assert( pB_forward );
       assert( pB_back );
-      BOOL has_p0 = FALSE;
       assert( pB_forward->sp.has_sp || pB_back->sp.has_sp );
-      if( pB_forward->sp.has_sp && !pB_back->sp.has_sp )
-	has_p0 = pB_forward->sp.stop_detect_type == P0_COUPLING;
-      else if( !pB_forward->sp.has_sp && pB_back->sp.has_sp )
-	has_p0 = pB_back->sp.stop_detect_type == P0_COUPLING;
-      else {
-	assert( pB_forward->sp.has_sp && pB_back->sp.has_sp );
-	if( pB_forward == pB_back ) {
-	   assert( pB_forward->sp.sp_code == pB_back->sp.sp_code );
-	   has_p0 = pB_forward->sp.stop_detect_type == P0_COUPLING;
-	} else {
-	  if( pB_forward->sp.sp_code == pB_back->sp.sp_code )
-	    has_p0 = (pB_forward->sp.stop_detect_type == P0_COUPLING) || (pB_back->sp.stop_detect_type == P0_COUPLING);
-	  else
-	    has_p0 = FALSE;
-	}
-      }
-      if( has_p0 ) {
+      if( sp_with_p0( pB_forward, pB_back ) == sp_now ) {
 	assert( pI );
 	switch( mode ) {
 	case DOCK_DETECT_MAJOR:
@@ -153,9 +174,65 @@ STOPPING_POINT_CODE detect_train_leave ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_
 
   TRAIN_INFO_ENTRY_PTR pI = NULL;
   pI = pT->pTI;
+  assert( pI );
   if( pT->stop_detected != SP_NONSENS ) {
-    assert( pI );
-    ;
+    if( !TRAIN_INFO_STOP_DETECTION(*pI) ) {
+      const unsigned short blk_occ_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI );
+      const unsigned short blk_occ_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI );
+      
+      assert( blk_occ_forward > 0 );
+      assert( blk_occ_back > 0 );
+      CBTC_BLOCK_C_PTR pB_forward = lookup_cbtc_block_prof( blk_occ_forward );
+      CBTC_BLOCK_C_PTR pB_back = lookup_cbtc_block_prof( blk_occ_back );
+      if( (pB_forward != NULL) && (pB_back != NULL) ) {
+	if( pB_forward->sp.has_sp || pB_back->sp.has_sp ) {
+	  STOPPING_POINT_CODE sp_now = SP_NONSENS;
+	  sp_now = sp_with_p0( pB_forward, pB_back );
+	  if( sp_now == pT->stop_detected ) {
+	    switch( TRAIN_INFO_OPERATION_MODE( *pI ) ) {
+	    case OM_UTO:
+	      /* same as the case of ATO, fall thru. */
+	    case OM_ATO:
+	      if( !TRAIN_INFO_P0_STOPPED(*pI) && !TRAIN_INFO_DOOR_ENABLE(*pI) ) {
+		r = sp_now;
+		break;
+	      }
+	      break;
+	    case OM_ATP:
+	      /* fail thru. */
+	    case OM_RM:
+	      /* fail thru. */
+	    default:
+	      if( !TRAIN_INFO_P0_STOPPED(*pI) && !TRAIN_INFO_DOOR_ENABLE(*pI) )
+		goto chk_front_blk_occupancy;
+	      break;
+	    }
+	  } else {
+	  chk_front_blk_occupancy:
+	    assert( pB_forward->sp.has_sp || pB_back->sp.has_sp );
+	    if( !pB_forward->sp.has_sp && pB_back->sp.has_sp )
+	      r = (pB_back->sp.sp_code == pT->stop_detected) ? pT->stop_detected : SP_NONSENS;
+	  }
+	}
+      } else {
+	if( !pB_forward ) {
+	  if( !pB_back ) {
+	    assert( !pB_forward );
+	    assert( !pB_back );
+	    errorF( "invalid occupied block (forward): %d, detected.\n", blk_occ_forward );
+	    errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back );
+	  } else {
+	    assert( !pB_forward );
+	    assert( pB_back );
+	    errorF( "invalid occupied block (forward): %d, detected.\n", blk_occ_forward );	  
+	  }
+	} else {
+	  assert( pB_forward );
+	  assert( !pB_back );
+	  errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back );
+	}
+      }    
+    }
   }
   return r;
 }
