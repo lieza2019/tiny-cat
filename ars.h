@@ -24,12 +24,16 @@ typedef enum stopping_point_code {
   END_OF_SPs
 } STOPPING_POINT_CODE;
 
-#define DEFALUT_ROUTESET_OFFSET 30
-#define DEFAULT_DEPARTURE_OFFSET 7
-typedef struct system_params {
-  int routeset_offset;
-  int departure_offset; 
-} SYSTEM_PARAMS, *SYSTEM_PARAMS_PTR;
+typedef enum ars_events_over_sp {
+  ARS_DOCK_DETECTED,
+  ARS_LEAVE_DETECTED,
+  ARS_SKIP_DETECTED,
+  ARS_DETECTS_NONE
+} ARS_EVENTS_OVER_SP;
+typedef struct ars_event_on_sp {
+  STOPPING_POINT_CODE sp;
+  ARS_EVENTS_OVER_SP detail;
+} ARS_EVENT_ON_SP, *ARS_EVENT_ON_SP_PTR;
 
 typedef enum offset_time_to_fire {
   OFFSET_TO_ROUTESET,
@@ -143,6 +147,13 @@ typedef enum ars_reasons {
   END_OF_ARS_REASONS
 } ARS_REASONS;
 extern const char *cnv2str_ars_reasons[];
+
+#define DEFALUT_ROUTESET_OFFSET 30
+#define DEFAULT_DEPARTURE_OFFSET 7
+typedef struct system_params {
+  int routeset_offset;
+  int departure_offset; 
+} SYSTEM_PARAMS, *SYSTEM_PARAMS_PTR;
 
 extern SYSTEM_PARAMS tiny_system_params;
 

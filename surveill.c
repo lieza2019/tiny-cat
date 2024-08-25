@@ -3,6 +3,7 @@
 #include "sparcs.h"
 #include "cbi.h"
 #include "interlock.h"
+#include "surveill.h"
 
 static STOPPING_POINT_CODE sp_with_p0 ( CBTC_BLOCK_C_PTR pblk_forward, CBTC_BLOCK_C_PTR pblk_back ) {
   assert( pblk_forward );
@@ -41,11 +42,6 @@ static STOPPING_POINT_CODE sp_with_p0 ( CBTC_BLOCK_C_PTR pblk_forward, CBTC_BLOC
   return r;
 }
 
-typedef enum dock_detect_directive {
-  DOCK_DETECT_MAJOR,
-  DOCK_DETECT_MINOR
-} DOCK_DETECT_DIRECTIVE;
-
 STOPPING_POINT_CODE detect_train_docked ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_STATE_PTR pT ) {
   assert( (mode == DOCK_DETECT_MAJOR) || (mode == DOCK_DETECT_MINOR) );
   assert( pT );
@@ -57,7 +53,6 @@ STOPPING_POINT_CODE detect_train_docked ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN
   if( (mode == DOCK_DETECT_MINOR) || (TRAIN_INFO_STOP_DETECTION(*pI)) ) {
     const unsigned short blk_occ_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI );
     const unsigned short blk_occ_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI );
-    
     assert( blk_occ_forward > 0 );
     assert( blk_occ_back > 0 );
     CBTC_BLOCK_C_PTR pB_forward = lookup_cbtc_block_prof( blk_occ_forward );
@@ -167,11 +162,10 @@ STOPPING_POINT_CODE detect_train_docked ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN
   return r;
 }
 
-STOPPING_POINT_CODE detect_train_leave ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_STATE_PTR pT ) {
-  assert( (mode == DOCK_DETECT_MAJOR) || (mode == DOCK_DETECT_MINOR) );
+STOPPING_POINT_CODE detect_train_leave ( TINY_TRAIN_STATE_PTR pT ) {
   assert( pT );
   STOPPING_POINT_CODE r = SP_NONSENS;
-
+  
   TRAIN_INFO_ENTRY_PTR pI = NULL;
   pI = pT->pTI;
   assert( pI );
@@ -179,7 +173,6 @@ STOPPING_POINT_CODE detect_train_leave ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_
     if( !TRAIN_INFO_STOP_DETECTION(*pI) ) {
       const unsigned short blk_occ_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI );
       const unsigned short blk_occ_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI );
-      
       assert( blk_occ_forward > 0 );
       assert( blk_occ_back > 0 );
       CBTC_BLOCK_C_PTR pB_forward = lookup_cbtc_block_prof( blk_occ_forward );
@@ -232,6 +225,66 @@ STOPPING_POINT_CODE detect_train_leave ( DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_
 	  errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back );
 	}
       }    
+    }
+  }
+  return r;
+}
+
+STOPPING_POINT_CODE detect_train_skip ( TINY_TRAIN_STATE_PTR pT ) {
+  assert( pT );
+  STOPPING_POINT_CODE r = SP_NONSENS;
+  
+  TRAIN_INFO_ENTRY_PTR pI_prev = NULL;
+  TRAIN_INFO_ENTRY_PTR pI_now = NULL;
+  pI_prev = &pT->TI_prev;
+  pI_now = pT->pTI;
+  
+  assert( pI_now );
+  assert( pI_prev );
+  if( pT->stop_detected == SP_NONSENS ) {
+    const unsigned short blk_occ_forward_prev = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI_prev );
+    const unsigned short blk_occ_back_prev = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI_prev );
+    assert( blk_occ_forward_prev > 0 );
+    assert( blk_occ_back_prev > 0 );
+    CBTC_BLOCK_C_PTR pB_forward_prev = lookup_cbtc_block_prof( blk_occ_forward_prev );
+    CBTC_BLOCK_C_PTR pB_back_prev = lookup_cbtc_block_prof( blk_occ_back_prev );
+    if( (pB_forward_prev != NULL) && (pB_back_prev != NULL) ) {
+      assert( pB_forward_prev );
+      if( pB_forward_prev->sp.has_sp ) {
+	const STOPPING_POINT_CODE sp_prev = pB_forward_prev->sp.sp_code;
+	
+	const unsigned short blk_occ_forward_now = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI_now );
+	const unsigned short blk_occ_back_now = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI_now );	
+	assert( blk_occ_forward_now > 0 );
+	assert( blk_occ_back_now > 0 );
+	CBTC_BLOCK_C_PTR pB_forward_now = lookup_cbtc_block_prof( blk_occ_forward_now );
+	CBTC_BLOCK_C_PTR pB_back_now = lookup_cbtc_block_prof( blk_occ_back_now );
+	if( (pB_forward_now != NULL) && (pB_back_now != NULL) ) {
+	  assert( pB_forward_now );
+	  assert( pB_back_now );
+	  if( pB_back_now->sp.has_sp && (pB_back_now->sp.sp_code == sp_prev) )
+	    if( !pB_forward_now->sp.has_sp )
+	      r = pB_back_now->sp.sp_code;
+	} else {
+	  if( !pB_forward_now ) {
+	    if( !pB_back_now ) {
+	      assert( !pB_forward_now );
+	      assert( !pB_back_now );
+	      errorF( "invalid occupied block (forward): %d, detected.\n", blk_occ_forward_now );
+	      errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back_now );
+	    } else {
+	      assert( !pB_forward_now );
+	      assert( pB_back_now );
+	      errorF( "invalid occupied block (forward): %d, detected.\n", blk_occ_forward_now );
+	    }
+	  } else {
+	    assert( pB_forward_now );
+	    assert( !pB_back_now );
+	    errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back_now );
+	  }
+	}
+	
+      }
     }
   }
   return r;

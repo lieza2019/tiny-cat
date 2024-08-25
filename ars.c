@@ -7,6 +7,7 @@
 #include "cbi.h"
 #include "interlock.h"
 #include "ars.h"
+#include "surveill.h"
 #include "timetable.h"
 
 const char *cnv2str_ars_reasons[] = {  
@@ -40,6 +41,48 @@ SCHEDULED_COMMAND_PTR sch_cmd_newnode( void ) {
     errorF( "%s", "nodes exhausted, to create a scheduled command.\n" );
   return r;
 };
+
+STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TINY_TRAIN_STATE_PTR pT ) {
+  assert( pdetects );
+  assert( pT );
+  STOPPING_POINT_CODE hit_sp = SP_NONSENS;
+  
+  pdetects->sp = SP_NONSENS;
+  pdetects->detail = ARS_DETECTS_NONE;
+  
+  if( pT->stop_detected == SP_NONSENS ) {
+    hit_sp = detect_train_docked( DOCK_DETECT_MAJOR, pT );
+    if( hit_sp != SP_NONSENS ) {
+      pT->stop_detected = hit_sp;
+      pdetects->sp = hit_sp;
+      pdetects->detail = ARS_DOCK_DETECTED;
+    }
+  }
+  hit_sp = SP_NONSENS;
+  hit_sp = detect_train_docked( DOCK_DETECT_MINOR, pT );
+  if( hit_sp != SP_NONSENS ) {
+    pT->stop_detected = hit_sp;
+    pdetects->sp = hit_sp;
+    pdetects->detail = ARS_DOCK_DETECTED;
+  }
+  
+  hit_sp = SP_NONSENS;
+  hit_sp = detect_train_leave( pT );
+  if( hit_sp != SP_NONSENS ) {
+    pT->stop_detected = SP_NONSENS;
+    pdetects->sp = hit_sp;
+    pdetects->detail = ARS_LEAVE_DETECTED;
+  }
+  
+  hit_sp = SP_NONSENS;
+  hit_sp = detect_train_skip( pT );
+  if( hit_sp != SP_NONSENS ) {
+    assert( pT->stop_detected == SP_NONSENS );
+    pdetects->sp = hit_sp;
+    pdetects->detail = ARS_SKIP_DETECTED;
+  }
+  return pdetects->sp;
+}
 
 static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, int hour, int minute, int second ) {
   assert( (offset_kind >= 0) && (offset_kind < END_OF_OFFSET_TIMES) );

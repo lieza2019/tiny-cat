@@ -41,7 +41,9 @@ typedef struct timetable {
 } TIMETABLE, *TIMETABLE_PTR;
 
 extern void cons_sp_schedule ( void );
+
 extern SCHEDULED_COMMAND_PTR sch_cmd_newnode( void );
+extern STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TINY_TRAIN_STATE_PTR pT );
 extern ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ );
 
 #endif // TIMETABLE_H

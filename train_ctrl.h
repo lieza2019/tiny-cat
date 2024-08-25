@@ -29,6 +29,7 @@ typedef struct tiny_train_state {
     struct tiny_train_state *pNext;
   } occupancy;
   TRAIN_INFO_ENTRY_PTR  pTI;
+  TRAIN_INFO_ENTRY TI_prev;
   BOOL updated;
   BOOL omit;
   struct tiny_train_state *pNext;
