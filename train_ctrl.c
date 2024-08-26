@@ -220,6 +220,7 @@ static TINY_TRAIN_STATE_PTR enum_orphant_trains ( void ) {
 	trains_tracking[i].pNext = NULL;
 	pp = &trains_tracking[i].pNext;
 	trains_tracking[i].omit = TRUE;
+	trains_tracking[i].pTI = NULL;
       }
     assert( *pp == NULL );
   }
@@ -263,9 +264,12 @@ static TINY_TRAIN_STATE_PTR update_train_state ( TRAIN_INFO_ENTRY_PTR pI ) {
       assert( i == frontier );
       pE = &trains_tracking[frontier];
       retrieve_from_train_info( pE, pI );
+      pE->pTI = NULL;
       frontier++;
     }
     assert( pE );
+    if( pE->pTI )
+      memcpy( &pE->TI_last, pE->pTI, (int)sizeof(TRAIN_INFO_ENTRY) );
     pE->pTI = pI;
     pE->updated = TRUE;
     pE->omit = FALSE;
@@ -307,7 +311,11 @@ void reveal_train_tracking( TINY_SOCK_PTR pS ) {
 	  pE = update_train_state( &pSC->train_information.recv.train_info.entries[j] );
 	  assert( pE );
 	  update_train_resblock( pE );
-	  pSC->train_information.pTrain_stat[i] = pE;
+#if 0
+	  pSC->train_information.pTrain_stat[i] = pE; // ***** BUG? *****
+#else
+	  pSC->train_information.pTrain_stat[j] = pE;
+#endif
 	}
       }
     }

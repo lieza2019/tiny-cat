@@ -36,7 +36,7 @@ cbi.h: generic.h misc.h network.h ./cbi/cbi_stat_kind.def ./cbi/il_obj_instance_
 	$(TOUCH) $@
 interlock.h : generic.h misc.h cbi.h cbtc.h interlock_def.h
 	$(TOUCH) $@
-surveill.h : generic.h misc.h surveill.h
+surveill.h : generic.h misc.h
 	$(TOUCH) $@
 ars.h : generic.h misc.h cbi.h
 	$(TOUCH) $@

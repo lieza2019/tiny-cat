@@ -236,7 +236,7 @@ STOPPING_POINT_CODE detect_train_skip ( TINY_TRAIN_STATE_PTR pT ) {
   
   TRAIN_INFO_ENTRY_PTR pI_prev = NULL;
   TRAIN_INFO_ENTRY_PTR pI_now = NULL;
-  pI_prev = &pT->TI_prev;
+  pI_prev = &pT->TI_last;
   pI_now = pT->pTI;
   
   assert( pI_now );

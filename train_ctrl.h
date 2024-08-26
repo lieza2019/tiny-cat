@@ -28,8 +28,8 @@ typedef struct tiny_train_state {
     CBTC_BLOCK_PTR pblk_back;
     struct tiny_train_state *pNext;
   } occupancy;
-  TRAIN_INFO_ENTRY_PTR  pTI;
-  TRAIN_INFO_ENTRY TI_prev;
+  TRAIN_INFO_ENTRY_PTR pTI;
+  TRAIN_INFO_ENTRY TI_last;
   BOOL updated;
   BOOL omit;
   struct tiny_train_state *pNext;
