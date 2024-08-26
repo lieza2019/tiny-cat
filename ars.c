@@ -67,6 +67,14 @@ STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TI
   }
   
   hit_sp = SP_NONSENS;
+  hit_sp = detect_train_skip( pT );
+  if( hit_sp != SP_NONSENS ) {
+    assert( pT->stop_detected == SP_NONSENS );
+    pdetects->sp = hit_sp;
+    pdetects->detail = ARS_SKIP_DETECTED;
+  }
+  
+  hit_sp = SP_NONSENS;
   hit_sp = detect_train_leave( pT );
   if( hit_sp != SP_NONSENS ) {
     pT->stop_detected = SP_NONSENS;
@@ -74,13 +82,6 @@ STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TI
     pdetects->detail = ARS_LEAVE_DETECTED;
   }
   
-  hit_sp = SP_NONSENS;
-  hit_sp = detect_train_skip( pT );
-  if( hit_sp != SP_NONSENS ) {
-    assert( pT->stop_detected == SP_NONSENS );
-    pdetects->sp = hit_sp;
-    pdetects->detail = ARS_SKIP_DETECTED;
-  }
   return pdetects->sp;
 }
 
@@ -672,64 +673,93 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
   return r;
 }
 
+static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PTR pC ) {
+  assert( pC );
+  assert( pJ );
+  assert( pJ->scheduled_commands.pNext == pC );
+  
+  SCHEDULED_COMMAND_PTR *pp = NULL;
+  pp = &pJ->past_commands;
+  assert( pp );
+  while( *pp ) {
+    assert( *pp );
+    pp = &(*pp)->ln.journey.pNext;
+    assert( pp );
+  }
+  assert( pp );
+  assert( ! *pp );
+  *pp = pC;
+  pJ->scheduled_commands.pNext = pC->ln.journey.pNext;
+  pC->ln.journey.pNext = NULL;
+  
+  return ( pJ->scheduled_commands.pNext );
+}
+
 void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
   assert( pJ );
-  SCHEDULED_COMMAND_PTR pC = NULL;
-  pC = pJ->scheduled_commands.pNext;
-  while( pC ) {
-    OC_ID oc_id;    CBI_STAT_KIND kind;
-    int stat = -1;
-    switch ( pC->cmd ) {
-    case ARS_SCHEDULED_ROUTESET:
-      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_routeset.route_id) );
-      assert( stat >= 0 );
-      if( stat > 0 ) {
-	SCHEDULED_COMMAND_PTR *pp = NULL;
-	pp = &pJ->past_commands;
-	assert( pp );
-	while( *pp ) {
-	  assert( *pp );
-	  pp = &(*pp)->ln.journey.pNext;
-	  assert( pp );
+  TINY_TRAIN_STATE_PTR pT = NULL;
+  pT = pJ->ptrain_ctrl;
+  if( pT ) {
+    SCHEDULED_COMMAND_PTR pC = NULL;
+    pC = pJ->scheduled_commands.pNext;
+    while( pC ) {
+      OC_ID oc_id;
+      CBI_STAT_KIND kind;
+      int stat = -1;
+      switch ( pC->cmd ) {
+      case ARS_SCHEDULED_ROUTESET:
+	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_routeset.route_id) );
+	assert( stat >= 0 );
+	if( stat > 0 ) {
+	  make_it_past( pJ, pC );
 	}
-	assert( pp );
-	assert( ! *pp );
-	*pp = pC;
-	pJ->scheduled_commands.pNext = pC->ln.journey.pNext;
-	pC->ln.journey.pNext = NULL;
-      }
-      break;
-    case ARS_SCHEDULED_ROUTEREL:
-      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_routeset.route_id) );
-      assert( stat >= 0 );
-      if( stat < 1 ) {
-	assert( stat == 0 );
-	SCHEDULED_COMMAND_PTR *pp = NULL;
-	pp = &pJ->past_commands;
-	assert( pp );
-	while( *pp ) {
-	  pp = &(*pp)->ln.journey.pNext;
+	break;
+      case ARS_SCHEDULED_ROUTEREL:
+	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_routeset.route_id) );
+	assert( stat >= 0 );
+	if( stat < 1 ) {
+	  assert( stat == 0 );
+	  SCHEDULED_COMMAND_PTR *pp = NULL;
+	  pp = &pJ->past_commands;
 	  assert( pp );
+	  while( *pp ) {
+	    pp = &(*pp)->ln.journey.pNext;
+	    assert( pp );
+	  }
+	  assert( pp );
+	  assert( ! *pp );
+	  *pp = pC;
+	  pJ->scheduled_commands.pNext = pC->ln.journey.pNext;
+	  pC->ln.journey.pNext = NULL;
 	}
-	assert( pp );
-	assert( ! *pp );
-	*pp = pC;
-	pJ->scheduled_commands.pNext = pC->ln.journey.pNext;
-	pC->ln.journey.pNext = NULL;
+	break;
+      case ARS_SCHEDULED_ARRIVAL:
+	assert( pT );
+	{ 
+	  ARS_EVENT_ON_SP detects;
+	  STOPPING_POINT_CODE sp_d = SP_NONSENS;
+	  sp_d = ars_judge_arriv_dept_skip( &detects, pT );
+	  if( sp_d != SP_NONSENS )
+	    if( detects.detail == ARS_DOCK_DETECTED ) {
+	      assert( detects.sp == sp_d );
+	      if( detects.sp == pC->attr.sch_arriv.arr_sp ) {
+		//pC->arr_time = ;
+		make_it_past( pJ, pC );
+	      }
+	    }
+	}
+	break;
+      case ARS_SCHEDULED_DEPT:
+	break;
+      case ARS_SCHEDULED_SKIP:
+	break;
+      case END_OF_SCHEDULED_CMDS:
+	break;
+      default:
+	assert( FALSE );
       }
-      break;
-    case ARS_SCHEDULED_ARRIVAL:
-      break;
-    case ARS_SCHEDULED_DEPT:
-      break;
-    case ARS_SCHEDULED_SKIP:
-      break;
-    case END_OF_SCHEDULED_CMDS:
-      break;
-    default:
-      assert( FALSE );
+      pC = pC->ln.journey.pNext;
     }
-    pC = pC->ln.journey.pNext;
+    pJ->scheduled_commands.pNext = pC;
   }
-  pJ->scheduled_commands.pNext = pC;
 }
