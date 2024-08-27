@@ -715,17 +715,16 @@ static ARS_ASSOC_TIME_PTR timestamp ( ARS_ASSOC_TIME_PTR pstamp ) {
   return r;
 }
 
-void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
+SCHEDULED_COMMAND_PTR ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
   assert( pJ );
+  SCHEDULED_COMMAND_PTR r = NULL;
+  
   TINY_TRAIN_STATE_PTR pT = NULL;
   pT = pJ->ptrain_ctrl;
   if( pT ) {
     SCHEDULED_COMMAND_PTR pC = NULL;
     pC = pJ->scheduled_commands.pNext;
     while( pC ) {
-      OC_ID oc_id;
-      CBI_STAT_KIND kind;
-      int stat = -1;
       switch ( pC->cmd ) {
       case ARS_SCHEDULED_ROUTESET:
 	assert( pC );
@@ -740,6 +739,9 @@ void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
 	    int cond = -1;
 	    cond = ars_chk_hit_trgsection( pR, pJ->ptrain_ctrl );
 	    if( cond >= 2 ) {
+	      OC_ID oc_id;
+	      CBI_STAT_KIND kind;
+	      int stat = -1;
 	      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_roset.route_id) );
 	      if( stat > 0 ) {
 		timestamp( &pC->attr.sch_roset.dept_time );
@@ -750,22 +752,26 @@ void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
 	}
 	break;
       case ARS_SCHEDULED_ROUTEREL:
-	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_rorel.route_id) );
-	assert( stat >= 0 );
-	if( stat < 1 ) {
-	  assert( stat == 0 );
-	  SCHEDULED_COMMAND_PTR *pp = NULL;
-	  pp = &pJ->past_commands;
-	  assert( pp );
-	  while( *pp ) {
-	    pp = &(*pp)->ln.journey.pNext;
-	    assert( pp );
+	assert( pC );
+	{
+	  ROUTE_C_PTR pR = NULL;
+	  pR = conslt_route_prof( pC->attr.sch_rorel.route_id );
+	  assert( pR );
+	  assert( pR->kind_cbi == _ROUTE );
+	  assert( (pR->kind_route < END_OF_ROUTE_KINDS) && (pR->kind_route != EMERGE_ROUTE) );
+	  assert( pR->ars_ctrl.app );
+	  if( pR->ars_ctrl.ctrl_tracks.pahead_trks[0] ) {
+	    TRACK_C_PTR pahead_trk = pR->ars_ctrl.ctrl_tracks.pahead_trks[0];
+	    OC_ID oc_id;
+	    CBI_STAT_KIND kind;
+	    int stat = -1;
+	    assert( pahead_trk );
+	    stat = conslt_il_state( &oc_id, &kind, pahead_trk->name );
+	    if( stat == 0 ) {
+	      timestamp( &pC->attr.sch_rorel.dept_time );
+	      make_it_past( pJ, pC );
+	    }
 	  }
-	  assert( pp );
-	  assert( ! *pp );
-	  *pp = pC;
-	  pJ->scheduled_commands.pNext = pC->ln.journey.pNext;
-	  pC->ln.journey.pNext = NULL;
 	}
 	break;
       case ARS_SCHEDULED_ARRIVAL:
@@ -840,11 +846,33 @@ void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
 	}
 	break;
       case END_OF_SCHEDULED_CMDS:
-	break;
+	return pC;
       default:
 	assert( FALSE );
       }
       pC = pC->ln.journey.pNext;
     }
+    r = pC;
+  }
+  return r;
+}
+
+#if 0
+static IL_OBJ_INSTANCES ahead_track ( IL_OBJ_INSTANCES route ) {
+  ROUTE_C_PTR pR = NULL;
+  
+  pR = conslt_route_prof( route );
+  assert( pR );
+  assert( pR->kind_cbi == _ROUTE );
+  assert( pR->kind_route < END_OF_ROUTE_KINDS );
+  //assert( pR->ars_ctrl.app );
+
+  if( pR->ars_ctrl.ctrl_tracks.num_ahead_tracks > 0 ) {
+    TRACK_C_PTR pahead_trk = NULL;
+    int i;
+    for( i = 0; i < MAX_ROUTE_TRACKS; i++ ) {
+      pR->ars_ctrl.ctrl_tracks.chk_trks[i] == 
+    }
   }
 }
+#endif
