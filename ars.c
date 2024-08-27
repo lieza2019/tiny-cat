@@ -730,10 +730,22 @@ void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
       case ARS_SCHEDULED_ROUTESET:
 	assert( pC );
 	{
-	  stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_roset.route_id) );
-	  if( stat > 0 ) {
-	    timestamp( &pC->attr.sch_roset.dept_time );
-	    make_it_past( pJ, pC );
+	  ROUTE_C_PTR pR = NULL;
+	  pR = conslt_route_prof( pC->attr.sch_roset.route_id );
+	  assert( pR );
+	  assert( pR->kind_cbi == _ROUTE );
+	  assert( (pR->kind_route < END_OF_ROUTE_KINDS) && (pR->kind_route != EMERGE_ROUTE) );
+	  assert( pR->ars_ctrl.app );
+	  {
+	    int cond = -1;
+	    cond = ars_chk_hit_trgsection( pR, pJ->ptrain_ctrl );
+	    if( cond >= 2 ) {
+	      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_roset.route_id) );
+	      if( stat > 0 ) {
+		timestamp( &pC->attr.sch_roset.dept_time );
+		make_it_past( pJ, pC );
+	      }
+	    }
 	  }
 	}
 	break;
