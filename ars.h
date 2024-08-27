@@ -85,12 +85,12 @@ typedef struct scheduled_command {
       IL_OBJ_INSTANCES route_id;
       BOOL is_dept_route;
       ARS_ASSOC_TIME dept_time;
-    } sch_routeset;
+    } sch_roset;
     struct { // for ARS_SCHEDULED_ROUTEREL
       int nth_routerel;
       IL_OBJ_INSTANCES route_id;
       ARS_ASSOC_TIME dept_time;
-    } sch_routerel;
+    } sch_rorel;
     struct { // for ARS_SCHEDULED_ARRIVAL
       DWELL_ID dw_seq;
       STOPPING_POINT_CODE arr_sp;

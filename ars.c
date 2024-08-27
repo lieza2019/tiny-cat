@@ -422,20 +422,20 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
   assert( sch_dst );
   assert( pC );
   assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
-  assert( whats_kind_of_il_obj( pC->attr.sch_routeset.route_id ) == _ROUTE );
+  assert( whats_kind_of_il_obj( pC->attr.sch_roset.route_id ) == _ROUTE );
   int r = -1;
   
   ROUTE_C_PTR pR = NULL;
-  pR = conslt_route_prof( pC->attr.sch_routeset.route_id );
+  pR = conslt_route_prof( pC->attr.sch_roset.route_id );
   assert( pR );
   assert( pR->kind_cbi == _ROUTE );
   assert( pR->ars_ctrl.app );
   assert( pR->ars_ctrl.trip_info.dst.pblk );
-  if( pC->attr.sch_routeset.is_dept_route ) {
+  if( pC->attr.sch_roset.is_dept_route ) {
     assert( pR->kind_route == DEP_ROUTE );
     r = 1;
   } else {
-    assert( ! pC->attr.sch_routeset.is_dept_route );
+    assert( ! pC->attr.sch_roset.is_dept_route );
     assert( (pR->kind_route == ENT_ROUTE) || (pR->kind_route == SHUNT_ROUTE) );
     CBTC_BLOCK_C_PTR pdst_blk = pR->ars_ctrl.trip_info.dst.pblk;
     assert( pdst_blk );
@@ -513,11 +513,11 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
   assert( sch_dep );
   assert( pC );
   assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
-  assert( whats_kind_of_il_obj( pC->attr.sch_routeset.route_id ) == _ROUTE );
+  assert( whats_kind_of_il_obj( pC->attr.sch_roset.route_id ) == _ROUTE );
   int r = -1;
   
   ROUTE_C_PTR pR = NULL;
-  pR = conslt_route_prof( pC->attr.sch_routeset.route_id );
+  pR = conslt_route_prof( pC->attr.sch_roset.route_id );
   assert( pR );
   assert( pR->kind_cbi == _ROUTE );
   assert( pR->ars_ctrl.app );
@@ -587,9 +587,9 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
     assert( pC );    
     {
       assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
-      assert( whats_kind_of_il_obj( pC->attr.sch_routeset.route_id ) == _ROUTE );
+      assert( whats_kind_of_il_obj( pC->attr.sch_roset.route_id ) == _ROUTE );
       ROUTE_C_PTR pR = NULL;
-      pR = conslt_route_prof( pC->attr.sch_routeset.route_id );
+      pR = conslt_route_prof( pC->attr.sch_roset.route_id );
       assert( pR );
       assert( pR->kind_cbi == _ROUTE );
       assert( (pR->kind_route < END_OF_ROUTE_KINDS) && (pR->kind_route != EMERGE_ROUTE) );
@@ -614,13 +614,13 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
 	      r = ARS_CTRL_TRACKS_DROP;
 	  } else {
 	    assert( pC );
-	    const int hour_to_set = pC->attr.sch_routeset.dept_time.hour;
-	    const int minute_to_set = pC->attr.sch_routeset.dept_time.minute;
-	    const int second_to_set = pC->attr.sch_routeset.dept_time.second;
+	    const int hour_to_set = pC->attr.sch_roset.dept_time.hour;
+	    const int minute_to_set = pC->attr.sch_roset.dept_time.minute;
+	    const int second_to_set = pC->attr.sch_roset.dept_time.second;
 	    assert( (hour_to_set >= 0) && (hour_to_set < 24) );
 	    assert( (minute_to_set >= 0) && (minute_to_set < 60) );
 	    assert( (second_to_set >= 0) && (second_to_set < 60) );
-	    if( pC->attr.sch_routeset.is_dept_route )
+	    if( pC->attr.sch_roset.is_dept_route )
 	      goto is_the_time_to_fire;
 	    else {
 	      cond = ars_chk_cond_routelok( pR );
@@ -728,14 +728,17 @@ void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
       int stat = -1;
       switch ( pC->cmd ) {
       case ARS_SCHEDULED_ROUTESET:
-	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_routeset.route_id) );
-	assert( stat >= 0 );
-	if( stat > 0 ) {
-	  make_it_past( pJ, pC );
+	assert( pC );
+	{
+	  stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_roset.route_id) );
+	  if( stat > 0 ) {
+	    timestamp( &pC->attr.sch_roset.dept_time );
+	    make_it_past( pJ, pC );
+	  }
 	}
 	break;
       case ARS_SCHEDULED_ROUTEREL:
-	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_routeset.route_id) );
+	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_rorel.route_id) );
 	assert( stat >= 0 );
 	if( stat < 1 ) {
 	  assert( stat == 0 );
@@ -831,6 +834,5 @@ void ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
       }
       pC = pC->ln.journey.pNext;
     }
-    pJ->scheduled_commands.pNext = pC;
   }
 }
