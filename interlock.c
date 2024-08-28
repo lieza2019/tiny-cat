@@ -127,6 +127,7 @@ void cons_track_state ( TRACK_PTR ptrack ) {
   assert( ptrack->name != NULL );
   int i;
   for( i = 0; i < ptrack->cbtc.num_blocks; i++ ) {
+    assert( ptrack->cbtc.blocks[i] );
     int found = -1;
     int j = 0;
     while( block_state[j].virt_block_name != END_OF_CBTC_BLOCKs ) {
@@ -154,6 +155,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
   {
     int i;
     for( i = 0; i < proute->body.num_tracks; i++ ) {
+      assert( proute->body.tracks[i] );
       int found = -1;
       int j = 0;
       while( track_state[j].kind_cbi != END_OF_CBI_STAT_KIND ) {
@@ -175,6 +177,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
   if( proute->ars_ctrl.app ) {
     int i;
     for( i = 0; i < proute->ars_ctrl.trg_sect.num_blocks; i++ ) {
+      assert( proute->ars_ctrl.trg_sect.trg_blks[i] );
       int found = -1;
       int j = 0;
       while( block_state[j].virt_block_name != END_OF_CBTC_BLOCKs ) {
@@ -195,6 +198,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
     {
       int i;
       for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks_occ; i++ ) {
+	assert( proute->ars_ctrl.ctrl_tracks.chk_trks[i] );
 	int found = -1;
 	int j = 0;
 	while( track_state[j].kind_cbi != END_OF_CBI_STAT_KIND ) {
@@ -213,6 +217,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
       }
       
       for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_ahead_tracks; i++ ) {
+	assert( proute->ars_ctrl.ctrl_tracks.ahead_trks[i] );
 	int found = -1;
 	int j = 0;
 	while( j < MAX_ROUTE_TRACKS ) {
@@ -280,6 +285,7 @@ void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
 	int f = -1;
 	int j;
 	for( j = 0; j < pblock->belonging_tr.ptrack->cbtc.num_blocks; j++ ) {
+	  assert( pblock->belonging_tr.ptrack->cbtc.pblocks[j] );
 	  if( pblock == pblock->belonging_tr.ptrack->cbtc.pblocks[j] )
 	    f = j;
 	}
@@ -432,22 +438,12 @@ static void chk_consistency_over_sp_links ( void ) {
 
 void cons_il_obj_tables ( void ) {
   int i = 0;
-  while( route_state[i].kind_route != END_OF_ROUTE_KINDS ) {
-    cons_route_state( &route_state[i] );
+  while( track_state[i].kind_cbi != END_OF_CBI_STAT_KIND ) {
+    cons_track_state( &track_state[i] );
     i++;
   }
-  assert( route_state[i].kind_route == END_OF_ROUTE_KINDS );
-  cons_route_prof_lkup_tbl();
-  
-  {
-    int i = 0;
-    while( track_state[i].kind_cbi != END_OF_CBI_STAT_KIND ) {
-      cons_track_state( &track_state[i] );
-      i++;
-    }
-    assert( track_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
-    cons_track_prof_lkup_tbl();
-  }
+  assert( track_state[i].kind_cbi == END_OF_CBI_STAT_KIND );
+  cons_track_prof_lkup_tbl();
   
   {
     int i = 0;
@@ -459,10 +455,20 @@ void cons_il_obj_tables ( void ) {
     assert( block_state[i].block_name == 0 );
     chk_consistency_over_sp_links();
   }
+  
+  {
+    int i = 0;
+    while( route_state[i].kind_route != END_OF_ROUTE_KINDS ) {
+      cons_route_state( &route_state[i] );
+      i++;
+    }
+    assert( route_state[i].kind_route == END_OF_ROUTE_KINDS );
+    cons_route_prof_lkup_tbl();
+  }
 }
 
 #if 1 // for MODULE-TEST
-int main( void ) {
+int main ( void ) {
   cons_il_obj_tables();
   return 0;
 }

@@ -75,10 +75,10 @@ typedef struct route {
       const int num_tracks_lok;
       const int num_tracks_occ;
       const IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRACKS];
-      const int num_ahead_tracks;  // added!
-      const IL_OBJ_INSTANCES ahead_trks[MAX_ROUTE_TRACKS]; // added!
+      const int num_ahead_tracks;
+      const IL_OBJ_INSTANCES ahead_trks[MAX_ROUTE_TRACKS];
       TRACK_C_PTR pchk_trks[MAX_ROUTE_TRACKS];
-      TRACK_C_PTR pahead_trks[MAX_ROUTE_TRACKS]; // added!
+      TRACK_C_PTR pahead_trks[MAX_ROUTE_TRACKS];
     } ctrl_tracks;
     struct {
       struct {
