@@ -159,7 +159,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
   int i = -1;  
   for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks_lok; i++ ) {
     OC_ID oc_id;
-    CBI_STAT_KIND kind;   
+    CBI_STAT_KIND kind;
     TRACK_C_PTR ptr = NULL;
     ptr = proute->ars_ctrl.ctrl_tracks.pchk_trks[i];
     assert( ptr );
@@ -241,8 +241,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
       r = stat;
     }
   }
-  assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks_lok) ? (r == 1) : (r <= 0) );
-  
+  assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks_lok) ? (r == 1) : (r <= 0) );  
   return r;
 }
 
@@ -273,7 +272,6 @@ static int ars_chk_cond_trackcirc ( ROUTE_C_PTR proute ) {
     r = stat;
   }
   assert( (i >= proute->ars_ctrl.ctrl_tracks.num_tracks_occ) ? (r == 1) : (r <= 0) );
-  
   return r;
 }
 
@@ -343,81 +341,6 @@ static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptr
   return r;
 }
 
-#if 0
-static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
-  assert( sch_dst );
-  assert( pC );
-  assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
-  assert( whats_kind_of_il_obj( pC->attr.sch_routeset.route_id ) == _ROUTE );
-  int r = -1;
-  
-  ROUTE_C_PTR pR = NULL;
-  pR = conslt_route_prof( pC->attr.sch_routeset.route_id );
-  assert( pR );
-  assert( pR->kind_cbi == _ROUTE );
-  assert( pR->ars_ctrl.app );
-  assert( pR->ars_ctrl.trip_info.dst.pblk );
-  if( pC->attr.sch_routeset.is_dept_route ) {
-    assert( pR->kind_route == DEP_ROUTE );
-    r = 1;
-  } else {
-    assert( ! pC->attr.sch_routeset.is_dept_route );
-    assert( (pR->kind_route == ENT_ROUTE) || (pR->kind_route == SHUNT_ROUTE) );
-    {
-      CBTC_BLOCK_C_PTR pdst_blk = pR->ars_ctrl.trip_info.dst.pblk;
-      assert( pdst_blk );
-      assert( pdst_blk->sp.has_sp );
-      assert( (pdst_blk->sp.sp_code > 0) && (pdst_blk->sp.sp_code < END_OF_SPs) );
-      SCHEDULED_COMMAND_C_PTR pdst_next_sch = sch_dst[pdst_blk->sp.sp_code].pNext;
-      if( ! pdst_next_sch )
-	r = 0;
-      else {
-	assert( pdst_next_sch );
-	assert( (pdst_next_sch->cmd == ARS_SCHEDULED_ARRIVAL) || (pdst_next_sch->cmd == ARS_SCHEDULED_DEPT) || (pdst_next_sch->cmd == ARS_SCHEDULED_SKIP) );
-	switch( pdst_next_sch->cmd ) {
-	case ARS_SCHEDULED_ARRIVAL:
-#ifdef CHK_STRICT_CONSISTENCY
-	  assert( pdst_next_sch->attr.sch_arriv.arr_sp == pdst_blk->sp.sp_code );
-#endif // CHK_STRICT_CONSISTENCY
-	  if( pdst_next_sch->jid != pC->jid )
-	    r = 0;
-	  else {
-	    assert( pdst_next_sch->jid == pC->jid );
-	    SCHEDULED_COMMAND_C_PTR pdst_next_next = pdst_next_sch->ln.sp_sch.pNext;
-	    if( pdst_next_next ) {
-	      assert( (pdst_next_next->cmd == ARS_SCHEDULED_ARRIVAL) || (pdst_next_next->cmd == ARS_SCHEDULED_DEPT) || (pdst_next_next->cmd == ARS_SCHEDULED_SKIP) );
-	      if( pdst_next_next->cmd == ARS_SCHEDULED_DEPT ) {
-#ifdef CHK_STRICT_CONSISTENCY
-		assert( pdst_next_next->attr.sch_dept.dept_sp == pdst_blk->sp.sp_code );
-#endif // CHK_STRICT_CONSISTENCY
-		r = pdst_next_next->jid == pC->jid;
-	      } else
-		r = 0;
-	    } else
-	      r = 1;
-	  }
-	  break;
-	case ARS_SCHEDULED_DEPT:
-#ifdef CHK_STRICT_CONSISTENCY
-	  assert( pdst_next_sch->attr.sch_dept.dept_sp == pdst_blk->sp.sp_code );
-#endif // CHK_STRICT_CONSISTENCY
-	  r = 0;
-	  break;
-	case ARS_SCHEDULED_SKIP:
-#ifdef CHK_STRICT_CONSISTENCY
-	  assert( pdst_next_sch->attr.sch_skip.ss_sp == pdst_blk->sp.sp_code );
-#endif // CHK_STRICT_CONSISTENCY
-	  r = pdst_next_sch->jid == pC->jid;
-	  break;
-	default:
-	  assert( FALSE );
-	}
-      }
-    }
-  }
-  return r;
-}
-#else
 static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
   assert( sch_dst );
   assert( pC );
@@ -507,7 +430,6 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
   }
   return r;
 }
-#endif
 
 static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
   assert( sch_dep );
@@ -573,8 +495,8 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
   return r;
 }
 
-ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
-  assert( pT );
+ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
+  assert( pTT );
   assert( pJ );
   assert( pJ->ptrain_ctrl );
   ARS_REASONS r = END_OF_ARS_REASONS;
@@ -621,7 +543,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
 	    assert( (minute_to_set >= 0) && (minute_to_set < 60) );
 	    assert( (second_to_set >= 0) && (second_to_set < 60) );
 	    if( pC->attr.sch_roset.is_dept_route )
-	      goto is_the_time_to_fire;
+	      goto is_the_time_to_go;
 	    else {
 	      cond = ars_chk_cond_routelok( pR );
 	      if( cond <= 0 ) {
@@ -630,7 +552,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
 		else
 		  r = ARS_CTRL_TRACKS_ROUTELOCKED;
 	      } else {
-	      is_the_time_to_fire:
+	      is_the_time_to_go:
 		cond = ars_chk_trgtime( OFFSET_TO_ROUTESET, hour_to_set, minute_to_set, second_to_set );
 		if( cond <= 0 ) {
 		  if( cond < 0 )
@@ -639,22 +561,37 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ ) {
 		    r = ARS_WAITING_ROUTESET_TIME;
 		} else {
 		  assert( pC );
-		  assert( pT );
-		  cond = ars_chk_depschedule( pT->sp_schedule, pC );
+		  assert( pTT );
+		  cond = ars_chk_depschedule( pTT->sp_schedule, pC );
 		  if( cond <= 0 ) {
 		    if( cond < 0 )
 		      r = ARS_MUTEX_BLOCKED;
 		    else
 		      r = ARS_PRED_DEPTRAINS_FOUND;
 		  } else {
-		    cond = ars_chk_dstschedule( pT->sp_schedule, pC );
+		    cond = ars_chk_dstschedule( pTT->sp_schedule, pC );
 		    if( cond <= 0 ) {
 		      if( cond < 0 )
 			r = ARS_MUTEX_BLOCKED;
 		      else
 			r = ARS_WAITING_PRED_DEPTRAINS_AT_DST;
 		    } else {
-		      ;
+		      assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
+		      CBTC_BLOCK_PTR pdst = NULL;
+		      pdst = conslt_cbtc_block_prof( pR->ars_ctrl.trip_info.dst.blk );
+		      assert( pdst );
+		      if( pdst ) {
+			TINY_TRAIN_STATE_PTR pT = pJ->ptrain_ctrl;
+			assert( pT );
+			pT->dest_blockID = pdst->block_name;
+		      }
+#if 0 // NOW, UNDER CONSTRUCTION
+		      {
+			OC_ID oc_id;
+			CBI_STAT_KIND kind;
+			conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_roset.route_id) );
+		      }
+#endif
 		      r = ARS_ROUTE_CONTROLLED_NORMALLY;
 		    }
 		  }
@@ -856,4 +793,3 @@ SCHEDULED_COMMAND_PTR ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
   }
   return r;
 }
-
