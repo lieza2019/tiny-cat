@@ -857,22 +857,3 @@ SCHEDULED_COMMAND_PTR ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
   return r;
 }
 
-#if 0
-static IL_OBJ_INSTANCES ahead_track ( IL_OBJ_INSTANCES route ) {
-  ROUTE_C_PTR pR = NULL;
-  
-  pR = conslt_route_prof( route );
-  assert( pR );
-  assert( pR->kind_cbi == _ROUTE );
-  assert( pR->kind_route < END_OF_ROUTE_KINDS );
-  //assert( pR->ars_ctrl.app );
-
-  if( pR->ars_ctrl.ctrl_tracks.num_ahead_tracks > 0 ) {
-    TRACK_C_PTR pahead_trk = NULL;
-    int i;
-    for( i = 0; i < MAX_ROUTE_TRACKS; i++ ) {
-      pR->ars_ctrl.ctrl_tracks.chk_trks[i] == 
-    }
-  }
-}
-#endif
