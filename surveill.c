@@ -244,46 +244,49 @@ STOPPING_POINT_CODE detect_train_skip ( TINY_TRAIN_STATE_PTR pT ) {
   if( pT->stop_detected == SP_NONSENS ) {
     const unsigned short blk_occ_forward_prev = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI_prev );
     const unsigned short blk_occ_back_prev = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI_prev );
-    assert( blk_occ_forward_prev > 0 );
-    assert( blk_occ_back_prev > 0 );
-    CBTC_BLOCK_C_PTR pB_forward_prev = lookup_cbtc_block_prof( blk_occ_forward_prev );
-    CBTC_BLOCK_C_PTR pB_back_prev = lookup_cbtc_block_prof( blk_occ_back_prev );
-    if( (pB_forward_prev != NULL) && (pB_back_prev != NULL) ) {
-      assert( pB_forward_prev );
-      if( pB_forward_prev->sp.has_sp ) {
-	const STOPPING_POINT_CODE sp_prev = pB_forward_prev->sp.sp_code;
+    if( (blk_occ_forward_prev > 0) && (blk_occ_back_prev > 0) ) {
+      CBTC_BLOCK_C_PTR pB_forward_prev = lookup_cbtc_block_prof( blk_occ_forward_prev );
+      CBTC_BLOCK_C_PTR pB_back_prev = lookup_cbtc_block_prof( blk_occ_back_prev );
+      if( (pB_forward_prev != NULL) && (pB_back_prev != NULL) ) {
+	assert( pB_forward_prev );
+	if( pB_forward_prev->sp.has_sp ) {
+	  const STOPPING_POINT_CODE sp_prev = pB_forward_prev->sp.sp_code;
 	
-	const unsigned short blk_occ_forward_now = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI_now );
-	const unsigned short blk_occ_back_now = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI_now );	
-	assert( blk_occ_forward_now > 0 );
-	assert( blk_occ_back_now > 0 );
-	CBTC_BLOCK_C_PTR pB_forward_now = lookup_cbtc_block_prof( blk_occ_forward_now );
-	CBTC_BLOCK_C_PTR pB_back_now = lookup_cbtc_block_prof( blk_occ_back_now );
-	if( (pB_forward_now != NULL) && (pB_back_now != NULL) ) {
-	  assert( pB_forward_now );
-	  assert( pB_back_now );
-	  if( pB_back_now->sp.has_sp && (pB_back_now->sp.sp_code == sp_prev) )
-	    if( !pB_forward_now->sp.has_sp )
-	      r = pB_back_now->sp.sp_code;
-	} else {
-	  if( !pB_forward_now ) {
-	    if( !pB_back_now ) {
-	      assert( !pB_forward_now );
-	      assert( !pB_back_now );
-	      errorF( "invalid occupied block (forward): %d, detected.\n", blk_occ_forward_now );
-	      errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back_now );
-	    } else {
-	      assert( !pB_forward_now );
-	      assert( pB_back_now );
-	      errorF( "invalid occupied block (forward): %d, detected.\n", blk_occ_forward_now );
-	    }
-	  } else {
+	  const unsigned short blk_occ_forward_now = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI_now );
+	  const unsigned short blk_occ_back_now = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI_now );	
+	  assert( blk_occ_forward_now > 0 );
+	  assert( blk_occ_back_now > 0 );
+	  CBTC_BLOCK_C_PTR pB_forward_now = lookup_cbtc_block_prof( blk_occ_forward_now );
+	  CBTC_BLOCK_C_PTR pB_back_now = lookup_cbtc_block_prof( blk_occ_back_now );
+	  if( (pB_forward_now != NULL) && (pB_back_now != NULL) ) {
 	    assert( pB_forward_now );
-	    assert( !pB_back_now );
-	    errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back_now );
-	  }
+	    assert( pB_back_now );
+	    if( pB_back_now->sp.has_sp && (pB_back_now->sp.sp_code == sp_prev) )
+	      if( !pB_forward_now->sp.has_sp ) {
+		assert( pT );
+		assert( pT->pTI );
+		if ( TRAIN_INFO_SKIP_NEXT_STOP( *(pT->pTI) ) )
+		  r = pB_back_now->sp.sp_code;
+	      }
+	  } else {
+	    if( !pB_forward_now ) {
+	      if( !pB_back_now ) {
+		assert( !pB_forward_now );
+		assert( !pB_back_now );
+		errorF( "invalid occupied block (forward): %d, detected.\n", blk_occ_forward_now );
+		errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back_now );
+	      } else {
+		assert( !pB_forward_now );
+		assert( pB_back_now );
+		errorF( "invalid occupied block (forward): %d, detected.\n", blk_occ_forward_now );
+	      }
+	    } else {
+	      assert( pB_forward_now );
+	      assert( !pB_back_now );
+	      errorF( "invalid occupied block (back): %d, detected.\n", blk_occ_back_now );
+	    }
+	  }	
 	}
-	
       }
     }
   }

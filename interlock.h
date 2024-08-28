@@ -74,11 +74,11 @@ typedef struct route {
     struct {
       const int num_tracks_lok;
       const int num_tracks_occ;
-      const IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRG_BLOCKS];
+      const IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRACKS];
       const int num_ahead_tracks;  // added!
-      const IL_OBJ_INSTANCES ahead_trks[MAX_ROUTE_TRG_BLOCKS]; // added!
-      TRACK_C_PTR pchk_trks[MAX_ROUTE_TRG_BLOCKS];
-      TRACK_C_PTR pahead_trks[MAX_ROUTE_TRG_BLOCKS]; // added!
+      const IL_OBJ_INSTANCES ahead_trks[MAX_ROUTE_TRACKS]; // added!
+      TRACK_C_PTR pchk_trks[MAX_ROUTE_TRACKS];
+      TRACK_C_PTR pahead_trks[MAX_ROUTE_TRACKS]; // added!
     } ctrl_tracks;
     struct {
       struct {
@@ -100,17 +100,6 @@ typedef const struct route *ROUTE_C_PTR;
 #define ROUTE_ATTRIB_DEFINITION
 #include "interlock_def.h"
 #undef ROUTE_ATTRIB_DEFINITION
-
-#if 0
-#define TLSR_LOCKED( tr ) ((tr).locking.TLSR)
-#define TRSR_LOCKED( tr ) ((tr).locking.TRSR)
-#define sTLSR_LOCKED( tr ) ((tr).locking.sTLSR)
-#define sTRSR_LOCKED( tr ) ((tr).locking.sTRSR)
-#define eTLSR_LOCKED( tr ) ((tr).locking.eTLSR)
-#define eTRSR_LOCKED( tr ) ((tr).locking.eTRSR)
-#define kTLSR_LOCKED( tr ) ((tr).locking.kTLSR)
-#define kTRSR_LOCKED( tr ) ((tr).locking.kTRSR)
-#endif
 
 extern TRACK_C_PTR conslt_track_prof ( IL_OBJ_INSTANCES track_id );
 extern ROUTE_C_PTR conslt_route_prof ( IL_OBJ_INSTANCES route_id );

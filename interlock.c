@@ -215,7 +215,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
       for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_ahead_tracks; i++ ) {
 	int found = -1;
 	int j = 0;
-	while( j < MAX_ROUTE_TRG_BLOCKS ) {
+	while( j < MAX_ROUTE_TRACKS ) {
 	  if( proute->ars_ctrl.ctrl_tracks.chk_trks[j] == proute->ars_ctrl.ctrl_tracks.ahead_trks[i] ) {
 	    assert( found < 0 );
 	    proute->ars_ctrl.ctrl_tracks.pahead_trks[i] = proute->ars_ctrl.ctrl_tracks.pchk_trks[j];
