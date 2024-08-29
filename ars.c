@@ -10,7 +10,7 @@
 #include "surveill.h"
 #include "timetable.h"
 
-const char *cnv2str_ars_reasons[] = {  
+const char *cnv2str_ars_reasons[] = {
   "ARS_NO_ROUTESET_CMD",
   "ARS_NO_TRIGGERED",
   "ARS_FOUND_TRAINS_AHEAD",
@@ -21,7 +21,12 @@ const char *cnv2str_ars_reasons[] = {
   "ARS_WAITING_PRED_DEPTRAINS_AT_DST",
   "ARS_ROUTE_CONTROLLED_NORMALLY",
   "ARS_MUTEX_BLOCKED",
-  "END_OF_ARS_REASONS",
+  "ARS_NOMORE_SCHEDULED_CMDS",
+  "ARS_ILLEGAL_CMD_ROUTESET",
+  "ARS_ILLEGAL_CMD_ROUTEREL",
+  "ARS_ILLEGAL_CMD_ARRIV",
+  "ARS_ILLEGAL_CMD_DEPT",
+  "ARS_ILLEGAL_CMD_SKIP",
   NULL,
 };
 
@@ -97,6 +102,11 @@ static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, int hour, int minu
   
   crnt_time = time( NULL );
   pT_crnt = localtime( &crnt_time );
+#if 0 // ***** for debugging.
+  tzset();
+  printf( "crnt_localtime: yyyy/mm/dd, HH:MM:SS => %d/%02d/%02d, %02d:%02d:%02d\n",
+	  (pT_crnt->tm_year + 1900), (pT_crnt->tm_mon + 1), pT_crnt->tm_mday, pT_crnt->tm_hour, pT_crnt->tm_min, pT_crnt->tm_sec );
+#endif
   if( pT_crnt ) {
     struct tm T_trg = {};
     T_trg.tm_year = pT_crnt->tm_year;
@@ -105,11 +115,6 @@ static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, int hour, int minu
     T_trg.tm_hour = hour;
     T_trg.tm_min = minute;
     T_trg.tm_sec = second;
-#if 0 // ***** for debugging.
-    tzset();
-    printf( "crnt_localtime: yyyy/mm/dd, HH:MM:SS => %d/%02d/%02d, %02d:%02d:%02d\n",
-	    (pT_crnt->tm_year + 1900), (pT_crnt->tm_mon + 1), pT_crnt->tm_mday, pT_crnt->tm_hour, pT_crnt->tm_min, pT_crnt->tm_sec );
-#endif
     {
       struct tm *pT_trg = NULL;
       time_t crnt_local = 0;
@@ -138,13 +143,13 @@ static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, int hour, int minu
 	/* fall thru. */
       }
       if( pT_trg ) {
-	r = (difftime( trg_time, crnt_local ) < (double)0) ? 1 : 0;
 #if 0 // ***** for debugging.
 	tzset();
 	printf( "trig_localtime: yyyy/mm/dd, HH:MM:SS => %d/%02d/%02d, %02d:%02d:%02d\n",
 		(pT_trg->tm_year + 1900), (pT_trg->tm_mon + 1), pT_trg->tm_mday, pT_trg->tm_hour, pT_trg->tm_min, pT_trg->tm_sec );
 	printf( "judgement: %s\n", (r ? "TRIGGERED!" : "STANDING-BY") );
 #endif
+	r = (difftime( trg_time, crnt_local ) < (double)0) ? 1 : 0;
       }
     }
   }
@@ -175,7 +180,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
 	  r = stat;
 	  break;
 	}
-	assert( stat == 1 );
+	assert( stat >= 1 );
 	assert( kind == _TLSR );
       }
       if( ptr->lock.TRSR.app ) {
@@ -187,7 +192,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
 	  r = stat;
 	  break;
 	}
-	assert( stat == 1 );
+	assert( stat >= 1 );
 	assert( kind == _TRSR );
       }
       if( ptr->lock.sTLSR.app ) {
@@ -199,7 +204,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
 	  r = stat;
 	  break;
 	}
-	assert( stat == 1 );
+	assert( stat >= 1 );
 	assert( kind == _sTLSR );
       }
       if( ptr->lock.sTRSR.app ) {
@@ -211,11 +216,12 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
 	  r = stat;
 	  break;
 	}
-	assert( stat == 1 );
+	assert( stat >= 1 );
 	assert( kind == _sTRSR );
       }
       if( ptr->lock.eTLSR.app ) {
 	assert( ptr->lock.eTLSR.kind == _eTLSR );
+	assert( ! strncmp(ptr->name, cnv2str_il_obj(ptr->lock.eTLSR.id), CBI_STAT_IDENT_LEN) );
 	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(ptr->lock.eTLSR.id) );
 	if( stat <= 0 ) {
 	  if( stat == 0 )
@@ -223,7 +229,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
 	  r = stat;
 	  break;
 	}
-	assert( stat == 1 );
+	assert( stat >= 1 );
 	assert( kind == _eTLSR );
       }
       if( ptr->lock.eTRSR.app ) {
@@ -235,7 +241,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
 	  r = stat;
 	  break;
 	}
-	assert( stat == 1 );
+	assert( stat >= 1 );
 	assert( kind == _eTRSR );
       }
       r = stat;
@@ -249,7 +255,7 @@ static int ars_chk_cond_trackcirc ( ROUTE_C_PTR proute ) {
   assert( proute );
   int r = -1;
   
-  int i = -1;
+  int i;
   for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_tracks_occ; i++ ) {
     OC_ID oc_id;
     CBI_STAT_KIND kind;
@@ -267,7 +273,7 @@ static int ars_chk_cond_trackcirc ( ROUTE_C_PTR proute ) {
       r = stat;
       break;
     }
-    assert( stat == 1 );
+    assert( stat >= 1 );
     assert( kind == _TRACK );
     r = stat;
   }
@@ -504,11 +510,10 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   
   ppC = fetch_cmd_routeset( &pJ->scheduled_commands.pNext );
   if( ppC ) {
-    assert( (*ppC)->cmd == ARS_SCHEDULED_ROUTESET );
     SCHEDULED_COMMAND_PTR pC = *ppC;
-    assert( pC );    
-    {
-      assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+    assert( pC );
+    assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+    if( pC->cmd == ARS_SCHEDULED_ROUTESET ) {
       assert( whats_kind_of_il_obj( pC->attr.sch_roset.route_id ) == _ROUTE );
       ROUTE_C_PTR pR = NULL;
       pR = conslt_route_prof( pC->attr.sch_roset.route_id );
@@ -516,14 +521,16 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
       assert( pR->kind_cbi == _ROUTE );
       assert( (pR->kind_route < END_OF_ROUTE_KINDS) && (pR->kind_route != EMERGE_ROUTE) );
       assert( pR->ars_ctrl.app );
-      {
+      if( pR->ars_ctrl.app ){
 	int cond = -1;
 	cond = ars_chk_hit_trgsection( pR, pJ->ptrain_ctrl );
 	if( cond <= 0 ) {
 	  if( cond < 0 )
 	    r = ARS_MUTEX_BLOCKED;
-	  else
+	  else {
+	    assert( cond == 0 );
 	    r = ARS_NO_TRIGGERED;
+	  }
 	} else if( cond == 1 )
 	  r = ARS_FOUND_TRAINS_AHEAD;
 	else {
@@ -532,9 +539,12 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	  if( cond <= 0 ) {
 	    if( cond < 0 )
 	      r = ARS_MUTEX_BLOCKED;
-	    else
+	    else {
+	      assert( cond == 0 );
 	      r = ARS_CTRL_TRACKS_DROP;
+	    }
 	  } else {
+	    assert( cond > 0 );
 	    assert( pC );
 	    const int hour_to_set = pC->attr.sch_roset.dept_time.hour;
 	    const int minute_to_set = pC->attr.sch_roset.dept_time.minute;
@@ -549,37 +559,47 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	      if( cond <= 0 ) {
 		if( cond < 0 )
 		  r = ARS_MUTEX_BLOCKED;
-		else
+		else {
+		  assert( cond == 0 );
 		  r = ARS_CTRL_TRACKS_ROUTELOCKED;
+		}
 	      } else {
+		assert( cond > 0 );
 	      is_the_time_to_go:
 		cond = ars_chk_trgtime( OFFSET_TO_ROUTESET, hour_to_set, minute_to_set, second_to_set );
 		if( cond <= 0 ) {
 		  if( cond < 0 )
 		    r = ARS_MUTEX_BLOCKED;
-		  else
+		  else {
+		    assert( cond == 0 );
 		    r = ARS_WAITING_ROUTESET_TIME;
+		  }
 		} else {
-		  assert( pC );
+		  assert( cond > 0 );
 		  assert( pTT );
+		  assert( pC );
 		  cond = ars_chk_depschedule( pTT->sp_schedule, pC );
 		  if( cond <= 0 ) {
 		    if( cond < 0 )
 		      r = ARS_MUTEX_BLOCKED;
-		    else
+		    else {
+		      assert( cond == 0 );
 		      r = ARS_PRED_DEPTRAINS_FOUND;
+		    }
 		  } else {
+		    assert( cond > 0 );
 		    cond = ars_chk_dstschedule( pTT->sp_schedule, pC );
 		    if( cond <= 0 ) {
 		      if( cond < 0 )
 			r = ARS_MUTEX_BLOCKED;
-		      else
+		      else {
+			assert( cond == 0 );
 			r = ARS_WAITING_PRED_DEPTRAINS_AT_DST;
+		      }
 		    } else {
 		      assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
-		      CBTC_BLOCK_PTR pdst = NULL;
-		      pdst = conslt_cbtc_block_prof( pR->ars_ctrl.trip_info.dst.blk );
-		      assert( pdst );
+		      assert( pR->ars_ctrl.trip_info.dst.pblk );
+		      CBTC_BLOCK_C_PTR pdst = pR->ars_ctrl.trip_info.dst.pblk;
 		      if( pdst ) {
 			TINY_TRAIN_STATE_PTR pT = pJ->ptrain_ctrl;
 			assert( pT );
@@ -600,12 +620,12 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	    }
 	  }
 	}
-      }
-      ;
-    }
+      } else
+	r = ARS_ILLEGAL_CMD_ROUTESET;
+    } else
+      r = ARS_NO_ROUTESET_CMD;
   } else
-    r = ARS_NO_ROUTESET_CMD;
-  
+    r = ARS_NOMORE_SCHEDULED_CMDS;
   assert( r != END_OF_ARS_REASONS );
   return r;
 }

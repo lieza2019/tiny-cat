@@ -54,35 +54,20 @@ typedef struct route {
     const IL_OBJ_INSTANCES tracks[MAX_ROUTE_TRACKS];
     TRACK_C_PTR ptracks[MAX_ROUTE_TRACKS];
   } body;
-#if 0
   struct {
     struct {
-      CBI_STAT_KIND kind;
       IL_OBJ_INSTANCES sig;
+      CBTC_BLOCK_ID blk;  // data not implemented yet.
+      CBTC_BLOCK_C_PTR pblk; // data not implemented yet.
+      STOPPING_POINT_CODE sp; // data not implemented yet.
     } src;
     struct {
-      CBI_STAT_KIND kind;
       IL_OBJ_INSTANCES sig;
+      CBTC_BLOCK_ID blk; // data not implemented yet.
+      CBTC_BLOCK_C_PTR pblk; // data not implemented yet.
+      STOPPING_POINT_CODE sp; // data not implemented yet.
     } dst;
   } const sig_pair;
-#else
-  struct {
-    struct {
-      //CBI_STAT_KIND kind;
-      IL_OBJ_INSTANCES sig;
-      CBTC_BLOCK_ID blk;
-      STOPPING_POINT_CODE sp;
-      CBTC_BLOCK_C_PTR pblk;
-    } src;
-    struct {
-      //CBI_STAT_KIND kind;
-      IL_OBJ_INSTANCES sig;
-      CBTC_BLOCK_ID blk;
-      STOPPING_POINT_CODE sp;
-      CBTC_BLOCK_C_PTR pblk;
-    } dst;
-  } const sig_pair;
-#endif
   struct {
     const BOOL app;
     struct {
@@ -100,7 +85,6 @@ typedef struct route {
       TRACK_C_PTR pahead_trks[MAX_ROUTE_TRACKS];
     } ctrl_tracks;
     struct {
-#if 1
       struct {
 	CBTC_BLOCK_ID blk;
 	STOPPING_POINT_CODE sp;	
@@ -111,9 +95,8 @@ typedef struct route {
 	STOPPING_POINT_CODE sp;
 	CBTC_BLOCK_C_PTR pblk;
       } dst;
-      time_t trip_time;
+      time_t trip_time; // data not implemented yet.
     } trip_info;
-#endif
   } ars_ctrl;
 } ROUTE, *ROUTE_PTR;
 typedef const struct route *ROUTE_C_PTR;
