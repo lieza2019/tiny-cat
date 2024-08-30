@@ -40,7 +40,7 @@ surveill.h : generic.h misc.h
 	$(TOUCH) $@
 ars.h : generic.h misc.h cbi.h
 	$(TOUCH) $@
-timetable.h : generic.h misc.h sparcs.h cbtc.h
+timetable.h : generic.h misc.h sparcs.h cbtc.h timetable_def.h
 	$(TOUCH) $@
 network.h : generic.h
 	$(TOUCH) $@
@@ -50,7 +50,7 @@ misc.h : generic.h
 misc.o : generic.h misc.h misc.c
 network.o : generic.h misc.h network.h network.c
 sparcs.o : generic.h misc.h sparcs.h sparcs.c
-train_cmd.o : generic.h misc.h sparcs_def.h train_cmd.h train_cmd.c
+train_cmd.o : generic.h misc.h sparcs.h train_cmd.c
 train_ctrl.o : generic.h misc.h network.h sparcs.h train_ctrl.c
 cbi.o: generic.h misc.h cbi.h ./cbi/cbi_stat_kind.def ./cbi/cbi_stat_label.h ./cbi/il_obj_instance_desc.h cbi.c
 interlock.o : generic.h misc.h network.h cbi.h srv.h interlock.h interlock.c

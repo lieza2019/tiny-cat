@@ -3,7 +3,10 @@
 #include <assert.h>
 #include "generic.h"
 #include "misc.h"
+
+#define TIMETABLE_C
 #include "timetable.h"
+#undef TIMETABLE_C
 
 TIMETABLE online_timetable;
 
