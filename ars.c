@@ -281,27 +281,29 @@ static int ars_chk_cond_trackcirc ( ROUTE_C_PTR proute ) {
   return r;
 }
 
-static SCHEDULED_COMMAND_PTR *fetch_cmd_routeset ( SCHEDULED_COMMAND_PTR *ppNext_cmd ) {
-  assert( ppNext_cmd );
-  SCHEDULED_COMMAND_PTR *r = NULL;
+static SCHEDULED_COMMAND_PTR fetch_routeset_cmd1 ( JOURNEY_PTR pJ ) {
+  assert( pJ );
+  SCHEDULED_COMMAND_PTR r = NULL;
   
   SCHEDULED_COMMAND_PTR *ppC = NULL;
-  ppC = ppNext_cmd;
+  ppC = &pJ->scheduled_commands.pNext;
   assert( ppC );
   while( *ppC ) {
     assert( ppC );
     assert( *ppC );
     if( (*ppC)->cmd == ARS_SCHEDULED_ROUTESET ) {
-      r = ppC;
+      r = *ppC;
       break;
-    } else {
+    }
+#if 0
+    else {
       if( ((*ppC)->cmd == ARS_SCHEDULED_DEPT) || ((*ppC)->cmd == ARS_SCHEDULED_SKIP) )
 	break;
     }
+#endif
     ppC = &(*ppC)->ln.journey.pNext;
   }
   assert( ppC );
-  assert( (r != NULL) ? ((r == ppC) && ((*ppC)->cmd == ARS_SCHEDULED_ROUTESET)) : (*ppC ? (((*ppC)->cmd == ARS_SCHEDULED_DEPT) || ((*ppC)->cmd == ARS_SCHEDULED_SKIP)) : (r == NULL)) );
   return r;
 }
 
@@ -501,16 +503,57 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
   return r;
 }
 
+static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PTR pC ) {
+  assert( pJ );
+  assert( pC );
+  assert( pJ->scheduled_commands.pNext == pC );
+  
+  SCHEDULED_COMMAND_PTR *pp = NULL;
+  pp = &pJ->past_commands;
+  assert( pp );
+  while( *pp ) {
+    assert( *pp );
+    pp = &(*pp)->ln.journey.pNext;
+    assert( pp );
+  }
+  assert( pp );
+  assert( ! *pp );
+  *pp = pC;
+  pJ->scheduled_commands.pNext = pC->ln.journey.pNext;
+  pC->ln.journey.pNext = NULL;
+  
+  return ( pJ->scheduled_commands.pNext );
+}
+
+static ARS_ASSOC_TIME_PTR timestamp ( ARS_ASSOC_TIME_PTR pstamp ) {
+  assert( pstamp );
+  ARS_ASSOC_TIME_PTR r = NULL;
+  
+  struct tm *pT_crnt = NULL;
+  time_t crnt_time = 0;
+  crnt_time = time( NULL );
+  pT_crnt = localtime( &crnt_time );
+  if( pT_crnt ) {
+    pstamp->hour = pT_crnt->tm_hour;
+    pstamp->minute = pT_crnt->tm_min;
+    pstamp->second = pT_crnt->tm_sec;
+    pstamp->year = pT_crnt->tm_year;
+    pstamp->month = pT_crnt->tm_mon;
+    pstamp->day = pT_crnt->tm_mday;
+    r = pstamp;
+  }
+  return r;
+}
+
 ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   assert( pTT );
   assert( pJ );
   assert( pJ->ptrain_ctrl );
   ARS_REASONS r = END_OF_ARS_REASONS;
-  SCHEDULED_COMMAND_PTR *ppC = NULL;
   
-  ppC = fetch_cmd_routeset( &pJ->scheduled_commands.pNext );
-  if( ppC ) {
-    SCHEDULED_COMMAND_PTR pC = *ppC;
+  SCHEDULED_COMMAND_PTR pC = NULL;
+  pC = fetch_routeset_cmd1( pJ );
+  if( pC ) {
     assert( pC );
     assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
     if( pC->cmd == ARS_SCHEDULED_ROUTESET ) {
@@ -612,6 +655,9 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 			conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_roset.route_id) );
 		      }
 #endif
+		      assert( pC );
+		      assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+		      make_it_past( pJ, pC );
 		      r = ARS_ROUTE_CONTROLLED_NORMALLY;
 		    }
 		  }
@@ -627,48 +673,6 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   } else
     r = ARS_NOMORE_SCHEDULED_CMDS;
   assert( r != END_OF_ARS_REASONS );
-  return r;
-}
-
-static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PTR pC ) {
-  assert( pC );
-  assert( pJ );
-  assert( pJ->scheduled_commands.pNext == pC );
-  
-  SCHEDULED_COMMAND_PTR *pp = NULL;
-  pp = &pJ->past_commands;
-  assert( pp );
-  while( *pp ) {
-    assert( *pp );
-    pp = &(*pp)->ln.journey.pNext;
-    assert( pp );
-  }
-  assert( pp );
-  assert( ! *pp );
-  *pp = pC;
-  pJ->scheduled_commands.pNext = pC->ln.journey.pNext;
-  pC->ln.journey.pNext = NULL;
-  
-  return ( pJ->scheduled_commands.pNext );
-}
-
-static ARS_ASSOC_TIME_PTR timestamp ( ARS_ASSOC_TIME_PTR pstamp ) {
-  assert( pstamp );
-  ARS_ASSOC_TIME_PTR r = NULL;
-  
-  struct tm *pT_crnt = NULL;
-  time_t crnt_time = 0;
-  crnt_time = time( NULL );
-  pT_crnt = localtime( &crnt_time );
-  if( pT_crnt ) {
-    pstamp->hour = pT_crnt->tm_hour;
-    pstamp->minute = pT_crnt->tm_min;
-    pstamp->second = pT_crnt->tm_sec;
-    pstamp->year = pT_crnt->tm_year;
-    pstamp->month = pT_crnt->tm_mon;
-    pstamp->day = pT_crnt->tm_mday;
-    r = pstamp;
-  }
   return r;
 }
 
