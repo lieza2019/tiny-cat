@@ -213,8 +213,10 @@ static char *lex_match_pattrn ( BOOL *pr, FILE *errfp, PREFX_SUFIX_PTR pprsf, in
       }
       assert( pprsf->prefix.err );
       assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
+#if 0
       fprintf( errfp, "%s", pprsf->prefix.err );
       fprintf( errfp, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
+#endif
       err = TRUE;
       break;
     }
@@ -224,8 +226,10 @@ static char *lex_match_pattrn ( BOOL *pr, FILE *errfp, PREFX_SUFIX_PTR pprsf, in
       assert( ppat < (plex->match_pat + CBI_LEX_PAT_MAXLEN) );
       assert( pprsf->prefix.err );
       assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
+#if 1
       fprintf( errfp, "%s", pprsf->prefix.err );
       fprintf( errfp, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
+#endif
     } else {
       if( psrc < (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
 	assert( *psrc );
