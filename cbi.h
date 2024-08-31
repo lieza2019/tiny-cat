@@ -233,6 +233,10 @@ typedef struct cbi_stat_attr {
   } disp;
   CBI_STAT_KIND kind;
   OC_ID oc_id;
+  struct {
+    const char *fname;
+    int line;
+  } src;
   struct cbi_stat_attr *pNext_hash;
   struct cbi_stat_attr *pNext_decl;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
@@ -262,4 +266,3 @@ typedef struct cbi_stat_label {
 } CBI_STAT_LABEL, *CBI_STAT_LABEL_PTR;
 
 #endif // CBI_H
-

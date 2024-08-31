@@ -189,8 +189,7 @@ static char *lex_match_pattrn ( BOOL *pr, FILE *errfp, PREFX_SUFIX_PTR pprsf, in
       }
       assert( pprsf->prefix.err );
       assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
-      fprintf( errfp, "%s", pprsf->prefix.err );
-      fprintf( errfp, "line: %d, matching pattern, col= %d: has no bound,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
+      fprintf( errfp, "%d: matching pattern, col= %d: has no bound, from %s.\n", line, MATCH_PAT_COL(plex->match_pat, ppat), pprsf->prefix.err );
       err = TRUE;
       break;
     } else {
@@ -199,8 +198,7 @@ static char *lex_match_pattrn ( BOOL *pr, FILE *errfp, PREFX_SUFIX_PTR pprsf, in
 	if( *ppat == '\\' ) {
 	  ppat++;
 	  if( !(*ppat && (ppat < (plex->match_pat + CBI_LEX_PAT_MAXLEN))) ) {
-	    fprintf( errfp, "%s", pprsf->prefix.err );
-	    fprintf( errfp, "line: %d, matching pattern, col= %d: escaping character has no meanings,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
+	    fprintf( errfp, "%d: matching pattern, col= %d: escaping character has no meanings, from %s.\n", line, MATCH_PAT_COL(plex->match_pat, ppat), pprsf->prefix.err );
 	    break;
 	  }
 	  /* fall thru. */
@@ -213,9 +211,8 @@ static char *lex_match_pattrn ( BOOL *pr, FILE *errfp, PREFX_SUFIX_PTR pprsf, in
       }
       assert( pprsf->prefix.err );
       assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
-#if 0
-      fprintf( errfp, "%s", pprsf->prefix.err );
-      fprintf( errfp, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
+#if 0 // ***** for debugging.
+      fprintf( errfp, "%d: matching pattern, col= %d: has no matching with %s.\n", line, MATCH_PAT_COL(plex->match_pat, ppat), pprsf->prefix.err );
 #endif
       err = TRUE;
       break;
@@ -226,17 +223,15 @@ static char *lex_match_pattrn ( BOOL *pr, FILE *errfp, PREFX_SUFIX_PTR pprsf, in
       assert( ppat < (plex->match_pat + CBI_LEX_PAT_MAXLEN) );
       assert( pprsf->prefix.err );
       assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
-#if 1
-      fprintf( errfp, "%s", pprsf->prefix.err );
-      fprintf( errfp, "line: %d, matching pattern, col= %d: has no matching,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
+#if 0 // ***** for debugging.
+      fprintf( errfp, "%d: matching pattern, col= %d: has no matching with %s.\n", line, MATCH_PAT_COL(plex->match_pat, ppat), pprsf->prefix.err );
 #endif
     } else {
       if( psrc < (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
 	assert( *psrc );
 	assert( pprsf->prefix.err );
 	assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
-	fprintf( errfp, "%s", pprsf->prefix.err );
-	fprintf( errfp, "line: %d, matching pattern, col= %d: excessive unmatched characters remain,\n", line, MATCH_PAT_COL(plex->match_pat, ppat) );
+	fprintf( errfp, "%d: matching pattern, col= %d: excessive unmatched characters remain, from %s.\n", line, MATCH_PAT_COL(plex->match_pat, ppat), pprsf->prefix.err );
       } else
 	*pr = TRUE;
     }
@@ -337,8 +332,7 @@ static int lex_exp_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, int pa
 	    err = TRUE;
 	    assert( pprsf->prefix.err );
 	    assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
-	    fprintf( errfp, "%s", pprsf->prefix.err );
-	    fprintf( errfp, "line: %d, (expansion pattern, col)= (%d, %d): index must be integer, ", line, patno, EXP_PAT_COL(pat, pp2) );
+	    fprintf( errfp, "%d: (expansion pattern, col)= (%d, %d): index must be integer, ", line, patno, EXP_PAT_COL(pat, pp2) );
 	    goto err_illegal_chr;
 	  } else {
 	    ppat = pp2;
@@ -361,8 +355,7 @@ static int lex_exp_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, int pa
 		err = TRUE;
 		assert( pprsf->prefix.err );
 		assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
-		fprintf( errfp, "%s", pprsf->prefix.err );
-		fprintf( errfp, "line: %d, (expansion pattern, col)= (%d, %d): index is out of range over the variables registered on.\n", line, patno, EXP_PAT_COL(pat, ppat) );
+		fprintf( errfp, "%d: (expansion pattern, col)= (%d, %d): index is out of range over the variables registered on.\n", line, patno, EXP_PAT_COL(pat, ppat) );
 		break;
 	      }
 	      assert( pbuf );
@@ -382,8 +375,7 @@ static int lex_exp_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, int pa
 	      err = TRUE;
 	      assert( pprsf->prefix.err );
 	      assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
-	      fprintf( errfp, "%s", pprsf->prefix.err );
-	      fprintf( errfp, "line: %d, (expansion pattern, col)= (%d, %d): missing the closing ']' for index description over the variables", line, patno, EXP_PAT_COL(pat, ppat) );
+	      fprintf( errfp, "%d: (expansion pattern, col)= (%d, %d): missing the closing ']' for index description over the variables", line, patno, EXP_PAT_COL(pat, ppat) );
 	      if( *ppat ) {
 		assert( ppat < plim );
 		fprintf( errfp, ", " );
@@ -410,8 +402,7 @@ static int lex_exp_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, int pa
 	err = TRUE;
 	assert( pprsf->prefix.err );
 	assert( strlen(pprsf->prefix.err) < CBI_LEX_ERR_PREFX_MAXCHRS );
-	fprintf( errfp, "%s", pprsf->prefix.err );
-	fprintf( errfp, "line:%d, (expansion pattern, col)= (%d, %d): ", line, patno, EXP_PAT_COL(pat, ppat) );
+	fprintf( errfp, "%d: (expansion pattern, col)= (%d, %d): ", line, patno, EXP_PAT_COL(pat, ppat) );
 	err_illegal_chr:
 	fprintf( errfp, "illegal character detected.\n" );
 	break;
@@ -606,7 +597,7 @@ int main ( void ) {
       }
       assert( il_status_geometry_resources[oc_id].csv_fname );
       assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
-    
+      
       n = load_cbi_code_tbl ( il_status_geometry_resources[oc_id].oc_id, il_status_geometry_resources[oc_id].csv_fname );
       assert( n >= 0 );
       fprintf( fp_err, "read %d entries from csv file of %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
@@ -628,7 +619,7 @@ int main ( void ) {
 	    for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[oc_id][j].name[0]; j++ ) {
 	      assert( pS );
 	      memset( pS, 0, sizeof(S) );
-	      snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%d: ", (j + 1) );
+	      snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%s:%d", cbi_stat_prof[oc_id][j].src.fname, cbi_stat_prof[oc_id][j].src.line );
 	      transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[oc_id][j] );
 	    }
 	    i++;

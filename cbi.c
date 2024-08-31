@@ -370,7 +370,6 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
     CBI_STAT_ATTR_PTR *pp;
     pp = walk_hash( ppB, pE->ident );
     if( *pp ) {
-     //assert( FALSE );
       errorF( "redefinition of cbi condition: %s\n", (*pp)->ident );
       pE->pNext_hash = (*pp)->pNext_hash;
       r = *pp;
@@ -697,6 +696,8 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	assert( pA );		       
 	if( (err = (BOOL)ferror( fp )) )
 	  break;
+	pA->src.fname = fname;
+	pA->src.line = lines;
 #if 0
 	strncpy( pA->name, bit_name, CBI_STAT_NAME_LEN );
 	strncpy( pA->ident, bit_name, CBI_STAT_NAME_LEN );
