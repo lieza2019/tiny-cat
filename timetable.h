@@ -40,7 +40,7 @@ typedef struct timetable {
   SCHEDULE_AT_SP sp_schedule[END_OF_SPs];
 } TIMETABLE, *TIMETABLE_PTR;
 
-#include "timetable_def.h"
+//#include "timetable_def.h"
 
 extern void cons_sp_schedule ( void );
 
