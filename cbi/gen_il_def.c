@@ -426,17 +426,27 @@ static int lex_exp_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, int pa
   return( strnlen(buf, buflen) * (err ? -1 : 1) );
 }
 
-static CBI_STAT_ATTR_PTR hash_regist ( CBI_STAT_ATTR_PTR pE ) {
+static CBI_STAT_ATTR_PTR hash_regist ( CBI_STAT_ATTR_PTR pE, int line ) {
   assert( pE );
-  return cbi_stat_regist( il_objs_hash.budgets, IL_OBJ_HASH_BUDGETS_NUM, pE );
+  assert( line > 0 );
+  char buf[256];
+  buf[255] = 0;
+  
+  {
+    int n = -1;
+    n = snprintf( buf, 256, "%d: ", line );
+    assert( n > 0 );
+  }
+  return cbi_stat_regist( il_objs_hash.budgets, IL_OBJ_HASH_BUDGETS_NUM, pE, TRUE, buf );
 }
 
-static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
+static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
   assert( fp );
   assert( errfp );
   assert( pprsf );
   assert( psymtbl );
   assert( plex );
+  assert( pattr );
   BOOL err = FALSE;
   
   int cnt = 0;
@@ -462,12 +472,14 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	  pE->name[CBI_STAT_RAWNAME_MAXLEN] = 0;
 	  strncpy( pE->name, plex->raw_name, CBI_STAT_NAME_LEN );
 	  pE->kind = plex->kind;
+	  pE->src.fname = pattr->src.fname;
+	  pE->src.line = pattr->src.line;
 #if 0
 	  printf( "HIT: (line: pat, name, ident) = (%d: %s, %s, %s)\n", line, plex->exp[i].pat, plex->raw_name, emit_buf ); // ***** for debugging.
-#else
+#endif
 	  {
 	    CBI_STAT_ATTR_PTR w = NULL;
-	    w = hash_regist( pE );
+	    w = hash_regist( pE, line );
 	    if( w != pE ) {
 	      assert( w );
 	      err = TRUE;
@@ -481,8 +493,7 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    
 	    if( ! il_objs_hash.ptop )
 	      il_objs_hash.ptop = w;
-	  }	  
-#endif
+	  }
 	  cnt++;
 	} else {
 	  err = TRUE;
@@ -494,12 +505,13 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
   return ( cnt * (err ? -1 : 1) );
 }
 
-static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex ) {
+static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
   assert( fp );
   assert( errfp );
   assert( pprsf );
   assert( psymtbl );
   assert( plex );
+  assert( pattr );
   BOOL err = FALSE;
   
   assert( plex->raw_name );
@@ -559,8 +571,8 @@ static BOOL transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, 
 	  assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
 	  strncpy( pprsf->prefix.emit, "{", CBI_LEX_EMIT_PREFX_MAXCHRS );
 	  strncpy( pprsf->suffix.emit, "}," , CBI_LEX_EMIT_PREFX_MAXCHRS );
-	  if( (r_emit_abb = emit_stat_abbrev( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
-	    if( (r_emit_ins = emit_il_instances( fp, errfp, pprsf, line, psymtbl, plex )) > 0 )
+	  if( (r_emit_abb = emit_stat_abbrev( fp, errfp, pprsf, line, psymtbl, plex, pattr )) > 0 )
+	    if( (r_emit_ins = emit_il_instances( fp, errfp, pprsf, line, psymtbl, plex, pattr )) > 0 )
 	      r = TRUE;
 	  if( (abs(r_emit_abb) + abs(r_emit_ins)) > 0 )
 	    fprintf( fp, "\n" );
@@ -578,7 +590,7 @@ int main ( void ) {
   fp_err = stdout;
   fp_out = fopen( CBI_STAT_LABELNG_FNAME, "wb" );
   if( !fp_out ) {
-    fprintf( fp_out, "failed to open the file of %s.\n", CBI_STAT_LABELNG_FNAME );
+    fprintf( fp_out, "failed to open the file: %s.\n", CBI_STAT_LABELNG_FNAME );
     return -1;
   }
   
@@ -598,9 +610,10 @@ int main ( void ) {
       assert( il_status_geometry_resources[oc_id].csv_fname );
       assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
       
+      fprintf( fp_err, "reading the csv file: %s.\n", il_status_geometry_resources[oc_id].csv_fname );
       n = load_cbi_code_tbl ( il_status_geometry_resources[oc_id].oc_id, il_status_geometry_resources[oc_id].csv_fname );
       assert( n >= 0 );
-      fprintf( fp_err, "read %d entries from csv file of %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
+      fprintf( fp_err, "read %d entries from the csv file: %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
       {
 	PREFX_SUFIX prsf;
 	memset( &prsf, 0, sizeof(prsf) );
@@ -641,7 +654,7 @@ int main ( void ) {
   
   fp_out = fopen( IL_INSTANCES_EMIT_FNAME, "wb" );
   if( !fp_out ) {
-    fprintf( fp_out, "failed to open the file of %s.\n", IL_INSTANCES_EMIT_FNAME );
+    fprintf( fp_out, "failed to open the file: %s.\n", IL_INSTANCES_EMIT_FNAME );
     return -1;
   }
   {

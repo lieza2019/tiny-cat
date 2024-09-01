@@ -382,7 +382,7 @@ void cons_il_obj_tables ( void ) {
   }
 }
 
-#if 1 // for MODULE-TEST
+#if 0 // for MODULE-TEST
 int main ( void ) {
   cons_il_obj_tables();
   return 0;

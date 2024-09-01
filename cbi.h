@@ -245,15 +245,15 @@ typedef struct cbi_stat_attr {
 extern CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
 
 #define CBI_STAT_HASH_BUDGETS_NUM 256
-extern CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE );
-extern CBI_STAT_ATTR_PTR cbi_stat_rehash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident, const char *ident_new );
+extern CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre );
+extern CBI_STAT_ATTR_PTR cbi_stat_rehash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident, const char *ident_new, const char *errmsg_pre );
 //extern CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, char *ident );
 extern CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident );
 
 #define CBI_STAT_BITS_LEXBUF_SIZE 256
 extern int load_cbi_code_tbl ( OC_ID oc_id, const char *fname );
 extern CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( const char *ident );
-extern int reveal_cbi_code_tbl ( void );
+extern int reveal_cbi_code_tbl( const char *errmsg_pre );
 extern void dump_cbi_stat_prof ( OC_ID oc_id );
 
 extern char *show_cbi_stat_bitmask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask );

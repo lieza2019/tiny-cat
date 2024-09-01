@@ -309,7 +309,6 @@ static int hash_key ( const int budgets_num, const char *ident ) {
   return ( h % budgets_num );
 }
 
-
 static BOOL chk_uniq_in_budget ( CBI_STAT_ATTR_PTR pE ) {
   assert( pE );
   BOOL found = FALSE;
@@ -349,7 +348,7 @@ static CBI_STAT_ATTR_PTR *walk_hash ( CBI_STAT_ATTR_PTR *ppB, const char *ident 
   return pp;
 }
 
-static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE ) {
+static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre ) {
   assert( budgets );
   assert( budgets_num > 0 );
   assert( pE );
@@ -363,40 +362,57 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
     ppB = &budgets[h];
   }
   assert( ppB );
-
+  
   r = pE;
   pE->pNext_hash = NULL;
   {
-    CBI_STAT_ATTR_PTR *pp;
+    CBI_STAT_ATTR_PTR *pp = NULL;
     pp = walk_hash( ppB, pE->ident );
-    if( *pp ) {
-      errorF( "redefinition of cbi condition: %s\n", (*pp)->ident );
-      pE->pNext_hash = (*pp)->pNext_hash;
-      r = *pp;
-    }
     assert( pp );
+    if( *pp ) {
+      r = *pp;
+      if( !mode )
+	return r;
+      else {
+	char buf_crnt[256];
+	char buf_prev[256];
+	buf_crnt[255] = 0;
+	buf_prev[255] = 0;
+	{
+	  int m = -1, n = -1;
+	  m = snprintf( buf_crnt, 256, "%s:%d", pE->src.fname, pE->src.line );
+	  assert( m > 0 );
+	  n = snprintf( buf_prev, 256, "%s:%d", (*pp)->src.fname, (*pp)->src.line );
+	  assert( n > 0 );
+	}
+	if( errmsg_pre )
+	  errorF( "%s", errmsg_pre );
+	errorF( "overridden and redefinition of cbi condition: %s from %s, previous: %s from %s.\n", pE->ident, buf_crnt, (*pp)->ident, buf_prev );
+	pE->pNext_hash = (*pp)->pNext_hash;
+      }
+    }
     *pp = pE;
   }
   assert( r );
   return r;
 }
-static CBI_STAT_ATTR_PTR regist_hash_local ( CBI_STAT_ATTR_PTR pE ) {
+static CBI_STAT_ATTR_PTR regist_hash_local ( CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre ) {
   assert( pE );
-  return regist_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, pE );
+  return regist_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, pE, mode, errmsg_pre );
 }
 
-CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE ) {
+CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre ) {
   assert( budgets );
   assert( budgets_num );
   assert( pE );
   CBI_STAT_ATTR_PTR r = NULL;
   
-  r = regist_hash( budgets, budgets_num, pE );
+  r = regist_hash( budgets, budgets_num, pE, mode, errmsg_pre );
   assert( r );
   return r;
 }
 
-static CBI_STAT_ATTR_PTR re_hash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident, const char *ident_new ) {
+static CBI_STAT_ATTR_PTR re_hash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident, const char *ident_new, const char *errmsg_pre ) {
   assert( budgets );
   assert( budgets_num > 0 );
   assert( ident );
@@ -423,23 +439,23 @@ static CBI_STAT_ATTR_PTR re_hash ( CBI_STAT_ATTR_PTR budgets[], const int budget
       strncpy( pE->ident, ident_new, CBI_STAT_IDENT_LEN );
       pE->ident[CBI_STAT_IDENT_LEN] = 0;
       pE->pNext_hash = NULL;
-      regist_hash( budgets, budgets_num, pE );
+      regist_hash( budgets, budgets_num, pE, TRUE, errmsg_pre );
     }
   }
   return pE;
 }
-static CBI_STAT_ATTR_PTR re_hash_local ( const char *ident, const char *ident_new ) {
+static CBI_STAT_ATTR_PTR re_hash_local ( const char *ident, const char *ident_new, const char *errmsg_pre ) {
   assert( ident );
   assert( ident_new );
-  return re_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, ident, ident_new );
+  return re_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, ident, ident_new, errmsg_pre );
 }
 
-CBI_STAT_ATTR_PTR cbi_stat_rehash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident, const char *ident_new ) {
+CBI_STAT_ATTR_PTR cbi_stat_rehash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident, const char *ident_new, const char *errmsg_pre ) {
   assert( budgets );
   assert( budgets_num > 0 );
   assert( ident );
   assert( ident_new );
-  return re_hash( budgets, budgets_num, ident, ident_new );
+  return re_hash( budgets, budgets_num, ident, ident_new, errmsg_pre );
 }
 
 static CBI_STAT_ATTR_PTR conslt_hash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident ) {
@@ -698,10 +714,6 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	  break;
 	pA->src.fname = fname;
 	pA->src.line = lines;
-#if 0
-	strncpy( pA->name, bit_name, CBI_STAT_NAME_LEN );
-	strncpy( pA->ident, bit_name, CBI_STAT_NAME_LEN );
-#else
 	{
 	  char *p = NULL;
 	  p = stpncpy( pA->name, "[", 1 );
@@ -713,7 +725,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	  strncpy( p, bit_name, CBI_STAT_NAME_LEN );
 	}
 	strncpy( pA->ident, pA->name, CBI_STAT_NAME_LEN );
-#endif
+	
 	pA->oc_id = oc_id;
 	pA->kind = _UNKNOWN;
 	pA->group.raw = (CBI_STAT_GROUP)group;
@@ -749,7 +761,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
   if( !err ) {
     int i;
     for( i = 0; i < frontier[oc_id]; i++ )
-      regist_hash_local( &cbi_stat_prof[oc_id][i] );
+      regist_hash_local( &cbi_stat_prof[oc_id][i], TRUE, "loading: " );
     assert( i == frontier[oc_id] );
   }
   
@@ -765,17 +777,23 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
   }
 }
 
-int reveal_cbi_code_tbl ( void ) {
+int reveal_cbi_code_tbl( const char *errmsg_pre ) {
   int cnt = 0;
   int j = 0;
   
   while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS ) {
     CBI_STAT_ATTR_PTR pS = NULL;
     pS = conslt_hash_local( cbi_stat_labeling[j].name );
+    
+    if( !pS ) {
+      printf( "(j, name): (%d, %s)\n", j, cbi_stat_labeling[j].name );
+      assert( FALSE );
+    }
+      
     if( pS ) {
       CBI_STAT_ATTR_PTR pE = NULL;
       pS->kind = cbi_stat_labeling[j].kind;
-      pE = re_hash_local( pS->ident, cbi_stat_labeling[j].ident );
+      pE = re_hash_local( pS->ident, cbi_stat_labeling[j].ident, errmsg_pre );
       if( pE )
 	cnt++;
 #ifdef CHK_STRICT_CONSISTENCY
@@ -791,7 +809,7 @@ int reveal_cbi_code_tbl ( void ) {
   return cnt;
 }
 
-#if 0 // for MODULE-TEST
+#if 1 // for MODULE-TEST
 int main ( void ) {
   const OC_ID oc_id = OC801;
   int cnt = 0;
@@ -802,7 +820,7 @@ int main ( void ) {
   printf( "read %d entries on, from raw csv.\n", n );
   {
     int m = -1;
-    m = reveal_cbi_code_tbl();
+    m = reveal_cbi_code_tbl( NULL );
     assert( m > -1 );
     printf( "revised %d entries.\n", m );
   }

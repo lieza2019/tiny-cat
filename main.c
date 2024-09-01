@@ -118,7 +118,7 @@ static void load_il_status_geometry ( void ) {
       } else {
 	int m = -1;
 	errorF( "read %d entries from raw csv file of %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
-	m = reveal_cbi_code_tbl();
+	m = reveal_cbi_code_tbl( NULL );
 	assert( m > -1 );
 	errorF( "revised %d entries over the ones from the file of %s.\n", m, il_status_geometry_resources[oc_id].csv_fname );
       }
