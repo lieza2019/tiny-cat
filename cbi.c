@@ -744,7 +744,6 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
     err = TRUE;
     //assert( FALSE );
   }
-  
   if( !err ) {
     int i;
     for( i = 0; i < frontier[oc_id]; i++ )
@@ -771,6 +770,12 @@ int reveal_cbi_code_tbl ( void ) {
   while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS ) {
     CBI_STAT_ATTR_PTR pS = NULL;
     pS = conslt_hash_local( cbi_stat_labeling[j].name );
+#if 1 
+    if( !pS ) {
+      printf( "(j, kind, name): (%d, %s, %s)\n", j, cnv2str_cbi_stat_kind[cbi_stat_labeling[j].kind], cbi_stat_labeling[j].name );
+      assert( FALSE );
+    }
+#endif
     if( pS ) {
       CBI_STAT_ATTR_PTR pE = NULL;
       pS->kind = cbi_stat_labeling[j].kind;
@@ -790,7 +795,8 @@ int reveal_cbi_code_tbl ( void ) {
   return cnt;
 }
 
-#if 0 // for MODULE-TEST
+#if 1 // for MODULE-TEST
+#if 0
 int main ( void ) {
   const OC_ID oc_id = OC801;
   int cnt = 0;
@@ -841,6 +847,83 @@ int main ( void ) {
   
   return 0;
 }
+#else
+int main ( void ) {
+  OC_ID oc_id = OC801;
+  int cnt = 0;
+  int n = -1;
+#if 0
+  n = load_cbi_code_tbl ( oc_id, "./cbi/BOTANICAL_GARDEN.csv" );
+  n = -1;
+  n = load_cbi_code_tbl ( (oc_id + 1), "./cbi/JASOLA_VIHAR.csv" );
+  assert( (n >= 0) && (n <= CBI_MAX_STAT_BITS) );
+#else
+  n = 0;
+  while( oc_id < (int)END_OF_OCs ) {
+    char *src_fname = NULL;
+    if( il_status_geometry_resources[oc_id].csv_fname ) {
+      int m = -1;
+      char buf[512];
+      buf[511] = 0;
+      {
+	char *p = NULL;
+	p = stpcpy( buf, "./cbi/" );
+	assert( p );
+	src_fname = strcpy( p, il_status_geometry_resources[oc_id].csv_fname );
+	assert( src_fname );
+      }
+      m = load_cbi_code_tbl ( il_status_geometry_resources[oc_id].oc_id, buf );
+      assert( (m >= 0) && (m <= CBI_MAX_STAT_BITS) );
+      n += m;
+    }
+    oc_id++;
+  }
+#endif
+  printf( "read %d entries on, from raw csv.\n", n );
+  {
+    int m = -1;
+    m = reveal_cbi_code_tbl();
+    assert( m > -1 );
+    printf( "revised %d entries.\n", m );
+  }
+  
+#if 1
+  // test correctness on construction of hash-map for cbi state bits.
+  {
+    int i;
+    for( i = 0; i < n; i++ ) {
+      CBI_STAT_ATTR_PTR pE = NULL;
+      CBI_STAT_LABEL_PTR pL = NULL;
+      int j = 0;
+      pE = &cbi_stat_prof[oc_id][i];
+      while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS )  {
+	if( ! strncmp(cbi_stat_labeling[j].name, cbi_stat_prof[oc_id][i].name, CBI_STAT_NAME_LEN) ) {
+	  pL = &cbi_stat_labeling[j];
+	  break;
+	}
+	j++;
+      }
+      
+      assert( pE );
+      {
+	char id[CBI_STAT_NAME_LEN + 1];
+	id[CBI_STAT_NAME_LEN] = 0;
+	if( pL )
+	  strncpy( id, pL->ident, CBI_STAT_NAME_LEN );
+	else
+	  strncpy( id, pE->name, CBI_STAT_NAME_LEN );
+	pE = conslt_hash_local( id );
+	assert( pE );
+	assert( ! strncmp(pE->name, cbi_stat_prof[oc_id][i].name, CBI_STAT_NAME_LEN) );
+	cnt++;
+      }
+    }
+  }
+  assert( n == cnt );
+#endif
+  return 0;
+}
+#endif
 #endif
 
 const CBI_STAT_KIND il_obj_kind[] = {

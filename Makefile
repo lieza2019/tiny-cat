@@ -1,4 +1,4 @@
-RM = rm
+Rm = rm
 TOUCH = touch
 CD = cd
 CC = /usr/bin/gcc
@@ -40,7 +40,8 @@ surveill.h : generic.h misc.h
 	$(TOUCH) $@
 ars.h : generic.h misc.h cbi.h
 	$(TOUCH) $@
-timetable.h : generic.h misc.h sparcs.h cbtc.h timetable_def.h
+#timetable.h : generic.h misc.h sparcs.h cbtc.h timetable_def.h
+timetable.h : generic.h misc.h sparcs.h cbtc.h
 	$(TOUCH) $@
 network.h : generic.h
 	$(TOUCH) $@
