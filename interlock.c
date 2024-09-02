@@ -389,12 +389,12 @@ int main ( void ) {
 }
 #endif
 
-static CBI_STAT_INFO_PTR willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
+static CBI_CTRL_STAT_INFO_PTR willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
   assert( pS );
   assert( (msg_id >= 0) && (msg_id < END_OF_OC2ATS) );
-  CBI_STAT_INFO_PTR r = NULL;
+  CBI_CTRL_STAT_INFO_PTR r = NULL;
   
-  CBI_STAT_INFO_PTR pOC = NULL;
+  CBI_CTRL_STAT_INFO_PTR pOC = NULL;
   pOC = &cbi_stat_OC2ATS[msg_id];
   assert( pOC );
   pOC->oc2ats.d_recv_cbi_stat = -1;
@@ -419,7 +419,7 @@ BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS ) {
   int i = (int)OC2ATS1;
   while( i < (int)END_OF_OC2ATS ) {
     assert( (i >= (int)OC2ATS1) && (i < (int)END_OF_OC2ATS) );
-    CBI_STAT_INFO_PTR p = NULL;
+    CBI_CTRL_STAT_INFO_PTR p = NULL;
     if( !(p = willing_to_recv_OC_stat( pS, (OC2ATS_STAT)i )) )
       goto exit;
     assert( p );
@@ -431,12 +431,12 @@ BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS ) {
   return r;
 }
 
-static CBI_STAT_INFO_PTR willing_to_send_OC_cmd ( TINY_SOCK_PTR pS, ATS2OC_CMD msg_id ) {
+static CBI_CTRL_STAT_INFO_PTR willing_to_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC_CMD msg_id ) {
   assert( pS );
   assert( (msg_id >= ATS2OC801) && (msg_id < END_OF_ATS2OC) );
-  CBI_STAT_INFO_PTR r = NULL;
+  CBI_CTRL_STAT_INFO_PTR r = NULL;
   
-  CBI_STAT_INFO_PTR pOC = NULL;
+  CBI_CTRL_STAT_INFO_PTR pOC = NULL;
   pOC = &cbi_stat_ATS2OC[(int)msg_id];
   assert( pOC );
   {
@@ -448,15 +448,15 @@ static CBI_STAT_INFO_PTR willing_to_send_OC_cmd ( TINY_SOCK_PTR pS, ATS2OC_CMD m
     bcast_dst_ipaddr.oct_3rd = 255;
     bcast_dst_ipaddr.oct_4th = 255;
     
-    pOC->ats2oc.d_recv_cbi_stat = -1;
+    pOC->ats2oc.d_sent_cbi_ctrl = -1;
     {
       TINY_SOCK_DESC d = -1;
       if( (d = creat_sock_sendnx( pS, pOC->ats2oc.dst_port, TRUE, &bcast_dst_ipaddr )) < 0 ) {
 	errorF( "failed to create the socket to send CBI control commands  toward OC%d.\n", OC_ID_CONV2INT(msg_id) );
 	goto exit;
       }
-      pOC->ats2oc.d_recv_cbi_stat = d;
-      sock_attach_send_buf( pS, pOC->ats2oc.d_recv_cbi_stat, (unsigned char *)&(pOC->ats2oc.sent), (int)sizeof(pOC->ats2oc.sent) );
+      pOC->ats2oc.d_sent_cbi_ctrl = d;
+      sock_attach_send_buf( pS, pOC->ats2oc.d_sent_cbi_ctrl, (unsigned char *)&(pOC->ats2oc.sent), (int)sizeof(pOC->ats2oc.sent) );
     }
     r = pOC;
   }
@@ -464,18 +464,18 @@ static CBI_STAT_INFO_PTR willing_to_send_OC_cmd ( TINY_SOCK_PTR pS, ATS2OC_CMD m
   return r;
 }
 
-BOOL establish_OC_stat_send ( TINY_SOCK_PTR pS ) {
+BOOL establish_OC_ctrl_send ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
   
   int i = ATS2OC801;
   while( i < (int)END_OF_ATS2OC ) {
     assert( (i >= ATS2OC801) && (i < (int)END_OF_ATS2OC) );
-    CBI_STAT_INFO_PTR p = NULL;
-    if( !(p = willing_to_send_OC_cmd( pS, (ATS2OC_CMD)i )) )
+    CBI_CTRL_STAT_INFO_PTR p = NULL;
+    if( !(p = willing_to_send_OC_ctrl( pS, (ATS2OC_CMD)i )) )
       goto exit;
     assert( p );
-    assert( p->ats2oc.d_recv_cbi_stat > -1 );
+    assert( p->ats2oc.d_sent_cbi_ctrl > -1 );
     i++;
   }
   r = TRUE;
@@ -483,22 +483,11 @@ BOOL establish_OC_stat_send ( TINY_SOCK_PTR pS ) {
   return r;
 }
 
-BOOL establish_CBI_comm ( TINY_SOCK_PTR pS ) {
-  assert( pS );
-  BOOL r = FALSE;
-  
-  if( establish_OC_stat_recv( pS ) )
-    if( establish_OC_stat_send( pS ) )
-      r = TRUE;
-  
-  return r;
-}
-
 static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
   assert( pS );
   assert( (msg_id >= OC2ATS1) && (msg_id < END_OF_OC2ATS) );
   RECV_BUF_CBI_STAT_PTR r = NULL;
-  CBI_STAT_INFO_PTR pOC = NULL;
+  CBI_CTRL_STAT_INFO_PTR pOC = NULL;
   
   int r_mutex = -1;
   r_mutex = pthread_mutex_lock( &cbi_stat_info_mutex );
@@ -542,15 +531,15 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
       
       switch( msg_id ) {
       case OC2ATS1:
-	if( len < OC_OC2ATS1_MSGSIZE )
+	if( len < OC2ATS1_MSGSIZE )
 	  goto msg_size_err;
 	break;
       case OC2ATS2:
-	if( len < OC_OC2ATS2_MSGSIZE )
+	if( len < OC2ATS2_MSGSIZE )
 	  goto msg_size_err;
 	break;
       case OC2ATS3:
-	if( len < OC_OC2ATS3_MSGSIZE )
+	if( len < OC2ATS3_MSGSIZE )
 	  goto msg_size_err;
 	break;
       msg_size_err:

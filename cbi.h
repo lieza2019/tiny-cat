@@ -114,32 +114,35 @@ typedef enum oc2ats_stat {
 #define UDP_BCAST_RECV_PORT_OC2ATS2_STAT 58197
 #define UDP_BCAST_RECV_PORT_OC2ATS3_STAT 58196
 
-#define OC_ATS2OC_MSGSIZE 286
-#define OC_OC2ATS1_MSGSIZE 1404
-#define OC_OC2ATS2_MSGSIZE 944
-#define OC_OC2ATS3_MSGSIZE 1260
+
+#define ATS2OC_MSGSIZE 286
+#define OC2ATS1_MSGSIZE 1404
+#define OC2ATS2_MSGSIZE 944
+#define OC2ATS3_MSGSIZE 1260
 
 #define OC_OC2ATS_MSGS_NUM 3
 typedef struct recv_buf_cbi_stat {
   struct {
     struct {
       NXNS_HEADER header;
-      unsigned char arena[OC_OC2ATS1_MSGSIZE - 76]; // for OC_OC2ATS1_MSGSIZE > OC_OC2ATS3_MSGSIZE > OC_OC2ATS2_MSGSIZE
+      unsigned char arena[OC2ATS1_MSGSIZE - 76]; // for OC_OC2ATS1_MSGSIZE > OC_OC2ATS3_MSGSIZE > OC_OC2ATS2_MSGSIZE
     } buf;
     BOOL updated;
   } msgs[OC_OC2ATS_MSGS_NUM];
 } RECV_BUF_CBI_STAT, *RECV_BUF_CBI_STAT_PTR;
+typedef struct recv_buf_cbi_stat SENT_BUF_CBI_CTRL;
+typedef struct recv_buf_cbi_stat *SENT_BUF_CBI_CTRL_PTR;
 extern RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 
-typedef struct CBI_stat_infoset {
+typedef struct cbi_ctrl_stat_infoset {
   char oc_name[END_OF_OCs][6];
   IP_ADDR_DESC oc_ipaddr[END_OF_OCs];
   uint16_t LNN[END_OF_OCs];
   struct {
     const unsigned short dst_port;
-    TINY_SOCK_DESC d_recv_cbi_stat;
+    TINY_SOCK_DESC d_sent_cbi_ctrl;
     OC_ID dest_oc_id;
-    RECV_BUF_CBI_STAT sent;
+    SENT_BUF_CBI_CTRL sent;
   } ats2oc;
   struct {
     const unsigned short dst_port;
@@ -147,9 +150,9 @@ typedef struct CBI_stat_infoset {
     OC_ID sender_oc_id;
     RECV_BUF_CBI_STAT recv;
   } oc2ats;
-} CBI_STAT_INFO, *CBI_STAT_INFO_PTR;
-extern CBI_STAT_INFO cbi_stat_ATS2OC[END_OF_ATS2OC];
-extern CBI_STAT_INFO cbi_stat_OC2ATS[END_OF_OC2ATS];
+} CBI_CTRL_STAT_INFO, *CBI_CTRL_STAT_INFO_PTR;
+extern CBI_CTRL_STAT_INFO cbi_stat_ATS2OC[END_OF_ATS2OC];
+extern CBI_CTRL_STAT_INFO cbi_stat_OC2ATS[END_OF_OC2ATS];
 
 typedef enum _cbi_stat_group {
   CBI_STAT_i1 = 1,

@@ -129,7 +129,7 @@ const static int cbi_group2addr[] = {
   364  // CBI_STAT_A of OC2ATS3
 };
 
-CBI_STAT_INFO cbi_stat_ATS2OC[END_OF_ATS2OC] = {
+CBI_CTRL_STAT_INFO cbi_stat_ATS2OC[END_OF_ATS2OC] = {
   {{"OC801", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""},
    {{172, 21, 51, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0},
     {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
@@ -244,7 +244,7 @@ CBI_STAT_INFO cbi_stat_ATS2OC[END_OF_ATS2OC] = {
   }
 };
 
-CBI_STAT_INFO cbi_stat_OC2ATS[END_OF_OC2ATS] = {
+CBI_CTRL_STAT_INFO cbi_stat_OC2ATS[END_OF_OC2ATS] = {
   {{"OC801", "OC802", "OC803", "OC804", "OC805", "OC806", "OC807", "OC808",
      "OC809", "OC810", "OC811", "OC812", "OC813", "OC814", "OC815", "OC816"},
    {{172, 21, 51, 1}, {172, 21, 52, 1}, {172, 21, 53, 1}, {172, 21, 54, 1}, {172, 21, 55, 1}, {172, 21, 56, 1}, {172, 21, 57, 1}, {172, 21, 58, 1},
