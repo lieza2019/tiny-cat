@@ -286,7 +286,11 @@ static const CBI_STAT_LABEL cbi_stat_labeling[] = {
 #undef CBI_STAT_LABELING
 #endif
 
+#if 0
 CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
+#else
+CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
+#endif
 static int frontier[END_OF_OCs];
 
 static CBI_STAT_ATTR_PTR cbi_stat_hash_budgets[CBI_STAT_HASH_BUDGETS_NUM];

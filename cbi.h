@@ -250,7 +250,15 @@ typedef struct cbi_stat_attr {
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
 #define CBI_MAX_STAT_BITS 65536
+#if 0
 extern CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
+#else
+struct cbi_code_tbl {
+  CBI_STAT_ATTR codes[CBI_MAX_STAT_BITS];
+  CBI_STAT_ATTR *pctrls;
+} CBI_CODE_TBL, *CBI_CODE_TBL_PTR;
+extern CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
+#endif
 
 #define CBI_STAT_HASH_BUDGETS_NUM 256
 extern CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre );
