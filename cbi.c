@@ -693,6 +693,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
   
   fp = fopen( fname, "r" );
   if( fp ) {
+    CBI_STAT_ATTR_PTR pctrlbit_last = NULL;
     int lines = 1;
     int group = -1;
     int disp = -1;
@@ -717,7 +718,6 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	{
 	  char *p = NULL;
 	  p = stpncpy( pA->name, "[", 1 );
-	  assert( p && !(*p) );
 	  p = stpncpy( p, sh_name, CBI_STAT_NAME_LEN );
 	  assert( p && !(*p) );
 	  p = stpncpy( p, "]", 1 );
@@ -745,6 +745,14 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	  pA->disp.bits = m;
 	}
 	pA->disp.mask = cbi_stat_bit_maskpat( pA->disp.bits );
+	if( ! strncmp( sh_name, "A", CBI_STAT_NAME_LEN ) ) {
+	  pA->attr_ctrl.ctrl_bit = TRUE;
+	  pA->attr_ctrl.dirty = FALSE;
+	  pA->attr_ctrl.pNext_ctrl = NULL;
+	  if( pctrlbit_last )
+	    pctrlbit_last->attr_ctrl.pNext_ctrl = pA;
+	  pctrlbit_last = pA;
+	}
 	frontier[oc_id]++;
       }
       lines++;

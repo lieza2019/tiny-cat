@@ -237,6 +237,11 @@ typedef struct cbi_stat_attr {
   CBI_STAT_KIND kind;
   OC_ID oc_id;
   struct {
+    BOOL ctrl_bit;
+    BOOL dirty;
+    struct cbi_stat_attr *pNext_ctrl;
+  } attr_ctrl;
+  struct {
     const char *fname;
     int line;
   } src;
