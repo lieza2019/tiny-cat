@@ -286,7 +286,7 @@ static const CBI_STAT_LABEL cbi_stat_labeling[] = {
 #undef CBI_STAT_LABELING
 #endif
 
-#if 1
+#if 0
 CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
 #else
 CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
@@ -676,15 +676,15 @@ static void dup_CBI_code_tbl ( const char *name, int group, int disp ) { // ****
 void dump_cbi_stat_prof ( OC_ID oc_id ) {
   int i;
   for( i = 0; i < CBI_MAX_STAT_BITS; i++ ) {
-    printf( "name: %s\n", cbi_stat_prof[oc_id][i].name );
-    printf( "ident: %s\n", cbi_stat_prof[oc_id][i].ident );
-    printf( "disp.raw: %d\n", cbi_stat_prof[oc_id][i].disp.raw );
-    printf( "disp.bytes: %d\n", cbi_stat_prof[oc_id][i].disp.bytes );
-    printf( "disp.bits: %d\n", cbi_stat_prof[oc_id][i].disp.bits );
+    printf( "name: %s\n", cbi_stat_prof[oc_id].codes[i].name );
+    printf( "ident: %s\n", cbi_stat_prof[oc_id].codes[i].ident );
+    printf( "disp.raw: %d\n", cbi_stat_prof[oc_id].codes[i].disp.raw );
+    printf( "disp.bytes: %d\n", cbi_stat_prof[oc_id].codes[i].disp.bytes );
+    printf( "disp.bits: %d\n", cbi_stat_prof[oc_id].codes[i].disp.bits );
     {
       char str[CBI_STAT_MASKNAME_MAXLEN + 1];
       str[CBI_STAT_MASKNAME_MAXLEN] = 0;
-      show_cbi_stat_bitmask( str, CBI_STAT_MASKNAME_MAXLEN, cbi_stat_prof[oc_id][i].disp.mask );
+      show_cbi_stat_bitmask( str, CBI_STAT_MASKNAME_MAXLEN, cbi_stat_prof[oc_id].codes[i].disp.mask );
       printf( "disp.mask: %s\n", str );
     }
     printf( "\n" );
@@ -697,7 +697,8 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
   
   fp = fopen( fname, "r" );
   if( fp ) {
-    CBI_STAT_ATTR_PTR pctrlbit_last = NULL;
+    CBI_STAT_ATTR_PTR pctrlbit_fst = NULL;
+    CBI_STAT_ATTR_PTR pctrlbit_lst = NULL;
     int lines = 1;
     int group = -1;
     int disp = -1;
@@ -713,7 +714,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	errorF( "failed lexical analyzing the CBI OC%3d code-table of %s, in the line: %d.\n,", OC_ID_CONV2INT(oc_id), fname, lines );
 	assert( FALSE );
       } else {
-	CBI_STAT_ATTR_PTR pA = &cbi_stat_prof[oc_id][frontier[oc_id]];
+	CBI_STAT_ATTR_PTR pA = &cbi_stat_prof[oc_id].codes[frontier[oc_id]];
 	assert( pA );		       
 	if( (err = (BOOL)ferror( fp )) )
 	  break;
@@ -749,13 +750,16 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	  pA->disp.bits = m;
 	}
 	pA->disp.mask = cbi_stat_bit_maskpat( pA->disp.bits );
+	pA->attr_ctrl.cnt_2_kill = -1;
 	if( ! strncmp( sh_name, "A", CBI_STAT_NAME_LEN ) ) {
 	  pA->attr_ctrl.ctrl_bit = TRUE;
-	  
+	  pA->attr_ctrl.cnt_2_kill = 0;
 	  pA->attr_ctrl.pNext_ctrl = NULL;
-	  if( pctrlbit_last )
-	    pctrlbit_last->attr_ctrl.pNext_ctrl = pA;
-	  pctrlbit_last = pA;
+	  if( pctrlbit_lst )
+	    pctrlbit_lst->attr_ctrl.pNext_ctrl = pA;
+	  else
+	    pctrlbit_fst = pA;
+	  pctrlbit_lst = pA;
 	}
 	pA->dirty = FALSE;
 	frontier[oc_id]++;
@@ -764,6 +768,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
       //dup_CBI_code_tbl( name, group, disp ); // ***** for debugging.
     }
     fclose( fp );
+    cbi_stat_prof[oc_id].pctrl_codes = pctrlbit_fst;
     //fclose( fp_out ); // ***** for debugging.
   } else {
     errorF( "failed to open the file: %s.\n", fname );
@@ -773,7 +778,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
   if( !err ) {
     int i;
     for( i = 0; i < frontier[oc_id]; i++ )
-      regist_hash_local( &cbi_stat_prof[oc_id][i], TRUE, "loading: " );
+      regist_hash_local( &cbi_stat_prof[oc_id].codes[i], TRUE, "loading: " );
     assert( i == frontier[oc_id] );
   }
   
@@ -789,7 +794,30 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
   }
 }
 
-int reveal_cbi_code_tbl( const char *errmsg_pre ) {
+int reveal_cbi_ctrl_bits ( ATS2OC_CMD cmd_id ) {
+  assert( (cmd_id > -1) && (cmd_id < END_OF_ATS2OC) );
+  int cnt = 0;
+  CBI_STAT_ATTR_PTR *pphd = NULL;
+  unsigned char *pa = cbi_stat_ATS2OC[cmd_id].ats2oc.sent.msgs[0].buf.arena;
+  assert( pa );
+  
+  pphd = &cbi_stat_prof[cmd_id].pdirty_bits;
+  assert( pphd );
+  while( *pphd ) {
+    assert( pphd );
+    CBI_STAT_ATTR_PTR pC = *pphd;
+    assert( pC );
+    if( pC->attr_ctrl.ctrl_bit ) {
+      ;
+    }
+    pC->dirty = FALSE;
+    *pphd = pC->pNext_dirt;
+    cnt++;
+  }
+  return cnt;
+}
+
+int revise_cbi_code_tbl( const char *errmsg_pre ) {
   int cnt = 0;
   int j = 0;
   

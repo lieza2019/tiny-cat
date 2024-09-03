@@ -629,11 +629,11 @@ int main ( void ) {
 	  int i = 0;
 	  while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
 	    int j;
-	    for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[oc_id][j].name[0]; j++ ) {
+	    for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[oc_id].codes[j].name[0]; j++ ) {
 	      assert( pS );
 	      memset( pS, 0, sizeof(S) );
-	      snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%s:%d", cbi_stat_prof[oc_id][j].src.fname, cbi_stat_prof[oc_id][j].src.line );
-	      transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[oc_id][j] );
+	      snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%s:%d", cbi_stat_prof[oc_id].codes[j].src.fname, cbi_stat_prof[oc_id].codes[j].src.line );
+	      transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_prof[oc_id].codes[j] );
 	    }
 	    i++;
 	  }

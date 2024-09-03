@@ -237,7 +237,8 @@ typedef struct cbi_stat_attr {
   CBI_STAT_KIND kind;
   OC_ID oc_id;
   struct {
-    BOOL ctrl_bit;    
+    BOOL ctrl_bit;
+    int cnt_2_kill;
     struct cbi_stat_attr *pNext_ctrl;
   } attr_ctrl;
   struct {
@@ -252,13 +253,20 @@ typedef struct cbi_stat_attr {
 
 #define CBI_MAX_STAT_BITS 65536
 
-#if 1
+#if 0
 extern CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
 #else
 typedef struct cbi_code_tbl {
   CBI_STAT_ATTR codes[CBI_MAX_STAT_BITS];
-  CBI_STAT_ATTR_PTR pctrls;
-  CBI_STAT_ATTR_PTR pdirts;
+  CBI_STAT_ATTR_PTR pctrl_codes;
+#if 1
+  CBI_STAT_ATTR_PTR pdirty_bits;
+#else
+  struct {
+    CBI_STAT_ATTR_PTR phd;
+    CBI_STAT_ATTR_PTR ptl;
+  } dirty_bits;
+#endif  
 } CBI_CODE_TBL, *CBI_CODE_TBL_PTR;
 extern CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
 #endif
@@ -272,7 +280,7 @@ extern CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const i
 #define CBI_STAT_BITS_LEXBUF_SIZE 256
 extern int load_cbi_code_tbl ( OC_ID oc_id, const char *fname );
 extern CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( const char *ident );
-extern int reveal_cbi_code_tbl( const char *errmsg_pre );
+extern int revise_cbi_code_tbl( const char *errmsg_pre );
 extern void dump_cbi_stat_prof ( OC_ID oc_id );
 
 extern char *show_cbi_stat_bitmask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask );
