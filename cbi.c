@@ -286,7 +286,7 @@ static const CBI_STAT_LABEL cbi_stat_labeling[] = {
 #undef CBI_STAT_LABELING
 #endif
 
-#if 0
+#if 1
 CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
 #else
 CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
@@ -751,12 +751,13 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	pA->disp.mask = cbi_stat_bit_maskpat( pA->disp.bits );
 	if( ! strncmp( sh_name, "A", CBI_STAT_NAME_LEN ) ) {
 	  pA->attr_ctrl.ctrl_bit = TRUE;
-	  pA->attr_ctrl.dirty = FALSE;
+	  
 	  pA->attr_ctrl.pNext_ctrl = NULL;
 	  if( pctrlbit_last )
 	    pctrlbit_last->attr_ctrl.pNext_ctrl = pA;
 	  pctrlbit_last = pA;
 	}
+	pA->dirty = FALSE;
 	frontier[oc_id]++;
       }
       lines++;

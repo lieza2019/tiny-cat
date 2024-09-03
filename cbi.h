@@ -237,25 +237,28 @@ typedef struct cbi_stat_attr {
   CBI_STAT_KIND kind;
   OC_ID oc_id;
   struct {
-    BOOL ctrl_bit;
-    BOOL dirty;
+    BOOL ctrl_bit;    
     struct cbi_stat_attr *pNext_ctrl;
   } attr_ctrl;
   struct {
     const char *fname;
     int line;
   } src;
+  BOOL dirty;
+  struct cbi_stat_attr *pNext_dirt;
   struct cbi_stat_attr *pNext_hash;
   struct cbi_stat_attr *pNext_decl;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
 #define CBI_MAX_STAT_BITS 65536
-#if 0
+
+#if 1
 extern CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
 #else
-struct cbi_code_tbl {
+typedef struct cbi_code_tbl {
   CBI_STAT_ATTR codes[CBI_MAX_STAT_BITS];
-  CBI_STAT_ATTR *pctrls;
+  CBI_STAT_ATTR_PTR pctrls;
+  CBI_STAT_ATTR_PTR pdirts;
 } CBI_CODE_TBL, *CBI_CODE_TBL_PTR;
 extern CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
 #endif
