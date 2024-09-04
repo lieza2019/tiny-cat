@@ -575,6 +575,32 @@ static void expire_cbi_status ( void ) {
   assert( i == END_OF_OCs );
 }
 
+int reveal_cbi_ctrl_bits ( ATS2OC_CMD cmd_id ) {
+  assert( (cmd_id > -1) && (cmd_id < END_OF_ATS2OC) );
+  int cnt = 0;
+  CBI_STAT_ATTR_PTR *pphd = NULL;
+  unsigned char *pa = cbi_stat_ATS2OC[cmd_id].ats2oc.sent.msgs[0].buf.arena;
+  assert( pa );
+  
+  pphd = &cbi_stat_prof[cmd_id].pdirty_bits;
+  assert( pphd );
+  while( *pphd ) {
+    assert( pphd );
+    CBI_STAT_ATTR_PTR pA = *pphd;
+    assert( pA );
+    if( pA->attr_ctrl.ctrl_bit ) {
+      if( pA->attr_ctrl.val )
+	pa[pA->disp.bytes] |= pA->disp.mask;
+      else
+	pa[pA->disp.bytes] &= ~(pA->disp.mask);
+    }
+    pA->dirty = FALSE;
+    *pphd = pA->pNext_dirt;
+    cnt++;
+  }
+  return cnt;
+}
+
 void reveal_il_status ( TINY_SOCK_PTR pS ) {
   assert( pS );
   int i = -1;
@@ -646,6 +672,36 @@ void *pth_reveal_il_status ( void *arg ) {
     }
   }
   return NULL;
+}
+
+#define CNT_TO_DOWNIT 3
+int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
+  assert( poc_id );
+  assert( pkind );
+  assert( ident );
+  int r = -1;
+  CBI_STAT_ATTR_PTR pA = NULL;
+  
+  *poc_id = -1;
+  *pkind = -1;
+  pA = conslt_cbi_code_tbl( ident );
+  if( pA ) {
+    assert( pA );
+    assert( *poc_id > -1 );
+    if( pA->attr_ctrl.ctrl_bit ) {
+      assert( pA->attr_ctrl.cmd_id == (ATS2OC_CMD)*poc_id );
+      r = (int)(pA->attr_ctrl.val);
+      if( !(pA->attr_ctrl.val || pA->dirty) ) {
+	pA->attr_ctrl.cnt_2_kill = CNT_TO_DOWNIT;
+	pA->attr_ctrl.val = TRUE;
+	pA->dirty = TRUE;
+	pA->pNext_dirt = cbi_stat_prof[*poc_id].pdirty_bits;
+	cbi_stat_prof[*poc_id].pdirty_bits = pA;
+	r = (int)TRUE;
+      }
+    }
+  }
+  return r;
 }
 
 int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
@@ -759,10 +815,9 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
 	assert( pA );
 	assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
 	RECV_BUF_CBI_STAT_PTR pstat = NULL;
-
 	pstat = &cbi_stat_info[pA->oc_id];
+	assert( pstat );
 	{
-	  assert( pstat );
 	  unsigned char *pgrp = &((unsigned char *)&pstat->msgs[pA->group.msg_id])[pA->group.addr];
 	  assert( pgrp );
 	  fprintf( fp_out, "value: %d\n", (pgrp[pA->disp.bytes] & pA->disp.mask) );

@@ -238,7 +238,9 @@ typedef struct cbi_stat_attr {
   OC_ID oc_id;
   struct {
     BOOL ctrl_bit;
+    ATS2OC_CMD cmd_id;
     int cnt_2_kill;
+    BOOL val;
     struct cbi_stat_attr *pNext_ctrl;
   } attr_ctrl;
   struct {

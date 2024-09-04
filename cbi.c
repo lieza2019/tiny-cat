@@ -753,6 +753,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	pA->attr_ctrl.cnt_2_kill = -1;
 	if( ! strncmp( sh_name, "A", CBI_STAT_NAME_LEN ) ) {
 	  pA->attr_ctrl.ctrl_bit = TRUE;
+	  pA->attr_ctrl.cmd_id = (ATS2OC_CMD)(pA->oc_id);
 	  pA->attr_ctrl.cnt_2_kill = 0;
 	  pA->attr_ctrl.pNext_ctrl = NULL;
 	  if( pctrlbit_lst )
@@ -792,29 +793,6 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
     }
     return r;
   }
-}
-
-int reveal_cbi_ctrl_bits ( ATS2OC_CMD cmd_id ) {
-  assert( (cmd_id > -1) && (cmd_id < END_OF_ATS2OC) );
-  int cnt = 0;
-  CBI_STAT_ATTR_PTR *pphd = NULL;
-  unsigned char *pa = cbi_stat_ATS2OC[cmd_id].ats2oc.sent.msgs[0].buf.arena;
-  assert( pa );
-  
-  pphd = &cbi_stat_prof[cmd_id].pdirty_bits;
-  assert( pphd );
-  while( *pphd ) {
-    assert( pphd );
-    CBI_STAT_ATTR_PTR pC = *pphd;
-    assert( pC );
-    if( pC->attr_ctrl.ctrl_bit ) {
-      ;
-    }
-    pC->dirty = FALSE;
-    *pphd = pC->pNext_dirt;
-    cnt++;
-  }
-  return cnt;
 }
 
 int revise_cbi_code_tbl( const char *errmsg_pre ) {
