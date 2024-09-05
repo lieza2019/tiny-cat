@@ -575,7 +575,41 @@ static void expire_cbi_status ( void ) {
   assert( i == END_OF_OCs );
 }
 
-int reveal_cbi_ctrl_bits ( ATS2OC_CMD cmd_id ) {
+int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
+  assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
+  int cnt = 0;
+  CBI_STAT_ATTR_PTR pA_ctl = NULL;
+  
+  pA_ctl = cbi_stat_prof[oc_id].pctrl_codes;
+  assert( pA_ctl );
+  while( pA_ctl ) {
+    assert( pA_ctl->attr_ctrl.ctrl_bit );
+    if( pA_ctl->attr_ctrl.ctrl_bit ) {
+      assert( pA_ctl->attr_ctrl.cmd_id == (ATS2OC_CMD)oc_id );
+      assert( pA_ctl->attr_ctrl.cnt_2_kil >= 0 );
+      if( pA_ctl->attr_ctrl.cnt_2_kil > 0 ) {
+	pA_ctl->attr_ctrl.cnt_2_kil--;
+	if( pA_ctl->attr_ctrl.cnt_2_kil <= 0 ) {
+	  pA_ctl->attr_ctrl.cnt_2_kil = 0;
+	  if( ! pA_ctl->dirty ) {
+	    assert( pA_ctl->pNext_dirt == NULL );
+	    if( pA_ctl->attr_ctrl.val ) {
+	      pA_ctl->attr_ctrl.val = FALSE;
+	      pA_ctl->dirty = TRUE;
+	      pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
+	      cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
+	      cnt++;
+	    }
+	  }
+	}
+      }
+    }
+    pA_ctl = pA_ctl->attr_ctrl.pNext_ctrl;
+  }
+  return cnt;
+}
+
+int reveal_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   assert( (cmd_id > -1) && (cmd_id < END_OF_ATS2OC) );
   int cnt = 0;
   CBI_STAT_ATTR_PTR *pphd = NULL;
@@ -588,7 +622,9 @@ int reveal_cbi_ctrl_bits ( ATS2OC_CMD cmd_id ) {
     assert( pphd );
     CBI_STAT_ATTR_PTR pA = *pphd;
     assert( pA );
-    if( pA->attr_ctrl.ctrl_bit ) {
+    assert( pA->attr_ctrl.ctrl_bit );
+    assert( pA->dirty );
+    if( pA->attr_ctrl.ctrl_bit && pA->dirty ) {
       if( pA->attr_ctrl.val )
 	pa[pA->disp.bytes] |= pA->disp.mask;
       else
@@ -596,9 +632,23 @@ int reveal_cbi_ctrl_bits ( ATS2OC_CMD cmd_id ) {
     }
     pA->dirty = FALSE;
     *pphd = pA->pNext_dirt;
+    pA->pNext_dirt = NULL;
     cnt++;
   }
   return cnt;
+}
+
+void *pth_reveal_il_ctrl_bits ( void *arg ) {
+  int oc_id = (int)END_OF_OCs;
+  
+  for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
+    expire_cbi_ctrl_bits( oc_id );
+  }
+  for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
+    reveal_il_ctrl_bits( (ATS2OC_CMD)oc_id );
+  }
+  
+  return NULL;
 }
 
 void reveal_il_status ( TINY_SOCK_PTR pS ) {
@@ -674,7 +724,6 @@ void *pth_reveal_il_status ( void *arg ) {
   return NULL;
 }
 
-#define CNT_TO_DOWNIT 3
 int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   assert( poc_id );
   assert( pkind );
@@ -687,16 +736,17 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   pA = conslt_cbi_code_tbl( ident );
   if( pA ) {
     assert( pA );
-    assert( *poc_id > -1 );
+    assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
     if( pA->attr_ctrl.ctrl_bit ) {
-      assert( pA->attr_ctrl.cmd_id == (ATS2OC_CMD)*poc_id );
-      r = (int)(pA->attr_ctrl.val);
+      assert( pA->attr_ctrl.cmd_id == (ATS2OC_CMD)(pA->oc_id) );
       if( !(pA->attr_ctrl.val || pA->dirty) ) {
-	pA->attr_ctrl.cnt_2_kill = CNT_TO_DOWNIT;
+	pA->attr_ctrl.cnt_2_kil = CTRL_LIT_SUSTAIN_CNT;
 	pA->attr_ctrl.val = TRUE;
 	pA->dirty = TRUE;
-	pA->pNext_dirt = cbi_stat_prof[*poc_id].pdirty_bits;
-	cbi_stat_prof[*poc_id].pdirty_bits = pA;
+	pA->pNext_dirt = cbi_stat_prof[pA->oc_id].pdirty_bits;
+	cbi_stat_prof[pA->oc_id].pdirty_bits = pA;
+	*poc_id = pA->oc_id;
+	*pkind = pA->kind;
 	r = (int)TRUE;
       }
     }

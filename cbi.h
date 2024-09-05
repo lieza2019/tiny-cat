@@ -217,6 +217,7 @@ typedef struct cbi_stat_csv_fnames {
 
 extern const CBI_STAT_CSV_FNAMES il_status_geometry_resources[END_OF_OCs + 1];
 
+#define CTRL_LIT_SUSTAIN_CNT 5
 #define CBI_STAT_IDENT_LEN 32
 #define CBI_STAT_NAME_LEN 32
 typedef struct cbi_stat_attr {
@@ -239,7 +240,7 @@ typedef struct cbi_stat_attr {
   struct {
     BOOL ctrl_bit;
     ATS2OC_CMD cmd_id;
-    int cnt_2_kill;
+    int cnt_2_kil;
     BOOL val;
     struct cbi_stat_attr *pNext_ctrl;
   } attr_ctrl;
