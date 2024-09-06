@@ -598,6 +598,7 @@ int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
 	  if( !r_mutex ) {
 	    if( ! pA_ctl->dirty ) {
 	      assert( pA_ctl->pNext_dirt == NULL );
+	      assert( pA_ctl->attr_ctrl.cnt_2_kil == 0 );
 	      if( pA_ctl->attr_ctrl.val ) {
 		pA_ctl->attr_ctrl.val = FALSE;
 		pA_ctl->dirty = TRUE;
@@ -640,6 +641,7 @@ int reveal_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
 	int r_mutex_sendbuf = -1;
 	r_mutex_sendbuf = pthread_mutex_trylock( &cbi_ctrl_sendbuf_mutex );
 	if( !r_mutex_sendbuf ) {
+	  assert( pA->attr_ctrl.cnt_2_kil == 0 );
 	  if( pA->attr_ctrl.val ) {
 	    pa[pA->disp.bytes] |= pA->disp.mask;
 	    pA->attr_ctrl.cnt_2_kil = CTRL_LIT_SUSTAIN_CNT;
@@ -661,7 +663,7 @@ int reveal_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   return cnt;
 }
 
-void *pth_reveal_il_ctrl_bits ( void *arg ) {
+void *pth_expire_il_ctrl_bits ( void *arg ) {
   assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.01;
   int oc_id = (int)END_OF_OCs;
@@ -670,12 +672,26 @@ void *pth_reveal_il_ctrl_bits ( void *arg ) {
     for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
       expire_cbi_ctrl_bits( oc_id );
     }
+    {
+      int r = -1;
+      r = usleep( interval );
+      assert( !r );
+    }
+  }
+  return NULL;
+}
+
+void *pth_reveal_il_ctrl_bits ( void *arg ) {
+  assert( arg );
+  const useconds_t interval = 1000 * 1000 * 0.01;
+  int oc_id = (int)END_OF_OCs;
+  
+  while( TRUE ) {
     for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
       reveal_il_ctrl_bits( (ATS2OC_CMD)oc_id );
     }
-  
     {
-      int r = 1;
+      int r = -1;
       r = usleep( interval );
       assert( !r );
     }
@@ -748,7 +764,7 @@ void *pth_reveal_il_status ( void *arg ) {
     }
     
     {
-      int r = 1;
+      int r = -1;
       r = usleep( interval );
       assert( !r );
     }
