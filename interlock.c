@@ -20,6 +20,8 @@ const CBI_STAT_KIND ROUTE_KIND2GENERIC[] = {
 };
 
 pthread_mutex_t cbi_stat_info_mutex;
+pthread_mutex_t cbi_ctrl_sendbuf_mutex;
+pthread_mutex_t cbi_ctrl_dispatch_mutex;
 
 static TRACK_C_PTR lkup_track_prof[END_OF_IL_OBJ_INSTANCES];
 static void cons_track_prof_lkup_tbl ( void ) {
@@ -590,17 +592,24 @@ int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
       if( pA_ctl->attr_ctrl.cnt_2_kil > 0 ) {
 	pA_ctl->attr_ctrl.cnt_2_kil--;
 	if( pA_ctl->attr_ctrl.cnt_2_kil <= 0 ) {
+	  int r_mutex = -1;
 	  pA_ctl->attr_ctrl.cnt_2_kil = 0;
-	  if( ! pA_ctl->dirty ) {
-	    assert( pA_ctl->pNext_dirt == NULL );
-	    if( pA_ctl->attr_ctrl.val ) {
-	      pA_ctl->attr_ctrl.val = FALSE;
-	      pA_ctl->dirty = TRUE;
-	      pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
-	      cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
-	      cnt++;
+	  r_mutex = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
+	  if( !r_mutex ) {
+	    if( ! pA_ctl->dirty ) {
+	      assert( pA_ctl->pNext_dirt == NULL );
+	      if( pA_ctl->attr_ctrl.val ) {
+		pA_ctl->attr_ctrl.val = FALSE;
+		pA_ctl->dirty = TRUE;
+		pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
+		cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
+		cnt++;
+	      }
 	    }
-	  }
+	    r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
+	    assert( !r_mutex );
+	  } else
+	    pA_ctl->attr_ctrl.cnt_2_kil = 1;
 	}
       }
     }
@@ -616,38 +625,61 @@ int reveal_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   unsigned char *pa = cbi_stat_ATS2OC[cmd_id].ats2oc.sent.msgs[0].buf.arena;
   assert( pa );
   
+  int r_mutex_dispatch = -1;
   pphd = &cbi_stat_prof[cmd_id].pdirty_bits;
   assert( pphd );
-  while( *pphd ) {
-    assert( pphd );
-    CBI_STAT_ATTR_PTR pA = *pphd;
-    assert( pA );
-    assert( pA->attr_ctrl.ctrl_bit );
-    assert( pA->dirty );
-    if( pA->attr_ctrl.ctrl_bit && pA->dirty ) {
-      if( pA->attr_ctrl.val )
-	pa[pA->disp.bytes] |= pA->disp.mask;
-      else
-	pa[pA->disp.bytes] &= ~(pA->disp.mask);
+  r_mutex_dispatch = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
+  if( !r_mutex_dispatch ) {
+    while( *pphd ) {
+      assert( pphd );
+      CBI_STAT_ATTR_PTR pA = *pphd;
+      assert( pA );
+      assert( pA->attr_ctrl.ctrl_bit );
+      assert( pA->dirty );
+      if( pA->attr_ctrl.ctrl_bit && pA->dirty ) {
+	int r_mutex_sendbuf = -1;
+	r_mutex_sendbuf = pthread_mutex_trylock( &cbi_ctrl_sendbuf_mutex );
+	if( !r_mutex_sendbuf ) {
+	  if( pA->attr_ctrl.val ) {
+	    pa[pA->disp.bytes] |= pA->disp.mask;
+	    pA->attr_ctrl.cnt_2_kil = CTRL_LIT_SUSTAIN_CNT;
+	  } else
+	    pa[pA->disp.bytes] &= ~(pA->disp.mask);
+	  r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
+	  assert( !r_mutex_sendbuf );
+	} else
+	  break;
+      }
+      pA->dirty = FALSE;
+      *pphd = pA->pNext_dirt;
+      pA->pNext_dirt = NULL;
+      cnt++;
     }
-    pA->dirty = FALSE;
-    *pphd = pA->pNext_dirt;
-    pA->pNext_dirt = NULL;
-    cnt++;
+    r_mutex_dispatch = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
+    assert( !r_mutex_dispatch );
   }
   return cnt;
 }
 
 void *pth_reveal_il_ctrl_bits ( void *arg ) {
+  assert( arg );
+  const useconds_t interval = 1000 * 1000 * 0.01;
   int oc_id = (int)END_OF_OCs;
   
-  for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
-    expire_cbi_ctrl_bits( oc_id );
-  }
-  for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
-    reveal_il_ctrl_bits( (ATS2OC_CMD)oc_id );
-  }
+  while( TRUE ) {
+    for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
+      expire_cbi_ctrl_bits( oc_id );
+    }
+    for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
+      reveal_il_ctrl_bits( (ATS2OC_CMD)oc_id );
+    }
   
+    {
+      int r = 1;
+      r = usleep( interval );
+      assert( !r );
+    }
+  }
   return NULL;
 }
 
@@ -692,7 +724,7 @@ void *pth_reveal_il_status ( void *arg ) {
     
     reveal_il_status( pS );
     {
-      const int obsolete = 100;
+      const int obsoleted = 100;
       int j = (int)OC801;
       while( j < (int)END_OF_OCs ) {	
 	assert( (j >= OC801) && (j < END_OF_OCs) );
@@ -703,7 +735,7 @@ void *pth_reveal_il_status ( void *arg ) {
 	      errorF( "CBI status information of (OC%3d, OC2ATS%d) has started updating, again.\n", OC_ID_CONV2INT(j), OC_MSG_ID_CONV2INT(k) );
 	    omits[j][k] = 0;
 	  } else {
-	    if( omits[j][k] >= obsolete ) {
+	    if( omits[j][k] >= obsoleted ) {
 	      errorF( "CBI status information of (OC%3d, OC2ATS%d) has been obsoleted.\n", OC_ID_CONV2INT(j), OC_MSG_ID_CONV2INT(k) );
 	      omits[j][k] = -1;
 	    } else
@@ -739,15 +771,20 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
     assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
     if( pA->attr_ctrl.ctrl_bit ) {
       assert( pA->attr_ctrl.cmd_id == (ATS2OC_CMD)(pA->oc_id) );
-      if( !(pA->attr_ctrl.val || pA->dirty) ) {
-	pA->attr_ctrl.cnt_2_kil = CTRL_LIT_SUSTAIN_CNT;
-	pA->attr_ctrl.val = TRUE;
-	pA->dirty = TRUE;
-	pA->pNext_dirt = cbi_stat_prof[pA->oc_id].pdirty_bits;
-	cbi_stat_prof[pA->oc_id].pdirty_bits = pA;
-	*poc_id = pA->oc_id;
-	*pkind = pA->kind;
-	r = (int)TRUE;
+      int r_mutex = -1;
+      r_mutex = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
+      if( !r_mutex ) {
+	if( !(pA->attr_ctrl.val || pA->dirty) ) {
+	  pA->attr_ctrl.val = TRUE;
+	  pA->dirty = TRUE;
+	  pA->pNext_dirt = cbi_stat_prof[pA->oc_id].pdirty_bits;
+	  cbi_stat_prof[pA->oc_id].pdirty_bits = pA;
+	  *poc_id = pA->oc_id;
+	  *pkind = pA->kind;
+	  r = (int)TRUE;
+	}
+	r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
+	assert( !r_mutex );
       }
     }
   }
@@ -784,9 +821,7 @@ int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 	}
       }
       r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
-      if( r_mutex ) {
-	assert( FALSE );
-      }
+      assert( !r_mutex );
     }
   }
   return r;
