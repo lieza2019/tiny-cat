@@ -391,7 +391,7 @@ int main ( void ) {
 }
 #endif
 
-static CBI_CTRL_STAT_INFO_PTR willing_to_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
+static CBI_CTRL_STAT_INFO_PTR willing_2_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
   assert( pS );
   assert( (msg_id >= 0) && (msg_id < END_OF_OC2ATS) );
   CBI_CTRL_STAT_INFO_PTR r = NULL;
@@ -422,7 +422,7 @@ BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS ) {
   while( i < (int)END_OF_OC2ATS ) {
     assert( (i >= (int)OC2ATS1) && (i < (int)END_OF_OC2ATS) );
     CBI_CTRL_STAT_INFO_PTR p = NULL;
-    if( !(p = willing_to_recv_OC_stat( pS, (OC2ATS_STAT)i )) )
+    if( !(p = willing_2_recv_OC_stat( pS, (OC2ATS_STAT)i )) )
       goto exit;
     assert( p );
     assert( p->oc2ats.d_recv_cbi_stat > -1 );
@@ -433,7 +433,7 @@ BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS ) {
   return r;
 }
 
-static CBI_CTRL_STAT_INFO_PTR willing_to_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC_CMD msg_id ) {
+static CBI_CTRL_STAT_INFO_PTR willing_2_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC_CMD msg_id ) {
   assert( pS );
   assert( (msg_id >= ATS2OC801) && (msg_id < END_OF_ATS2OC) );
   CBI_CTRL_STAT_INFO_PTR r = NULL;
@@ -458,7 +458,7 @@ static CBI_CTRL_STAT_INFO_PTR willing_to_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC
 	goto exit;
       }
       pOC->ats2oc.d_sent_cbi_ctrl = d;
-      sock_attach_send_buf( pS, pOC->ats2oc.d_sent_cbi_ctrl, (unsigned char *)&(pOC->ats2oc.sent), (int)sizeof(pOC->ats2oc.sent) );
+      sock_attach_send_buf( pS, pOC->ats2oc.d_sent_cbi_ctrl, (unsigned char *)&(pOC->ats2oc.sent.msgs[0].buf), (int)sizeof(pOC->ats2oc.sent.msgs[0].buf) );
     }
     r = pOC;
   }
@@ -474,7 +474,7 @@ BOOL establish_OC_ctrl_send ( TINY_SOCK_PTR pS ) {
   while( i < (int)END_OF_ATS2OC ) {
     assert( (i >= ATS2OC801) && (i < (int)END_OF_ATS2OC) );
     CBI_CTRL_STAT_INFO_PTR p = NULL;
-    if( !(p = willing_to_send_OC_ctrl( pS, (ATS2OC_CMD)i )) )
+    if( !(p = willing_2_send_OC_ctrl( pS, (ATS2OC_CMD)i )) )
       goto exit;
     assert( p );
     assert( p->ats2oc.d_sent_cbi_ctrl > -1 );
@@ -564,62 +564,68 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
   return r;
 }
 
-static void expire_cbi_status ( void ) {
-  int i = -1;
-  i = (int)OC801;
-  while( i < (int)END_OF_OCs ) {
-    assert( (i >= OC801) && (i < END_OF_OCs) );
-    int j;
-    for( j = 0; j < OC_OC2ATS_MSGS_NUM; j++ )
-      cbi_stat_info[i].msgs[j].updated = FALSE;
-    i++;
-  }
-  assert( i == END_OF_OCs );
-}
-
-int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
+static int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
   assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
   int cnt = 0;
   CBI_STAT_ATTR_PTR pA_ctl = NULL;
   
   pA_ctl = cbi_stat_prof[oc_id].pctrl_codes;
-  assert( pA_ctl );
-  while( pA_ctl ) {
-    assert( pA_ctl->attr_ctrl.ctrl_bit );
-    if( pA_ctl->attr_ctrl.ctrl_bit ) {
-      assert( pA_ctl->attr_ctrl.cmd_id == (ATS2OC_CMD)oc_id );
-      assert( pA_ctl->attr_ctrl.cnt_2_kil >= 0 );
-      if( pA_ctl->attr_ctrl.cnt_2_kil > 0 ) {
-	pA_ctl->attr_ctrl.cnt_2_kil--;
-	if( pA_ctl->attr_ctrl.cnt_2_kil <= 0 ) {
-	  int r_mutex = -1;
-	  pA_ctl->attr_ctrl.cnt_2_kil = 0;
-	  r_mutex = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
-	  if( !r_mutex ) {
-	    if( ! pA_ctl->dirty ) {
-	      assert( pA_ctl->pNext_dirt == NULL );
-	      assert( pA_ctl->attr_ctrl.cnt_2_kil == 0 );
-	      if( pA_ctl->attr_ctrl.val ) {
-		pA_ctl->attr_ctrl.val = FALSE;
-		pA_ctl->dirty = TRUE;
-		pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
-		cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
-		cnt++;
+  if( pA_ctl ) {
+    while( pA_ctl ) {
+      assert( pA_ctl->attr_ctrl.ctrl_bit );
+      if( pA_ctl->attr_ctrl.ctrl_bit ) {
+	assert( pA_ctl->attr_ctrl.cmd_id == (ATS2OC_CMD)oc_id );
+	assert( pA_ctl->attr_ctrl.cnt_2_kil >= 0 );
+	if( pA_ctl->attr_ctrl.cnt_2_kil > 0 ) {
+	  pA_ctl->attr_ctrl.cnt_2_kil--;
+	  if( pA_ctl->attr_ctrl.cnt_2_kil <= 0 ) {
+	    int r_mutex = -1;
+	    pA_ctl->attr_ctrl.cnt_2_kil = 0;
+	    r_mutex = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
+	    if( !r_mutex ) {
+	      if( ! pA_ctl->dirty ) {
+		assert( pA_ctl->pNext_dirt == NULL );
+		assert( pA_ctl->attr_ctrl.cnt_2_kil == 0 );
+		if( pA_ctl->attr_ctrl.val ) {
+		  pA_ctl->attr_ctrl.val = FALSE;
+		  pA_ctl->dirty = TRUE;
+		  pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
+		  cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
+		  cnt++;
+		}
 	      }
-	    }
-	    r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
-	    assert( !r_mutex );
-	  } else
-	    pA_ctl->attr_ctrl.cnt_2_kil = 1;
+	      r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
+	      assert( !r_mutex );
+	    } else
+	      pA_ctl->attr_ctrl.cnt_2_kil = 1;
+	  }
 	}
       }
+      pA_ctl = pA_ctl->attr_ctrl.pNext_ctrl;
     }
-    pA_ctl = pA_ctl->attr_ctrl.pNext_ctrl;
   }
   return cnt;
 }
 
-int reveal_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
+void *pth_expire_il_ctrl_bits ( void *arg ) {
+  assert( !arg );
+  const useconds_t interval = 1000 * 1000 * 0.01;
+  int oc_id = (int)END_OF_OCs;
+  
+  while( TRUE ) {
+    for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
+      expire_cbi_ctrl_bits( oc_id );
+    }
+    {
+      int r = -1;
+      r = usleep( interval );
+      assert( !r );
+    }
+  }
+  return NULL;
+}
+
+static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   assert( cmd_id < END_OF_ATS2OC );
   int cnt = 0;
   CBI_STAT_ATTR_PTR *pphd = NULL;
@@ -657,39 +663,35 @@ int reveal_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
       pA->pNext_dirt = NULL;
       cnt++;
     }
+    assert( pphd );
+    if( !(*pphd) )
+      cnt *= -1;
     r_mutex_dispatch = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
     assert( !r_mutex_dispatch );
   }
   return cnt;
 }
 
-void *pth_expire_il_ctrl_bits ( void *arg ) {
-  assert( arg );
-  const useconds_t interval = 1000 * 1000 * 0.01;
-  int oc_id = (int)END_OF_OCs;
-  
-  while( TRUE ) {
-    for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
-      expire_cbi_ctrl_bits( oc_id );
-    }
-    {
-      int r = -1;
-      r = usleep( interval );
-      assert( !r );
-    }
-  }
-  return NULL;
-}
-
 void *pth_reveal_il_ctrl_bits ( void *arg ) {
   assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.01;
   int oc_id = (int)END_OF_OCs;
+  TINY_SOCK_PTR pS = NULL;
   
+  pS = (TINY_SOCK_PTR)arg;
   while( TRUE ) {
-    for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
-      reveal_il_ctrl_bits( (ATS2OC_CMD)oc_id );
+    BOOL remains;;
+    for( remains = FALSE, oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
+      if( render_il_ctrl_bits( (ATS2OC_CMD)oc_id ) < 0 )
+	remains = TRUE;
     }
+    if( remains )
+      continue;
+    else {
+      if( sock_send( pS ) < 0 )
+	errorF( "%s", "error on sending CBI control information toward OCs.\n" );
+    }
+    
     {
       int r = -1;
       r = usleep( interval );
@@ -699,7 +701,20 @@ void *pth_reveal_il_ctrl_bits ( void *arg ) {
   return NULL;
 }
 
-void reveal_il_status ( TINY_SOCK_PTR pS ) {
+static void expire_cbi_status ( void ) {
+  int i = -1;
+  i = (int)OC801;
+  while( i < (int)END_OF_OCs ) {
+    assert( (i >= OC801) && (i < END_OF_OCs) );
+    int j;
+    for( j = 0; j < OC_OC2ATS_MSGS_NUM; j++ )
+      cbi_stat_info[i].msgs[j].updated = FALSE;
+    i++;
+  }
+  assert( i == END_OF_OCs );
+}
+
+static void reveal_il_status ( TINY_SOCK_PTR pS ) {
   assert( pS );
   int i = -1;
   
@@ -735,13 +750,10 @@ void *pth_reveal_il_status ( void *arg ) {
     assert( pS );
     if( sock_recv( pS ) < 0 ) {
       errorF( "%s", "error on receiving CBI status information from OCs.\n" );
-      continue;
-    }
-    
-    reveal_il_status( pS );
-    {
+    } else {
       const int obsoleted = 100;
       int j = (int)OC801;
+      reveal_il_status( pS );
       while( j < (int)END_OF_OCs ) {	
 	assert( (j >= OC801) && (j < END_OF_OCs) );
 	int k;
@@ -762,7 +774,6 @@ void *pth_reveal_il_status ( void *arg ) {
       }
       assert( j == END_OF_OCs );
     }
-    
     {
       int r = -1;
       r = usleep( interval );

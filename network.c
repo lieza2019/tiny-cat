@@ -340,12 +340,12 @@ static size_t envelop_with_the_header ( NXNS_HEADER_PTR phdr, unsigned char *pra
   }
   
   assert( prawdata == memcpy( prawdata, buf, n ) );
-#if 1
+#ifdef CHK_STRICT_CONSISTENCY
     assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[0] == 'N' );
     assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[1] == 'U' );
     assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[2] == 'X' );
     assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[3] == 'M' );
-#endif
+#endif // CHK_STRICT_CONSISTENCY
   return n;
 }
 
@@ -360,24 +360,24 @@ int sock_send ( TINY_SOCK_PTR pS ) {
       if( pS->send[i].dirty ) {
 	NXNS_HEADER nx_ns_hdr;
 	NX_HEADER_CREAT( NEXUS_HDR( nx_ns_hdr ) );
-#if 1
+#ifdef CHK_STRICT_CONSISTENCY
 	assert( NEXUS_HDR(nx_ns_hdr).H_TYPE_headerType[0] == 'N' );
 	assert( NEXUS_HDR(nx_ns_hdr).H_TYPE_headerType[1] == 'U' );
 	assert( NEXUS_HDR(nx_ns_hdr).H_TYPE_headerType[2] == 'X' );
 	assert( NEXUS_HDR(nx_ns_hdr).H_TYPE_headerType[3] == 'M' );
-#endif
+#endif // CHK_STRICT_CONSISTENCY
 	{
 	  int n = -1;
 	  int wrote_with_hdr_len = -1;
 	  if( pS->send[i].is_nx ) {
 	    wrote_with_hdr_len = envelop_with_the_header( &nx_ns_hdr, pS->send[i].pbuf, pS->send[i].wrote_len, MAX_SEND_BUFSIZ );
 	    assert( wrote_with_hdr_len == (sizeof(NXNS_HEADER) + pS->send[i].wrote_len) );
-#if 1
+#ifdef CHK_STRICT_CONSISTENCY
 	    assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[0] == 'N' );
 	    assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[1] == 'U' );
 	    assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[2] == 'X' );
 	    assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[3] == 'M' );
-#endif	  
+#endif // CHK_STRICT_CONSISTENCY
 	  } else
 	    wrote_with_hdr_len = pS->send[i].wrote_len;
 	  assert( wrote_with_hdr_len > -1 );

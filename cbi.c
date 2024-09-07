@@ -273,7 +273,6 @@ CBI_CTRL_STAT_INFO cbi_stat_OC2ATS[END_OF_OC2ATS] = {
    {UDP_BCAST_RECV_PORT_OC2ATS3_STAT}
   }
 };
-
 RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 
 #include "./cbi/cbi_stat_label.h"
@@ -802,11 +801,11 @@ int revise_cbi_code_tbl( const char *errmsg_pre ) {
   while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS ) {
     CBI_STAT_ATTR_PTR pS = NULL;
     pS = conslt_hash_local( cbi_stat_labeling[j].name );
-    
+#if 0 // ***** for debugging.
     if( !pS ) {
       printf( "(j, name) = (%d, %s)\n", j, cbi_stat_labeling[j].name );
     }
-    
+#endif
     if( pS ) {
       CBI_STAT_ATTR_PTR pE = NULL;
       pS->kind = cbi_stat_labeling[j].kind;
@@ -838,7 +837,7 @@ int main ( void ) {
   printf( "read %d entries on, from raw csv.\n", n );
   {
     int m = -1;
-    m = reveal_cbi_code_tbl( NULL );
+    m = revise_cbi_code_tbl( NULL );
     assert( m > -1 );
     printf( "revised %d entries.\n", m );
   }
@@ -870,7 +869,7 @@ int main ( void ) {
 	pE = conslt_hash_local( id );
 	assert( pE );
 	assert( ! strncmp(pE->name, cbi_stat_prof[oc_id][i].name, CBI_STAT_NAME_LEN) );
-	cnt++;
+	cnt++
       }
     }
   }
@@ -906,7 +905,7 @@ int main ( void ) {
   
   {
     int m = -1;
-    m = reveal_cbi_code_tbl( NULL );
+    m = revise_cbi_code_tbl( NULL );
     assert( m > -1 );
     printf( "revised %d entries.\n", m );
   }
