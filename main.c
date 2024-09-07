@@ -91,10 +91,9 @@ BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_
 }
 
 static void load_il_status_geometry ( void ) {
-  int oc_id = -1;
-  oc_id = (int)OC801;
+  int cnt = 0;
+  int oc_id = (int)OC801;
   while( oc_id < (int)END_OF_OCs ) {
-    assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
     if( ! il_status_geometry_resources[oc_id].csv_fname ) {
       oc_id++;
       continue;
@@ -103,11 +102,11 @@ static void load_il_status_geometry ( void ) {
     assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
     {
       int n = -1;
-      char fname[256];
-      assert( (int)sizeof(fname) > strlen(il_status_geometry_resources[oc_id].csv_fname) );
+      char fname[512];
+      fname[511] = 0;
 #ifndef IN_CBI_RESOURCEDIR
-      assert( (strlen("./cbi/") + (int)sizeof(fname)) > strlen(il_status_geometry_resources[oc_id].csv_fname) );
-      strcat( strcpy(fname, "./cbi/"), il_status_geometry_resources[oc_id].csv_fname );      
+      assert( (int)sizeof(fname) > (strlen("./cbi/") + strlen(il_status_geometry_resources[oc_id].csv_fname)) );
+      strcat( strcpy(fname, "./cbi/"), il_status_geometry_resources[oc_id].csv_fname );
 #else
       strcpy( fname, il_status_geometry_resources[oc_id].csv_fname );
 #endif // IN_CBI_RESOURCEDRI
@@ -115,15 +114,19 @@ static void load_il_status_geometry ( void ) {
       if( n < 0 ) {
 	errorF( "failed to open the CBI status csv file of %s.\n", fname );
 	exit( 1 );
-      } else {
-	int m = -1;
-	errorF( "read %d entries from raw csv file of %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
-	m = revise_cbi_code_tbl( NULL );
-	assert( m > -1 );
-	errorF( "revised %d entries over the ones from the file of %s.\n", m, il_status_geometry_resources[oc_id].csv_fname );
       }
+      errorF( "read %d entries from raw csv file of %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
+      cnt += n;
     }
     oc_id++;
+  }
+  printf( "read %d entries on, from raw csv files.\n", cnt );
+  
+  {
+    int m = -1;
+    m = revise_cbi_code_tbl( NULL );
+    assert( m > -1 );
+    errorF( "revised %d entries of CSV status.\n", m );
   }
 }
 
@@ -227,7 +230,7 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_SCADA( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER1( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
-#if 0
+    
     pthread_mutex_init( &cbi_ctrl_sendbuf_mutex, NULL );    
     pthread_mutex_init( &cbi_ctrl_dispatch_mutex, NULL );
     if( pthread_create( &P_il_ctrl_dispat, NULL, pth_reveal_il_ctrl_bits, NULL ) ) {
@@ -238,7 +241,6 @@ int main ( void ) {
       errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
       exit( 1 );
     }
-#endif
     pthread_mutex_init( &cbi_stat_info_mutex, NULL );
     if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&socks_cbi_stat ) ) {
       errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );

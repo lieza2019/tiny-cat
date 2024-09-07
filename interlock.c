@@ -583,38 +583,39 @@ int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
   CBI_STAT_ATTR_PTR pA_ctl = NULL;
   
   pA_ctl = cbi_stat_prof[oc_id].pctrl_codes;
-  assert( pA_ctl );
-  while( pA_ctl ) {
-    assert( pA_ctl->attr_ctrl.ctrl_bit );
-    if( pA_ctl->attr_ctrl.ctrl_bit ) {
-      assert( pA_ctl->attr_ctrl.cmd_id == (ATS2OC_CMD)oc_id );
-      assert( pA_ctl->attr_ctrl.cnt_2_kil >= 0 );
-      if( pA_ctl->attr_ctrl.cnt_2_kil > 0 ) {
-	pA_ctl->attr_ctrl.cnt_2_kil--;
-	if( pA_ctl->attr_ctrl.cnt_2_kil <= 0 ) {
-	  int r_mutex = -1;
-	  pA_ctl->attr_ctrl.cnt_2_kil = 0;
-	  r_mutex = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
-	  if( !r_mutex ) {
-	    if( ! pA_ctl->dirty ) {
-	      assert( pA_ctl->pNext_dirt == NULL );
-	      assert( pA_ctl->attr_ctrl.cnt_2_kil == 0 );
-	      if( pA_ctl->attr_ctrl.val ) {
-		pA_ctl->attr_ctrl.val = FALSE;
-		pA_ctl->dirty = TRUE;
-		pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
-		cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
-		cnt++;
+  if( pA_ctl ) {
+    while( pA_ctl ) {
+      assert( pA_ctl->attr_ctrl.ctrl_bit );
+      if( pA_ctl->attr_ctrl.ctrl_bit ) {
+	assert( pA_ctl->attr_ctrl.cmd_id == (ATS2OC_CMD)oc_id );
+	assert( pA_ctl->attr_ctrl.cnt_2_kil >= 0 );
+	if( pA_ctl->attr_ctrl.cnt_2_kil > 0 ) {
+	  pA_ctl->attr_ctrl.cnt_2_kil--;
+	  if( pA_ctl->attr_ctrl.cnt_2_kil <= 0 ) {
+	    int r_mutex = -1;
+	    pA_ctl->attr_ctrl.cnt_2_kil = 0;
+	    r_mutex = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
+	    if( !r_mutex ) {
+	      if( ! pA_ctl->dirty ) {
+		assert( pA_ctl->pNext_dirt == NULL );
+		assert( pA_ctl->attr_ctrl.cnt_2_kil == 0 );
+		if( pA_ctl->attr_ctrl.val ) {
+		  pA_ctl->attr_ctrl.val = FALSE;
+		  pA_ctl->dirty = TRUE;
+		  pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
+		  cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
+		  cnt++;
+		}
 	      }
-	    }
-	    r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
-	    assert( !r_mutex );
-	  } else
-	    pA_ctl->attr_ctrl.cnt_2_kil = 1;
+	      r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
+	      assert( !r_mutex );
+	    } else
+	      pA_ctl->attr_ctrl.cnt_2_kil = 1;
+	  }
 	}
       }
+      pA_ctl = pA_ctl->attr_ctrl.pNext_ctrl;
     }
-    pA_ctl = pA_ctl->attr_ctrl.pNext_ctrl;
   }
   return cnt;
 }
@@ -664,7 +665,7 @@ int reveal_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
 }
 
 void *pth_expire_il_ctrl_bits ( void *arg ) {
-  assert( arg );
+  //assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.01;
   int oc_id = (int)END_OF_OCs;
   
@@ -682,7 +683,7 @@ void *pth_expire_il_ctrl_bits ( void *arg ) {
 }
 
 void *pth_reveal_il_ctrl_bits ( void *arg ) {
-  assert( arg );
+  //assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.01;
   int oc_id = (int)END_OF_OCs;
   
