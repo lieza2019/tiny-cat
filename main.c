@@ -200,6 +200,8 @@ int main ( void ) {
     int nrecv = -1;
     int cnt = 0;
     pthread_t P_il_stat;
+    pthread_t P_il_ctrl_dispat, P_il_ctrl_chrono;
+    
     static MSG_TINY_HEARTBEAT msg_srv_beat;
     static MSG_TINY_SERVER_STATUS msg_srv_stat;
     TINY_SRVBEAT_HEARTBEAT_SERVERID( msg_srv_beat, 1 );
@@ -225,12 +227,24 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_SCADA( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER1( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
-    
+#if 0
+    pthread_mutex_init( &cbi_ctrl_sendbuf_mutex, NULL );    
+    pthread_mutex_init( &cbi_ctrl_dispatch_mutex, NULL );
+    if( pthread_create( &P_il_ctrl_dispat, NULL, pth_reveal_il_ctrl_bits, NULL ) ) {
+      errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
+      exit( 1 );
+    }
+    if( pthread_create( &P_il_ctrl_chrono, NULL, pth_expire_il_ctrl_bits, NULL ) ) {
+      errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
+      exit( 1 );
+    }
+#endif
     pthread_mutex_init( &cbi_stat_info_mutex, NULL );
     if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&socks_cbi_stat ) ) {
       errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
       exit( 1 );
     }
+    
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
       if( (nrecv = sock_recv( &socks_less_1 )) < 0 ) {

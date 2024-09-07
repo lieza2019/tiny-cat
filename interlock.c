@@ -620,7 +620,7 @@ int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
 }
 
 int reveal_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
-  assert( (cmd_id > -1) && (cmd_id < END_OF_ATS2OC) );
+  assert( cmd_id < END_OF_ATS2OC );
   int cnt = 0;
   CBI_STAT_ATTR_PTR *pphd = NULL;
   unsigned char *pa = cbi_stat_ATS2OC[cmd_id].ats2oc.sent.msgs[0].buf.arena;

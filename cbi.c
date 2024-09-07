@@ -802,6 +802,11 @@ int revise_cbi_code_tbl( const char *errmsg_pre ) {
   while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS ) {
     CBI_STAT_ATTR_PTR pS = NULL;
     pS = conslt_hash_local( cbi_stat_labeling[j].name );
+    
+    if( !pS ) {
+      printf( "(j, name) = (%d, %s)\n", j, cbi_stat_labeling[j].name );
+    }
+    
     if( pS ) {
       CBI_STAT_ATTR_PTR pE = NULL;
       pS->kind = cbi_stat_labeling[j].kind;
