@@ -750,7 +750,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
 	}
 	pA->disp.mask = cbi_stat_bit_maskpat( pA->disp.bits );
 	pA->attr_ctrl.cnt_2_kil = -1;
-	if( ! strncmp( sh_name, "A", CBI_STAT_NAME_LEN ) ) {
+	if( ! strncmp( sh_name, "P", CBI_STAT_NAME_LEN ) ) {
 	  pA->attr_ctrl.ctrl_bit = TRUE;
 	  pA->attr_ctrl.cmd_id = (ATS2OC_CMD)(pA->oc_id);
 	  pA->attr_ctrl.cnt_2_kil = 0;

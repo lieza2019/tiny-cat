@@ -256,7 +256,13 @@ int main ( void ) {
       }
       
       diag_cbi_stat_attrib( stdout, "S821B_S801B" );
-      
+      {
+	OC_ID oc_id = END_OF_OCs;
+	CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
+	const char ctl_bit_ident[] = "P_S821A_S801A";
+	engage_il_ctrl( &oc_id, &kind, ctl_bit_ident );
+	//errorF( "(oc_id): (%d)\n", OC_ID_CONV2INT(oc_id) ); // ***** for debugging.
+      }
       reveal_train_tracking( &socks_less_2 );
       purge_block_restrains();
 #if 0

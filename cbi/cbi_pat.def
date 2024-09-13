@@ -1,3 +1,4 @@
+{_CTRL, "[P]P_Sxxxy_Sxxxy", "P_Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]", {{"P_Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]"}}},
 {_ROUTE, "[L\\o]Sxxxy_Sxxxy_R", "Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]", {{"Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]"}}},
 {_ROUTE, "[L\\o]Sxxxy_VSxxxy_R", "Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]", {{"Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]"}}},
 {_SIGNAL, "[\\o1]o_Sxxxy_VR1", "Sx[1]x[2]x[3]y[1]", {{"Sx[1]x[2]x[3]y[1]"}}},

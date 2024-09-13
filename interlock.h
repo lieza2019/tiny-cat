@@ -117,12 +117,15 @@ extern BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS );
 extern BOOL establish_OC_ctrl_send ( TINY_SOCK_PTR pS );
 
 extern pthread_mutex_t cbi_stat_info_mutex;
-extern void *pth_reveal_il_status ( void *arg );
 extern pthread_mutex_t cbi_ctrl_sendbuf_mutex;
 extern pthread_mutex_t cbi_ctrl_dispatch_mutex;
+extern int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
+extern void *pth_reveal_il_status ( void *arg );
 extern void *pth_expire_il_ctrl_bits ( void *arg );
 extern void *pth_reveal_il_ctrl_bits ( void *arg );
-extern int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
+extern int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
+extern int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
+
 extern void diag_cbi_stat_attrib ( FILE *fp_out, char *ident );
 
 extern BOOL chk_routeconf ( ROUTE_C_PTR r1, ROUTE_C_PTR r2 );

@@ -485,6 +485,43 @@ BOOL establish_OC_ctrl_send ( TINY_SOCK_PTR pS ) {
   return r;
 }
 
+int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
+  assert( poc_id );
+  assert( pkind );
+  assert( ident );
+  int r = -1;
+  CBI_STAT_ATTR_PTR pA = NULL;
+  
+  *poc_id = END_OF_OCs;
+  *pkind = END_OF_CBI_STAT_KIND;
+  pA = conslt_cbi_code_tbl( ident );
+  if( pA ) {
+    assert( pA );
+    assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
+    assert( ! strncmp(pA->ident, ident, CBI_STAT_IDENT_LEN) );
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_trylock( &cbi_stat_info_mutex );
+    if( !r_mutex ) {
+      *poc_id = pA->oc_id;
+      *pkind = pA->kind;
+      {
+	RECV_BUF_CBI_STAT_PTR pstat = NULL;
+	pstat = &cbi_stat_info[pA->oc_id];
+	assert( pstat );
+	{ 
+	  unsigned char *pgrp = &((unsigned char *)&pstat->msgs[pA->group.msg_id])[pA->group.addr];
+	  assert( pgrp );
+	  r = pgrp[pA->disp.bytes] & pA->disp.mask;
+	}
+      }
+      r_mutex = -1;
+      r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
+      assert( !r_mutex );
+    }
+  }
+  return r;
+}
+
 static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT msg_id ) {
   assert( pS );
   assert( (msg_id >= OC2ATS1) && (msg_id < END_OF_OC2ATS) );
@@ -557,9 +594,7 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
  exit:
   r_mutex = -1;
   r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
-  if( r_mutex ) {
-    assert( FALSE );
-  }
+  assert( !r_mutex );
   
   return r;
 }
@@ -570,46 +605,47 @@ static int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
   CBI_STAT_ATTR_PTR pA_ctl = NULL;
   
   pA_ctl = cbi_stat_prof[oc_id].pctrl_codes;
-  if( pA_ctl ) {
-    while( pA_ctl ) {
-      assert( pA_ctl->attr_ctrl.ctrl_bit );
-      if( pA_ctl->attr_ctrl.ctrl_bit ) {
-	assert( pA_ctl->attr_ctrl.cmd_id == (ATS2OC_CMD)oc_id );
+  while( pA_ctl ) {
+    assert( pA_ctl->attr_ctrl.ctrl_bit );
+    if( pA_ctl->attr_ctrl.ctrl_bit ) {
+      assert( pA_ctl->attr_ctrl.cmd_id == (ATS2OC_CMD)oc_id );
+      int r_mutex = -1;
+      r_mutex = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
+      if( !r_mutex ) {
 	assert( pA_ctl->attr_ctrl.cnt_2_kil >= 0 );
 	if( pA_ctl->attr_ctrl.cnt_2_kil > 0 ) {
 	  pA_ctl->attr_ctrl.cnt_2_kil--;
 	  if( pA_ctl->attr_ctrl.cnt_2_kil <= 0 ) {
-	    int r_mutex = -1;
+	    assert( pA_ctl->attr_ctrl.cnt_2_kil == 0 );
 	    pA_ctl->attr_ctrl.cnt_2_kil = 0;
-	    r_mutex = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
-	    if( !r_mutex ) {
-	      if( ! pA_ctl->dirty ) {
-		assert( pA_ctl->pNext_dirt == NULL );
-		assert( pA_ctl->attr_ctrl.cnt_2_kil == 0 );
-		if( pA_ctl->attr_ctrl.val ) {
-		  pA_ctl->attr_ctrl.val = FALSE;
-		  pA_ctl->dirty = TRUE;
-		  pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
-		  cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
-		  cnt++;
-		}
-	      }
-	      r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
-	      assert( !r_mutex );
-	    } else
-	      pA_ctl->attr_ctrl.cnt_2_kil = 1;
-	  }
+	    assert( !(pA_ctl->dirty) );
+	    assert( pA_ctl->attr_ctrl.setval );
+	    assert( pA_ctl->pNext_dirt == NULL );
+#if 1		
+	    pA_ctl->attr_ctrl.setval = FALSE;
+	    pA_ctl->dirty = TRUE;
+	    pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
+	    cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
+#endif
+	    cnt++;
+	  } else
+	    assert( pA_ctl->attr_ctrl.cnt_2_kil > 0 );
+	} else {
+	  assert( pA_ctl->attr_ctrl.cnt_2_kil == 0 );
+	  assert( !(pA_ctl->attr_ctrl.setval) );
 	}
+	r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
+	assert( !r_mutex );
       }
-      pA_ctl = pA_ctl->attr_ctrl.pNext_ctrl;
     }
+    pA_ctl = pA_ctl->attr_ctrl.pNext_ctrl;
   }
   return cnt;
 }
 
 void *pth_expire_il_ctrl_bits ( void *arg ) {
   assert( !arg );
-  const useconds_t interval = 1000 * 1000 * 0.01;
+  const useconds_t interval = 1000 * 1000 * 1;
   int oc_id = (int)END_OF_OCs;
   
   while( TRUE ) {
@@ -644,11 +680,12 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
       assert( pA->attr_ctrl.ctrl_bit );
       assert( pA->dirty );
       if( pA->attr_ctrl.ctrl_bit && pA->dirty ) {
+	assert( pA->attr_ctrl.cnt_2_kil <= 0 );
 	int r_mutex_sendbuf = -1;
 	r_mutex_sendbuf = pthread_mutex_trylock( &cbi_ctrl_sendbuf_mutex );
 	if( !r_mutex_sendbuf ) {
 	  assert( pA->attr_ctrl.cnt_2_kil == 0 );
-	  if( pA->attr_ctrl.val ) {
+	  if( pA->attr_ctrl.setval ) {
 	    pa[pA->disp.bytes] |= pA->disp.mask;
 	    pA->attr_ctrl.cnt_2_kil = CTRL_LIT_SUSTAIN_CNT;
 	  } else
@@ -701,24 +738,34 @@ void *pth_reveal_il_ctrl_bits ( void *arg ) {
   return NULL;
 }
 
-static void expire_cbi_status ( void ) {
-  int i = -1;
-  i = (int)OC801;
-  while( i < (int)END_OF_OCs ) {
-    assert( (i >= OC801) && (i < END_OF_OCs) );
-    int j;
-    for( j = 0; j < OC_OC2ATS_MSGS_NUM; j++ )
-      cbi_stat_info[i].msgs[j].updated = FALSE;
-    i++;
-  }
-  assert( i == END_OF_OCs );
-}
-
-static void reveal_il_status ( TINY_SOCK_PTR pS ) {
-  assert( pS );
+static int expire_cbi_status ( void ) {
+  int r_mutex = -1;
   int i = -1;
   
-  expire_cbi_status();
+  r_mutex = pthread_mutex_trylock( &cbi_stat_info_mutex );
+  if( !r_mutex ) {
+    i = (int)OC801;
+    while( i < (int)END_OF_OCs ) {
+      assert( (i >= OC801) && (i < END_OF_OCs) );
+      int j;
+      for( j = 0; j < OC_OC2ATS_MSGS_NUM; j++ )
+	cbi_stat_info[i].msgs[j].updated = FALSE;
+      i++;
+    }
+    assert( i == END_OF_OCs );
+    r_mutex = -1;
+    r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
+    assert( !r_mutex );
+  }
+  return i;
+}
+
+static int reveal_il_status ( TINY_SOCK_PTR pS ) {
+  assert( pS );
+  int r = -1;
+  int i = -1;
+  
+  r = expire_cbi_status();
   i = (int)OC2ATS1;
   while( i < (int)END_OF_OC2ATS ) {
     assert( (i >= OC2ATS1) && (i < END_OF_OC2ATS) );
@@ -726,6 +773,7 @@ static void reveal_il_status ( TINY_SOCK_PTR pS ) {
     i++;
   }
   assert( i == END_OF_OC2ATS );
+  return r;
 }
 
 void *pth_reveal_il_status ( void *arg ) {
@@ -752,13 +800,14 @@ void *pth_reveal_il_status ( void *arg ) {
       errorF( "%s", "error on receiving CBI status information from OCs.\n" );
     } else {
       const int obsoleted = 100;
+      BOOL clear = FALSE;
       int j = (int)OC801;
-      reveal_il_status( pS );
+      clear = (reveal_il_status(pS) < 0) ? FALSE : TRUE;
       while( j < (int)END_OF_OCs ) {	
 	assert( (j >= OC801) && (j < END_OF_OCs) );
 	int k;
 	for( k = 0; k < OC_OC2ATS_MSGS_NUM; k++ )
-	  if( cbi_stat_info[j].msgs[k].updated ) {
+	  if( clear && cbi_stat_info[j].msgs[k].updated ) {
 	    if( omits[j][k] < 0 )
 	      errorF( "CBI status information of (OC%3d, OC2ATS%d) has started updating, again.\n", OC_ID_CONV2INT(j), OC_MSG_ID_CONV2INT(k) );
 	    omits[j][k] = 0;
@@ -767,8 +816,10 @@ void *pth_reveal_il_status ( void *arg ) {
 	      errorF( "CBI status information of (OC%3d, OC2ATS%d) has been obsoleted.\n", OC_ID_CONV2INT(j), OC_MSG_ID_CONV2INT(k) );
 	      omits[j][k] = -1;
 	    } else
-	      if( omits[j][k] > -1 )
+	      if( omits[j][k] > -1 ) {
+		assert( omits[j][k] < obsoleted );
 		omits[j][k]++;
+	      }
 	  }
 	j++;
       }
@@ -788,83 +839,160 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   assert( pkind );
   assert( ident );
   int r = -1;
+  int oc_id = END_OF_OCs;
   CBI_STAT_ATTR_PTR pA = NULL;
   
-  *poc_id = -1;
-  *pkind = -1;
+  *poc_id = END_OF_OCs;
+  *pkind = END_OF_CBI_STAT_KIND;
   pA = conslt_cbi_code_tbl( ident );
+  assert( pA );
+
   if( pA ) {
-    assert( pA );
     assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
+    oc_id = pA->oc_id;
     if( pA->attr_ctrl.ctrl_bit ) {
-      assert( pA->attr_ctrl.cmd_id == (ATS2OC_CMD)(pA->oc_id) );
+      assert( pA->attr_ctrl.cmd_id == (ATS2OC_CMD)oc_id );
       int r_mutex = -1;
       r_mutex = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
       if( !r_mutex ) {
-	if( !(pA->attr_ctrl.val || pA->dirty) ) {
-	  pA->attr_ctrl.val = TRUE;
-	  pA->dirty = TRUE;
-	  pA->pNext_dirt = cbi_stat_prof[pA->oc_id].pdirty_bits;
-	  cbi_stat_prof[pA->oc_id].pdirty_bits = pA;
-	  *poc_id = pA->oc_id;
-	  *pkind = pA->kind;
-	  r = (int)TRUE;
+	int state = -1;
+	state = conslt_il_state( poc_id, pkind, ident );
+
+	if( state >= 0 ) {
+	  assert( *poc_id == oc_id );
+	  assert( *pkind < END_OF_CBI_STAT_KIND );
+	  r = 0;
+	  if( state < 1 ) {
+	    assert( state == 0 );
+	    if( !((pA->attr_ctrl.cnt_2_kil > 0) || (pA->dirty && pA->attr_ctrl.setval)) ) {
+	      assert( pA->attr_ctrl.cnt_2_kil <= 0 );
+	      assert( !(pA->dirty) || !(pA->attr_ctrl.setval) );
+	      pA->attr_ctrl.setval = TRUE;
+	      pA->dirty = TRUE;
+	      pA->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
+	      cbi_stat_prof[oc_id].pdirty_bits = pA;
+#if CHK_STRICT_CONSISTENCY
+	      {
+		CBI_STAT_ATTR_PTR p = cbi_stat_prof[oc_id].pdirty_bits;
+		assert( p == pA );
+		do {
+		  assert( p->dirty );
+		  p = p->pNext_dirt;
+		} while( p );
+	      }
+#endif // CHK_STRICT_CONSISTENCY
+	      r = 1;
+	    }
+	  } else {
+	    assert( state >= 1 );
+	    assert( r == 0 );
+	  }
+	} else {
+	  assert( state < 0 );
+	  assert( *poc_id == END_OF_OCs );
+	  assert( *pkind == END_OF_CBI_STAT_KIND );
+	  assert( r < 0 );
 	}
 	r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
 	assert( !r_mutex );
+      } else {
+	assert( *poc_id == END_OF_OCs );
+	assert( *pkind == END_OF_CBI_STAT_KIND );
+	assert( r < 0 );
       }
+    } else {
+      assert( *poc_id == END_OF_OCs );
+      assert( *pkind == END_OF_CBI_STAT_KIND );
+      assert( r < 0 );
     }
+  } else {
+    assert( *poc_id == END_OF_OCs );
+    assert( *pkind == END_OF_CBI_STAT_KIND );
+    assert( r < 0 );
   }
   return r;
 }
 
-int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
+int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   assert( poc_id );
   assert( pkind );
   assert( ident );
   int r = -1;
+  int oc_id = END_OF_OCs;
   CBI_STAT_ATTR_PTR pA = NULL;
   
-  *poc_id = -1;
-  *pkind = -1;
+  *poc_id = END_OF_OCs;
+  *pkind = END_OF_CBI_STAT_KIND;
   pA = conslt_cbi_code_tbl( ident );
+  assert( pA );
   if( pA ) {
-    assert( pA );
     assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_trylock( &cbi_stat_info_mutex );
-    if( !r_mutex ) {
-      assert( ! strncmp(pA->ident, ident, CBI_STAT_IDENT_LEN) );
-      *poc_id = pA->oc_id;
-      *pkind = pA->kind;
-      {
-	RECV_BUF_CBI_STAT_PTR pstat = NULL;
-	pstat = &cbi_stat_info[pA->oc_id];
-	assert( pstat );
-	{ 
-	  unsigned char *pgrp = &((unsigned char *)&pstat->msgs[pA->group.msg_id])[pA->group.addr];
-	  assert( pgrp );
-	  r = pgrp[pA->disp.bytes] & pA->disp.mask;
+    oc_id = pA->oc_id;
+    if( pA->attr_ctrl.ctrl_bit ) {
+      assert( pA->attr_ctrl.cmd_id == (ATS2OC_CMD)oc_id );
+      int r_mutex = -1;
+      r_mutex = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
+      if( !r_mutex ) {
+	int state = -1;
+	state = conslt_il_state( poc_id, pkind, ident );
+	if( state >= 0 ) {
+	  assert( *poc_id == oc_id );
+	  assert( *pkind < END_OF_CBI_STAT_KIND );
+	  r = 0;
+	  if( state > 0 ) {
+	    assert( state >= 1 );
+	    if( !(pA->dirty) || pA->attr_ctrl.setval ) {
+	      pA->attr_ctrl.cnt_2_kil = 0;
+	      pA->attr_ctrl.setval = FALSE;
+	      pA->dirty = TRUE;
+	      pA->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
+	      cbi_stat_prof[oc_id].pdirty_bits = pA;
+#if CHK_STRICT_CONSISTENCY
+	      {
+		CBI_STAT_ATTR_PTR p = cbi_stat_prof[oc_id].pdirty_bits;
+		assert( p == pA );
+		do {
+		  assert( p->dirty );
+		  p = p->pNext_dirt;
+		} while( p );
+	      }
+#endif // CHK_STRICT_CONSISTENCY
+	      r = 1;
+	    }
+	  } else {
+	    assert( state == 0 );
+	    assert( r == 0 );
+	  }
+	} else {
+	  assert( state < 0 );
+	  assert( *poc_id == END_OF_OCs );
+	  *pkind = END_OF_CBI_STAT_KIND;
+	  assert( r < 0 );
 	}
+	r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
+	assert( !r_mutex );
+      } else {
+	assert( *poc_id == END_OF_OCs );
+	*pkind = END_OF_CBI_STAT_KIND;
+	assert( r < 0 );
       }
-      r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
-      assert( !r_mutex );
+    } else {
+      assert( *poc_id == END_OF_OCs );
+      *pkind = END_OF_CBI_STAT_KIND;
+      assert( r < 0 );
     }
+  } else {
+    assert( *poc_id == END_OF_OCs );
+    *pkind = END_OF_CBI_STAT_KIND;
+    assert( r < 0 );
   }
   return r;
 }
 
-#if 0
 void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
   assert( fp_out );
   assert( ident );
   CBI_STAT_ATTR_PTR pA = NULL;
-  
-  int r_mutex = -1;
-  r_mutex = pthread_mutex_lock( &cbi_stat_info_mutex );
-  if( r_mutex ) {
-    assert( FALSE);
-  }
   
   pA = conslt_cbi_code_tbl( ident );
   if( pA ) {
@@ -880,50 +1008,11 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
       fprintf( fp_out, "disp of (raw, bytes, bits, mask): (%d, %d, %d, %s)\n",
 	       pA->disp.raw, pA->disp.bytes, pA->disp.bits, show_cbi_stat_bitmask(s, sizeof(s), pA->disp.mask) );
     }
+#if 0
     {
-      assert( pA );
-      assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
-      RECV_BUF_CBI_STAT_PTR pstat = NULL;
-
-      pstat = &cbi_stat_info[pA->oc_id];
-      {
-	assert( pstat );
-	unsigned char *pgrp = &((unsigned char *)&pstat->msgs[pA->group.msg_id])[pA->group.addr];
-	assert( pgrp );
-	fprintf( fp_out, "value: %d\n", (pgrp[pA->disp.bytes] & pA->disp.mask) );
-      }
-    }
-  }
-  r_mutex = -1;
-    r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
-  if( r_mutex ) {
-    assert( FALSE );
-  }
-}
-#else
-void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
-  assert( fp_out );
-  assert( ident );
-  CBI_STAT_ATTR_PTR pA = NULL;
-  
-  pA = conslt_cbi_code_tbl( ident );
-  if( pA ) {
-    assert( pA );
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_trylock( &cbi_stat_info_mutex );
-    if( !r_mutex ) {
-      fprintf( fp_out, "ident: %s\n", pA->ident );
-      fprintf( fp_out, "oc_id: OC%3d\n", OC_ID_CONV2INT(pA->oc_id) );
-      fprintf( fp_out, "name: %s\n", pA->name );
-      fprintf( fp_out, "kind: %s\n", cnv2str_cbi_stat_kind[pA->kind] );
-      fprintf( fp_out, "group of (raw, oc_from, addr): (%s, OC2ATS%d, %d)\n",
-	       CBI_STAT_GROUP_CONV2STR[pA->group.raw], OC_MSG_ID_CONV2INT(pA->group.msg_id), pA->group.addr );
-      {
-	char s[] = "CBI_STAT_BIT_x";
-	fprintf( fp_out, "disp of (raw, bytes, bits, mask): (%d, %d, %d, %s)\n",
-		 pA->disp.raw, pA->disp.bytes, pA->disp.bits, show_cbi_stat_bitmask(s, sizeof(s), pA->disp.mask) );
-      }
-      {
+      int r_mutex = -1;
+      r_mutex = pthread_mutex_trylock( &cbi_stat_info_mutex );
+      if( !r_mutex ) {
 	assert( pA );
 	assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
 	RECV_BUF_CBI_STAT_PTR pstat = NULL;
@@ -934,15 +1023,27 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
 	  assert( pgrp );
 	  fprintf( fp_out, "value: %d\n", (pgrp[pA->disp.bytes] & pA->disp.mask) );
 	}
-      }
-      r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
-      if( r_mutex ) {
-	assert( FALSE );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
+	assert( !r_mutex );
       }
     }
+#else
+    {
+      OC_ID oc_id = END_OF_OCs;
+      CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
+      int state = -1;
+      state = conslt_il_state( &oc_id, &kind, pA->ident );
+      if( state > -1 ) {
+	assert( oc_id == pA->oc_id );     
+	assert( kind == pA->kind );
+	fprintf( fp_out, "value: %d\n", state );
+      } else
+	fprintf( fp_out, "value: %d\n", -1 );
+    }
+#endif
   }
 }
-#endif
 
 BOOL chk_routeconf ( ROUTE_C_PTR r1, ROUTE_C_PTR r2 ) {
   assert( r1 );

@@ -241,7 +241,7 @@ typedef struct cbi_stat_attr {
     BOOL ctrl_bit;
     ATS2OC_CMD cmd_id;
     int cnt_2_kil;
-    BOOL val;
+    BOOL setval;
     struct cbi_stat_attr *pNext_ctrl;
   } attr_ctrl;
   struct {
