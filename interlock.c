@@ -625,7 +625,7 @@ static int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
 	    assert( !(pA_ctl->dirty) );
 	    assert( pA_ctl->attr_ctrl.setval );
 	    assert( pA_ctl->pNext_dirt == NULL );
-	    pA_ctl->attr_ctrl.setval = FALSE; //pA_ctl->attr_ctrl.setval = TRUE;
+	    pA_ctl->attr_ctrl.setval = FALSE;
 	    pA_ctl->dirty = TRUE;
 	    pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
 #if 1
@@ -636,7 +636,6 @@ static int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
 	    assert( pA_ctl->attr_ctrl.cnt_2_kil > 0 );
 	} else {
 	  assert( pA_ctl->attr_ctrl.cnt_2_kil == 0 );
-	  assert( !(pA_ctl->attr_ctrl.setval) );
 	}
 	r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
 	assert( !r_mutex );
@@ -649,7 +648,7 @@ static int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
 
 void *pth_expire_il_ctrl_bits ( void *arg ) {
   assert( !arg );
-  const useconds_t interval = 1000 * 1000 * 1;
+  const useconds_t interval = 1000 * 1000 * 0.1;
   int oc_id = (int)END_OF_OCs;
   
   while( TRUE ) {
@@ -665,6 +664,7 @@ void *pth_expire_il_ctrl_bits ( void *arg ) {
   return NULL;
 }
 
+
 static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   assert( cmd_id < END_OF_ATS2OC );
   int cnt = 0;
@@ -678,17 +678,18 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   assert( pphd );
   r_mutex_dispatch = pthread_mutex_trylock( &cbi_ctrl_dispatch_mutex );
   if( !r_mutex_dispatch ) {
-    while( *pphd ) {
-      assert( pphd );
-      CBI_STAT_ATTR_PTR pA = *pphd;
-      assert( pA );
-      assert( pA->attr_ctrl.ctrl_bit );
-      assert( pA->dirty );
-      if( pA->attr_ctrl.ctrl_bit && pA->dirty ) {
-	assert( pA->attr_ctrl.cnt_2_kil <= 0 );
-	int r_mutex_sendbuf = -1;
-	r_mutex_sendbuf = pthread_mutex_trylock( &cbi_ctrl_sendbuf_mutex );	
-	if( !r_mutex_sendbuf ) {
+    int r_mutex_sendbuf = -1;
+    r_mutex_sendbuf = pthread_mutex_trylock( &cbi_ctrl_sendbuf_mutex );
+    if( !r_mutex_sendbuf ) {
+      BOOL err = FALSE;
+      while( *pphd ) {
+	assert( pphd );
+	CBI_STAT_ATTR_PTR pA = *pphd;
+	assert( pA );
+	assert( pA->attr_ctrl.ctrl_bit );
+	assert( pA->dirty );
+	if( pA->attr_ctrl.ctrl_bit && pA->dirty ) {
+	  assert( pA->attr_ctrl.cnt_2_kil <= 0 );
 	  assert( pA->attr_ctrl.cnt_2_kil == 0 );
 	  unsigned char *p = &pa[pA->disp.bytes];
 #if 1
@@ -703,23 +704,23 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
 	    printf( "INACTIVATED.\n" );
 	  }
 #endif
-	  r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
-	  assert( !r_mutex_sendbuf );
+	  cnt++;
+	  
 	} else
-	  break;
+	  err = TRUE;
+	pA->dirty = FALSE;
+	*pphd = pA->pNext_dirt;
+	pA->pNext_dirt = NULL;
       }
-      pA->dirty = FALSE;
-      *pphd = pA->pNext_dirt;
-      pA->pNext_dirt = NULL;
-      cnt++;
+      assert( pphd );
+      if( err )
+	cnt *= -1;
+      r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
+      assert( !r_mutex_sendbuf );
     }
-    assert( pphd );
-    if( !(*pphd) )
-      cnt *= -1;
     r_mutex_dispatch = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
     assert( !r_mutex_dispatch );
-  } else
-    printf( "LOCK FAILed.\n" );
+  }
   return cnt;
 }
 
