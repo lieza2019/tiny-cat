@@ -170,7 +170,7 @@ extern void NX_HEADER_CREAT(NX_HEADER NX_hdr );
 typedef struct NS_user_header {
   uint8_t srcID; // = 200;
   uint8_t srcStatus; // = 103;
-  uint8_t msgType; // = 0;n
+  uint8_t msgType; // = 0;
   uint8_t dstID; // = 104;
   uint8_t flgs_1;
   uint8_t ackEM; // = 105;
@@ -179,14 +179,28 @@ typedef struct NS_user_header {
   uint8_t networkTime[3]; // constantly, 0 filled.
 } NS_USRHDR, *NS_USRHDR_PTR;
 
-#define NEXUS_HDR( H ) ((H).nx_hdr)
-#define NS_USR_HDR( H ) ((H).ns_usr_hdr)
-
 typedef struct NX_NS_header {
   NX_HEADER nx_hdr;
   NS_USRHDR ns_usr_hdr;
 } NXNS_HEADER, *NXNS_HEADER_PTR;
 
-#define NXNS_USR_DATA( pG ) ((unsigned char *)(pG) + sizeof(NXNS_HEADER))
+#define NEXUS_HDR( H ) ((H).nx_hdr)
+#define NS_USRHDR( H ) ((H).ns_usr_hdr)
+#define NXNS_PAYLOAD( pG ) ((unsigned char *)(pG) + (int)sizeof(NXNS_HEADER))
 
+#define NS_USRHDR_CREAT( H ) (					\
+  {								\
+    (H).srcID = 200;						\
+    (H).srcStatus = 103;					\
+    (H).msgType = 0;						\
+    (H).dstID = 0;						\
+    (H).flgs_1 = 0;						\
+    (H).ackEM = 105;						\
+    (H).dataLength = 0;						\
+    (H).flgs_2 = 0;						\
+    (H).networkTime[0] = 0;					\
+    (H).networkTime[1] = 0;					\
+    (H).networkTime[2] = 0;					\
+  }								\
+)
 #endif // NETWORK_H_INCLUDED

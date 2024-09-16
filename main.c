@@ -282,11 +282,9 @@ int main ( void ) {
 	  assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
 	  assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
 	  {
-	    const int cbl_ctlbits_areasiz = ATS2OC_MSGSIZE - (int)sizeof(NXNS_HEADER);
 	    int n = -1;
-	    assert( cbl_ctlbits_areasiz > 0 );
-	    n = sock_send_ready( &socks_cbi_ctrl, sd_cbi_ctrl[i], cbl_ctlbits_areasiz );
-	    assert( n == cbl_ctlbits_areasiz );
+	    n = sock_send_ready( &socks_cbi_ctrl, sd_cbi_ctrl[i], ATS2OC_MSGSIZE );
+	    assert( n == ATS2OC_MSGSIZE );
 	  }
 	  i++;
 	}
@@ -333,7 +331,7 @@ int main ( void ) {
 #endif // CHK_STRICT_CONSISTENCY
       if( diag_tracking_train_cmd( stdout ) > 0 )
 	fprintf( stdout, "\n" );
-#if 0
+#if 1
       if( sock_send(&socks_cbi_ctrl) < 1 ) {
 	errorF( "%s", "failed to send interlocking control for CBIs.\n" );
 	//exit( 1 );

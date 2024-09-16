@@ -385,7 +385,9 @@ int sock_send ( TINY_SOCK_PTR pS ) {
     if( pS->send[i].sock > 0 )
       if( pS->send[i].dirty ) {
 	NXNS_HEADER nx_ns_hdr;
-	NX_HEADER_CREAT( NEXUS_HDR( nx_ns_hdr ) );
+	NX_HEADER_CREAT( NEXUS_HDR(nx_ns_hdr) );
+	NS_USRHDR_CREAT( NS_USRHDR(nx_ns_hdr) );
+	//*NXNS_USR_HEADER(&nx_ns_hdr)
 #ifdef CHK_STRICT_CONSISTENCY
 	assert( NEXUS_HDR(nx_ns_hdr).H_TYPE_headerType[0] == 'N' );
 	assert( NEXUS_HDR(nx_ns_hdr).H_TYPE_headerType[1] == 'U' );
