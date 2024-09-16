@@ -628,9 +628,7 @@ static int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
 	    pA_ctl->attr_ctrl.setval = FALSE;
 	    pA_ctl->dirty = TRUE;
 	    pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
-#if 1
 	    cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
-#endif
 	    cnt++;
 	  } else
 	    assert( pA_ctl->attr_ctrl.cnt_2_kil > 0 );
@@ -664,7 +662,6 @@ void *pth_expire_il_ctrl_bits ( void *arg ) {
   return NULL;
 }
 
-
 static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   assert( cmd_id < END_OF_ATS2OC );
   int cnt = 0;
@@ -692,7 +689,6 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
 	  assert( pA->attr_ctrl.cnt_2_kil <= 0 );
 	  assert( pA->attr_ctrl.cnt_2_kil == 0 );
 	  unsigned char *p = &pa[pA->disp.bytes];
-#if 1
 	  assert( p < plim );
 	  if( pA->attr_ctrl.setval ) {
 	    *p |= pA->disp.mask;
@@ -703,7 +699,6 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
 	    assert( pA->attr_ctrl.cnt_2_kil == 0 );
 	    printf( "INACTIVATED.\n" );
 	  }
-#endif
 	  cnt++;
 	  
 	} else

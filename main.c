@@ -274,20 +274,31 @@ int main ( void ) {
 #endif
       
       {
-	unsigned char *pmsg_buf = NULL;
-	int size = -1;
-	int i = (int)ATS2OC801;
-	while( i < (int)END_OF_ATS2OC ) {
-	  pmsg_buf = sock_send_buf_attached( &socks_cbi_ctrl, sd_cbi_ctrl[i], &size );
-	  assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
-	  assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
-	  {
+	int r_mutex_sendbuf = -1;
+	r_mutex_sendbuf = pthread_mutex_lock( &cbi_ctrl_sendbuf_mutex );
+	if( !r_mutex_sendbuf ) {
+	  int i = (int)ATS2OC801;
+	  while( i < (int)END_OF_ATS2OC ) {
 	    int n = -1;
+#ifdef CHK_STRICT_CONSISTENCY
+	    unsigned char *pmsg_buf = NULL;
+	    int size = -1;
+	    pmsg_buf = sock_send_buf_attached( &socks_cbi_ctrl, sd_cbi_ctrl[i], &size );
+	    assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
+	    assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
+#endif // CHK_STRICT_CONSISTENCY
 	    n = sock_send_ready( &socks_cbi_ctrl, sd_cbi_ctrl[i], ATS2OC_MSGSIZE );
 	    assert( n == ATS2OC_MSGSIZE );
+	    i++;
 	  }
-	  i++;
-	}
+	  if( sock_send(&socks_cbi_ctrl, NULL ) < 1 ) {
+	    errorF( "%s", "failed to send interlocking control for CBIs.\n" );
+	    //exit( 1 );
+	  }
+	  r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
+	  assert( !r_mutex_sendbuf );
+	} else
+	  assert( FALSE );
       }
       
       {
@@ -331,17 +342,11 @@ int main ( void ) {
 #endif // CHK_STRICT_CONSISTENCY
       if( diag_tracking_train_cmd( stdout ) > 0 )
 	fprintf( stdout, "\n" );
-#if 1
-      if( sock_send(&socks_cbi_ctrl) < 1 ) {
-	errorF( "%s", "failed to send interlocking control for CBIs.\n" );
-	//exit( 1 );
-      }
 #if 0
-      if( sock_send(&socks_less_2) < 1 ) {
+      if( sock_send(&socks_less_2, NULL ) < 1 ) {
 	errorF( "%s", "failed to send msgServerStatus.\n" );
 	exit( 1 );
       }
-#endif
 #endif
       cnt++;
       {

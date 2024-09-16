@@ -64,9 +64,6 @@ extern int creat_sock_recv ( TINY_SOCK_PTR pS, unsigned short udp_bcast_recv_por
 extern TINY_SOCK_DESC creat_sock_send ( TINY_SOCK_PTR pS, unsigned short udp_dst_port, BOOL bcast, const IP_ADDR_DESC_PTR pIPdesc );
 extern TINY_SOCK_DESC creat_sock_sendnx ( TINY_SOCK_PTR pS, unsigned short udp_dst_port, BOOL bcast, const IP_ADDR_DESC_PTR pIPdesc );
 
-extern int sock_recv ( TINY_SOCK_PTR pS );
-extern int sock_send ( TINY_SOCK_PTR pS );
-
 typedef struct NEXUS_header {
   char H_TYPE_headerType[4]; // set the NEXUS signature constant of "NUXM".
   uint32_t ML_messageLength;
@@ -203,4 +200,7 @@ typedef struct NX_NS_header {
     (H).networkTime[2] = 0;					\
   }								\
 )
+
+extern int sock_recv ( TINY_SOCK_PTR pS );
+extern int sock_send ( TINY_SOCK_PTR pS, NXNS_HEADER_PTR pnxns_hdr );
 #endif // NETWORK_H_INCLUDED
