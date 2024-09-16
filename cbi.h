@@ -114,7 +114,6 @@ typedef enum oc2ats_stat {
 #define UDP_BCAST_RECV_PORT_OC2ATS2_STAT 58197
 #define UDP_BCAST_RECV_PORT_OC2ATS3_STAT 58196
 
-
 #define ATS2OC_MSGSIZE 286
 #define OC2ATS1_MSGSIZE 1404
 #define OC2ATS2_MSGSIZE 944
@@ -125,7 +124,7 @@ typedef struct recv_buf_cbi_stat {
   struct {
     struct {
       NXNS_HEADER header;
-      unsigned char arena[OC2ATS1_MSGSIZE - 76]; // for OC_OC2ATS1_MSGSIZE > OC_OC2ATS3_MSGSIZE > OC_OC2ATS2_MSGSIZE
+      unsigned char arena[OC2ATS1_MSGSIZE - sizeof(NXNS_HEADER)]; // for OC_OC2ATS1_MSGSIZE > OC_OC2ATS3_MSGSIZE > OC_OC2ATS2_MSGSIZE, sizeof(NXNS_HEADER) == 76.
     } buf;
     BOOL updated;
   } msgs[OC_OC2ATS_MSGS_NUM];

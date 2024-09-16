@@ -132,8 +132,11 @@ static void load_il_status_geometry ( void ) {
 
 int main ( void ) {
   TINY_SOCK socks_cbi_ctrl;
+  TINY_SOCK_DESC sd_cbi_ctrl[END_OF_ATS2OC];
+  
   TINY_SOCK socks_cbi_stat;
-  TINY_SOCK socks_less_2;
+  
+  TINY_SOCK socks_less_2;  
   TINY_SOCK_DESC sd_send_srvbeat = -1;
   TINY_SOCK_DESC sd_send_srvstat = -1;
   TINY_SOCK_DESC sd_recv_srvstat = -1;
@@ -142,7 +145,7 @@ int main ( void ) {
   
   cons_il_obj_tables();
   TINY_SOCK_CREAT( socks_cbi_ctrl );
-  if( establish_OC_ctrl_send( &socks_cbi_ctrl ) ) {
+  if( establish_OC_ctrl_send( sd_cbi_ctrl, (int)END_OF_ATS2OC, &socks_cbi_ctrl ) ) {
     TINY_SOCK_CREAT( socks_cbi_stat );
     if( establish_OC_stat_recv( &socks_cbi_stat ) )
       load_il_status_geometry();
@@ -234,17 +237,17 @@ int main ( void ) {
     
     pthread_mutex_init( &cbi_ctrl_sendbuf_mutex, NULL );    
     pthread_mutex_init( &cbi_ctrl_dispatch_mutex, NULL );
-    if( pthread_create( &P_il_ctrl_dispat, NULL, pth_reveal_il_ctrl_bits, (void *)&socks_less_2 ) ) {
+    if( pthread_create( &P_il_ctrl_dispat, NULL, pth_reveal_il_ctrl_bits, (void *)&socks_cbi_ctrl ) ) {
       errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
-      exit( 1 );
-    }
-    if( pthread_create( &P_il_ctrl_chrono, NULL, pth_expire_il_ctrl_bits, NULL ) ) {
-      errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
       exit( 1 );
     }
     pthread_mutex_init( &cbi_stat_info_mutex, NULL );
     if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&socks_cbi_stat ) ) {
       errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
+      exit( 1 );
+    }
+    if( pthread_create( &P_il_ctrl_chrono, NULL, pth_expire_il_ctrl_bits, NULL ) ) {
+      errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
       exit( 1 );
     }
     
@@ -272,9 +275,27 @@ int main ( void ) {
       
       {
 	unsigned char *pmsg_buf = NULL;
+	int size = -1;
+	int i = (int)ATS2OC801;
+	while( i < (int)END_OF_ATS2OC ) {
+	  pmsg_buf = sock_send_buf_attached( &socks_cbi_ctrl, sd_cbi_ctrl[i], &size );
+	  assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
+	  assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
+	  {
+	    const int cbl_ctlbits_areasiz = ATS2OC_MSGSIZE - (int)sizeof(NXNS_HEADER);
+	    int n = -1;
+	    assert( cbl_ctlbits_areasiz > 0 );
+	    n = sock_send_ready( &socks_cbi_ctrl, sd_cbi_ctrl[i], cbl_ctlbits_areasiz );
+	    assert( n == cbl_ctlbits_areasiz );
+	  }
+	  i++;
+	}
+      }
+      
+      {
+	unsigned char *pmsg_buf = NULL;
 	int msglen = -1;
 	pmsg_buf = sock_recv_buf_attached( &socks_less_2, sd_recv_srvstat, &msglen );
-	assert( pmsg_buf );
 	assert( pmsg_buf == buf_msgServerStatus );
 	assert( (msglen > 0) ? (msglen == sizeof(MSG_TINY_SERVER_STATUS)) : TRUE );
       }
@@ -313,10 +334,16 @@ int main ( void ) {
       if( diag_tracking_train_cmd( stdout ) > 0 )
 	fprintf( stdout, "\n" );
 #if 0
-      if( sock_send(&socks) < 1 ) {
+      if( sock_send(&socks_cbi_ctrl) < 1 ) {
+	errorF( "%s", "failed to send interlocking control for CBIs.\n" );
+	//exit( 1 );
+      }
+#if 0
+      if( sock_send(&socks_less_2) < 1 ) {
 	errorF( "%s", "failed to send msgServerStatus.\n" );
 	exit( 1 );
       }
+#endif
 #endif
       cnt++;
       {

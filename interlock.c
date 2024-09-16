@@ -385,7 +385,7 @@ void cons_il_obj_tables ( void ) {
 }
 
 #if 0 // for MODULE-TEST
-int main ( void ) {
+int main ( void ) {  
   cons_il_obj_tables();
   return 0;
 }
@@ -466,11 +466,14 @@ static CBI_CTRL_STAT_INFO_PTR willing_2_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC_
   return r;
 }
 
-BOOL establish_OC_ctrl_send ( TINY_SOCK_PTR pS ) {
+BOOL establish_OC_ctrl_send ( TINY_SOCK_DESC *pds, const int ndescs, TINY_SOCK_PTR pS ) {
+  assert( pds );
+  assert( ndescs >= (int)END_OF_ATS2OC );
   assert( pS );
   BOOL r = FALSE;
+  int i = (int)ATS2OC801;
   
-  int i = ATS2OC801;
+  assert( i == 0 );
   while( i < (int)END_OF_ATS2OC ) {
     assert( (i >= ATS2OC801) && (i < (int)END_OF_ATS2OC) );
     CBI_CTRL_STAT_INFO_PTR p = NULL;
@@ -478,6 +481,7 @@ BOOL establish_OC_ctrl_send ( TINY_SOCK_PTR pS ) {
       goto exit;
     assert( p );
     assert( p->ats2oc.d_sent_cbi_ctrl > -1 );
+    pds[i] = p->ats2oc.d_sent_cbi_ctrl;
     i++;
   }
   r = TRUE;
@@ -621,10 +625,10 @@ static int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
 	    assert( !(pA_ctl->dirty) );
 	    assert( pA_ctl->attr_ctrl.setval );
 	    assert( pA_ctl->pNext_dirt == NULL );
-#if 1		
-	    pA_ctl->attr_ctrl.setval = FALSE;
+	    pA_ctl->attr_ctrl.setval = FALSE; //pA_ctl->attr_ctrl.setval = TRUE;
 	    pA_ctl->dirty = TRUE;
 	    pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
+#if 1
 	    cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
 #endif
 	    cnt++;
@@ -665,6 +669,7 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   assert( cmd_id < END_OF_ATS2OC );
   int cnt = 0;
   CBI_STAT_ATTR_PTR *pphd = NULL;
+  const unsigned char *plim = (unsigned char *)&cbi_stat_ATS2OC[cmd_id].ats2oc.sent.msgs[0].updated;
   unsigned char *pa = cbi_stat_ATS2OC[cmd_id].ats2oc.sent.msgs[0].buf.arena;
   assert( pa );
   
@@ -682,14 +687,22 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
       if( pA->attr_ctrl.ctrl_bit && pA->dirty ) {
 	assert( pA->attr_ctrl.cnt_2_kil <= 0 );
 	int r_mutex_sendbuf = -1;
-	r_mutex_sendbuf = pthread_mutex_trylock( &cbi_ctrl_sendbuf_mutex );
+	r_mutex_sendbuf = pthread_mutex_trylock( &cbi_ctrl_sendbuf_mutex );	
 	if( !r_mutex_sendbuf ) {
 	  assert( pA->attr_ctrl.cnt_2_kil == 0 );
+	  unsigned char *p = &pa[pA->disp.bytes];
+#if 1
+	  assert( p < plim );
 	  if( pA->attr_ctrl.setval ) {
-	    pa[pA->disp.bytes] |= pA->disp.mask;
+	    *p |= pA->disp.mask;
 	    pA->attr_ctrl.cnt_2_kil = CTRL_LIT_SUSTAIN_CNT;
-	  } else
-	    pa[pA->disp.bytes] &= ~(pA->disp.mask);
+	    printf( "ACTIVATED!\n" );
+	  } else {
+	    *p &= ~(pA->disp.mask);
+	    assert( pA->attr_ctrl.cnt_2_kil == 0 );
+	    printf( "INACTIVATED.\n" );
+	  }
+#endif
 	  r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
 	  assert( !r_mutex_sendbuf );
 	} else
@@ -705,7 +718,8 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
       cnt *= -1;
     r_mutex_dispatch = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
     assert( !r_mutex_dispatch );
-  }
+  } else
+    printf( "LOCK FAILed.\n" );
   return cnt;
 }
 
@@ -716,19 +730,36 @@ void *pth_reveal_il_ctrl_bits ( void *arg ) {
   TINY_SOCK_PTR pS = NULL;
   
   pS = (TINY_SOCK_PTR)arg;
+  assert( pS );
   while( TRUE ) {
     BOOL remains;;
     for( remains = FALSE, oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
       if( render_il_ctrl_bits( (ATS2OC_CMD)oc_id ) < 0 )
 	remains = TRUE;
     }
-    if( remains )
+    if( remains ) {
       continue;
+    }
+#if 0
     else {
+#if 1
+      BOOL inv_all = TRUE;
+      int i = 0;
+      while( i < (int)END_OF_ATS2OC ) {
+	if( pS->send[i].dirty )
+	  inv_all = FALSE;
+	i++;
+      }
+      assert( !inv_all );
+#endif
       if( sock_send( pS ) < 0 )
 	errorF( "%s", "error on sending CBI control information toward OCs.\n" );
+      else {
+	;
+	//printf( "BAR\n" );
+      }
     }
-    
+#endif
     {
       int r = -1;
       r = usleep( interval );
@@ -864,7 +895,8 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 	  r = 0;
 	  if( state < 1 ) {
 	    assert( state == 0 );
-	    if( !((pA->attr_ctrl.cnt_2_kil > 0) || (pA->dirty && pA->attr_ctrl.setval)) ) {
+	    //if( !((pA->attr_ctrl.cnt_2_kil > 0) || (pA->dirty && pA->attr_ctrl.setval)) ) {
+	    if( !((pA->attr_ctrl.cnt_2_kil > 0) || pA->dirty) ) {
 	      assert( pA->attr_ctrl.cnt_2_kil <= 0 );
 	      assert( !(pA->dirty) || !(pA->attr_ctrl.setval) );
 	      pA->attr_ctrl.setval = TRUE;

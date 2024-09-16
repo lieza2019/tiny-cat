@@ -114,7 +114,7 @@ extern void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock );
 extern void cons_il_obj_tables ( void );
 
 extern BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS );
-extern BOOL establish_OC_ctrl_send ( TINY_SOCK_PTR pS );
+extern BOOL establish_OC_ctrl_send ( TINY_SOCK_DESC *pds, const int ndescs, TINY_SOCK_PTR pS );
 
 extern pthread_mutex_t cbi_stat_info_mutex;
 extern pthread_mutex_t cbi_ctrl_sendbuf_mutex;

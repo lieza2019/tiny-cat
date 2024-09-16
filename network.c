@@ -319,35 +319,61 @@ int sock_recv ( TINY_SOCK_PTR pS ) {
   return r;
 }
 
+#if 0
 static size_t envelop_with_the_header ( NXNS_HEADER_PTR phdr, unsigned char *prawdata, int rawdata_len, int sendto_bufsiz ) {
   assert( phdr );
   assert( prawdata );
   assert( rawdata_len >= 0 );
   assert( sendto_bufsiz >= sizeof(NXNS_HEADER) );
   assert( (sizeof(NXNS_HEADER) + rawdata_len) <= sendto_bufsiz );
-  
+
+  int n = 0;
   unsigned char buf[MAX_SEND_BUFSIZ];
   unsigned char *pbuf = NULL;
-  int n = 0;
   
-  assert( pbuf = memcpy( buf, phdr, sizeof(NXNS_HEADER) ) );
+  pbuf = memcpy( buf, phdr, sizeof(NXNS_HEADER) );
+  assert( pbuf == buf );
   n += sizeof( NXNS_HEADER );
   if( rawdata_len > 0 ) {
-    assert( n == sizeof(NXNS_HEADER) );
     assert( pbuf == buf );
-    assert( pbuf = memcpy( (pbuf + n), prawdata, rawdata_len ) );
+    assert( n == sizeof(NXNS_HEADER) );
+    pbuf = memcpy( &pbuf[n], prawdata, rawdata_len );
+    assert( pbuf == &pbuf[n] );
     n += rawdata_len;
   }
   
   assert( prawdata == memcpy( prawdata, buf, n ) );
 #ifdef CHK_STRICT_CONSISTENCY
-    assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[0] == 'N' );
-    assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[1] == 'U' );
-    assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[2] == 'X' );
-    assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[3] == 'M' );
+  assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[0] == 'N' );
+  assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[1] == 'U' );
+  assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[2] == 'X' );
+  assert( NEXUS_HDR(*(NXNS_HEADER_PTR)prawdata).H_TYPE_headerType[3] == 'M' );
 #endif // CHK_STRICT_CONSISTENCY
   return n;
 }
+#else
+static void envelop_with_the_header ( NXNS_HEADER_PTR phdr, unsigned char *psendto_buf, const int sendto_bufsiz ) {
+  assert( phdr );
+  assert( psendto_buf );
+  assert( sendto_bufsiz >= sizeof(NXNS_HEADER) );
+#ifdef CHK_STRICT_CONSISTENCY
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[0] == 'N' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[1] == 'U' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[2] == 'X' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[3] == 'M' );
+#endif // CHK_STRICT_CONSISTENCY
+  
+  unsigned char *pbuf = NULL; 
+  pbuf = memcpy( psendto_buf, phdr, sizeof(NXNS_HEADER) );
+  assert( pbuf == psendto_buf );
+#ifdef CHK_STRICT_CONSISTENCY
+  assert( NEXUS_HDR(*(NXNS_HEADER_PTR)psendto_buf).H_TYPE_headerType[0] == 'N' );
+  assert( NEXUS_HDR(*(NXNS_HEADER_PTR)psendto_buf).H_TYPE_headerType[1] == 'U' );
+  assert( NEXUS_HDR(*(NXNS_HEADER_PTR)psendto_buf).H_TYPE_headerType[2] == 'X' );
+  assert( NEXUS_HDR(*(NXNS_HEADER_PTR)psendto_buf).H_TYPE_headerType[3] == 'M' );
+#endif // CHK_STRICT_CONSISTENCY
+}
+#endif
 
 int sock_send ( TINY_SOCK_PTR pS ) {
   assert( pS );
@@ -368,22 +394,26 @@ int sock_send ( TINY_SOCK_PTR pS ) {
 #endif // CHK_STRICT_CONSISTENCY
 	{
 	  int n = -1;
-	  int wrote_with_hdr_len = -1;
+	  //int wrote_with_hdr_len = -1;
 	  if( pS->send[i].is_nx ) {
-	    wrote_with_hdr_len = envelop_with_the_header( &nx_ns_hdr, pS->send[i].pbuf, pS->send[i].wrote_len, MAX_SEND_BUFSIZ );
-	    assert( wrote_with_hdr_len == (sizeof(NXNS_HEADER) + pS->send[i].wrote_len) );
+	    //wrote_with_hdr_len = envelop_with_the_header( &nx_ns_hdr, pS->send[i].pbuf, pS->send[i].wrote_len, MAX_SEND_BUFSIZ );
+	    //assert( wrote_with_hdr_len == (sizeof(NXNS_HEADER) + pS->send[i].wrote_len) );
+	    envelop_with_the_header( &nx_ns_hdr, pS->send[i].pbuf, pS->send[i].wrote_len );
 #ifdef CHK_STRICT_CONSISTENCY
 	    assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[0] == 'N' );
 	    assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[1] == 'U' );
 	    assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[2] == 'X' );
 	    assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[3] == 'M' );
 #endif // CHK_STRICT_CONSISTENCY
-	  } else
-	    wrote_with_hdr_len = pS->send[i].wrote_len;
-	  assert( wrote_with_hdr_len > -1 );
-	  n = sendto( pS->send[i].sock, pS->send[i].pbuf, wrote_with_hdr_len, 0, (struct sockaddr *)&(pS->send[i].addr), sizeof(pS->send[i].addr) );
+	  } else {
+	    //wrote_with_hdr_len = pS->send[i].wrote_len;
+	    assert( pS->send[i].wrote_len >= 0 );
+	  }
+	  //assert( wrote_with_hdr_len > -1 );
+	  //n = sendto( pS->send[i].sock, pS->send[i].pbuf, wrote_with_hdr_len, 0, (struct sockaddr *)&(pS->send[i].addr), sizeof(pS->send[i].addr) );
+	  n = sendto( pS->send[i].sock, pS->send[i].pbuf, pS->send[i].wrote_len, 0, (struct sockaddr *)&(pS->send[i].addr), sizeof(pS->send[i].addr) );
 	  if( n < 0 )
-	    err = FALSE;
+	    err = TRUE;
 	  else
 	    r++;
 	}

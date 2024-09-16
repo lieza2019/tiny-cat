@@ -20,11 +20,11 @@ typedef struct ip_addr_desc {
 struct tiny_sock_entry {
   int sock;
   struct sockaddr_in addr;
+  BOOL is_nx;
   unsigned char *pbuf;
   int buf_siz;
   int wrote_len;
   BOOL dirty;
-  BOOL is_nx;
 };
 #define MAX_RECV_SOCK_NUM 256
 #define MAX_SEND_SOCK_NUM 256
