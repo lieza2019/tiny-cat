@@ -693,11 +693,9 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
 	  if( pA->attr_ctrl.setval ) {
 	    *p |= pA->disp.mask;
 	    pA->attr_ctrl.cnt_2_kil = CTRL_LIT_SUSTAIN_CNT;
-	    printf( "ACTIVATED!\n" );
 	  } else {
 	    *p &= ~(pA->disp.mask);
 	    assert( pA->attr_ctrl.cnt_2_kil == 0 );
-	    printf( "INACTIVATED.\n" );
 	  }
 	  cnt++;
 	  
@@ -1036,27 +1034,6 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
       fprintf( fp_out, "disp of (raw, bytes, bits, mask): (%d, %d, %d, %s)\n",
 	       pA->disp.raw, pA->disp.bytes, pA->disp.bits, show_cbi_stat_bitmask(s, sizeof(s), pA->disp.mask) );
     }
-#if 0
-    {
-      int r_mutex = -1;
-      r_mutex = pthread_mutex_trylock( &cbi_stat_info_mutex );
-      if( !r_mutex ) {
-	assert( pA );
-	assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
-	RECV_BUF_CBI_STAT_PTR pstat = NULL;
-	pstat = &cbi_stat_info[pA->oc_id];
-	assert( pstat );
-	{
-	  unsigned char *pgrp = &((unsigned char *)&pstat->msgs[pA->group.msg_id])[pA->group.addr];
-	  assert( pgrp );
-	  fprintf( fp_out, "value: %d\n", (pgrp[pA->disp.bytes] & pA->disp.mask) );
-	}
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
-	assert( !r_mutex );
-      }
-    }
-#else
     {
       OC_ID oc_id = END_OF_OCs;
       CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
@@ -1069,7 +1046,6 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
       } else
 	fprintf( fp_out, "value: %d\n", -1 );
     }
-#endif
   }
 }
 

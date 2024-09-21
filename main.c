@@ -130,7 +130,27 @@ static void load_il_status_geometry ( void ) {
   }
 }
 
+static void make_nsnx_header( NXNS_HEADER_PTR phdr, const time_t emission_start, const uint8_t msgType, const uint8_t dstID, const uint32_t seq ) {
+  assert( phdr );
+  NX_HEADER_CREAT( NEXUS_HDR(*phdr) );
+  NS_USRHDR_CREAT( NS_USRHDR(*phdr) );
+#ifdef CHK_STRICT_CONSISTENCY
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[0] == 'N' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[1] == 'U' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[2] == 'X' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[3] == 'M' );
+#endif // CHK_STRICT_CONSISTENCY
+  
+  phdr->nx_hdr.V_SEQ_versionSequenceNum = htonl( (uint32_t)emission_start );
+  phdr->nx_hdr.SEQ_sequenceNum = htonl( seq );
+  phdr->nx_hdr.TCD_transactionCode = htons( (uint16_t)msgType );
+  phdr->ns_usr_hdr.msgType = msgType;
+  phdr->ns_usr_hdr.dstID = dstID;
+}
+
 int main ( void ) {
+  time_t emission_start = 0;
+  uint32_t seq = 0;
   TINY_SOCK socks_cbi_ctrl;
   TINY_SOCK_DESC sd_cbi_ctrl[END_OF_ATS2OC];
   
@@ -203,7 +223,7 @@ int main ( void ) {
   }
   
   {
-    const useconds_t interval = 1000 * 1000 * 0.1;
+    const useconds_t interval = 1000 * 1000 * 0.1;    
     int nrecv = -1;
     int cnt = 0;
     pthread_t P_il_stat;
@@ -250,15 +270,17 @@ int main ( void ) {
       errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
       exit( 1 );
     }
-    
-    while( TRUE ) {
+
+    emission_start = time( NULL );
+    while( TRUE ) {      
       errorF( "%s", "waken up!\n" );
       if( (nrecv = sock_recv( &socks_less_2 )) < 0 ) {
 	errorF( "%s", "error on receiving CBTC/CBI status information from SC/OCs.\n" );
 	continue;
       }
       
-      diag_cbi_stat_attrib( stdout, "S821B_S801B" );
+      //diag_cbi_stat_attrib( stdout, "S821B_S801B" );
+      diag_cbi_stat_attrib( stdout, "S803A_S811A" );
       {
 	OC_ID oc_id = END_OF_OCs;
 	CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
@@ -278,20 +300,29 @@ int main ( void ) {
 	r_mutex_sendbuf = pthread_mutex_lock( &cbi_ctrl_sendbuf_mutex );
 	if( !r_mutex_sendbuf ) {
 	  int i = (int)ATS2OC801;
+	  seq = (seq % 0x80000000) + 1;
 	  while( i < (int)END_OF_ATS2OC ) {
-	    int n = -1;
-#ifdef CHK_STRICT_CONSISTENCY
 	    unsigned char *pmsg_buf = NULL;
 	    int size = -1;
 	    pmsg_buf = sock_send_buf_attached( &socks_cbi_ctrl, sd_cbi_ctrl[i], &size );
+#ifdef CHK_STRICT_CONSISTENCY
 	    assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
 	    assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
 #endif // CHK_STRICT_CONSISTENCY
-	    n = sock_send_ready( &socks_cbi_ctrl, sd_cbi_ctrl[i], ATS2OC_MSGSIZE );
-	    assert( n == ATS2OC_MSGSIZE );
+	    {
+	      const uint8_t dstID = 101 + i;
+	      NXNS_HEADER_PTR phdr = NULL;
+	      int n = -1;
+	      assert( (OC_ID)((int)dstID - 101) == (OC_ID)i );
+	      phdr = &cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf.header;
+	      assert( phdr );
+	      make_nsnx_header( phdr, emission_start, 99, dstID, seq );
+	      n = sock_send_ready( &socks_cbi_ctrl, sd_cbi_ctrl[i], ATS2OC_MSGSIZE );
+	      assert( n == ATS2OC_MSGSIZE );
+	    }
 	    i++;
 	  }
-	  if( sock_send(&socks_cbi_ctrl, NULL ) < 1 ) {
+	  if( sock_send(&socks_cbi_ctrl) < 1 ) {
 	    errorF( "%s", "failed to send interlocking control for CBIs.\n" );
 	    //exit( 1 );
 	  }
@@ -343,7 +374,7 @@ int main ( void ) {
       if( diag_tracking_train_cmd( stdout ) > 0 )
 	fprintf( stdout, "\n" );
 #if 0
-      if( sock_send(&socks_less_2, NULL ) < 1 ) {
+      if( sock_send0(&socks_less_2, NULL ) < 1 ) {
 	errorF( "%s", "failed to send msgServerStatus.\n" );
 	exit( 1 );
       }

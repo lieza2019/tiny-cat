@@ -118,8 +118,13 @@ extern void NX_HEADER_CREAT(NX_HEADER NX_hdr );
     (N).H_TYPE_headerType[1] = 'U';				\
     (N).H_TYPE_headerType[2] = 'X';				\
     (N).H_TYPE_headerType[3] = 'M';				\
+    (N).SA_DMN_srcAddrDomainNum = 0;				\
+    (N).SA_DFN_srcAddrDataFieldNum = 1;				\
+    (N).SA_LNN_srcAddrLogicNodeNum = htons( 0xca );		\
+    (N).DA_DMN_dstAdderDomainNum = 0;				\
+    (N).DA_DFN_dstAdderDataFieldNum = 1;			\
+    (N).DA_MGN_dstAdderMulticastGroupNum = htons( 0x63 );	\
     (N).M_CTL_flgs_1 = 0;					\
-    (N).M_CTL_flgs_1 |= (uint8_t)NX_HEADER_FLG1_M_CTL_MLT;	\
     (N).M_CTL_flgs_2 = 0;					\
     (N).M_CTL_flgs_3 = 0;					\
     (N).M_CTL_flgs_4 = 0;					\
@@ -135,6 +140,7 @@ extern void NX_HEADER_CREAT(NX_HEADER NX_hdr );
     (N).INQ_ID[9] = 0;						\
     (N).INQ_ID[10] = 0;						\
     (N).INQ_ID[11] = 0;						\
+    (N).TCD_transactionCode = 99;				\
     (N).VER_versionNum = 0;					\
     (N).GTID_gtID[0] = 0;					\
     (N).GTID_gtID[1] = 0;					\
@@ -144,10 +150,10 @@ extern void NX_HEADER_CREAT(NX_HEADER NX_hdr );
     (N).GTID_gtID[5] = 0;					\
     (N).GTID_gtID[6] = 0;					\
     (N).GTID_gtID[7] = 0;					\
-    (N).PVER_nxProtocolVersion = 0;				\
-    (N).PRI_messagePriorityLevel = 0;				\
-    (N).CBN_currentFlagmentBlockNumber = 0;			\
-    (N).TBN_totalFlagmentBlockNumber = 0;			\
+    (N).PVER_nxProtocolVersion = 1;				\
+    (N).PRI_messagePriorityLevel = 1;				\
+    (N).CBN_currentFlagmentBlockNumber = 1;			\
+    (N).TBN_totalFlagmentBlockNumber = 1;			\
     (N).BSIZE_blockSize = 0;					\
     (N).FUI_forFuture[0] = 0;					\
     (N).FUI_forFuture[1] = 0;					\
@@ -188,11 +194,11 @@ typedef struct NX_NS_header {
 #define NS_USRHDR_CREAT( H ) (					\
   {								\
     (H).srcID = 200;						\
-    (H).srcStatus = 103;					\
+    (H).srcStatus = 1;						\
     (H).msgType = 0;						\
     (H).dstID = 0;						\
     (H).flgs_1 = 0;						\
-    (H).ackEM = 105;						\
+    (H).ackEM = 0;						\
     (H).dataLength = 0;						\
     (H).flgs_2 = 0;						\
     (H).networkTime[0] = 0;					\
@@ -202,5 +208,6 @@ typedef struct NX_NS_header {
 )
 
 extern int sock_recv ( TINY_SOCK_PTR pS );
-extern int sock_send ( TINY_SOCK_PTR pS, NXNS_HEADER_PTR pnxns_hdr );
+extern int sock_send0 ( TINY_SOCK_PTR pS, NXNS_HEADER_PTR pnxns_hdr );
+extern int sock_send ( TINY_SOCK_PTR pS );
 #endif // NETWORK_H_INCLUDED

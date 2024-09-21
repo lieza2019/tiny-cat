@@ -341,7 +341,7 @@ static void envelop_with_the_header ( NXNS_HEADER_PTR phdr, unsigned char *psend
 #endif // CHK_STRICT_CONSISTENCY
 }
 
-int sock_send ( TINY_SOCK_PTR pS, NXNS_HEADER_PTR pnxns_hdr ) {
+int sock_send0 ( TINY_SOCK_PTR pS, NXNS_HEADER_PTR pnxns_hdr ) {
   assert( pS );
   BOOL err = FALSE;
   int r = 0;
@@ -366,6 +366,9 @@ int sock_send ( TINY_SOCK_PTR pS, NXNS_HEADER_PTR pnxns_hdr ) {
 	  assert( NEXUS_HDR(*pnxns_hdr).H_TYPE_headerType[2] == 'X' );
 	  assert( NEXUS_HDR(*pnxns_hdr).H_TYPE_headerType[3] == 'M' );
 #endif // CHK_STRICT_CONSISTENCY
+	  pnxns_hdr->nx_hdr.ML_messageLength = htonl( (uint32_t)pS->send[i].wrote_len );
+	  pnxns_hdr->nx_hdr.BSIZE_blockSize = htons( (uint16_t)pS->send[i].wrote_len );
+	  pnxns_hdr->ns_usr_hdr.dataLength = htons( (uint16_t)(pS->send[i].wrote_len - (int)sizeof(NXNS_HEADER)) );;
 	  
 	  envelop_with_the_header( pnxns_hdr, pS->send[i].pbuf, pS->send[i].wrote_len );	  
 #ifdef CHK_STRICT_CONSISTENCY
@@ -387,6 +390,48 @@ int sock_send ( TINY_SOCK_PTR pS, NXNS_HEADER_PTR pnxns_hdr ) {
       }
   }
   assert( r >= 0 );
+  if( err )
+    r = ((r > 0) ? r : 1) * -1;
+  return r;
+}
+
+int sock_send ( TINY_SOCK_PTR pS ) {
+  assert( pS );
+  BOOL err = FALSE;
+  int r = 0;
+  int i;
+  
+  for( i = 0; i < MAX_SEND_SOCK_NUM; i++ ) {
+    if( pS->send[i].sock > 0 ) {
+      assert( pS->send[i].pbuf );
+      assert( pS->send[i].wrote_len <= pS->send[i].buf_siz );
+      if( pS->send[i].dirty ) {
+	int n = -1;
+	if( pS->send[i].is_nx ) {
+	  NXNS_HEADER_PTR pnxns_hdr = NULL;
+	  assert( pS->send[i].wrote_len >= sizeof(NXNS_HEADER) );
+#ifdef CHK_STRICT_CONSISTENCY
+	  assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[0] == 'N' );
+	  assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[1] == 'U' );
+	  assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[2] == 'X' );
+	  assert( NEXUS_HDR( *(NXNS_HEADER_PTR)(pS->send[i].pbuf) ).H_TYPE_headerType[3] == 'M' );
+#endif // CHK_STRICT_CONSISTENCY
+	  pnxns_hdr = (NXNS_HEADER_PTR)(pS->send[i].pbuf);
+	  assert( pnxns_hdr );
+	  pnxns_hdr->nx_hdr.ML_messageLength = htonl( (uint32_t)pS->send[i].wrote_len );
+	  pnxns_hdr->nx_hdr.BSIZE_blockSize = htons( (uint16_t)pS->send[i].wrote_len );
+	  pnxns_hdr->ns_usr_hdr.dataLength = htons( (uint16_t)(pS->send[i].wrote_len - (int)sizeof(NXNS_HEADER)) );;
+	}
+	assert( pS->send[i].wrote_len >= 0 );
+	n = sendto( pS->send[i].sock, pS->send[i].pbuf, pS->send[i].wrote_len, 0, (struct sockaddr *)&(pS->send[i].addr), sizeof(pS->send[i].addr) );
+	if( n < 0 )
+	  err = TRUE;
+	else
+	  r++;
+	pS->send[i].dirty = FALSE;
+      }
+    }
+  }
   if( err )
     r = ((r > 0) ? r : 1) * -1;
   return r;
