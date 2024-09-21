@@ -281,7 +281,7 @@ int main ( void ) {
       
       //diag_cbi_stat_attrib( stdout, "S821B_S801B" );
       diag_cbi_stat_attrib( stdout, "S803A_S811A" );
-      {
+      if( cnt > 30 ) {
 	OC_ID oc_id = END_OF_OCs;
 	CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
 	const char ctl_bit_ident[] = "P_S821A_S801A";
@@ -320,6 +320,7 @@ int main ( void ) {
 	      n = sock_send_ready( &socks_cbi_ctrl, sd_cbi_ctrl[i], ATS2OC_MSGSIZE );
 	      assert( n == ATS2OC_MSGSIZE );
 	    }
+	    //memset( &pmsg_buf[sizeof(NXNS_HEADER)], 0xff, (size_t)socks_cbi_ctrl.send[i].wrote_len ); // ***** for debugging.
 	    i++;
 	  }
 	  if( sock_send(&socks_cbi_ctrl) < 1 ) {

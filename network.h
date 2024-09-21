@@ -120,7 +120,7 @@ extern void NX_HEADER_CREAT(NX_HEADER NX_hdr );
     (N).H_TYPE_headerType[3] = 'M';				\
     (N).SA_DMN_srcAddrDomainNum = 0;				\
     (N).SA_DFN_srcAddrDataFieldNum = 1;				\
-    (N).SA_LNN_srcAddrLogicNodeNum = htons( 0xca );		\
+    (N).SA_LNN_srcAddrLogicNodeNum = htons( 0xc9 );		\
     (N).DA_DMN_dstAdderDomainNum = 0;				\
     (N).DA_DFN_dstAdderDataFieldNum = 1;			\
     (N).DA_MGN_dstAdderMulticastGroupNum = htons( 0x63 );	\
