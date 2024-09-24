@@ -895,6 +895,7 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 	      assert( !(pA->dirty) || !(pA->attr_ctrl.setval) );
 	      pA->attr_ctrl.setval = TRUE;
 	      pA->dirty = TRUE;
+#if 0
 	      pA->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
 	      cbi_stat_prof[oc_id].pdirty_bits = pA;
 #if CHK_STRICT_CONSISTENCY
@@ -907,6 +908,21 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 		} while( p );
 	      }
 #endif // CHK_STRICT_CONSISTENCY
+#else
+	      {
+		CBI_STAT_ATTR_PTR *pp = &cbi_stat_prof[oc_id].pdirty_bits;
+		assert( pp );
+		while( *pp ) {
+		  assert( *pp );
+		  pp = &(*pp)->pNext_dirt;
+		  assert( pp );
+		}
+		assert( pp );
+		assert( !(*pp) );
+		*pp = pA;
+		pA->pNext_dirt = NULL;
+	      }
+#endif
 	      r = 1;
 	    }
 	  } else {
@@ -971,6 +987,7 @@ int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 	      pA->attr_ctrl.cnt_2_kil = 0;
 	      pA->attr_ctrl.setval = FALSE;
 	      pA->dirty = TRUE;
+#if 1
 	      pA->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
 	      cbi_stat_prof[oc_id].pdirty_bits = pA;
 #if CHK_STRICT_CONSISTENCY
@@ -983,6 +1000,21 @@ int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 		} while( p );
 	      }
 #endif // CHK_STRICT_CONSISTENCY
+#else
+	      {
+		CBI_STAT_ATTR_PTR *pp = &cbi_stat_prof[oc_id].pdirty_bits;
+		assert( pp );
+		while( *pp ) {
+		  assert( *pp );
+		  pp = &(*pp)->pNext_dirt;
+		  assert( pp );
+		}
+		assert( pp );
+		assert( !(*pp) );
+		*pp = pA;
+		pA->pNext_dirt = NULL;
+	      }
+#endif
 	      r = 1;
 	    }
 	  } else {
