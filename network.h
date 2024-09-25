@@ -34,6 +34,7 @@ typedef struct _tiny_sock {
 } TINY_SOCK, *TINY_SOCK_PTR;
 
 typedef int TINY_SOCK_DESC;
+typedef int *TINY_SOCK_DESC_PTR;
 
 #define TINY_SOCK_CREAT( S ) (				\
   {							\
@@ -103,6 +104,7 @@ extern BOOL NX_HEADER_M_CTL_ONE( NX_HEADER NX_hdr );
 extern BOOL NX_HEADER_M_CTL_MLT( NX_HEADER NX_hdr );
 extern void NX_HEADER_CREAT(NX_HEADER NX_hdr );
 
+#define NX_HEADER_SEQMAX_PLUS1 0x80000000
 #define NX_HEADER_FLG1_M_CTL_RPL 16
 #define NX_HEADER_FLG1_M_CTL_INQ 32
 #define NX_HEADER_FLG1_M_CTL_ONE 64
@@ -162,6 +164,7 @@ extern void NX_HEADER_CREAT(NX_HEADER NX_hdr );
   }								\
 )
 
+#define NX_SEQNUM_MAX_PLUS1 0x80000000
 #define NS_USRHDR_FLG1_SYSTEM_EXCHANGE_CMD 3
 #define NS_USRHDR_FLG1_RESETCMD 4
 

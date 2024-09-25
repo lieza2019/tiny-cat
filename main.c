@@ -323,10 +323,8 @@ int main ( void ) {
 	    //memset( &pmsg_buf[sizeof(NXNS_HEADER)], 0xff, (size_t)socks_cbi_ctrl.send[i].wrote_len ); // ***** for debugging.
 	    i++;
 	  }
-	  if( sock_send(&socks_cbi_ctrl) < 1 ) {
+	  if( sock_send(&socks_cbi_ctrl) < 1 )
 	    errorF( "%s", "failed to send interlocking control for CBIs.\n" );
-	    //exit( 1 );
-	  }
 	  r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
 	  assert( !r_mutex_sendbuf );
 	} else
