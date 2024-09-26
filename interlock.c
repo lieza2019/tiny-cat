@@ -414,21 +414,29 @@ static CBI_CTRL_STAT_INFO_PTR willing_2_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_
   return r;
 }
 
-BOOL establish_OC_stat_recv ( TINY_SOCK_PTR pS ) {
+int establish_OC_stat_recv ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
   assert( pS );
-  BOOL r = FALSE;
+  assert( pdescs );
+  assert( ndescs >= (int)END_OF_OC2ATS );
+  int r = -1;
   
   int i = (int)OC2ATS1;
   while( i < (int)END_OF_OC2ATS ) {
     assert( (i >= (int)OC2ATS1) && (i < (int)END_OF_OC2ATS) );
-    CBI_CTRL_STAT_INFO_PTR p = NULL;
-    if( !(p = willing_2_recv_OC_stat( pS, (OC2ATS_STAT)i )) )
+    if( i < ndescs ) {
+      CBI_CTRL_STAT_INFO_PTR p = NULL;
+      if( !(p = willing_2_recv_OC_stat( pS, (OC2ATS_STAT)i )) )
+	goto exit;
+      assert( p );
+      assert( p->oc2ats.d_recv_cbi_stat > -1 );
+      pdescs[i] = p->oc2ats.d_recv_cbi_stat;
+      i++;
+    } else
       goto exit;
-    assert( p );
-    assert( p->oc2ats.d_recv_cbi_stat > -1 );
-    i++;
   }
-  r = TRUE;
+  assert( i == END_OF_OC2ATS );
+  assert( i <= ndescs );
+  r = i;
  exit:
   return r;
 }
@@ -466,25 +474,29 @@ static CBI_CTRL_STAT_INFO_PTR willing_2_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC_
   return r;
 }
 
-BOOL establish_OC_ctrl_send ( TINY_SOCK_DESC *pds, const int ndescs, TINY_SOCK_PTR pS ) {
-  assert( pds );
-  assert( ndescs >= (int)END_OF_ATS2OC );
+int establish_OC_ctrl_send ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
   assert( pS );
-  BOOL r = FALSE;
-  int i = (int)ATS2OC801;
+  assert( pdescs );
+  assert( ndescs >= (int)END_OF_ATS2OC );
+  int r = -1;
   
-  assert( i == 0 );
+  int i = (int)ATS2OC801;
   while( i < (int)END_OF_ATS2OC ) {
     assert( (i >= ATS2OC801) && (i < (int)END_OF_ATS2OC) );
-    CBI_CTRL_STAT_INFO_PTR p = NULL;
-    if( !(p = willing_2_send_OC_ctrl( pS, (ATS2OC_CMD)i )) )
+    if( i < ndescs ) {
+      CBI_CTRL_STAT_INFO_PTR p = NULL;
+      if( !(p = willing_2_send_OC_ctrl( pS, (ATS2OC_CMD)i )) )
+	goto exit;
+      assert( p );
+      assert( p->ats2oc.d_sent_cbi_ctrl > -1 );
+      pdescs[i] = p->ats2oc.d_sent_cbi_ctrl;
+      i++;
+    } else
       goto exit;
-    assert( p );
-    assert( p->ats2oc.d_sent_cbi_ctrl > -1 );
-    pds[i] = p->ats2oc.d_sent_cbi_ctrl;
-    i++;
   }
-  r = TRUE;
+  assert( i == END_OF_ATS2OC );
+  assert( i <= ndescs );
+  r = i;
  exit:
   return r;
 }

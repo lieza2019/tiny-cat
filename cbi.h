@@ -141,6 +141,10 @@ typedef struct cbi_ctrl_stat_infoset {
     const unsigned short dst_port;
     TINY_SOCK_DESC d_sent_cbi_ctrl;
     OC_ID dest_oc_id;
+    struct {
+      time_t emission_start;
+      uint32_t seq;
+    } nx;
     SENT_BUF_CBI_CTRL sent;
   } ats2oc;
   struct {

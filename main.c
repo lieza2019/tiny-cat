@@ -149,12 +149,11 @@ static void make_nsnx_header( NXNS_HEADER_PTR phdr, const time_t emission_start,
 }
 
 int main ( void ) {
-  time_t emission_start = 0;
-  uint32_t seq = 0;
   TINY_SOCK socks_cbi_ctrl;
   TINY_SOCK_DESC sd_cbi_ctrl[END_OF_ATS2OC];
   
   TINY_SOCK socks_cbi_stat;
+  TINY_SOCK_DESC sd_cbi_stat[END_OF_OC2ATS];
   
   TINY_SOCK socks_less_2;  
   TINY_SOCK_DESC sd_send_srvbeat = -1;
@@ -164,19 +163,44 @@ int main ( void ) {
   tzset();
   
   cons_il_obj_tables();
-  TINY_SOCK_CREAT( socks_cbi_ctrl );
-  if( establish_OC_ctrl_send( sd_cbi_ctrl, (int)END_OF_ATS2OC, &socks_cbi_ctrl ) ) {
-    TINY_SOCK_CREAT( socks_cbi_stat );
-    if( establish_OC_stat_recv( &socks_cbi_stat ) )
-      load_il_status_geometry();
-    else
-      goto err_OC_sockets;
-  } else {
-  err_OC_sockets:
-    errorF("%s", "failed to create the send/recv UDP ports for CBI control & state information, respectively.\n");
-    exit( 1 );
+  {
+    int nsocks_ctrl = -1;
+    int nsocks_stat = -1;
+    {
+      int i;
+      for( i = 0; i < END_OF_ATS2OC; i++ )
+	sd_cbi_ctrl[i] = -1;
+      assert( i == END_OF_ATS2OC );
+    }
+    TINY_SOCK_CREAT( socks_cbi_ctrl );
+    nsocks_ctrl = establish_OC_ctrl_send( &socks_cbi_ctrl, sd_cbi_ctrl, (int)END_OF_ATS2OC );
+    if( nsocks_ctrl > 0 ) {
+      assert( nsocks_ctrl == END_OF_ATS2OC );
+      int j;
+#ifdef CHK_STRICT_CONSISTENCY
+      for( j = 0; j < nsocks_ctrl; j++ )
+	assert( sd_cbi_ctrl[j] > -1 );
+#endif // CHK_STRICT_CONSISTENCY
+      for( j = 0; j < END_OF_OC2ATS; j++ )
+	sd_cbi_stat[j] = -1;
+      TINY_SOCK_CREAT( socks_cbi_stat );
+      nsocks_stat = establish_OC_stat_recv( &socks_cbi_stat, sd_cbi_stat, (int)END_OF_OC2ATS );
+      if( nsocks_stat > 0 ) {
+	assert( nsocks_stat == END_OF_OC2ATS );
+#ifdef CHK_STRICT_CONSISTENCY
+	int k;
+	for( k = 0; k < nsocks_stat; k++ )
+	  assert( sd_cbi_stat[k] > -1 );
+#endif // CHK_STRICT_CONSISTENCY
+	load_il_status_geometry();
+      } else
+	goto err_OC_sockets;
+    } else {
+    err_OC_sockets:
+      errorF("%s", "failed to create the send/recv UDP ports for CBI control & state information, respectively.\n");
+      exit( 1 );
+    }
   }
-  
 #if 0
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
   printf( "sizeof TRAIN_INFO: %d.\n", (int)sizeof(TRAIN_INFO) );
@@ -270,8 +294,7 @@ int main ( void ) {
       errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
       exit( 1 );
     }
-
-    emission_start = time( NULL );
+    
     while( TRUE ) {      
       errorF( "%s", "waken up!\n" );
       if( (nrecv = sock_recv( &socks_less_2 )) < 0 ) {
@@ -300,7 +323,6 @@ int main ( void ) {
 	r_mutex_sendbuf = pthread_mutex_lock( &cbi_ctrl_sendbuf_mutex );
 	if( !r_mutex_sendbuf ) {
 	  int i = (int)ATS2OC801;
-	  seq = (seq % 0x80000000) + 1;
 	  while( i < (int)END_OF_ATS2OC ) {
 	    unsigned char *pmsg_buf = NULL;
 	    int size = -1;
@@ -314,9 +336,17 @@ int main ( void ) {
 	      NXNS_HEADER_PTR phdr = NULL;
 	      int n = -1;
 	      assert( (OC_ID)((int)dstID - 101) == (OC_ID)i );
+	      if( !cbi_stat_ATS2OC[i].ats2oc.nx.emission_start )
+		cbi_stat_ATS2OC[i].ats2oc.nx.emission_start = time( NULL );
 	      phdr = &cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf.header;
 	      assert( phdr );
-	      make_nsnx_header( phdr, emission_start, 99, dstID, seq );
+	      {
+		uint32_t seq = cbi_stat_ATS2OC[i].ats2oc.nx.seq;
+		seq++;
+		seq = (seq %= NX_SEQNUM_MAX_PLUS1) ? seq : 1;
+		make_nsnx_header( phdr, cbi_stat_ATS2OC[i].ats2oc.nx.emission_start, 99, dstID, seq );
+		cbi_stat_ATS2OC[i].ats2oc.nx.seq = seq;
+	      }
 	      n = sock_send_ready( &socks_cbi_ctrl, sd_cbi_ctrl[i], ATS2OC_MSGSIZE );
 	      assert( n == ATS2OC_MSGSIZE );
 	    }
