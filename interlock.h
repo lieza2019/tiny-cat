@@ -124,6 +124,7 @@ extern void *pth_expire_il_ctrl_bits ( void *arg );
 extern void *pth_reveal_il_ctrl_bits ( void *arg );
 extern int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
 extern int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
+extern void ready_on_emit_OC_ctrl( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, const int ndescs );
 
 extern void diag_cbi_stat_attrib ( FILE *fp_out, char *ident );
 

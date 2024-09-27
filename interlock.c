@@ -1059,6 +1059,74 @@ int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   return r;
 }
 
+#if 1
+static void mk_nxns_header( NXNS_HEADER_PTR phdr, const time_t emission_start, const uint8_t msgType, const uint8_t dstID, const uint32_t seq ) {
+  assert( phdr );
+  NX_HEADER_CREAT( NEXUS_HDR(*phdr) );
+  NS_USRHDR_CREAT( NS_USRHDR(*phdr) );
+#ifdef CHK_STRICT_CONSISTENCY
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[0] == 'N' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[1] == 'U' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[2] == 'X' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[3] == 'M' );
+#endif // CHK_STRICT_CONSISTENCY
+  
+  phdr->nx_hdr.V_SEQ_versionSequenceNum = htonl( (uint32_t)emission_start );
+  phdr->nx_hdr.SEQ_sequenceNum = htonl( seq );
+  phdr->nx_hdr.TCD_transactionCode = htons( (uint16_t)msgType );
+  phdr->ns_usr_hdr.msgType = msgType;
+  phdr->ns_usr_hdr.dstID = dstID;
+}
+
+// psocks: socks_cbi_ctrl
+// pdescs: sd_cbi_ctrl
+void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, const int ndescs ) {
+  assert( psocks );
+  assert( pdescs );
+  assert( ndescs == END_OF_ATS2OC );
+  int r_mutex_sendbuf = -1;
+  
+  r_mutex_sendbuf = pthread_mutex_lock( &cbi_ctrl_sendbuf_mutex );
+  if( !r_mutex_sendbuf ) {
+    int i = (int)ATS2OC801;
+    while( i < (int)END_OF_ATS2OC ) {
+      unsigned char *pmsg_buf = NULL;
+      int size = -1;
+      pmsg_buf = sock_send_buf_attached( psocks, pdescs[i], &size ); // socks_cbi_ctrl: psocks, sd_cbi_ctrl: pdescs.
+#ifdef CHK_STRICT_CONSISTENCY
+      assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
+      assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
+#endif // CHK_STRICT_CONSISTENCY
+      {
+	const uint8_t dstID = 101 + i;
+	NXNS_HEADER_PTR phdr = NULL;
+	int n = -1;
+	assert( (OC_ID)((int)dstID - 101) == (OC_ID)i );
+	if( !cbi_stat_ATS2OC[i].ats2oc.nx.emission_start )
+	  cbi_stat_ATS2OC[i].ats2oc.nx.emission_start = time( NULL );
+	phdr = &cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf.header;
+	assert( phdr );
+	{
+	  uint32_t seq = cbi_stat_ATS2OC[i].ats2oc.nx.seq;
+	  seq++;
+	  seq = (seq %= NX_SEQNUM_MAX_PLUS1) ? seq : 1;
+	  mk_nxns_header( phdr, cbi_stat_ATS2OC[i].ats2oc.nx.emission_start, 99, dstID, seq );
+	  cbi_stat_ATS2OC[i].ats2oc.nx.seq = seq;
+	}
+	n = sock_send_ready( psocks, pdescs[i], ATS2OC_MSGSIZE ); // socks_cbi_ctrl: socks, sd_cbi_ctrl: pdescs.
+	assert( n == ATS2OC_MSGSIZE );
+      }
+      i++;
+    }
+    if( sock_send(psocks) < 1 )
+      errorF( "%s", "failed to send interlocking control for CBIs.\n" );
+    r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
+    assert( !r_mutex_sendbuf );
+  } else
+    assert( FALSE );
+}
+#endif
+
 void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
   assert( fp_out );
   assert( ident );
@@ -1110,65 +1178,3 @@ BOOL chk_routeconf ( ROUTE_C_PTR r1, ROUTE_C_PTR r2 ) {
  found:
   return r;
 }
-
-#if 1
-static void mk_nxns_header( NXNS_HEADER_PTR phdr, const time_t emission_start, const uint8_t msgType, const uint8_t dstID, const uint32_t seq ) {
-  assert( phdr );
-  NX_HEADER_CREAT( NEXUS_HDR(*phdr) );
-  NS_USRHDR_CREAT( NS_USRHDR(*phdr) );
-#ifdef CHK_STRICT_CONSISTENCY
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[0] == 'N' );
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[1] == 'U' );
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[2] == 'X' );
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[3] == 'M' );
-#endif // CHK_STRICT_CONSISTENCY
-  
-  phdr->nx_hdr.V_SEQ_versionSequenceNum = htonl( (uint32_t)emission_start );
-  phdr->nx_hdr.SEQ_sequenceNum = htonl( seq );
-  phdr->nx_hdr.TCD_transactionCode = htons( (uint16_t)msgType );
-  phdr->ns_usr_hdr.msgType = msgType;
-  phdr->ns_usr_hdr.dstID = dstID;
-}
-
-// psocks: socks_cbi_ctrl
-// pdescs: sd_cbi_ctrl
-void foo( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, const int ndescs, time_t emission_start, uint32_t *pseq ) {
-  assert( psocks );
-  assert( pdescs );
-  assert( ndescs == END_OF_ATS2OC );
-  assert( pseq );
-  int r_mutex_sendbuf = -1;
-  
-  r_mutex_sendbuf = pthread_mutex_lock( &cbi_ctrl_sendbuf_mutex );
-  if( !r_mutex_sendbuf ) {
-    int i = (int)ATS2OC801;
-    *pseq = (*pseq % NX_HEADER_SEQMAX_PLUS1) + 1;
-    while( i < (int)END_OF_ATS2OC ) {
-      unsigned char *pmsg_buf = NULL;
-      int size = -1;
-      pmsg_buf = sock_send_buf_attached( psocks, pdescs[i], &size ); // socks_cbi_ctrl: psocks, sd_cbi_ctrl: pdescs.
-#ifdef CHK_STRICT_CONSISTENCY
-      assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
-      assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
-#endif // CHK_STRICT_CONSISTENCY
-      {
-	const uint8_t dstID = 101 + i;
-	NXNS_HEADER_PTR phdr = NULL;
-	int n = -1;
-	assert( (OC_ID)((int)dstID - 101) == (OC_ID)i );
-	phdr = &cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf.header;
-	assert( phdr );
-	mk_nxns_header( phdr, emission_start, 99, dstID, *pseq );
-	n = sock_send_ready( psocks, pdescs[i], ATS2OC_MSGSIZE ); // socks_cbi_ctrl: socks, sd_cbi_ctrl: pdescs.
-	assert( n == ATS2OC_MSGSIZE );
-      }
-      i++;
-    }
-    if( sock_send(psocks) < 1 )
-      errorF( "%s", "failed to send interlocking control for CBIs.\n" );
-    r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
-    assert( !r_mutex_sendbuf );
-  } else
-    assert( FALSE );
-}
-#endif

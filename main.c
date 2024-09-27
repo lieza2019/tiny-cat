@@ -130,23 +130,94 @@ static void load_il_status_geometry ( void ) {
   }
 }
 
-static void make_nsnx_header( NXNS_HEADER_PTR phdr, const time_t emission_start, const uint8_t msgType, const uint8_t dstID, const uint32_t seq ) {
-  assert( phdr );
-  NX_HEADER_CREAT( NEXUS_HDR(*phdr) );
-  NS_USRHDR_CREAT( NS_USRHDR(*phdr) );
-#ifdef CHK_STRICT_CONSISTENCY
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[0] == 'N' );
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[1] == 'U' );
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[2] == 'X' );
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[3] == 'M' );
-#endif // CHK_STRICT_CONSISTENCY
+#if 1
+typedef struct tiny_comm_prof {
+  struct {
+    struct {
+      TINY_SOCK socks;
+      TINY_SOCK_DESC descs[END_OF_ATS2OC];
+    } ctrl;
+    struct {
+      TINY_SOCK socks;
+      TINY_SOCK_DESC descs[END_OF_OC2ATS];
+    } stat;
+  } cbi;
+  struct {
+    struct {
+      TINY_SOCK socks;
+      TINY_SOCK_DESC descs;
+    } cmd;
+    struct {
+      TINY_SOCK socks;
+      TINY_SOCK_DESC descs;
+    } info;
+  } cbtc;
+} TINY_COMM_PROF, *TINY_COMM_PROF_PTR;
+
+static void creat_comm_threads ( TINY_SOCK_PTR psocks_cbi_ctrl, TINY_SOCK_PTR psocks_cbi_stat ) {
+  assert( psocks_cbi_ctrl );
+  assert( psocks_cbi_stat );
+  pthread_t P_il_stat;
+  pthread_t P_il_ctrl_emit;
+  pthread_t P_il_ctrl_chrono;
   
-  phdr->nx_hdr.V_SEQ_versionSequenceNum = htonl( (uint32_t)emission_start );
-  phdr->nx_hdr.SEQ_sequenceNum = htonl( seq );
-  phdr->nx_hdr.TCD_transactionCode = htons( (uint16_t)msgType );
-  phdr->ns_usr_hdr.msgType = msgType;
-  phdr->ns_usr_hdr.dstID = dstID;
+  pthread_mutex_init( &cbi_ctrl_sendbuf_mutex, NULL );    
+  pthread_mutex_init( &cbi_ctrl_dispatch_mutex, NULL );
+  if( pthread_create( &P_il_ctrl_emit, NULL, pth_reveal_il_ctrl_bits, (void *)psocks_cbi_ctrl ) ) {
+    errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
+    exit( 1 );
+  }
+  pthread_mutex_init( &cbi_stat_info_mutex, NULL );
+  if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)psocks_cbi_stat ) ) {
+    errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
+    exit( 1 );
+  }
+  if( pthread_create( &P_il_ctrl_chrono, NULL, pth_expire_il_ctrl_bits, NULL ) ) {
+    errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
+    exit( 1 );
+  }
 }
+
+static void establish_comm_threads ( TINY_COMM_PROF_PTR pcomm_prof ) {
+  assert( pcomm_prof );
+  int nsocks_ctrl = -1;
+  int nsocks_stat = -1;
+  
+  int i;
+  for( i = 0; i < END_OF_ATS2OC; i++ )
+    pcomm_prof->cbi.ctrl.descs[i] = -1; //sd_cbi_ctrl[i] = -1;
+  TINY_SOCK_CREAT( pcomm_prof->cbi.ctrl.socks ); //TINY_SOCK_CREAT( socks_cbi_ctrl );
+  //nsocks_ctrl = establish_OC_ctrl_send( &socks_cbi_ctrl, sd_cbi_ctrl, (int)END_OF_ATS2OC );
+  nsocks_ctrl = establish_OC_ctrl_send( &pcomm_prof->cbi.ctrl.socks, pcomm_prof->cbi.ctrl.descs, (int)END_OF_ATS2OC );
+  if( nsocks_ctrl > 0 ) {
+    assert( nsocks_ctrl == END_OF_ATS2OC );
+    int j;
+#ifdef CHK_STRICT_CONSISTENCY
+    for( j = 0; j < nsocks_ctrl; j++ )
+      assert( pcomm_prof->cbi.ctrl.descs[j] > -1 ); //assert( sd_cbi_ctrl[j] > -1 );
+#endif // CHK_STRICT_CONSISTENCY
+    for( j = 0; j < END_OF_OC2ATS; j++ )
+      pcomm_prof->cbi.stat.descs[j] = -1; //sd_cbi_stat[j] = -1;
+    TINY_SOCK_CREAT( pcomm_prof->cbi.stat.socks ); //TINY_SOCK_CREAT( socks_cbi_stat );
+    //nsocks_stat = establish_OC_stat_recv( &socks_cbi_stat, sd_cbi_stat, (int)END_OF_OC2ATS );
+    nsocks_stat = establish_OC_stat_recv( &pcomm_prof->cbi.stat.socks, pcomm_prof->cbi.stat.descs, (int)END_OF_OC2ATS );
+    if( nsocks_stat > 0 ) {
+      assert( nsocks_stat == END_OF_OC2ATS );
+#ifdef CHK_STRICT_CONSISTENCY
+      int k;
+      for( k = 0; k < nsocks_stat; k++ )
+	assert( pcomm_prof->cbi.stat.descs[k] > -1 ); //assert( sd_cbi_stat[k] > -1 );
+#endif // CHK_STRICT_CONSISTENCY
+      load_il_status_geometry();
+    } else
+      goto err_OC_sockets;
+  } else {
+  err_OC_sockets:
+    errorF("%s", "failed to create the send/recv UDP ports for CBI control & state information, respectively.\n");
+    exit( 1 );
+  }
+}
+#endif
 
 int main ( void ) {
   TINY_SOCK socks_cbi_ctrl;
@@ -155,7 +226,7 @@ int main ( void ) {
   TINY_SOCK socks_cbi_stat;
   TINY_SOCK_DESC sd_cbi_stat[END_OF_OC2ATS];
   
-  TINY_SOCK socks_less_2;  
+  TINY_SOCK socks_less_2;
   TINY_SOCK_DESC sd_send_srvbeat = -1;
   TINY_SOCK_DESC sd_send_srvstat = -1;
   TINY_SOCK_DESC sd_recv_srvstat = -1;
@@ -163,6 +234,7 @@ int main ( void ) {
   tzset();
   
   cons_il_obj_tables();
+#if 1
   {
     int nsocks_ctrl = -1;
     int nsocks_stat = -1;
@@ -201,6 +273,14 @@ int main ( void ) {
       exit( 1 );
     }
   }
+#else
+  {
+    TINY_COMM_PROF comm_threads_prof;
+    memset( &comm_threads_prof, 0, sizeof(comm_threads_prof) );
+    establish_comm_threads( &comm_threads_prof );
+    ;
+  }
+#endif
 #if 0
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
   printf( "sizeof TRAIN_INFO: %d.\n", (int)sizeof(TRAIN_INFO) );
@@ -250,8 +330,6 @@ int main ( void ) {
     const useconds_t interval = 1000 * 1000 * 0.1;    
     int nrecv = -1;
     int cnt = 0;
-    pthread_t P_il_stat;
-    pthread_t P_il_ctrl_dispat, P_il_ctrl_chrono;
     
     static MSG_TINY_HEARTBEAT msg_srv_beat;
     static MSG_TINY_SERVER_STATUS msg_srv_stat;
@@ -279,23 +357,8 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_LOGGER1( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
     
-    pthread_mutex_init( &cbi_ctrl_sendbuf_mutex, NULL );    
-    pthread_mutex_init( &cbi_ctrl_dispatch_mutex, NULL );
-    if( pthread_create( &P_il_ctrl_dispat, NULL, pth_reveal_il_ctrl_bits, (void *)&socks_cbi_ctrl ) ) {
-      errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
-      exit( 1 );
-    }
-    pthread_mutex_init( &cbi_stat_info_mutex, NULL );
-    if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&socks_cbi_stat ) ) {
-      errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
-      exit( 1 );
-    }
-    if( pthread_create( &P_il_ctrl_chrono, NULL, pth_expire_il_ctrl_bits, NULL ) ) {
-      errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
-      exit( 1 );
-    }
-    
-    while( TRUE ) {      
+    creat_comm_threads( &socks_cbi_ctrl, &socks_cbi_stat );
+    while( TRUE ) {
       errorF( "%s", "waken up!\n" );
       if( (nrecv = sock_recv( &socks_less_2 )) < 0 ) {
 	errorF( "%s", "error on receiving CBTC/CBI status information from SC/OCs.\n" );
@@ -304,7 +367,7 @@ int main ( void ) {
       
       //diag_cbi_stat_attrib( stdout, "S821B_S801B" );
       diag_cbi_stat_attrib( stdout, "S803A_S811A" );
-      if( cnt > 30 ) {
+      {
 	OC_ID oc_id = END_OF_OCs;
 	CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
 	const char ctl_bit_ident[] = "P_S821A_S801A";
@@ -318,49 +381,7 @@ int main ( void ) {
 	fprintf( stdout, "\n" );
 #endif
       
-      {
-	int r_mutex_sendbuf = -1;
-	r_mutex_sendbuf = pthread_mutex_lock( &cbi_ctrl_sendbuf_mutex );
-	if( !r_mutex_sendbuf ) {
-	  int i = (int)ATS2OC801;
-	  while( i < (int)END_OF_ATS2OC ) {
-	    unsigned char *pmsg_buf = NULL;
-	    int size = -1;
-	    pmsg_buf = sock_send_buf_attached( &socks_cbi_ctrl, sd_cbi_ctrl[i], &size );
-#ifdef CHK_STRICT_CONSISTENCY
-	    assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
-	    assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
-#endif // CHK_STRICT_CONSISTENCY
-	    {
-	      const uint8_t dstID = 101 + i;
-	      NXNS_HEADER_PTR phdr = NULL;
-	      int n = -1;
-	      assert( (OC_ID)((int)dstID - 101) == (OC_ID)i );
-	      if( !cbi_stat_ATS2OC[i].ats2oc.nx.emission_start )
-		cbi_stat_ATS2OC[i].ats2oc.nx.emission_start = time( NULL );
-	      phdr = &cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf.header;
-	      assert( phdr );
-	      {
-		uint32_t seq = cbi_stat_ATS2OC[i].ats2oc.nx.seq;
-		seq++;
-		seq = (seq %= NX_SEQNUM_MAX_PLUS1) ? seq : 1;
-		make_nsnx_header( phdr, cbi_stat_ATS2OC[i].ats2oc.nx.emission_start, 99, dstID, seq );
-		cbi_stat_ATS2OC[i].ats2oc.nx.seq = seq;
-	      }
-	      n = sock_send_ready( &socks_cbi_ctrl, sd_cbi_ctrl[i], ATS2OC_MSGSIZE );
-	      assert( n == ATS2OC_MSGSIZE );
-	    }
-	    //memset( &pmsg_buf[sizeof(NXNS_HEADER)], 0xff, (size_t)socks_cbi_ctrl.send[i].wrote_len ); // ***** for debugging.
-	    i++;
-	  }
-	  if( sock_send(&socks_cbi_ctrl) < 1 )
-	    errorF( "%s", "failed to send interlocking control for CBIs.\n" );
-	  r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
-	  assert( !r_mutex_sendbuf );
-	} else
-	  assert( FALSE );
-      }
-      
+      ready_on_emit_OC_ctrl( &socks_cbi_ctrl, sd_cbi_ctrl, END_OF_ATS2OC );
       {
 	unsigned char *pmsg_buf = NULL;
 	int msglen = -1;
