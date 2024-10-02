@@ -19,6 +19,29 @@
 #include "srv.h"
 
 #if 1
+typedef struct tiny_comm_prof {
+  struct {
+    struct {
+      TINY_SOCK socks;
+      TINY_SOCK_DESC descs[END_OF_ATS2OC];
+    } ctrl;
+    struct {
+      TINY_SOCK socks;
+      TINY_SOCK_DESC descs[END_OF_OC2ATS];
+    } stat;
+  } cbi;
+  struct {
+    struct {
+      TINY_SOCK socks;
+      TINY_SOCK_DESC descs;
+    } cmd;
+    struct {
+      TINY_SOCK socks;
+      TINY_SOCK_DESC descs;
+    } info;
+  } cbtc;
+} TINY_COMM_PROF, *TINY_COMM_PROF_PTR;
+
 static int diag_tracking_train_cmd ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
@@ -130,30 +153,6 @@ static void load_il_status_geometry ( void ) {
   }
 }
 
-#if 1
-typedef struct tiny_comm_prof {
-  struct {
-    struct {
-      TINY_SOCK socks;
-      TINY_SOCK_DESC descs[END_OF_ATS2OC];
-    } ctrl;
-    struct {
-      TINY_SOCK socks;
-      TINY_SOCK_DESC descs[END_OF_OC2ATS];
-    } stat;
-  } cbi;
-  struct {
-    struct {
-      TINY_SOCK socks;
-      TINY_SOCK_DESC descs;
-    } cmd;
-    struct {
-      TINY_SOCK socks;
-      TINY_SOCK_DESC descs;
-    } info;
-  } cbtc;
-} TINY_COMM_PROF, *TINY_COMM_PROF_PTR;
-
 static void creat_comm_threads ( TINY_SOCK_PTR psocks_cbi_ctrl, TINY_SOCK_PTR psocks_cbi_stat ) {
   assert( psocks_cbi_ctrl );
   assert( psocks_cbi_stat );
@@ -185,28 +184,26 @@ static void establish_comm_threads ( TINY_COMM_PROF_PTR pcomm_prof ) {
   
   int i;
   for( i = 0; i < END_OF_ATS2OC; i++ )
-    pcomm_prof->cbi.ctrl.descs[i] = -1; //sd_cbi_ctrl[i] = -1;
-  TINY_SOCK_CREAT( pcomm_prof->cbi.ctrl.socks ); //TINY_SOCK_CREAT( socks_cbi_ctrl );
-  //nsocks_ctrl = establish_OC_ctrl_send( &socks_cbi_ctrl, sd_cbi_ctrl, (int)END_OF_ATS2OC );
+    pcomm_prof->cbi.ctrl.descs[i] = -1;
+  TINY_SOCK_CREAT( pcomm_prof->cbi.ctrl.socks );
   nsocks_ctrl = establish_OC_ctrl_send( &pcomm_prof->cbi.ctrl.socks, pcomm_prof->cbi.ctrl.descs, (int)END_OF_ATS2OC );
   if( nsocks_ctrl > 0 ) {
     assert( nsocks_ctrl == END_OF_ATS2OC );
     int j;
 #ifdef CHK_STRICT_CONSISTENCY
     for( j = 0; j < nsocks_ctrl; j++ )
-      assert( pcomm_prof->cbi.ctrl.descs[j] > -1 ); //assert( sd_cbi_ctrl[j] > -1 );
+      assert( pcomm_prof->cbi.ctrl.descs[j] > -1 );
 #endif // CHK_STRICT_CONSISTENCY
     for( j = 0; j < END_OF_OC2ATS; j++ )
-      pcomm_prof->cbi.stat.descs[j] = -1; //sd_cbi_stat[j] = -1;
-    TINY_SOCK_CREAT( pcomm_prof->cbi.stat.socks ); //TINY_SOCK_CREAT( socks_cbi_stat );
-    //nsocks_stat = establish_OC_stat_recv( &socks_cbi_stat, sd_cbi_stat, (int)END_OF_OC2ATS );
+      pcomm_prof->cbi.stat.descs[j] = -1;
+    TINY_SOCK_CREAT( pcomm_prof->cbi.stat.socks );
     nsocks_stat = establish_OC_stat_recv( &pcomm_prof->cbi.stat.socks, pcomm_prof->cbi.stat.descs, (int)END_OF_OC2ATS );
     if( nsocks_stat > 0 ) {
       assert( nsocks_stat == END_OF_OC2ATS );
 #ifdef CHK_STRICT_CONSISTENCY
       int k;
       for( k = 0; k < nsocks_stat; k++ )
-	assert( pcomm_prof->cbi.stat.descs[k] > -1 ); //assert( sd_cbi_stat[k] > -1 );
+	assert( pcomm_prof->cbi.stat.descs[k] > -1 );
 #endif // CHK_STRICT_CONSISTENCY
       load_il_status_geometry();
     } else
@@ -217,14 +214,13 @@ static void establish_comm_threads ( TINY_COMM_PROF_PTR pcomm_prof ) {
     exit( 1 );
   }
 }
-#endif
 
 int main ( void ) {
-  TINY_SOCK socks_cbi_ctrl;
-  TINY_SOCK_DESC sd_cbi_ctrl[END_OF_ATS2OC];
+  TINY_SOCK socks_cbi_ctrl;  
+  TINY_SOCK_DESC_PTR sd_cbi_ctrl = NULL; //TINY_SOCK_DESC sd_cbi_ctrl[END_OF_ATS2OC];
   
   TINY_SOCK socks_cbi_stat;
-  TINY_SOCK_DESC sd_cbi_stat[END_OF_OC2ATS];
+  TINY_SOCK_DESC_PTR sd_cbi_stat = NULL; //TINY_SOCK_DESC sd_cbi_stat[END_OF_OC2ATS];
   
   TINY_SOCK socks_less_2;
   TINY_SOCK_DESC sd_send_srvbeat = -1;
@@ -234,53 +230,16 @@ int main ( void ) {
   tzset();
   
   cons_il_obj_tables();
-#if 1
-  {
-    int nsocks_ctrl = -1;
-    int nsocks_stat = -1;
-    {
-      int i;
-      for( i = 0; i < END_OF_ATS2OC; i++ )
-	sd_cbi_ctrl[i] = -1;
-      assert( i == END_OF_ATS2OC );
-    }
-    TINY_SOCK_CREAT( socks_cbi_ctrl );
-    nsocks_ctrl = establish_OC_ctrl_send( &socks_cbi_ctrl, sd_cbi_ctrl, (int)END_OF_ATS2OC );
-    if( nsocks_ctrl > 0 ) {
-      assert( nsocks_ctrl == END_OF_ATS2OC );
-      int j;
-#ifdef CHK_STRICT_CONSISTENCY
-      for( j = 0; j < nsocks_ctrl; j++ )
-	assert( sd_cbi_ctrl[j] > -1 );
-#endif // CHK_STRICT_CONSISTENCY
-      for( j = 0; j < END_OF_OC2ATS; j++ )
-	sd_cbi_stat[j] = -1;
-      TINY_SOCK_CREAT( socks_cbi_stat );
-      nsocks_stat = establish_OC_stat_recv( &socks_cbi_stat, sd_cbi_stat, (int)END_OF_OC2ATS );
-      if( nsocks_stat > 0 ) {
-	assert( nsocks_stat == END_OF_OC2ATS );
-#ifdef CHK_STRICT_CONSISTENCY
-	int k;
-	for( k = 0; k < nsocks_stat; k++ )
-	  assert( sd_cbi_stat[k] > -1 );
-#endif // CHK_STRICT_CONSISTENCY
-	load_il_status_geometry();
-      } else
-	goto err_OC_sockets;
-    } else {
-    err_OC_sockets:
-      errorF("%s", "failed to create the send/recv UDP ports for CBI control & state information, respectively.\n");
-      exit( 1 );
-    }
-  }
-#else
   {
     TINY_COMM_PROF comm_threads_prof;
     memset( &comm_threads_prof, 0, sizeof(comm_threads_prof) );
     establish_comm_threads( &comm_threads_prof );
-    ;
+    socks_cbi_ctrl = comm_threads_prof.cbi.ctrl.socks;
+    sd_cbi_ctrl = comm_threads_prof.cbi.ctrl.descs;
+    socks_cbi_stat = comm_threads_prof.cbi.stat.socks;
+    sd_cbi_stat = comm_threads_prof.cbi.stat.descs;
   }
-#endif
+  
 #if 0
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
   printf( "sizeof TRAIN_INFO: %d.\n", (int)sizeof(TRAIN_INFO) );
