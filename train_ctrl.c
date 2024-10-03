@@ -379,6 +379,34 @@ static BOOL establish_SC_statinfo_recv ( TINY_SOCK_PTR pS ) {
  exit:
   return r;
 }
+static int establish_SC_comm_traininfo ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
+  assert( pS );
+  assert( pdescs );
+  assert( ndescs > 0 );
+  BOOL r = -1;
+  
+  int i = (int)SC801;
+  while( i < (int)END_OF_SCs ) {
+    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
+    if( i < ndescs ) {
+      SC_STAT_INFOSET_PTR p = NULL;
+      expire_all_train_state();
+      if( !(p = willing_to_recv_train_info( pS, (SC_ID)i )) )
+	goto exit;
+      assert( p );
+      assert( p->train_information.d_recv_train_info > -1 );
+      assert( pdescs );
+      pdescs[i] = p->train_information.d_recv_train_info;
+      i++;
+    } else
+      goto exit;
+  }
+  assert( i == (int)END_OF_SCs );
+  assert( i <= ndescs );
+  r = i;
+ exit:
+  return r;
+}
 
 static SC_CTRL_CMDSET_PTR willing_to_send_train_cmd ( TINY_SOCK_PTR pS, SC_ID sc_id ) {
   assert( pS );
@@ -434,6 +462,34 @@ static BOOL establish_SC_traincmd_send ( TINY_SOCK_PTR pS ) {
  exit:
   return r;
 }
+static int establish_SC_comm_traincmd ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
+  assert( pS );
+  assert( pdescs );
+  assert( ndescs > 0 );
+  BOOL r = FALSE;
+  
+  int i = (int)SC801;
+  while( i < (int)END_OF_SCs ) {
+    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
+    if( i < ndescs ) {
+      SC_CTRL_CMDSET_PTR p = NULL;
+      expire_all_train_cmds();
+      if(! (p = willing_to_send_train_cmd( pS, (SC_ID)i )) )
+	goto exit;
+      assert( p );
+      assert( p->train_command.d_send_train_cmd > -1 );
+      assert( pdescs );
+      pdescs[i] = p->train_command.d_send_train_cmd;
+      i++;
+    } else
+      goto exit;
+  }
+  assert( i == END_OF_SCs );
+  assert( i <= ndescs );
+  r = i;
+ exit:
+  return r;
+}
 
 BOOL establish_SC_comm ( TINY_SOCK_PTR pS ) {
   assert( pS );
@@ -443,6 +499,31 @@ BOOL establish_SC_comm ( TINY_SOCK_PTR pS ) {
     if( establish_SC_traincmd_send( pS ) )
     r = TRUE;
   
+  return r;
+}
+static int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs ) {
+  assert( pS );
+  assert( pdescs );
+  assert( ninfos > 0 );
+  assert( ndescs > 0 );
+  int r = 1;
+  
+  assert( CBTC_TRAIN_INFO < ninfos );
+  if( establish_SC_comm_traininfo( pS, pdescs[CBTC_TRAIN_INFO], ndescs ) < 0 ) {
+    r *= -1;
+    goto exit;
+  }
+ exit:
+  return r;
+}
+static int establish_SC_comm_cmds ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs ) {
+  assert( pS );
+  assert( pdescs );
+  assert( ninfos > 0 );
+  assert( ndescs > 0 );
+  int r = 1;
+  
+ exit:
   return r;
 }
 

@@ -414,7 +414,7 @@ static CBI_CTRL_STAT_INFO_PTR willing_2_recv_OC_stat ( TINY_SOCK_PTR pS, OC2ATS_
   return r;
 }
 
-int establish_OC_stat_recv ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
+int establish_OC_comm_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
   assert( pS );
   assert( pdescs );
   assert( ndescs >= (int)END_OF_OC2ATS );
@@ -434,7 +434,7 @@ int establish_OC_stat_recv ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int
     } else
       goto exit;
   }
-  assert( i == END_OF_OC2ATS );
+  assert( i == (int)END_OF_OC2ATS );
   assert( i <= ndescs );
   r = i;
  exit:
@@ -474,7 +474,7 @@ static CBI_CTRL_STAT_INFO_PTR willing_2_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC_
   return r;
 }
 
-int establish_OC_ctrl_send ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
+int establish_OC_comm_ctrl ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
   assert( pS );
   assert( pdescs );
   assert( ndescs >= (int)END_OF_ATS2OC );
@@ -494,7 +494,7 @@ int establish_OC_ctrl_send ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int
     } else
       goto exit;
   }
-  assert( i == END_OF_ATS2OC );
+  assert( i == (int)END_OF_ATS2OC );
   assert( i <= ndescs );
   r = i;
  exit:

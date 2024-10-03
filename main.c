@@ -33,11 +33,15 @@ typedef struct tiny_comm_prof {
   struct {
     struct {
       TINY_SOCK socks;
-      TINY_SOCK_DESC descs;
+      struct {
+	TINY_SOCK_DESC descs[1]; // currently, for only Train command.
+      } train_cmd;
     } cmd;
     struct {
       TINY_SOCK socks;
-      TINY_SOCK_DESC descs;
+      struct {
+	TINY_SOCK_DESC descs[1]; // currently, for only Train information.
+      } train_info;
     } info;
   } cbtc;
 } TINY_COMM_PROF, *TINY_COMM_PROF_PTR;
@@ -186,7 +190,7 @@ static void establish_comm_threads ( TINY_COMM_PROF_PTR pcomm_prof ) {
   for( i = 0; i < END_OF_ATS2OC; i++ )
     pcomm_prof->cbi.ctrl.descs[i] = -1;
   TINY_SOCK_CREAT( pcomm_prof->cbi.ctrl.socks );
-  nsocks_ctrl = establish_OC_ctrl_send( &pcomm_prof->cbi.ctrl.socks, pcomm_prof->cbi.ctrl.descs, (int)END_OF_ATS2OC );
+  nsocks_ctrl = establish_OC_comm_ctrl( &pcomm_prof->cbi.ctrl.socks, pcomm_prof->cbi.ctrl.descs, (int)END_OF_ATS2OC );
   if( nsocks_ctrl > 0 ) {
     assert( nsocks_ctrl == END_OF_ATS2OC );
     int j;
@@ -197,7 +201,7 @@ static void establish_comm_threads ( TINY_COMM_PROF_PTR pcomm_prof ) {
     for( j = 0; j < END_OF_OC2ATS; j++ )
       pcomm_prof->cbi.stat.descs[j] = -1;
     TINY_SOCK_CREAT( pcomm_prof->cbi.stat.socks );
-    nsocks_stat = establish_OC_stat_recv( &pcomm_prof->cbi.stat.socks, pcomm_prof->cbi.stat.descs, (int)END_OF_OC2ATS );
+    nsocks_stat = establish_OC_comm_stat( &pcomm_prof->cbi.stat.socks, pcomm_prof->cbi.stat.descs, (int)END_OF_OC2ATS );
     if( nsocks_stat > 0 ) {
       assert( nsocks_stat == END_OF_OC2ATS );
 #ifdef CHK_STRICT_CONSISTENCY
@@ -206,6 +210,8 @@ static void establish_comm_threads ( TINY_COMM_PROF_PTR pcomm_prof ) {
 	assert( pcomm_prof->cbi.stat.descs[k] > -1 );
 #endif // CHK_STRICT_CONSISTENCY
       load_il_status_geometry();
+      //if( ! establish_SC_comm( &socks_less_2 ) )
+      ;
     } else
       goto err_OC_sockets;
   } else {
@@ -216,11 +222,7 @@ static void establish_comm_threads ( TINY_COMM_PROF_PTR pcomm_prof ) {
 }
 
 int main ( void ) {
-  TINY_SOCK socks_cbi_ctrl;  
-  TINY_SOCK_DESC_PTR sd_cbi_ctrl = NULL; //TINY_SOCK_DESC sd_cbi_ctrl[END_OF_ATS2OC];
-  
-  TINY_SOCK socks_cbi_stat;
-  TINY_SOCK_DESC_PTR sd_cbi_stat = NULL; //TINY_SOCK_DESC sd_cbi_stat[END_OF_OC2ATS];
+  TINY_COMM_PROF comm_threads_prof;
   
   TINY_SOCK socks_less_2;
   TINY_SOCK_DESC sd_send_srvbeat = -1;
@@ -228,17 +230,10 @@ int main ( void ) {
   TINY_SOCK_DESC sd_recv_srvstat = -1;
   
   tzset();
-  
   cons_il_obj_tables();
-  {
-    TINY_COMM_PROF comm_threads_prof;
-    memset( &comm_threads_prof, 0, sizeof(comm_threads_prof) );
-    establish_comm_threads( &comm_threads_prof );
-    socks_cbi_ctrl = comm_threads_prof.cbi.ctrl.socks;
-    sd_cbi_ctrl = comm_threads_prof.cbi.ctrl.descs;
-    socks_cbi_stat = comm_threads_prof.cbi.stat.socks;
-    sd_cbi_stat = comm_threads_prof.cbi.stat.descs;
-  }
+  
+  memset( &comm_threads_prof, 0, sizeof(comm_threads_prof) );
+  establish_comm_threads( &comm_threads_prof );
   
 #if 0
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
@@ -316,7 +311,7 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_LOGGER1( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
     
-    creat_comm_threads( &socks_cbi_ctrl, &socks_cbi_stat );
+    creat_comm_threads( &comm_threads_prof.cbi.ctrl.socks, &comm_threads_prof.cbi.stat.socks );
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
       if( (nrecv = sock_recv( &socks_less_2 )) < 0 ) {
@@ -340,7 +335,7 @@ int main ( void ) {
 	fprintf( stdout, "\n" );
 #endif
       
-      ready_on_emit_OC_ctrl( &socks_cbi_ctrl, sd_cbi_ctrl, END_OF_ATS2OC );
+      ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.descs, END_OF_ATS2OC );
       {
 	unsigned char *pmsg_buf = NULL;
 	int msglen = -1;

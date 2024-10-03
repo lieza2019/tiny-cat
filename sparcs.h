@@ -9,6 +9,11 @@
 #include "train_info.h"
 #include "train_ctrl.h"
 
+typedef enum cbtc_cmds_infos {
+  CBTC_TRAIN_COMMAND,
+  CBTC_TRAIN_INFO
+} CBTC_CMDS_INFOS;
+
 typedef enum SC_ID {
   SC801,
   SC802,

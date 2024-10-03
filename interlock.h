@@ -113,8 +113,8 @@ extern void cons_route_state ( ROUTE_PTR proute );
 extern void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock );
 extern void cons_il_obj_tables ( void );
 
-extern int establish_OC_stat_recv ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs );
-extern int establish_OC_ctrl_send ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs );
+extern int establish_OC_comm_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs );
+extern int establish_OC_comm_ctrl ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs );
 extern pthread_mutex_t cbi_stat_info_mutex;
 extern pthread_mutex_t cbi_ctrl_sendbuf_mutex;
 extern pthread_mutex_t cbi_ctrl_dispatch_mutex;
