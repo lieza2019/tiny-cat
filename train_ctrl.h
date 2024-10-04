@@ -44,7 +44,11 @@ typedef struct standby_train_cmds {
 
 extern TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 extern void reveal_train_tracking( TINY_SOCK_PTR pS );
+#if 1
 extern BOOL establish_SC_comm ( TINY_SOCK_PTR pS );
+#endif
+extern int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs );
+extern int establish_SC_comm_cmds ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs );
 extern int load_train_command ( void );
 extern void chk_solid_train_cmds ( void );
 
@@ -56,4 +60,3 @@ extern TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB );
 extern TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );
 //extern TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB );
 extern TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB );
-

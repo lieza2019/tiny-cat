@@ -34,15 +34,15 @@ typedef struct tiny_comm_prof {
     struct {
       TINY_SOCK socks;
       struct {
-	TINY_SOCK_DESC descs[1]; // currently, for only Train command.
+	TINY_SOCK_DESC descs[END_OF_SCs];
       } train_cmd;
-    } cmd;
+    } cmd; // currently, for only Train command.
     struct {
       TINY_SOCK socks;
       struct {
-	TINY_SOCK_DESC descs[1]; // currently, for only Train information.
+	TINY_SOCK_DESC descs[END_OF_SCs];
       } train_info;
-    } info;
+    } info; // currently, for only Train information.
   } cbtc;
 } TINY_COMM_PROF, *TINY_COMM_PROF_PTR;
 
@@ -162,7 +162,7 @@ static void creat_comm_threads ( TINY_SOCK_PTR psocks_cbi_ctrl, TINY_SOCK_PTR ps
   assert( psocks_cbi_stat );
   pthread_t P_il_stat;
   pthread_t P_il_ctrl_emit;
-  pthread_t P_il_ctrl_chrono;
+  pthread_t P_il_ctrl_chron;
   
   pthread_mutex_init( &cbi_ctrl_sendbuf_mutex, NULL );    
   pthread_mutex_init( &cbi_ctrl_dispatch_mutex, NULL );
@@ -175,13 +175,56 @@ static void creat_comm_threads ( TINY_SOCK_PTR psocks_cbi_ctrl, TINY_SOCK_PTR ps
     errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
     exit( 1 );
   }
-  if( pthread_create( &P_il_ctrl_chrono, NULL, pth_expire_il_ctrl_bits, NULL ) ) {
+  if( pthread_create( &P_il_ctrl_chron, NULL, pth_expire_il_ctrl_bits, NULL ) ) {
     errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
     exit( 1 );
   }
 }
 
-static void establish_comm_threads ( TINY_COMM_PROF_PTR pcomm_prof ) {
+static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
+  assert( pcomm_prof );
+  TINY_SOCK_DESC *pdescs[END_OF_CBTC_CMDS_INFOS] = {};
+  {
+    int i;
+    pdescs[CBTC_TRAIN_COMMAND] = pcomm_prof->cbtc.cmd.train_cmd.descs;
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) { pcomm_prof->cbtc.cmd.train_cmd.descs[i] = -1; }
+    
+    pdescs[CBTC_TRAIN_INFO] = pcomm_prof->cbtc.info.train_info.descs;
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) { pcomm_prof->cbtc.info.train_info.descs[i] = -1; }
+  }
+  
+  TINY_SOCK_CREAT( pcomm_prof->cbtc.info.socks );
+  if( establish_SC_comm_infos( &pcomm_prof->cbtc.info.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
+    errorF("%s", "failed to create the recv UDP ports for CBTC/SC status informations.\n" );
+    exit( 1 );
+  }
+#ifdef CHK_STRICT_CONSISTENCY
+  {
+    int i;
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) {
+      assert( pcomm_prof->cbtc.info.train_info.descs[i] > -1 );
+    }
+  }  
+#endif // CHK_STRICT_CONSISTENCY
+  
+#if 0
+  TINY_SOCK_CREAT( pcomm_prof->cbi.ctrl.socks );
+  if( establish_SC_comm_cmds( &pcomm_prof->cbi.ctrl.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
+    errorF("%s", "failed to create the send UDP ports for CBTC/SC control commands.\n");
+    exit( 1 );
+  }
+#ifdef CHK_STRICT_CONSISTENCY
+  {
+    int i;
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) {
+      assert( pcomm_prof->cbtc.cmd.train_cmd.descs[i] > -1 );
+    }
+  }
+#endif // CHK_STRICT_CONSISTENCY
+#endif
+}
+
+static void establish_OC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
   assert( pcomm_prof );
   int nsocks_ctrl = -1;
   int nsocks_stat = -1;
@@ -210,8 +253,6 @@ static void establish_comm_threads ( TINY_COMM_PROF_PTR pcomm_prof ) {
 	assert( pcomm_prof->cbi.stat.descs[k] > -1 );
 #endif // CHK_STRICT_CONSISTENCY
       load_il_status_geometry();
-      //if( ! establish_SC_comm( &socks_less_2 ) )
-      ;
     } else
       goto err_OC_sockets;
   } else {
@@ -222,18 +263,27 @@ static void establish_comm_threads ( TINY_COMM_PROF_PTR pcomm_prof ) {
 }
 
 int main ( void ) {
-  TINY_COMM_PROF comm_threads_prof;
-  
-  TINY_SOCK socks_less_2;
+  TINY_SOCK socks_srvstat;
   TINY_SOCK_DESC sd_send_srvbeat = -1;
   TINY_SOCK_DESC sd_send_srvstat = -1;
   TINY_SOCK_DESC sd_recv_srvstat = -1;
+
+  TINY_COMM_PROF comm_threads_prof;
+  memset( &comm_threads_prof, 0, sizeof(comm_threads_prof) );
   
   tzset();
   cons_il_obj_tables();
-  
-  memset( &comm_threads_prof, 0, sizeof(comm_threads_prof) );
-  establish_comm_threads( &comm_threads_prof );
+
+  TINY_SOCK_CREAT( socks_srvstat );  
+#if 0
+  if( ! establish_SC_comm( &socks_srvstat ) ) {
+    errorF("%s", "failed to create the recv/send UDP ports for Train information and Train command respectively.\n");
+    exit( 1 );
+  }
+#else
+  _establish_SC_comm( &comm_threads_prof );
+#endif
+  establish_OC_comm( &comm_threads_prof );
   
 #if 0
   printf( "sizeof TRAIN_INFO_ENTRY: %d.\n", (int)sizeof(TRAIN_INFO_ENTRY) );
@@ -260,24 +310,18 @@ int main ( void ) {
   exit( 0 );
 #endif
   
-  TINY_SOCK_CREAT( socks_less_2 );  
-  if( ! launch_msg_srv_stat( &socks_less_2, &sd_send_srvbeat, &sd_send_srvstat ) ) {
+  if( ! launch_msg_srv_stat( &socks_srvstat, &sd_send_srvbeat, &sd_send_srvstat ) ) {
     errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
     exit( 1 );
   }
   assert( sd_send_srvstat > -1 );
   assert( sd_send_srvbeat > -1 );
-  if( (sd_recv_srvstat = creat_sock_recv( &socks_less_2, UDP_BCAST_SEND_PORT_msgServerStatus )) < 0 ) {
+  if( (sd_recv_srvstat = creat_sock_recv( &socks_srvstat, UDP_BCAST_SEND_PORT_msgServerStatus )) < 0 ) {
     errorF( "%s", "failed to create the socket to self-receive msgServerStatus.\n" );
     exit( 1 );
   } else {
     assert( sd_recv_srvstat > -1 );
-    sock_attach_recv_buf( &socks_less_2, sd_recv_srvstat, buf_msgServerStatus, sizeof(buf_msgServerStatus) );
-  }
-  
-  if( ! establish_SC_comm( &socks_less_2 ) ) {
-    errorF("%s", "failed to create the recv/send UDP ports for Train information and Train command respectively.\n");
-    exit( 1 );
+    sock_attach_recv_buf( &socks_srvstat, sd_recv_srvstat, buf_msgServerStatus, sizeof(buf_msgServerStatus) );
   }
   
   {
@@ -314,12 +358,15 @@ int main ( void ) {
     creat_comm_threads( &comm_threads_prof.cbi.ctrl.socks, &comm_threads_prof.cbi.stat.socks );
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
-      if( (nrecv = sock_recv( &socks_less_2 )) < 0 ) {
+
+      
+      //if( (nrecv = sock_recv( &socks_srvstat )) < 0 ) {
+      if( (nrecv = sock_recv( &comm_threads_prof.cbtc.info.socks )) < 0 ) {
 	errorF( "%s", "error on receiving CBTC/CBI status information from SC/OCs.\n" );
 	continue;
       }
       
-      //diag_cbi_stat_attrib( stdout, "S821B_S801B" );
+#if 0
       diag_cbi_stat_attrib( stdout, "S803A_S811A" );
       {
 	OC_ID oc_id = END_OF_OCs;
@@ -327,46 +374,48 @@ int main ( void ) {
 	const char ctl_bit_ident[] = "P_S821A_S801A";
 	engage_il_ctrl( &oc_id, &kind, ctl_bit_ident );
 	//errorF( "(oc_id): (%d)\n", OC_ID_CONV2INT(oc_id) ); // ***** for debugging.
-      }
-      reveal_train_tracking( &socks_less_2 );
+      }      
+#endif
+      ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.descs, END_OF_ATS2OC );
+
+      //reveal_train_tracking( &socks_srvstat );
+      reveal_train_tracking( &comm_threads_prof.cbtc.info.socks );
       purge_block_restrains();
-#if 0
+#if 1
       if( diag_tracking_train_stat( stdout ) > 0 )
 	fprintf( stdout, "\n" );
 #endif
       
-      ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.descs, END_OF_ATS2OC );
       {
 	unsigned char *pmsg_buf = NULL;
 	int msglen = -1;
-	pmsg_buf = sock_recv_buf_attached( &socks_less_2, sd_recv_srvstat, &msglen );
+	pmsg_buf = sock_recv_buf_attached( &socks_srvstat, sd_recv_srvstat, &msglen );
 	assert( pmsg_buf == buf_msgServerStatus );
 	assert( (msglen > 0) ? (msglen == sizeof(MSG_TINY_SERVER_STATUS)) : TRUE );
       }
-      
       {
 	unsigned char *pmsg_buf = NULL;
 	int size = -1;
-	pmsg_buf = sock_send_buf_attached( &socks_less_2, sd_send_srvbeat, &size );
+	pmsg_buf = sock_send_buf_attached( &socks_srvstat, sd_send_srvbeat, &size );
 	assert( pmsg_buf );
 	assert( size >= sizeof(MSG_TINY_HEARTBEAT) );
 	memcpy( pmsg_buf, &msg_srv_beat, sizeof(msg_srv_beat) );
 	{
 	  int n = -1;
-	  n = sock_send_ready( &socks_less_2, sd_send_srvbeat, sizeof(msg_srv_beat) );
+	  n = sock_send_ready( &socks_srvstat, sd_send_srvbeat, sizeof(msg_srv_beat) );
 	  assert( n == sizeof(MSG_TINY_HEARTBEAT) );
 	}
 	
 	pmsg_buf = NULL;
 	size = -1;
-	pmsg_buf = sock_send_buf_attached( &socks_less_2, sd_send_srvstat, &size );
+	pmsg_buf = sock_send_buf_attached( &socks_srvstat, sd_send_srvstat, &size );
 	assert( pmsg_buf );
 	assert( size >= sizeof(MSG_TINY_SERVER_STATUS) );
 	msg_srv_stat.n = cnt;
 	memcpy( pmsg_buf, &msg_srv_stat, sizeof(msg_srv_stat) );
 	{
 	  int n = -1;
-	  n = sock_send_ready( &socks_less_2, sd_send_srvstat, sizeof(msg_srv_stat) );
+	  n = sock_send_ready( &socks_srvstat, sd_send_srvstat, sizeof(msg_srv_stat) );
 	  assert( n == sizeof(MSG_TINY_SERVER_STATUS) );
 	}
       }
@@ -378,7 +427,7 @@ int main ( void ) {
       if( diag_tracking_train_cmd( stdout ) > 0 )
 	fprintf( stdout, "\n" );
 #if 0
-      if( sock_send0(&socks_less_2, NULL ) < 1 ) {
+      if( sock_send0(&socks_srvstat, NULL ) < 1 ) {
 	errorF( "%s", "failed to send msgServerStatus.\n" );
 	exit( 1 );
       }

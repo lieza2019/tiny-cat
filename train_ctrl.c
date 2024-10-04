@@ -491,6 +491,7 @@ static int establish_SC_comm_traincmd ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs
   return r;
 }
 
+#if 1
 BOOL establish_SC_comm ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
@@ -501,14 +502,15 @@ BOOL establish_SC_comm ( TINY_SOCK_PTR pS ) {
   
   return r;
 }
-static int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs ) {
+#endif
+int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs ) {
   assert( pS );
   assert( pdescs );
-  assert( ninfos > 0 );
+  assert( ninfos >= (int)END_OF_CBTC_CMDS_INFOS );
   assert( ndescs > 0 );
   int r = 1;
   
-  assert( CBTC_TRAIN_INFO < ninfos );
+  assert( (int)CBTC_TRAIN_INFO < ninfos );
   if( establish_SC_comm_traininfo( pS, pdescs[CBTC_TRAIN_INFO], ndescs ) < 0 ) {
     r *= -1;
     goto exit;
@@ -516,13 +518,19 @@ static int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[],
  exit:
   return r;
 }
-static int establish_SC_comm_cmds ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs ) {
+
+int establish_SC_comm_cmds ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs ) {
   assert( pS );
   assert( pdescs );
-  assert( ninfos > 0 );
+  assert( ninfos >= (int)END_OF_CBTC_CMDS_INFOS );
   assert( ndescs > 0 );
   int r = 1;
   
+  assert( (int)CBTC_TRAIN_COMMAND < ninfos );
+  if( establish_SC_comm_traincmd( pS, pdescs[CBTC_TRAIN_COMMAND], ndescs ) < 0 ) {
+    r *= -1;
+    goto exit;
+  }
  exit:
   return r;
 }

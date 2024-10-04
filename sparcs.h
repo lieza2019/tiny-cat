@@ -11,7 +11,8 @@
 
 typedef enum cbtc_cmds_infos {
   CBTC_TRAIN_COMMAND,
-  CBTC_TRAIN_INFO
+  CBTC_TRAIN_INFO,
+  END_OF_CBTC_CMDS_INFOS
 } CBTC_CMDS_INFOS;
 
 typedef enum SC_ID {
