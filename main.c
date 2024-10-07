@@ -85,7 +85,6 @@ static int diag_tracking_train_stat ( FILE *fp_out ) {
       
       assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(*trains_tracking[i].pTI) );
       fprintf( fp_out, "rakeID: %-3d\n", trains_tracking[i].rakeID );
-      
       fprintf( fp_out, "\n" );
       r++;
     }
@@ -358,7 +357,6 @@ int main ( void ) {
     creat_comm_threads( &comm_threads_prof.cbi.ctrl.socks, &comm_threads_prof.cbi.stat.socks );
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
-
       
       //if( (nrecv = sock_recv( &socks_srvstat )) < 0 ) {
       if( (nrecv = sock_recv( &comm_threads_prof.cbtc.info.socks )) < 0 ) {
@@ -382,8 +380,7 @@ int main ( void ) {
       reveal_train_tracking( &comm_threads_prof.cbtc.info.socks );
       purge_block_restrains();
 #if 1
-      if( diag_tracking_train_stat( stdout ) > 0 )
-	fprintf( stdout, "\n" );
+      diag_tracking_train_stat( stdout );
 #endif
       
       {

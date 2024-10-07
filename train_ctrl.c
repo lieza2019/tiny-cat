@@ -325,7 +325,7 @@ void reveal_train_tracking( TINY_SOCK_PTR pS ) {
     TINY_TRAIN_STATE_PTR pOph = NULL;
     pOph = enum_orphant_trains();
     while( pOph ) {
-      errorF( "%-3d: lost in observing the train information.\n", pOph->rakeID );
+      errorF( "%-3d: observation lost on the train information.\n", pOph->rakeID );
       pOph = pOph->pNext;
     }
   }
@@ -803,6 +803,7 @@ static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of
       int rID = ntohs( pE->rakeID );
       int j = 0;
       while( rakeIDs_w[j] > -1 ) {
+	assert( rID > 0 );
 	if( rID == rakeIDs_w[j] ) {
 	  int len = 0;
 	  while( rakeIDs_w[len] > -1 )
@@ -814,10 +815,13 @@ static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of
 	} else
 	  j++;
       }
-      if( found )
+      if( found ) {
 	assert( pE == ++pEp );
-      else
+      }
+      else {
+	//printf( "(sc_id, rakeID) = (%d, %d)\n", SC_ID_CONV_2_INT(sc_id), rID ); // ***** for debugging.
 	assert( FALSE );
+      }
     }
   }
   assert( num_of_rakes < TRAIN_COMMAND_ENTRIES_NUM ? pE < plim : pE == plim );
