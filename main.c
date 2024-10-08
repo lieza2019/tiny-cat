@@ -110,6 +110,18 @@ static void diag_train_stat ( FILE *fp_out, const TRAIN_INFO_ENTRY_PTR pE ) {
       fprintf( fp_out, "NO_time_update" );
     fprintf( fp_out, "\n" );
   }
+  fprintf( fp_out, "OCC Command ID Ack: %d\n", (int)pE->occ_command_ID_ack );
+  fprintf( fp_out, "Stop detection: %d\n", TRAIN_INFO_STOP_DETECTION(*pE) );
+  fprintf( fp_out, "Dynamic testable section: %d\n", TRAIN_INFO_DYNAMIC_TESTABLE_SECTION(*pE) );
+  fprintf( fp_out, "Voltage reduction: %d\n", TRAIN_INFO_VOLTAGE_REDUCTION(*pE) );
+  fprintf( fp_out, "VRS(F) reset: %d\n", TRAIN_INFO_VRS_F_RESET(*pE) );
+  fprintf( fp_out, "VRS ID(forward): %d\n", TRAIN_INFO_VRS_ID_FORWARD(*pE) );
+  fprintf( fp_out, "Passing through balise: %d\n", TRAIN_INFO_PASSING_THROUGH_BALISE(*pE) );
+  fprintf( fp_out, "overspeed: %d\n", TRAIN_INFO_OVERSPEED(*pE) );
+  fprintf( fp_out, "Door Enable: %d\n", TRAIN_INFO_DOOR_ENABLE(*pE) );
+  fprintf( fp_out, "VRS(B) reset: %d\n", TRAIN_INFO_VRS_B_RESET(*pE) );
+  fprintf( fp_out, "VRS ID(back): %d\n", TRAIN_INFO_VRS_ID_BACK(*pE) );
+  fprintf( fp_out, "Forward train position: %d\n", (int)TRAIN_INFO_FORWARD_TRAIN_POS(*pE) );
 }
 static int show_tracking_train_stat ( FILE *fp_out ) {
   assert( fp_out );
