@@ -72,22 +72,61 @@ static int diag_tracking_train_cmd ( FILE *fp_out ) {
   return r;
 }
 
-static int diag_tracking_train_stat ( FILE *fp_out ) {
+#define NOTICE_OF_TIME_NO_TIME_UPDATE 0x00
+#define NOTICE_OF_TIME_VRS_TIME_UPDATE 0x01
+#define NOTICE_OF_TIME_DMI_TIME_UPDATE 0x02
+#define NOTICE_OF_TIME_TCMS_TIME_UPDATE 0x04
+static void diag_train_stat ( FILE *fp_out, const TRAIN_INFO_ENTRY_PTR pE ) {
+  assert( fp_out );
+  assert( pE );
+  
+  fprintf( fp_out, "rakeID: %-3d\n", TRAIN_INFO_RAKEID(*pE) );
+  fprintf( fp_out, "TRR: %d\n", TRAIN_INFO_TRR(*pE) );
+  fprintf( fp_out, "Acknowledge of energy saving mode: %d\n", TRAIN_INFO_ACKNOWLEDGE_OF_ENERGY_SAVING_MODE(*pE) );
+  fprintf( fp_out, "ATB OK: %d\n", TRAIN_INFO_ATB_OK(*pE) );
+  fprintf( fp_out, "Push of departure button: %d\n", TRAIN_INFO_PUSH_OF_DEPARTURE_BUTTON(*pE) );
+  fprintf( fp_out, "Skip Next Stop: %d\n", TRAIN_INFO_SKIP_NEXT_STOP(*pE) );
+  fprintf( fp_out, "Notice of time: " );
+  {
+    const unsigned char v = TRAIN_INFO_NOTICE_OF_TIME(*pE);
+    BOOL cont = FALSE;
+    if( v & NOTICE_OF_TIME_VRS_TIME_UPDATE ) {
+      fprintf( fp_out, "VRS_time_update" );
+      cont = TRUE;
+    }
+    if( v & NOTICE_OF_TIME_DMI_TIME_UPDATE ) {
+      if( cont )
+	fprintf( fp_out, ", " );
+      fprintf( fp_out, "DMI_time_update" );
+      cont = TRUE;
+    }
+    if( v & NOTICE_OF_TIME_TCMS_TIME_UPDATE ) {
+      if( cont )
+	fprintf( fp_out, ", " );
+      fprintf( fp_out, "TCMS_time_update" );
+      cont = TRUE;
+    }
+    if( !cont )
+      fprintf( fp_out, "NO_time_update" );
+    fprintf( fp_out, "\n" );
+  }
+}
+static int show_tracking_train_stat ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
   
   int i;
-  for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ )
+  for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ ) {
     if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
-      TRAIN_INFO_ENTRY_PTR pE = trains_tracking[i].pTI;
+      const TRAIN_INFO_ENTRY_PTR pE = trains_tracking[i].pTI;
       assert( pE );
-      fprintf( fp_out, "%s;\n", (which_SC_from_train_info(pE))->sc_name );
-      
-      assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(*trains_tracking[i].pTI) );
-      fprintf( fp_out, "rakeID: %-3d\n", trains_tracking[i].rakeID );
+      fprintf( fp_out, "%s:\n", (which_SC_from_train_info(pE))->sc_name );
+      assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(*pE) );
+      diag_train_stat ( fp_out, pE );
       fprintf( fp_out, "\n" );
       r++;
     }
+  }
   return r;
 }
 
@@ -380,7 +419,7 @@ int main ( void ) {
       reveal_train_tracking( &comm_threads_prof.cbtc.info.socks );
       purge_block_restrains();
 #if 1
-      diag_tracking_train_stat( stdout );
+      show_tracking_train_stat( stdout );
 #endif
       
       {

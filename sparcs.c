@@ -82,7 +82,7 @@ static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {
   assert( zones );
   assert( front_blk > 0 );
   assert( back_blk > 0 );
-
+  
   //zones[0] = SC817; zones[1] = SC818;
   zones[0] = SC801;
   zones[1] = SC801;
