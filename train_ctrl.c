@@ -857,3 +857,61 @@ void chk_solid_train_cmds ( void ) {
     chk_massiv_train_cmds_array( i, rakeIDs[i], num_of_rakes );
   }
 }
+
+#if 0
+void *pth_reveal_il_status ( void *arg ) {
+  assert( arg );  
+  const useconds_t interval = 1000 * 1000 * 0.1;
+  
+  while( TRUE ) {
+    int nrecv = -1;
+    if( (nrecv = sock_recv( &comm_threads_prof.cbtc.info.socks )) < 0 ) {
+      errorF( "%s", "error on receiving CBTC status information from SC.\n" );
+    } else {
+      ;
+    }
+    {
+      int r = -1;
+      r = usleep( interval );
+      assert( !r );
+    }
+  }
+  return NULL;
+
+  
+  
+  pS = (TINY_SOCK_PTR)arg;
+  while( TRUE ) {
+    assert( pS );
+    if( sock_recv( pS ) < 0 ) {
+      errorF( "%s", "error on receiving CBI status information from OCs.\n" );
+    } else {
+      const int obsoleted = 100;
+      BOOL clear = FALSE;
+      int j = (int)OC801;
+      clear = (reveal_il_status(pS) < 0) ? FALSE : TRUE;
+      while( j < (int)END_OF_OCs ) {	
+	assert( (j >= OC801) && (j < END_OF_OCs) );
+	int k;
+	for( k = 0; k < OC_OC2ATS_MSGS_NUM; k++ )
+	  if( clear && cbi_stat_info[j].msgs[k].updated ) {
+	    if( omits[j][k] < 0 )
+	      errorF( "CBI status information of (OC%3d, OC2ATS%d) has started updating, again.\n", OC_ID_CONV2INT(j), OC_MSG_ID_CONV2INT(k) );
+	    omits[j][k] = 0;
+	  } else {
+	    if( omits[j][k] >= obsoleted ) {
+	      errorF( "CBI status information of (OC%3d, OC2ATS%d) has been obsoleted.\n", OC_ID_CONV2INT(j), OC_MSG_ID_CONV2INT(k) );
+	      omits[j][k] = -1;
+	    } else
+	      if( omits[j][k] > -1 ) {
+		assert( omits[j][k] < obsoleted );
+		omits[j][k]++;
+	      }
+	  }
+	j++;
+      }
+      assert( j == END_OF_OCs );
+    }
+  }
+}
+#endif

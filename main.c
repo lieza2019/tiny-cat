@@ -375,7 +375,7 @@ int main ( void ) {
   }
   
   {
-    const useconds_t interval = 1000 * 1000 * 0.1;    
+    const useconds_t interval = 1000 * 1000 * 0.1;
     int nrecv = -1;
     int cnt = 0;
     
