@@ -19,33 +19,6 @@
 #include "srv.h"
 
 #if 1
-typedef struct tiny_comm_prof {
-  struct {
-    struct {
-      TINY_SOCK socks;
-      TINY_SOCK_DESC descs[END_OF_ATS2OC];
-    } ctrl;
-    struct {
-      TINY_SOCK socks;
-      TINY_SOCK_DESC descs[END_OF_OC2ATS];
-    } stat;
-  } cbi;
-  struct {
-    struct {
-      TINY_SOCK socks;
-      struct {
-	TINY_SOCK_DESC descs[END_OF_SCs];
-      } train_cmd;
-    } cmd; // currently, for only Train command.
-    struct {
-      TINY_SOCK socks;
-      struct {
-	TINY_SOCK_DESC descs[END_OF_SCs];
-      } train_info;
-    } info; // currently, for only Train information.
-  } cbtc;
-} TINY_COMM_PROF, *TINY_COMM_PROF_PTR;
-
 static int diag_tracking_train_cmd ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
@@ -130,7 +103,15 @@ static int show_tracking_train_stat ( FILE *fp_out ) {
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ ) {
     if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
-      const TRAIN_INFO_ENTRY_PTR pE = trains_tracking[i].pTI;
+      TRAIN_INFO_ENTRY TI;
+      TRAIN_INFO_ENTRY_PTR pE = NULL;
+#if 0
+      pE = trains_tracking[i].pTI;
+#else
+      memset( &TI, 0, sizeof(TRAIN_INFO_ENTRY) );
+      conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );
+      pE = &TI;
+#endif     
       assert( pE );
       fprintf( fp_out, "%s:\n", (which_SC_from_train_info(pE))->sc_name );
       assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(*pE) );
@@ -142,29 +123,77 @@ static int show_tracking_train_stat ( FILE *fp_out ) {
   return r;
 }
 
-#define BUFSIZ_msgServerStatus MAX_SEND_BUFSIZ
-#define BUFSIZ_msgServerHeartbeat MAX_SEND_BUFSIZ
-static unsigned char buf_msgServerStatus[BUFSIZ_msgServerStatus];
-static unsigned char buf_msgServerHeartbeat[BUFSIZ_msgServerStatus];
-BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_DESC *pd_stat ) {
-  assert( pS );
-  assert( pd_beat );
-  assert( pd_stat );
-  IP_ADDR_DESC srvstat_dstip = { 0, 0, 0, 0 };  
-  BOOL r = FALSE;
+static void creat_comm_threads ( TINY_COMM_PROF_PTR pcomm_threads_prof ) {
+  assert( pcomm_threads_prof );
+  pthread_t P_cbi_stat;
+  pthread_t P_il_stat;
+  pthread_t P_il_ctrl_emit;
+  pthread_t P_il_ctrl_kron;
   
-  srvstat_dstip.oct_1st = BROADCAST_DSTIP_1stO;
-  srvstat_dstip.oct_2nd = BROADCAST_DSTIP_2ndO;
-  srvstat_dstip.oct_3rd = BROADCAST_DSTIP_3rdO;
-  srvstat_dstip.oct_4th = BROADCAST_DSTIP_4thO;
-  if( (*pd_beat = creat_sock_send( pS, UDP_BCAST_SEND_PORT_MsgServerHeartbeat, TRUE, &srvstat_dstip )) >= 0 ) {
-    sock_attach_send_buf( pS, *pd_beat, buf_msgServerHeartbeat, sizeof(buf_msgServerHeartbeat) );
-    if( (*pd_stat = creat_sock_send( pS, UDP_BCAST_SEND_PORT_msgServerStatus, TRUE, &srvstat_dstip )) >= 0 ) {
-      sock_attach_send_buf( pS, *pd_stat, buf_msgServerStatus, sizeof(buf_msgServerStatus) );
-      r = TRUE;
+  pthread_mutex_init( &cbtc_stat_info_mutex, NULL );
+  pthread_mutex_init( &cbi_ctrl_sendbuf_mutex, NULL );    
+  pthread_mutex_init( &cbi_ctrl_dispatch_mutex, NULL );
+  
+  if( pthread_create( &P_cbi_stat, NULL, pth_reveal_cbtc_status, (void *)&pcomm_threads_prof->cbtc.info.socks ) ) {
+    errorF( "%s", "failed to invoke the CBTC status gathering thread.\n" );
+    exit( 1 );
+  }
+  if( pthread_create( &P_il_ctrl_emit, NULL, pth_reveal_il_ctrl_bits, (void *)&pcomm_threads_prof->cbi.ctrl.socks ) ) {
+    errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
+    exit( 1 );
+  }
+  pthread_mutex_init( &cbi_stat_info_mutex, NULL );
+  if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&pcomm_threads_prof->cbi.stat.socks ) ) {
+    errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
+    exit( 1 );
+  }
+  if( pthread_create( &P_il_ctrl_kron, NULL, pth_expire_il_ctrl_bits, NULL ) ) {
+    errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
+    exit( 1 );
+  }
+}
+
+static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
+  assert( pcomm_prof );
+  TINY_SOCK_DESC *pdescs[END_OF_CBTC_CMDS_INFOS] = {};
+  {
+    int i;
+    pdescs[CBTC_TRAIN_COMMAND] = pcomm_prof->cbtc.cmd.train_cmd.descs;
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) { pcomm_prof->cbtc.cmd.train_cmd.descs[i] = -1; }
+    
+    pdescs[CBTC_TRAIN_INFORMATION] = pcomm_prof->cbtc.info.train_info.descs;
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) { pcomm_prof->cbtc.info.train_info.descs[i] = -1; }
+  }
+  
+  TINY_SOCK_CREAT( pcomm_prof->cbtc.info.socks );
+  if( establish_SC_comm_infos( &pcomm_prof->cbtc.info.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
+    errorF("%s", "failed to create the recv UDP ports for CBTC/SC status informations.\n" );
+    exit( 1 );
+  }
+#ifdef CHK_STRICT_CONSISTENCY
+  {
+    int i;
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) {
+      assert( pcomm_prof->cbtc.info.train_info.descs[i] > -1 );
+    }
+  }  
+#endif // CHK_STRICT_CONSISTENCY
+  
+#if 0
+  TINY_SOCK_CREAT( pcomm_prof->cbi.ctrl.socks );
+  if( establish_SC_comm_cmds( &pcomm_prof->cbi.ctrl.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
+    errorF("%s", "failed to create the send UDP ports for CBTC/SC control commands.\n");
+    exit( 1 );
+  }
+#ifdef CHK_STRICT_CONSISTENCY
+  {
+    int i;
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) {
+      assert( pcomm_prof->cbtc.cmd.train_cmd.descs[i] > -1 );
     }
   }
-  return r;
+#endif // CHK_STRICT_CONSISTENCY
+#endif
 }
 
 static void load_il_status_geometry ( void ) {
@@ -207,73 +236,6 @@ static void load_il_status_geometry ( void ) {
   }
 }
 
-static void creat_comm_threads ( TINY_SOCK_PTR psocks_cbi_ctrl, TINY_SOCK_PTR psocks_cbi_stat ) {
-  assert( psocks_cbi_ctrl );
-  assert( psocks_cbi_stat );
-  pthread_t P_il_stat;
-  pthread_t P_il_ctrl_emit;
-  pthread_t P_il_ctrl_chron;
-  
-  pthread_mutex_init( &cbi_ctrl_sendbuf_mutex, NULL );    
-  pthread_mutex_init( &cbi_ctrl_dispatch_mutex, NULL );
-  if( pthread_create( &P_il_ctrl_emit, NULL, pth_reveal_il_ctrl_bits, (void *)psocks_cbi_ctrl ) ) {
-    errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
-    exit( 1 );
-  }
-  pthread_mutex_init( &cbi_stat_info_mutex, NULL );
-  if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)psocks_cbi_stat ) ) {
-    errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
-    exit( 1 );
-  }
-  if( pthread_create( &P_il_ctrl_chron, NULL, pth_expire_il_ctrl_bits, NULL ) ) {
-    errorF( "%s", "failed to invoke the CBI control elimination thread.\n" );
-    exit( 1 );
-  }
-}
-
-static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
-  assert( pcomm_prof );
-  TINY_SOCK_DESC *pdescs[END_OF_CBTC_CMDS_INFOS] = {};
-  {
-    int i;
-    pdescs[CBTC_TRAIN_COMMAND] = pcomm_prof->cbtc.cmd.train_cmd.descs;
-    for( i = (int)SC801; i < END_OF_SCs; i++ ) { pcomm_prof->cbtc.cmd.train_cmd.descs[i] = -1; }
-    
-    pdescs[CBTC_TRAIN_INFO] = pcomm_prof->cbtc.info.train_info.descs;
-    for( i = (int)SC801; i < END_OF_SCs; i++ ) { pcomm_prof->cbtc.info.train_info.descs[i] = -1; }
-  }
-  
-  TINY_SOCK_CREAT( pcomm_prof->cbtc.info.socks );
-  if( establish_SC_comm_infos( &pcomm_prof->cbtc.info.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
-    errorF("%s", "failed to create the recv UDP ports for CBTC/SC status informations.\n" );
-    exit( 1 );
-  }
-#ifdef CHK_STRICT_CONSISTENCY
-  {
-    int i;
-    for( i = (int)SC801; i < END_OF_SCs; i++ ) {
-      assert( pcomm_prof->cbtc.info.train_info.descs[i] > -1 );
-    }
-  }  
-#endif // CHK_STRICT_CONSISTENCY
-  
-#if 0
-  TINY_SOCK_CREAT( pcomm_prof->cbi.ctrl.socks );
-  if( establish_SC_comm_cmds( &pcomm_prof->cbi.ctrl.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
-    errorF("%s", "failed to create the send UDP ports for CBTC/SC control commands.\n");
-    exit( 1 );
-  }
-#ifdef CHK_STRICT_CONSISTENCY
-  {
-    int i;
-    for( i = (int)SC801; i < END_OF_SCs; i++ ) {
-      assert( pcomm_prof->cbtc.cmd.train_cmd.descs[i] > -1 );
-    }
-  }
-#endif // CHK_STRICT_CONSISTENCY
-#endif
-}
-
 static void establish_OC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
   assert( pcomm_prof );
   int nsocks_ctrl = -1;
@@ -310,6 +272,31 @@ static void establish_OC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
     errorF("%s", "failed to create the send/recv UDP ports for CBI control & state information, respectively.\n");
     exit( 1 );
   }
+}
+
+#define BUFSIZ_msgServerStatus MAX_SEND_BUFSIZ
+#define BUFSIZ_msgServerHeartbeat MAX_SEND_BUFSIZ
+static unsigned char buf_msgServerStatus[BUFSIZ_msgServerStatus];
+static unsigned char buf_msgServerHeartbeat[BUFSIZ_msgServerStatus];
+BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_DESC *pd_stat ) {
+  assert( pS );
+  assert( pd_beat );
+  assert( pd_stat );
+  IP_ADDR_DESC srvstat_dstip = { 0, 0, 0, 0 };  
+  BOOL r = FALSE;
+  
+  srvstat_dstip.oct_1st = BROADCAST_DSTIP_1stO;
+  srvstat_dstip.oct_2nd = BROADCAST_DSTIP_2ndO;
+  srvstat_dstip.oct_3rd = BROADCAST_DSTIP_3rdO;
+  srvstat_dstip.oct_4th = BROADCAST_DSTIP_4thO;
+  if( (*pd_beat = creat_sock_send( pS, UDP_BCAST_SEND_PORT_MsgServerHeartbeat, TRUE, &srvstat_dstip )) >= 0 ) {
+    sock_attach_send_buf( pS, *pd_beat, buf_msgServerHeartbeat, sizeof(buf_msgServerHeartbeat) );
+    if( (*pd_stat = creat_sock_send( pS, UDP_BCAST_SEND_PORT_msgServerStatus, TRUE, &srvstat_dstip )) >= 0 ) {
+      sock_attach_send_buf( pS, *pd_stat, buf_msgServerStatus, sizeof(buf_msgServerStatus) );
+      r = TRUE;
+    }
+  }
+  return r;
 }
 
 int main ( void ) {
@@ -376,9 +363,9 @@ int main ( void ) {
   
   {
     const useconds_t interval = 1000 * 1000 * 0.1;
-    int nrecv = -1;
     int cnt = 0;
-    
+    //int nrecv = -1;
+
     static MSG_TINY_HEARTBEAT msg_srv_beat;
     static MSG_TINY_SERVER_STATUS msg_srv_stat;
     TINY_SRVBEAT_HEARTBEAT_SERVERID( msg_srv_beat, 1 );
@@ -405,16 +392,19 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_LOGGER1( msg_srv_stat, TRUE );
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
     
-    creat_comm_threads( &comm_threads_prof.cbi.ctrl.socks, &comm_threads_prof.cbi.stat.socks );
+    creat_comm_threads( &comm_threads_prof );
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
       
+#if 0
       //if( (nrecv = sock_recv( &socks_srvstat )) < 0 ) {
       if( (nrecv = sock_recv( &comm_threads_prof.cbtc.info.socks )) < 0 ) {
 	errorF( "%s", "error on receiving CBTC/CBI status information from SC/OCs.\n" );
 	continue;
       }
-      
+#elae
+      pth_reveal_cbtc_status( &comm_threads_prof );
+#endif
 #if 0
       diag_cbi_stat_attrib( stdout, "S803A_S811A" );
       {
@@ -426,7 +416,7 @@ int main ( void ) {
       }      
 #endif
       ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.descs, END_OF_ATS2OC );
-
+      
       //reveal_train_tracking( &socks_srvstat );
       reveal_train_tracking( &comm_threads_prof.cbtc.info.socks );
       purge_block_restrains();

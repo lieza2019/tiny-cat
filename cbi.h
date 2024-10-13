@@ -1,5 +1,5 @@
-#ifndef CBI_H
-#define CBI_H
+#ifndef CBI_H_INCLUDED
+#define CBI_H_INCLUDED
 
 #include <sys/types.h>
 #include "generic.h"
@@ -297,4 +297,4 @@ typedef struct cbi_stat_label {
   char ident[CBI_STAT_IDENT_LEN + 1];
 } CBI_STAT_LABEL, *CBI_STAT_LABEL_PTR;
 
-#endif // CBI_H
+#endif // CBI_H_INCLUDED

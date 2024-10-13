@@ -1,4 +1,34 @@
 #include <stdint.h>
+#include "network.h"
+#include "sparcs.h"
+#include "cbi.h"
+
+typedef struct tiny_comm_prof {
+  struct {
+    struct {
+      TINY_SOCK socks;
+      TINY_SOCK_DESC descs[END_OF_ATS2OC];
+    } ctrl;
+    struct {
+      TINY_SOCK socks;
+      TINY_SOCK_DESC descs[END_OF_OC2ATS];
+    } stat;
+  } cbi;
+  struct {
+    struct {
+      TINY_SOCK socks;
+      struct {
+	TINY_SOCK_DESC descs[END_OF_SCs];
+      } train_cmd;
+    } cmd; // currently, for only Train command.
+    struct {
+      TINY_SOCK socks;
+      struct {
+	TINY_SOCK_DESC descs[END_OF_SCs];
+      } train_info;
+    } info; // currently, for only Train information.
+  } cbtc;
+} TINY_COMM_PROF, *TINY_COMM_PROF_PTR;
 
 typedef enum _ars_rejected_reason {
   ARS_TRACKS_OCCUPIED,

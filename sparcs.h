@@ -1,5 +1,5 @@
-#ifndef SPARCS_H
-#define SPARCS_H
+#ifndef SPARCS_H_INCLUDED
+#define SPARCS_H_INCLUDED
 
 #include "generic.h"
 #include "misc.h"
@@ -8,12 +8,6 @@
 #include "train_cmd.h"
 #include "train_info.h"
 #include "train_ctrl.h"
-
-typedef enum cbtc_cmds_infos {
-  CBTC_TRAIN_COMMAND,
-  CBTC_TRAIN_INFO,
-  END_OF_CBTC_CMDS_INFOS
-} CBTC_CMDS_INFOS;
 
 typedef enum SC_ID {
   SC801,
@@ -136,4 +130,4 @@ extern int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_
 extern SC_CTRL_CMDSET_PTR emit_train_cmd( TINY_SOCK_PTR pS, SC_ID sc_id );
 extern SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id );
 
-#endif // SPARCS_H
+#endif // SPARCS_H_INCLUDED

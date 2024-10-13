@@ -1,11 +1,18 @@
 #include <string.h>
+#include <unistd.h>
+#include <assert.h>
+#include <pthread.h>
 #include "generic.h"
 #include "misc.h"
 #include "network.h"
 #include "sparcs.h"
+#include "cbi.h"
+#include "srv.h"
 
 TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 static int frontier;
+
+pthread_mutex_t cbtc_stat_info_mutex;
 
 #if 0
 static TINY_TRAIN_STATE_PTR push_block_restrain ( TINY_TRAIN_STATE_PTR pT ) {
@@ -510,8 +517,8 @@ int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const 
   assert( ndescs > 0 );
   int r = 1;
   
-  assert( (int)CBTC_TRAIN_INFO < ninfos );
-  if( establish_SC_comm_traininfo( pS, pdescs[CBTC_TRAIN_INFO], ndescs ) < 0 ) {
+  assert( (int)CBTC_TRAIN_INFORMATION < ninfos );
+  if( establish_SC_comm_traininfo( pS, pdescs[CBTC_TRAIN_INFORMATION], ndescs ) < 0 ) {
     r *= -1;
     goto exit;
   }
@@ -858,17 +865,75 @@ void chk_solid_train_cmds ( void ) {
   }
 }
 
-#if 0
-void *pth_reveal_il_status ( void *arg ) {
-  assert( arg );  
-  const useconds_t interval = 1000 * 1000 * 0.1;
+void conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind, void *pstate, const int size ) {
+  assert( ptrain );
+  assert( pstate );
+  assert( size > 0 );
   
+  switch( kind ) {
+  case CBTC_TRAIN_INFORMATION:
+    {
+      assert( size >= sizeof( TRAIN_INFO_ENTRY ) );
+      void *pdst = NULL;
+      TRAIN_INFO_ENTRY_PTR pI = (TRAIN_INFO_ENTRY_PTR)pstate;
+      assert( pI );      
+      int r_mutex = -1;
+      r_mutex = pthread_mutex_trylock( &cbtc_stat_info_mutex );
+      if( !r_mutex ) {
+	void *psrc = NULL;
+	if( ptrain->pTI )
+	  psrc = ptrain->pTI;
+	else
+	  psrc = &ptrain->TI_last;
+	pdst = memcpy( pstate, psrc, sizeof(TRAIN_INFO_ENTRY) );	
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_stat_info_mutex );
+	assert( !r_mutex );
+      } else {	
+	pdst = memcpy( pstate, &ptrain->TI_last, sizeof(TRAIN_INFO_ENTRY) );
+      }
+      assert( pdst == pstate );
+    }
+    break;
+  case CBTC_TRACK_DATA:
+    /* fall thru. */
+  case CBTC_CBI_INFORMATION:
+    /* fall thru. */
+  case CBTC_TSR_STATUS:
+    /* fall thru. */
+  case CBTC_NOENTRY_PRESET_STATUS:
+    /* fall thru. */
+  case CBTC_STATUS_INFORMATION:
+    /* fall thru. */
+  case CBTC_STATION_STATUS:
+    /* fall thru. */
+  case CBTC_UNLOCATED_TRAIN_INFORMATION:
+    assert( FALSE );
+  default:
+    assert( FALSE );
+  }
+}
+
+void *pth_reveal_cbtc_status ( void *arg ) {
+  assert( arg );
+  const useconds_t interval = 1000 * 1000 * 0.1;
+  TINY_SOCK_PTR psocks_cbtc_infos = arg;
+  
+  psocks_cbtc_infos = (TINY_SOCK_PTR)arg;
   while( TRUE ) {
-    int nrecv = -1;
-    if( (nrecv = sock_recv( &comm_threads_prof.cbtc.info.socks )) < 0 ) {
-      errorF( "%s", "error on receiving CBTC status information from SC.\n" );
+    assert( psocks_cbtc_infos );
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_stat_info_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
     } else {
-      ;
+      int nrecv = -1;
+      if( (nrecv = sock_recv( psocks_cbtc_infos )) < 0 ) {
+	errorF( "%s", "error on receiving CBTC status information from SC.\n" );
+      }
+      r_mutex = -1;
+      r_mutex = pthread_mutex_unlock( &cbtc_stat_info_mutex );
+      assert( !r_mutex );
     }
     {
       int r = -1;
@@ -877,41 +942,4 @@ void *pth_reveal_il_status ( void *arg ) {
     }
   }
   return NULL;
-
-  
-  
-  pS = (TINY_SOCK_PTR)arg;
-  while( TRUE ) {
-    assert( pS );
-    if( sock_recv( pS ) < 0 ) {
-      errorF( "%s", "error on receiving CBI status information from OCs.\n" );
-    } else {
-      const int obsoleted = 100;
-      BOOL clear = FALSE;
-      int j = (int)OC801;
-      clear = (reveal_il_status(pS) < 0) ? FALSE : TRUE;
-      while( j < (int)END_OF_OCs ) {	
-	assert( (j >= OC801) && (j < END_OF_OCs) );
-	int k;
-	for( k = 0; k < OC_OC2ATS_MSGS_NUM; k++ )
-	  if( clear && cbi_stat_info[j].msgs[k].updated ) {
-	    if( omits[j][k] < 0 )
-	      errorF( "CBI status information of (OC%3d, OC2ATS%d) has started updating, again.\n", OC_ID_CONV2INT(j), OC_MSG_ID_CONV2INT(k) );
-	    omits[j][k] = 0;
-	  } else {
-	    if( omits[j][k] >= obsoleted ) {
-	      errorF( "CBI status information of (OC%3d, OC2ATS%d) has been obsoleted.\n", OC_ID_CONV2INT(j), OC_MSG_ID_CONV2INT(k) );
-	      omits[j][k] = -1;
-	    } else
-	      if( omits[j][k] > -1 ) {
-		assert( omits[j][k] < obsoleted );
-		omits[j][k]++;
-	      }
-	  }
-	j++;
-      }
-      assert( j == END_OF_OCs );
-    }
-  }
 }
-#endif

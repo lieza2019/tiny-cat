@@ -6,6 +6,8 @@
 #include "misc.h"
 #include "network.h"
 #include "cbi.h"
+
+#include "sparcs.h"
 #include "srv.h"
 
 #define INTERLOCK_C
@@ -548,6 +550,7 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
   r_mutex = pthread_mutex_lock( &cbi_stat_info_mutex );
   if( r_mutex ) {
     assert( FALSE );
+    return r;
   }
   pOC = &cbi_stat_OC2ATS[(int)msg_id];
   assert( pOC );
@@ -894,7 +897,6 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
       if( !r_mutex ) {
 	int state = -1;
 	state = conslt_il_state( poc_id, pkind, ident );
-
 	if( state >= 0 ) {
 	  assert( *poc_id == oc_id );
 	  assert( *pkind < END_OF_CBI_STAT_KIND );
