@@ -1,3 +1,6 @@
+#ifndef NETWORK_H_INCLUDED
+#define NETWORK_H_INCLUDED
+
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -6,8 +9,6 @@
 #include <arpa/inet.h>
 #include "generic.h"
 
-#ifndef NETWORK_H_INCLUDED
-#define NETWORK_H_INCLUDED
 typedef struct ip_addr_desc {
   unsigned char oct_1st;
   unsigned char oct_2nd;
@@ -213,4 +214,5 @@ typedef struct NX_NS_header {
 extern int sock_recv ( TINY_SOCK_PTR pS );
 extern int sock_send0 ( TINY_SOCK_PTR pS, NXNS_HEADER_PTR pnxns_hdr );
 extern int sock_send ( TINY_SOCK_PTR pS );
+
 #endif // NETWORK_H_INCLUDED

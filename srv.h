@@ -1,3 +1,6 @@
+#ifndef SRV_H_INCLUDED
+#define SRV_H_INCLUDED
+
 #include <stdint.h>
 #include "network.h"
 #include "sparcs.h"
@@ -25,6 +28,7 @@ typedef struct tiny_comm_prof {
       TINY_SOCK socks;
       struct {
 	TINY_SOCK_DESC descs[END_OF_SCs];
+	BOOL ready;
       } train_info;
     } info; // currently, for only Train information.
   } cbtc;
@@ -170,3 +174,5 @@ extern BOOL TINY_SRVSTAT_MSG_COMM_LOGGER2( MSG_TINY_SERVER_STATUS S, BOOL commLo
 #define TINY_SRVSTAT_MSG_COMM_LOGGER2( S, _commLogger_2 )		\
   (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_LOGGER2) | (_commLogger_2 << nbits_sft(FLG1_TINY_MSG_COMM_LOGGER2)))), \
    ((S).flgs_1 & FLG1_TINY_MSG_COMM_LOGGER2))
+
+#endif //SRV_H_INCLUDED

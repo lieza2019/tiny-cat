@@ -21,9 +21,9 @@ const CBI_STAT_KIND ROUTE_KIND2GENERIC[] = {
   _CBI_KIND_NONSENS // END_OF_ROUTE_KINDS
 };
 
-pthread_mutex_t cbi_stat_info_mutex;
-pthread_mutex_t cbi_ctrl_sendbuf_mutex;
 pthread_mutex_t cbi_ctrl_dispatch_mutex;
+pthread_mutex_t cbi_ctrl_sendbuf_mutex;
+pthread_mutex_t cbi_stat_info_mutex;
 
 static TRACK_C_PTR lkup_track_prof[END_OF_IL_OBJ_INSTANCES];
 static void cons_track_prof_lkup_tbl ( void ) {
@@ -732,7 +732,7 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   return cnt;
 }
 
-void *pth_reveal_il_ctrl_bits ( void *arg ) {
+void *pth_revise_il_ctrl_bits ( void *arg ) {
   assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.01;
   int oc_id = (int)END_OF_OCs;

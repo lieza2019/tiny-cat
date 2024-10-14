@@ -103,19 +103,12 @@ static int show_tracking_train_stat ( FILE *fp_out ) {
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ ) {
     if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
-      TRAIN_INFO_ENTRY TI;
-      TRAIN_INFO_ENTRY_PTR pE = NULL;
-#if 0
-      pE = trains_tracking[i].pTI;
-#else
+      TRAIN_INFO_ENTRY TI;     
       memset( &TI, 0, sizeof(TRAIN_INFO_ENTRY) );
-      conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );
-      pE = &TI;
-#endif     
-      assert( pE );
-      fprintf( fp_out, "%s:\n", (which_SC_from_train_info(pE))->sc_name );
-      assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(*pE) );
-      diag_train_stat ( fp_out, pE );
+      conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );     
+      fprintf( fp_out, "%s:\n", (which_SC_from_train_info(trains_tracking[i].pTI))->sc_name );
+      assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(TI) );
+      diag_train_stat ( fp_out, &TI );
       fprintf( fp_out, "\n" );
       r++;
     }
@@ -125,20 +118,27 @@ static int show_tracking_train_stat ( FILE *fp_out ) {
 
 static void creat_comm_threads ( TINY_COMM_PROF_PTR pcomm_threads_prof ) {
   assert( pcomm_threads_prof );
-  pthread_t P_cbi_stat;
+  pthread_t P_cbtc_stat;
+  pthread_t P_cbtc_ctrl;
   pthread_t P_il_stat;
   pthread_t P_il_ctrl_emit;
   pthread_t P_il_ctrl_kron;
   
-  pthread_mutex_init( &cbtc_stat_info_mutex, NULL );
+  pthread_mutex_init( &cbtc_stat_infos_mutex, NULL );
+  pthread_mutex_init( &cbtc_ctrl_cmds_mutex, NULL );
   pthread_mutex_init( &cbi_ctrl_sendbuf_mutex, NULL );    
   pthread_mutex_init( &cbi_ctrl_dispatch_mutex, NULL );
   
-  if( pthread_create( &P_cbi_stat, NULL, pth_reveal_cbtc_status, (void *)&pcomm_threads_prof->cbtc.info.socks ) ) {
+  if( pthread_create( &P_cbtc_stat, NULL, pth_reveal_cbtc_status, (void *)pcomm_threads_prof ) ) {
     errorF( "%s", "failed to invoke the CBTC status gathering thread.\n" );
     exit( 1 );
   }
-  if( pthread_create( &P_il_ctrl_emit, NULL, pth_reveal_il_ctrl_bits, (void *)&pcomm_threads_prof->cbi.ctrl.socks ) ) {
+  if( pthread_create( &P_cbtc_ctrl, NULL, pth_emit_cbtc_ctrl_cmds, (void *)&pcomm_threads_prof->cbtc.cmd.socks ) ) {
+    errorF( "%s", "failed to invoke the CBTC control commands emitter thread.\n" );
+    exit( 1 );
+  }
+  
+  if( pthread_create( &P_il_ctrl_emit, NULL, pth_revise_il_ctrl_bits, (void *)&pcomm_threads_prof->cbi.ctrl.socks ) ) {
     errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
     exit( 1 );
   }
@@ -179,7 +179,6 @@ static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
   }  
 #endif // CHK_STRICT_CONSISTENCY
   
-#if 0
   TINY_SOCK_CREAT( pcomm_prof->cbi.ctrl.socks );
   if( establish_SC_comm_cmds( &pcomm_prof->cbi.ctrl.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
     errorF("%s", "failed to create the send UDP ports for CBTC/SC control commands.\n");
@@ -193,7 +192,6 @@ static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
     }
   }
 #endif // CHK_STRICT_CONSISTENCY
-#endif
 }
 
 static void load_il_status_geometry ( void ) {
@@ -304,7 +302,7 @@ int main ( void ) {
   TINY_SOCK_DESC sd_send_srvbeat = -1;
   TINY_SOCK_DESC sd_send_srvstat = -1;
   TINY_SOCK_DESC sd_recv_srvstat = -1;
-
+  
   TINY_COMM_PROF comm_threads_prof;
   memset( &comm_threads_prof, 0, sizeof(comm_threads_prof) );
   
@@ -364,8 +362,7 @@ int main ( void ) {
   {
     const useconds_t interval = 1000 * 1000 * 0.1;
     int cnt = 0;
-    //int nrecv = -1;
-
+    
     static MSG_TINY_HEARTBEAT msg_srv_beat;
     static MSG_TINY_SERVER_STATUS msg_srv_stat;
     TINY_SRVBEAT_HEARTBEAT_SERVERID( msg_srv_beat, 1 );
@@ -396,14 +393,10 @@ int main ( void ) {
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
       
-#if 0
-      //if( (nrecv = sock_recv( &socks_srvstat )) < 0 ) {
-      if( (nrecv = sock_recv( &comm_threads_prof.cbtc.info.socks )) < 0 ) {
-	errorF( "%s", "error on receiving CBTC/CBI status information from SC/OCs.\n" );
-	continue;
-      }
-#elae
-      pth_reveal_cbtc_status( &comm_threads_prof );
+      reveal_train_tracking( &comm_threads_prof );
+      purge_block_restrains();
+#if 1
+      show_tracking_train_stat( stdout );
 #endif
 #if 0
       diag_cbi_stat_attrib( stdout, "S803A_S811A" );
@@ -416,13 +409,6 @@ int main ( void ) {
       }      
 #endif
       ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.descs, END_OF_ATS2OC );
-      
-      //reveal_train_tracking( &socks_srvstat );
-      reveal_train_tracking( &comm_threads_prof.cbtc.info.socks );
-      purge_block_restrains();
-#if 1
-      show_tracking_train_stat( stdout );
-#endif
       
       {
 	unsigned char *pmsg_buf = NULL;

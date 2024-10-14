@@ -7,7 +7,6 @@
 #include "sparcs_def.h"
 #include "train_cmd.h"
 #include "train_info.h"
-#include "train_ctrl.h"
 
 typedef enum SC_ID {
   SC801,
@@ -34,6 +33,8 @@ typedef enum SC_ID {
   END_OF_SCs
 } SC_ID;
 #define SC_ID_CONV_2_INT( sc_id ) ((sc_id) + 801)
+
+#include "train_ctrl.h"
 
 #define UDP_BCAST_RECV_PORT_SC801_Train_command 55143
 #define UDP_BCAST_RECV_PORT_SC802_Train_command 55243
@@ -130,4 +131,4 @@ extern int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_
 extern SC_CTRL_CMDSET_PTR emit_train_cmd( TINY_SOCK_PTR pS, SC_ID sc_id );
 extern SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id );
 
-#endif // SPARCS_H_INCLUDED
+#endif //SPARCS_H_INCLUDED

@@ -12,7 +12,8 @@
 TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 static int frontier;
 
-pthread_mutex_t cbtc_stat_info_mutex;
+pthread_mutex_t cbtc_ctrl_cmds_mutex;
+pthread_mutex_t cbtc_stat_infos_mutex;
 
 #if 0
 static TINY_TRAIN_STATE_PTR push_block_restrain ( TINY_TRAIN_STATE_PTR pT ) {
@@ -109,7 +110,7 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
       assert( pblk_forward );
       assert( pT->occupancy.pblk_forward == pblk_forward );
     } else
-      errorF( "%d: unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
+      errorF( "%d: nknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
   }
   return r;
 }
@@ -210,7 +211,7 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 	}
       }
     } else
-      errorF( "%d: unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
+      errorF( "%d: Unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
   }
   return crnt_forward_blk;
 }
@@ -299,42 +300,48 @@ static void expire_all_train_states ( void ) {
     trains_tracking[i].updated = FALSE;
 }
 
-void reveal_train_tracking( TINY_SOCK_PTR pS ) {
-  assert( pS );
-  int i;
+void reveal_train_tracking ( TINY_COMM_PROF_PTR pcomm_prof ) {
+  assert( pcomm_prof );
+  int r_mutex = -1;
   
-  expire_all_train_states();
-  for( i = (int)SC801; i < END_OF_SCs; i++ ) {
-    assert( (i >= SC801) && (i < END_OF_SCs) );
-    SC_STAT_INFOSET_PTR pSC = NULL;
-    pSC = snif_train_info( pS, (SC_ID)i );
-    if( pSC ) {
-      int j;
-      for( j = 0; j < TRAIN_INFO_ENTRIES_NUM; j++ ) {
-	TINY_TRAIN_STATE_PTR pE = NULL;
-	unsigned short rakeID = TRAIN_INFO_RAKEID(pSC->train_information.recv.train_info.entries[j]);
-	if( rakeID != 0 ) {
-	  //printf( "received rakeID in the %2d th Train info.: %3d.\n", (i + 1), rakeID );  // ***** for debugging.
-	  pE = update_train_state( &pSC->train_information.recv.train_info.entries[j] );
-	  assert( pE );
-	  update_train_resblock( pE );
+  r_mutex = pthread_mutex_trylock( &cbtc_stat_infos_mutex );
+  if( !r_mutex ) {
+    int i;  
+    expire_all_train_states();
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) {
+      assert( (i >= SC801) && (i < END_OF_SCs) );
+      SC_STAT_INFOSET_PTR pSC = NULL;
+      pSC = snif_train_info( &pcomm_prof->cbtc.info.socks, (SC_ID)i );
+      if( pSC ) {
+	int j;
+	for( j = 0; j < TRAIN_INFO_ENTRIES_NUM; j++ ) {
+	  TINY_TRAIN_STATE_PTR pE = NULL;
+	  unsigned short rakeID = TRAIN_INFO_RAKEID(pSC->train_information.recv.train_info.entries[j]);
+	  if( rakeID != 0 ) {
+	    //printf( "received rakeID in the %2d th Train info.: %3d.\n", (i + 1), rakeID );  // ***** for debugging.
+	    pE = update_train_state( &pSC->train_information.recv.train_info.entries[j] );
+	    assert( pE );
+	    update_train_resblock( pE );
 #if 0
-	  pSC->train_information.pTrain_stat[i] = pE; // ***** BUG? *****
+	    pSC->train_information.pTrain_stat[i] = pE; // ***** BUG? *****
 #else
-	  pSC->train_information.pTrain_stat[j] = pE;
+	    pSC->train_information.pTrain_stat[j] = pE;
 #endif
+	  }
 	}
       }
     }
-  }
-  
-  {
-    TINY_TRAIN_STATE_PTR pOph = NULL;
-    pOph = enum_orphant_trains();
-    while( pOph ) {
-      errorF( "%-3d: observation lost on the train information.\n", pOph->rakeID );
-      pOph = pOph->pNext;
+    {
+      TINY_TRAIN_STATE_PTR pOph = NULL;
+      pOph = enum_orphant_trains();
+      while( pOph ) {
+	errorF( "%-3d: observation lost on the train information.\n", pOph->rakeID );
+	pOph = pOph->pNext;
+      }
     }
+    r_mutex = -1;
+    r_mutex = pthread_mutex_unlock( &cbtc_stat_infos_mutex );
+    assert( !r_mutex );
   }
 }
 
@@ -878,7 +885,7 @@ void conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind
       TRAIN_INFO_ENTRY_PTR pI = (TRAIN_INFO_ENTRY_PTR)pstate;
       assert( pI );      
       int r_mutex = -1;
-      r_mutex = pthread_mutex_trylock( &cbtc_stat_info_mutex );
+      r_mutex = pthread_mutex_trylock( &cbtc_stat_infos_mutex );
       if( !r_mutex ) {
 	void *psrc = NULL;
 	if( ptrain->pTI )
@@ -887,9 +894,9 @@ void conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind
 	  psrc = &ptrain->TI_last;
 	pdst = memcpy( pstate, psrc, sizeof(TRAIN_INFO_ENTRY) );	
 	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_stat_info_mutex );
+	r_mutex = pthread_mutex_unlock( &cbtc_stat_infos_mutex );
 	assert( !r_mutex );
-      } else {	
+      } else {
 	pdst = memcpy( pstate, &ptrain->TI_last, sizeof(TRAIN_INFO_ENTRY) );
       }
       assert( pdst == pstate );
@@ -914,25 +921,55 @@ void conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind
   }
 }
 
+void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
+  assert( arg );
+  const useconds_t interval = 1000 * 1000 * 0.1;
+  TINY_SOCK_PTR psocks_cbtc_cmds = (TINY_SOCK_PTR)arg;
+  assert( psocks_cbtc_cmds );
+  
+  while( TRUE ) {
+    assert( psocks_cbtc_cmds );
+    int r_mutex = -1;
+    
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      if( sock_send( psocks_cbtc_cmds ) < 1 ) {
+	errorF( "%s", "failed to send cbtc control commands toward the SCs.\n" );
+      }
+      r_mutex = -1;
+      r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+      assert( !r_mutex );
+    }
+    {
+      int r = -1;
+      r = usleep( interval );
+      assert( !r );
+    }
+  }
+  return NULL;
+}
+
 void *pth_reveal_cbtc_status ( void *arg ) {
   assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.1;
-  TINY_SOCK_PTR psocks_cbtc_infos = arg;
+  TINY_COMM_PROF_PTR pcomm_prof = (TINY_COMM_PROF_PTR)arg;
+  assert( pcomm_prof );
   
-  psocks_cbtc_infos = (TINY_SOCK_PTR)arg;
   while( TRUE ) {
-    assert( psocks_cbtc_infos );
+    assert( pcomm_prof );
     int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_stat_info_mutex );
+    r_mutex = pthread_mutex_lock( &cbtc_stat_infos_mutex );
     if( r_mutex ) {
       assert( FALSE );
     } else {
       int nrecv = -1;
-      if( (nrecv = sock_recv( psocks_cbtc_infos )) < 0 ) {
+      if( (nrecv = sock_recv( &pcomm_prof->cbtc.info.socks )) < 0 ) {
 	errorF( "%s", "error on receiving CBTC status information from SC.\n" );
       }
       r_mutex = -1;
-      r_mutex = pthread_mutex_unlock( &cbtc_stat_info_mutex );
+      r_mutex = pthread_mutex_unlock( &cbtc_stat_infos_mutex );
       assert( !r_mutex );
     }
     {

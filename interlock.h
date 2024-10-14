@@ -115,13 +115,14 @@ extern void cons_il_obj_tables ( void );
 
 extern int establish_OC_comm_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs );
 extern int establish_OC_comm_ctrl ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs );
-extern pthread_mutex_t cbi_stat_info_mutex;
-extern pthread_mutex_t cbi_ctrl_sendbuf_mutex;
 extern pthread_mutex_t cbi_ctrl_dispatch_mutex;
+extern pthread_mutex_t cbi_ctrl_sendbuf_mutex;
+extern pthread_mutex_t cbi_stat_info_mutex;
 extern int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
 extern void *pth_reveal_il_status ( void *arg );
 extern void *pth_expire_il_ctrl_bits ( void *arg );
-extern void *pth_reveal_il_ctrl_bits ( void *arg );
+extern void *pth_revise_il_ctrl_bits ( void *arg );
+
 extern int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
 extern int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
 extern void ready_on_emit_OC_ctrl( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, const int ndescs );

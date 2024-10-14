@@ -118,7 +118,7 @@ static BOOL creteria_2_elide ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
 	  r = pB->block_name != pblk_forward->block_name;
 	}
       } else {
-	errorF( "%d: unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
+	errorF( "%d: nknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
 	r = TRUE;
       }
     }

@@ -1,6 +1,7 @@
 #include "generic.h"
 #include "misc.h"
 #include "cbtc.h"
+#include "srv.h"
 
 #define TRAINID_MAX_LEN 4
 typedef struct tiny_train_state {
@@ -43,7 +44,7 @@ typedef struct standby_train_cmds {
 #define MAX_TRAIN_TRACKINGS 1024
 
 extern TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
-extern void reveal_train_tracking( TINY_SOCK_PTR pS );
+extern void reveal_train_tracking ( TINY_COMM_PROF_PTR pcomm_prof );
 #if 1
 extern BOOL establish_SC_comm ( TINY_SOCK_PTR pS );
 #endif
@@ -51,8 +52,10 @@ extern int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[],
 extern int establish_SC_comm_cmds ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs );
 extern int load_train_command ( void );
 extern void chk_solid_train_cmds ( void );
-extern pthread_mutex_t cbtc_stat_info_mutex;
+extern pthread_mutex_t cbtc_ctrl_cmds_mutex;
+extern pthread_mutex_t cbtc_stat_infos_mutex;
 extern void conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind, void *pstate, const int size );
+extern void *pth_emit_cbtc_ctrl_cmds ( void *arg );
 extern void *pth_reveal_cbtc_status ( void *arg );
 
 //extern TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB );
