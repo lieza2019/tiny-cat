@@ -80,14 +80,15 @@ SC_STAT_INFOSET_PTR which_SC_from_train_info ( TRAIN_INFO_ENTRY_PTR pTi ) {
 
 static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {  
   assert( zones );
-  assert( front_blk > 0 );
-  assert( back_blk > 0 );
+  //assert( front_blk > 0 );
+  //assert( back_blk > 0 );
+  int r = -1;
   
   //zones[0] = SC817; zones[1] = SC818;
   zones[0] = SC801;
   zones[1] = SC801;
-  
-  return( 1 );
+  r = 1;
+  return r;
 }
 
 static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTRL_CMDSET_PTR pCs, int rakeID ) {
@@ -147,14 +148,13 @@ int alloc_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR
   assert( es );
   assert( pTs );
   assert( rakeID > 0 );
-  assert( front_blk > 0 );
-  assert( back_blk > 0 );
   SC_ID zones[2] = { END_OF_SCs, END_OF_SCs };
   int r = 0;
   
-  int n = which_SC_zones( zones, front_blk, back_blk );
-  assert( (n > 0) && (n <= 2) );
-  {
+  int n = -1;
+  n = which_SC_zones( zones, front_blk, back_blk );
+  if( n > 0 ) {
+    assert( n <= 2 );
     int i;
     for( i = 0; i < n; i++ ) {
       assert( zones[i] != END_OF_SCs );
@@ -168,8 +168,11 @@ int alloc_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR
       } else
 	r++;
     }
+    assert( r == n );
+  } else {
+    errorF( "%s", "failed to allocate train command entry to the train:%03d, for invalid Occupied Block(forward/back).\n" );
+    r = -1;
   }
-  assert( r == n );
   return r;
 }
 
@@ -177,14 +180,13 @@ int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_P
   assert( es );
   assert( pTs );
   assert( rakeID > 0 );
-  assert( front_blk > 0 );
-  assert( back_blk > 0 );
   SC_ID zones[2] = { END_OF_SCs, END_OF_SCs };
   int r = 0;
-  
-  int n = which_SC_zones( zones, front_blk, back_blk );
-  assert( (n > 0) && (n <= 2) );
-  {
+
+  int n = -1;
+  n = which_SC_zones( zones, front_blk, back_blk );
+  if( n > 0 ) {
+    assert(n <= 2);
     int i;
     for( i = 0; i < n; i++ ) {
       assert( zones[i] != END_OF_SCs );
@@ -205,8 +207,11 @@ int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_P
 	}
       }
     }
+    assert( r == n );
+  } else {
+    errorF( "%s", "failed to allocate train command entry to the standing-by train:%03d, for invalid Occupied Block(forward/back).\n" );
+    r = -1;
   }
-  assert( r == n );
   return r;
 }
 

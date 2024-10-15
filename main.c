@@ -53,7 +53,7 @@ static void diag_train_stat ( FILE *fp_out, const TRAIN_INFO_ENTRY_PTR pE ) {
   assert( fp_out );
   assert( pE );
   
-  fprintf( fp_out, "rakeID: %-3d\n", TRAIN_INFO_RAKEID(*pE) );
+  fprintf( fp_out, "rakeID: %03d\n", TRAIN_INFO_RAKEID(*pE) );
   fprintf( fp_out, "TRR: %d\n", TRAIN_INFO_TRR(*pE) );
   fprintf( fp_out, "Acknowledge of energy saving mode: %d\n", TRAIN_INFO_ACKNOWLEDGE_OF_ENERGY_SAVING_MODE(*pE) );
   fprintf( fp_out, "ATB OK: %d\n", TRAIN_INFO_ATB_OK(*pE) );
@@ -83,7 +83,7 @@ static void diag_train_stat ( FILE *fp_out, const TRAIN_INFO_ENTRY_PTR pE ) {
       fprintf( fp_out, "NO_time_update" );
     fprintf( fp_out, "\n" );
   }
-  fprintf( fp_out, "OCC Command ID Ack: %d\n", (int)pE->occ_command_ID_ack );
+  fprintf( fp_out, "OCC Command ID Ack: %d\n", (int)TRAIN_INFO_OCC_COMMANDID_ACK(*pE) );
   fprintf( fp_out, "Stop detection: %d\n", TRAIN_INFO_STOP_DETECTION(*pE) );
   fprintf( fp_out, "Dynamic testable section: %d\n", TRAIN_INFO_DYNAMIC_TESTABLE_SECTION(*pE) );
   fprintf( fp_out, "Voltage reduction: %d\n", TRAIN_INFO_VOLTAGE_REDUCTION(*pE) );
@@ -95,6 +95,23 @@ static void diag_train_stat ( FILE *fp_out, const TRAIN_INFO_ENTRY_PTR pE ) {
   fprintf( fp_out, "VRS(B) reset: %d\n", TRAIN_INFO_VRS_B_RESET(*pE) );
   fprintf( fp_out, "VRS ID(back): %d\n", TRAIN_INFO_VRS_ID_BACK(*pE) );
   fprintf( fp_out, "Forward train position: %d\n", (int)TRAIN_INFO_FORWARD_TRAIN_POS(*pE) );
+  fprintf( fp_out, "Forward train position offset: %d\n", (int)TRAIN_INFO_FORWARD_TRAIN_POS_OFFSET(*pE) );
+  fprintf( fp_out, "Back train position: %d\n", (int)TRAIN_INFO_BACK_TRAIN_POS(*pE) );
+  fprintf( fp_out, "Back train position offset: %d\n", (int)TRAIN_INFO_BACK_TRAIN_POS_OFFSET(*pE) );
+  fprintf( fp_out, "Occupied Block(forward): %d\n", (int)TRAIN_INFO_OCCUPIED_BLK_FORWARD(*pE) );
+  fprintf( fp_out, "Occupied Block(forward) offset: %d\n", (int)TRAIN_INFO_OCCUPIED_BLK_FORWARD_OFFSET(*pE) );
+  fprintf( fp_out, "Occupied Block(back): %d\n", (int)TRAIN_INFO_OCCUPIED_BLK_BACK(*pE) );
+  fprintf( fp_out, "Occupied Block(back) offset: %d\n", (int)TRAIN_INFO_OCCUPIED_BLK_BACK_OFFSET(*pE) );
+  fprintf( fp_out, "Forward train position segment: %d\n", (int)TRAIN_INFO_FORWARD_TRAIN_POS_SEGMENT(*pE) );
+  fprintf( fp_out, "Forward train position offset segment: %d\n", (int)TRAIN_INFO_FORWARD_TRAIN_POS_OFFSET_SEGMENT(*pE) );
+  fprintf( fp_out, "Back train position segment: %d\n", (int)TRAIN_INFO_BACK_TRAIN_POS_SEGMENT(*pE) );
+  fprintf( fp_out, "Back train position offset segment: %d\n", (int)TRAIN_INFO_BACK_TRAIN_POS_OFFSET_SEGMENT(*pE) );
+  fprintf( fp_out, "Forward train occupied position segment: %d\n", (int)TRAIN_INFO_FORWARD_TRAIN_OCCUPIED_POS_SEGMENT(*pE) );
+  fprintf( fp_out, "Forward train occupied position offset segment: %d\n", (int)TRAIN_INFO_FORWARD_TRAIN_OCCUPIED_POS_OFFSET_SEGMENT(*pE) );
+  fprintf( fp_out, "Back train occupied segment: %d\n", (int)TRAIN_INFO_BACK_TRAIN_OCCUPIED_SEGMENT(*pE) );
+  fprintf( fp_out, "Back train occupied position offset segment: %d\n", (int)TRAIN_INFO_BACK_TRAIN_OCCUPIED_POS_OFFSET_SEGMENT(*pE) );
+  fprintf( fp_out, "Train speed: %d\n", (int)TRAIN_INFO_TRAIN_SPEED(*pE) );
+  fprintf( fp_out, "Train max speed: %d\n", (int)TRAIN_INFO_TRAIN_MAXSPEED(*pE) );
 }
 static int show_tracking_train_stat ( FILE *fp_out ) {
   assert( fp_out );
@@ -103,14 +120,18 @@ static int show_tracking_train_stat ( FILE *fp_out ) {
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ ) {
     if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
-      TRAIN_INFO_ENTRY TI;     
+      TRAIN_INFO_ENTRY_PTR pTI = NULL;
+      TRAIN_INFO_ENTRY TI;
       memset( &TI, 0, sizeof(TRAIN_INFO_ENTRY) );
-      conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );     
-      fprintf( fp_out, "%s:\n", (which_SC_from_train_info(trains_tracking[i].pTI))->sc_name );
-      assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(TI) );
-      diag_train_stat ( fp_out, &TI );
-      fprintf( fp_out, "\n" );
-      r++;
+      pTI = (TRAIN_INFO_ENTRY_PTR)conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, NULL, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );
+      if( pTI ) {
+	assert( pTI == &TI );
+	fprintf( fp_out, "%s:\n", (which_SC_from_train_info(trains_tracking[i].pTI))->sc_name );
+	assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(TI) );
+	diag_train_stat ( fp_out, &TI );
+	fprintf( fp_out, "\n" );
+	r++;
+      }
     }
   }
   return r;
@@ -179,8 +200,8 @@ static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
   }  
 #endif // CHK_STRICT_CONSISTENCY
   
-  TINY_SOCK_CREAT( pcomm_prof->cbi.ctrl.socks );
-  if( establish_SC_comm_cmds( &pcomm_prof->cbi.ctrl.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
+  TINY_SOCK_CREAT( pcomm_prof->cbtc.cmd.socks );
+  if( establish_SC_comm_cmds( &pcomm_prof->cbtc.cmd.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
     errorF("%s", "failed to create the send UDP ports for CBTC/SC control commands.\n");
     exit( 1 );
   }
@@ -407,9 +428,8 @@ int main ( void ) {
 	engage_il_ctrl( &oc_id, &kind, ctl_bit_ident );
 	//errorF( "(oc_id): (%d)\n", OC_ID_CONV2INT(oc_id) ); // ***** for debugging.
       }      
-#endif
       ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.descs, END_OF_ATS2OC );
-      
+#endif
       {
 	unsigned char *pmsg_buf = NULL;
 	int msglen = -1;

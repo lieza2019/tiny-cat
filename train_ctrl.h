@@ -54,7 +54,7 @@ extern int load_train_command ( void );
 extern void chk_solid_train_cmds ( void );
 extern pthread_mutex_t cbtc_ctrl_cmds_mutex;
 extern pthread_mutex_t cbtc_stat_infos_mutex;
-extern void conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind, void *pstate, const int size );
+extern void *conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind, void *pstat_prev, void *pstate, const int size );
 extern void *pth_emit_cbtc_ctrl_cmds ( void *arg );
 extern void *pth_reveal_cbtc_status ( void *arg );
 

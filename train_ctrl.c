@@ -644,9 +644,10 @@ int load_train_command ( void ) {
 	    TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
 	    int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
 	    int back_blk = TRAIN_INFO_OCCUPIED_BLK_BACK( *(pstat->pTI) );
-	    int n = alloc_train_cmd_entries( es, pstat, pstat->rakeID, front_blk, back_blk );
-	    assert( (n > 0) && (n <= 2) );
-	    {
+	    int n = -1;
+	    n = alloc_train_cmd_entries( es, pstat, pstat->rakeID, front_blk, back_blk );
+	    if( n > 0 ) {
+	      assert( n <= 2 );
 	      int j;
 	      for( j = 0; j < n; j++ )
 		pstat->pTC[j] = es[j];
@@ -655,9 +656,9 @@ int load_train_command ( void ) {
 		assert( j == 1 );
 		pstat->pTC[j] = NULL;
 	      }
+	      cons_train_cmd( pstat );
+	      cnt++;
 	    }
-	    cons_train_cmd( pstat );
-	    cnt++;
 	  }
 	}
       }
@@ -672,9 +673,10 @@ int load_train_command ( void ) {
 	TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
 	int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
 	int back_blk = TRAIN_INFO_OCCUPIED_BLK_BACK( *(pstat->pTI) );
-	int n = standup_train_cmd_entries( es, pstat, pstat->rakeID, front_blk, back_blk );
-	assert( (n > 0) && (n <= 2) );
-	{
+	int n = -1;
+	n = standup_train_cmd_entries( es, pstat, pstat->rakeID, front_blk, back_blk );
+	if( n > 0 ) {
+	  assert( n <= 2 );
 	  int k;
 	  for( k = 0; k < n; k++ )
 	    pstat->pTC[k] = es[k];
@@ -683,10 +685,10 @@ int load_train_command ( void ) {
 	    assert( k == 1 );
 	    pstat->pTC[k] = NULL;
 	  }
+	  cnt++;
+	  assert( standby_train_cmds.phd->pNext ? TRUE : standby_train_cmds.pptl == &(standby_train_cmds.phd->pNext) );
+	  standby_train_cmds.phd = standby_train_cmds.phd->pNext;
 	}
-	cnt++;
-	assert( standby_train_cmds.phd->pNext ? TRUE : standby_train_cmds.pptl == &(standby_train_cmds.phd->pNext) );
-	standby_train_cmds.phd = standby_train_cmds.phd->pNext;
       }
       fine_train_cmds();
     
@@ -889,10 +891,11 @@ void chk_solid_train_cmds ( void ) {
   }
 }
 
-void conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind, void *pstate, const int size ) {
+void *conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind, void *pstat_prev, void *pstate, const int size ) {
   assert( ptrain );
   assert( pstate );
   assert( size > 0 );
+  void *r = NULL;
   
   switch( kind ) {
   case CBTC_TRAIN_INFORMATION:
@@ -909,14 +912,22 @@ void conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind
 	  psrc = ptrain->pTI;
 	else
 	  psrc = &ptrain->TI_last;
-	pdst = memcpy( pstate, psrc, sizeof(TRAIN_INFO_ENTRY) );	
+	pdst = memcpy( pstate, psrc, sizeof(TRAIN_INFO_ENTRY) );
+	assert( pdst == pstate );
+	if( pstat_prev ) {
+	  pdst = memcpy( pstat_prev, &ptrain->TI_last, sizeof(TRAIN_INFO_ENTRY) );
+	  assert( pdst == pstat_prev );
+	}
+	r = pstate;
 	r_mutex = -1;
 	r_mutex = pthread_mutex_unlock( &cbtc_stat_infos_mutex );
 	assert( !r_mutex );
       } else {
-	pdst = memcpy( pstate, &ptrain->TI_last, sizeof(TRAIN_INFO_ENTRY) );
+	if( pstat_prev ) {
+	  pdst = memcpy( pstat_prev, &ptrain->TI_last, sizeof(TRAIN_INFO_ENTRY) );
+	  assert( pdst == pstat_prev );
+	}
       }
-      assert( pdst == pstate );
     }
     break;
   case CBTC_TRACK_DATA:
@@ -936,6 +947,7 @@ void conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind
   default:
     assert( FALSE );
   }
+  return r;
 }
 
 void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
@@ -952,7 +964,7 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
     if( r_mutex ) {
       assert( FALSE );
     } else {
-      if( sock_send( psocks_cbtc_cmds ) < 1 ) {
+      if( sock_send( psocks_cbtc_cmds ) < 0 ) {
 	errorF( "%s", "failed to send cbtc control commands toward the SCs.\n" );
       }
       r_mutex = -1;

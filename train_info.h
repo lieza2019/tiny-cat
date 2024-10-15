@@ -76,10 +76,10 @@ typedef struct train_info_entry {
   uint16_t forward_train_pos_offset_segment;
   uint16_t back_train_pos_segment;
   uint16_t back_train_pos_offset_segment;
-  uint16_t forward_train_occpied_pos_segment;
-  uint16_t forward_train_occpied_pos_offset_segment;
-  uint16_t back_train_occpied_pos_segment;
-  uint16_t back_train_occpied_pos_offset_segment;
+  uint16_t forward_train_occupied_pos_segment;
+  uint16_t forward_train_occupied_pos_offset_segment;
+  uint16_t back_train_occupied_segment;
+  uint16_t back_train_occupied_pos_offset_segment;
   uint8_t train_speed;
   uint8_t train_max_speed;
   uint8_t flgs_6;
@@ -128,6 +128,7 @@ extern BOOL TRAIN_INFO_PUSH_OF_DEPARTURE_BUTTON( TRAIN_INFO_ENTRY Ie );
 extern BOOL TRAIN_INFO_ATB_OK( TRAIN_INFO_ENTRY Ie );
 extern BOOL TRAIN_INFO_ACKNOWLEDGE_OF_ENERGY_SAVING_MODE( TRAIN_INFO_ENTRY Ie );
 extern BOOL TRAIN_INFO_TRR( TRAIN_INFO_ENTRY Ie );
+extern unsigned char TRAIN_INFO_OCC_COMMANDID_ACK( TRAIN_INFO_ENTRY Ie );
 extern unsigned short TRAIN_INFO_VRS_ID_FORWARD( TRAIN_INFO_ENTRY Ie );
 extern BOOL TRAIN_INFO_VRS_F_RESET( TRAIN_INFO_ENTRY Ie );
 extern BOOL TRAIN_INFO_VOLTAGE_REDUCTION( TRAIN_INFO_ENTRY Ie );
@@ -140,10 +141,23 @@ extern BOOL TRAIN_INFO_OVERSPEED( TRAIN_INFO_ENTRY Ie );
 extern BOOL TRAIN_INFO_PASSING_THROUGH_BALISE( TRAIN_INFO_ENTRY Ie );
 
 extern unsigned short TRAIN_INFO_FORWARD_TRAIN_POS( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_FORWARD_TRAIN_POS_OFFSET( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_BACK_TRAIN_POS( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_BACK_TRAIN_POS_OFFSET( TRAIN_INFO_ENTRY Ie );
 extern unsigned short TRAIN_INFO_OCCUPIED_BLK_FORWARD( TRAIN_INFO_ENTRY Ie );
 extern unsigned short TRAIN_INFO_OCCUPIED_BLK_FORWARD_OFFSET( TRAIN_INFO_ENTRY Ie );
 extern unsigned short TRAIN_INFO_OCCUPIED_BLK_BACK( TRAIN_INFO_ENTRY Ie );
 extern unsigned short TRAIN_INFO_OCCUPIED_BLK_BACK_OFFSET( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_FORWARD_TRAIN_POS_SEGMENT( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_FORWARD_TRAIN_POS_OFFSET_SEGMENT( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_BACK_TRAIN_POS_SEGMENT( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_BACK_TRAIN_POS_OFFSET_SEGMENT( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_FORWARD_TRAIN_OCCUPIED_POS_SEGMENT( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_FORWARD_TRAIN_OCCUPIED_POS_OFFSET_SEGMENT( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_BACK_TRAIN_OCCUPIED_SEGMENT( TRAIN_INFO_ENTRY Ie );
+extern unsigned short TRAIN_INFO_BACK_TRAIN_OCCUPIED_POS_OFFSET_SEGMENT( TRAIN_INFO_ENTRY Ie );
+extern unsigned char TRAIN_INFO_TRAIN_SPEED( TRAIN_INFO_ENTRY Ie );
+extern unsigned char TRAIN_INFO_TRAIN_MAXSPEED( TRAIN_INFO_ENTRY Ie );
 
 extern unsigned short TRAIN_INFO_DISTANCE_TO_STOPPING_POINT( TRAIN_INFO_ENTRY Ie );
 extern BOOL TRAIN_INFO_REMOTE_EB_RELEASE( TRAIN_INFO_ENTRY Ie );
@@ -182,6 +196,7 @@ extern TRAIN_PERF_REGIME TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( TRAIN_INFO_ENTRY I
 #define TRAIN_INFO_ACKNOWLEDGE_OF_ENERGY_SAVING_MODE( Ie ) (((Ie).flgs_3 & FLG3_ACKNOWLEDGE_OF_ENERGY_SAVING_MODE) >> 6)
 #define TRAIN_INFO_TRR( Ie ) (((Ie).flgs_3 & FLG3_TRR) >> 7)
 
+#define TRAIN_INFO_OCC_COMMANDID_ACK( Ie ) ((Ie).occ_command_ID_ack)
 #define TRAIN_INFO_VRS_ID_FORWARD( Ie ) ((((Ie).flgs_4 & FLG4_VRS_ID_FORWARD) << 8)  + (Ie).vrsID_forward)  // ((FLG4_VRS_ID_FORWARD & flgs_4) << 8) + vrsID_forward
 #define TRAIN_INFO_VRS_F_RESET( Ie ) (((Ie).flgs_4 & FLG4_VRS_F_RESET) >> 4)
 #define TRAIN_INFO_VOLTAGE_REDUCTION( Ie ) (((Ie).flgs_4 & FLG4_VOLTAGE_REDUCTION) >> 5)
@@ -194,12 +209,24 @@ extern TRAIN_PERF_REGIME TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( TRAIN_INFO_ENTRY I
 #define TRAIN_INFO_OVERSPEED( Ie ) (((Ie).flgs_5 & FLG5_OVERSPEED) >> 6)
 #define TRAIN_INFO_PASSING_THROUGH_BALISE( Ie ) (((Ie).flgs_5 & FLG5_PASSING_THROUGH_BALISE) >> 7)
 
-#define TRAIN_INFO_OCCUPIED_BLK_FORWARD( Ie ) (ntohs( (Ie).occupied_blk_forward ))
-
 #define TRAIN_INFO_FORWARD_TRAIN_POS( Ie ) (ntohs( (Ie).forward_train_pos ))
+#define TRAIN_INFO_FORWARD_TRAIN_POS_OFFSET( Ie ) (ntohs( (Ie).forward_train_pos_offset ))
+#define TRAIN_INFO_BACK_TRAIN_POS( Ie ) (ntohs( (Ie).back_train_pos ))
+#define TRAIN_INFO_BACK_TRAIN_POS_OFFSET( Ie ) (ntohs( (Ie).back_train_pos_offset ))
+#define TRAIN_INFO_OCCUPIED_BLK_FORWARD( Ie ) (ntohs( (Ie).occupied_blk_forward ))
 #define TRAIN_INFO_OCCUPIED_BLK_FORWARD_OFFSET( Ie ) (ntohs( (Ie).occupied_blk_forward_offset ))
 #define TRAIN_INFO_OCCUPIED_BLK_BACK( Ie ) (ntohs( (Ie).occupied_blk_back ))
 #define TRAIN_INFO_OCCUPIED_BLK_BACK_OFFSET( Ie ) ntohs( (Ie).occupied_blk_back_offset )
+#define TRAIN_INFO_FORWARD_TRAIN_POS_SEGMENT( Ie ) ntohs( (Ie).forward_train_pos_segment )
+#define TRAIN_INFO_FORWARD_TRAIN_POS_OFFSET_SEGMENT( Ie ) ntohs( (Ie).forward_train_pos_offset_segment )
+#define TRAIN_INFO_BACK_TRAIN_POS_SEGMENT( Ie ) ntohs( (Ie).back_train_pos_segment )
+#define TRAIN_INFO_BACK_TRAIN_POS_OFFSET_SEGMENT( Ie ) ntohs( (Ie).back_train_pos_offset_segment )
+#define TRAIN_INFO_FORWARD_TRAIN_OCCUPIED_POS_SEGMENT( Ie ) ntohs( (Ie).forward_train_occupied_pos_segment )
+#define TRAIN_INFO_FORWARD_TRAIN_OCCUPIED_POS_OFFSET_SEGMENT( Ie ) ntohs( (Ie).forward_train_occupied_pos_offset_segment )
+#define TRAIN_INFO_BACK_TRAIN_OCCUPIED_SEGMENT( Ie ) ntohs( (Ie).back_train_occupied_segment )
+#define TRAIN_INFO_BACK_TRAIN_OCCUPIED_POS_OFFSET_SEGMENT( Ie ) ntohs( (Ie).back_train_occupied_pos_offset_segment )
+#define TRAIN_INFO_TRAIN_SPEED( Ie ) ((Ie).train_speed)
+#define TRAIN_INFO_TRAIN_MAXSPEED( Ie ) ((Ie).train_max_speed)
 
 #define TRAIN_INFO_DISTANCE_TO_STOPPING_POINT( Ie ) ((((Ie).flgs_6 & FLG6_DISTANCE_TO_STOPPING_POINT) << 8) + (Ie).distance_to_SP)  // ((FLG6_DISTANCE_TO_STOPPING_POINT & flgs_6) << 8) + distance_to_SP
 #define TRAIN_INFO_REMOTE_EB_RELEASE( Ie ) ((Ie).flgs_6 & FLG6_REMOTE_EB_RELEASE)

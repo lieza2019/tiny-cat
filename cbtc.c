@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include "generic.h"
 #include "misc.h"
 
@@ -127,36 +128,46 @@ static BOOL creteria_2_elide ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
   return r;
 }
 
-void purge_block_restrains ( void ) {
-  int i = 0;
-  while( block_state[i].virt_block_name < END_OF_CBTC_BLOCKs ) {
-    CBTC_BLOCK_PTR pB = &block_state[i];
-    assert( pB );
-    assert( (pB->block_name > 0) && (pB->virt_block_name < END_OF_CBTC_BLOCKs) );
-    TINY_TRAIN_STATE_PTR *pp = NULL;
-    pp = addr_residents_CBTC_BLOCK( pB );
-    assert( pp );
-    while( *pp ) {
-      assert( *pp );
-      if( creteria_2_elide( pB, *pp ) ) {
-	TINY_TRAIN_STATE_PTR w = NULL;
-	w = *pp;
-	assert( w );
-	*pp = w->occupancy.pNext;
-	w->occupancy.pNext = NULL;
-	w->occupancy.pblk_forward = NULL;
-	w->occupancy.pblk_back = NULL;
-	continue;
-      }
-      pp = &(*pp)->occupancy.pNext;
+void purge_block_restrains ( void ) {  
+  int r_mutex = -1;
+  
+  r_mutex = pthread_mutex_lock( &cbtc_stat_infos_mutex );
+  if( r_mutex ) {
+    assert( FALSE );
+  } else {
+    int i = 0;
+    while( block_state[i].virt_block_name < END_OF_CBTC_BLOCKs ) {
+      CBTC_BLOCK_PTR pB = &block_state[i];
+      assert( pB );
+      assert( (pB->block_name > 0) && (pB->virt_block_name < END_OF_CBTC_BLOCKs) );
+      TINY_TRAIN_STATE_PTR *pp = NULL;
+      pp = addr_residents_CBTC_BLOCK( pB );
       assert( pp );
-    } 
-    assert( pB );
-    if( read_edge_of_residents_CBTC_BLOCK(pB) ) {
-      if( creteria_2_elide( pB, pB->residents.edge ) )
-	pB->residents.edge = NULL;
+      while( *pp ) {
+	assert( *pp );
+	if( creteria_2_elide( pB, *pp ) ) {
+	  TINY_TRAIN_STATE_PTR w = NULL;
+	  w = *pp;
+	  assert( w );
+	  *pp = w->occupancy.pNext;
+	  w->occupancy.pNext = NULL;
+	  w->occupancy.pblk_forward = NULL;
+	  w->occupancy.pblk_back = NULL;
+	  continue;
+	}
+	pp = &(*pp)->occupancy.pNext;
+	assert( pp );
+      }
+      assert( pB );
+      if( read_edge_of_residents_CBTC_BLOCK(pB) ) {
+	if( creteria_2_elide( pB, pB->residents.edge ) )
+	  pB->residents.edge = NULL;
+      }
+      i++;
     }
-    i++;
+    r_mutex = -1;
+    r_mutex = pthread_mutex_unlock( &cbtc_stat_infos_mutex );
+    assert( !r_mutex );
   }
 }	
 
