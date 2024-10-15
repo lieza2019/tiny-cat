@@ -16,26 +16,6 @@ pthread_mutex_t cbtc_ctrl_cmds_mutex;
 pthread_mutex_t cbtc_stat_infos_mutex;
 
 #if 0
-static TINY_TRAIN_STATE_PTR push_block_restrain ( TINY_TRAIN_STATE_PTR pT ) {
-  assert( pT );
-  TINY_TRAIN_STATE_PTR r = NULL;
-  
-  if( pT->pTI ) {
-    assert( pT->rakeID == TRAIN_INFO_RAKEID(*pT->pTI) );
-    CBTC_BLOCK_PTR pblk_front = NULL;
-    const unsigned short blk_name = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pT->pTI );
-    pblk_front = lookup_cbtc_block_prof( blk_name );
-    if( pblk_front ) {
-      pT->occupancy.front.pNext = read_residents_CBTC_BLOCK( pblk_front );
-      r = write_residents_CBTC_BLOCK( pblk_front, pT );
-    } else
-    errorF( "%d: unknown cbtc block detected as forward occupied, of train %3d.\n", blk_name, pT->rakeID );  
-  }
-  return r;
-}
-#endif
-
-#if 0
 static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
   assert( pT );
   CBTC_BLOCK_PTR r = NULL;
@@ -639,67 +619,85 @@ static void fine_train_cmds ( void ) {
 
 int load_train_command ( void ) {
   int cnt = 0;
-  int i;
   
-  expire_all_train_cmds();
-  for( i = 0; i < frontier; i++ ) {
-    assert( frontier < MAX_TRAIN_TRACKINGS );
-    TINY_TRAIN_STATE_PTR pstat = NULL;
-    pstat = &trains_tracking[i];
-    assert( pstat );
-    if( pstat->rakeID > 0 ) {
-      if( pstat->omit )
-	continue;
-      else {
+  int r_mutex_ctrl = -1;
+  r_mutex_ctrl = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+  if( r_mutex_ctrl ) {
+    assert( FALSE );
+  } else {
+    int r_mutex_stat = -1;
+    r_mutex_stat = pthread_mutex_lock( &cbtc_stat_infos_mutex );
+    if( r_mutex_stat ) {
+      assert( FALSE );
+    } else {
+      int i;
+      expire_all_train_cmds();
+      for( i = 0; i < frontier; i++ ) {
+	assert( frontier < MAX_TRAIN_TRACKINGS );
+	TINY_TRAIN_STATE_PTR pstat = NULL;
+	pstat = &trains_tracking[i];
+	assert( pstat );
+	if( pstat->rakeID > 0 ) {
+	  if( pstat->omit )
+	    continue;
+	  else {
+	    TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
+	    int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
+	    int back_blk = TRAIN_INFO_OCCUPIED_BLK_BACK( *(pstat->pTI) );
+	    int n = alloc_train_cmd_entries( es, pstat, pstat->rakeID, front_blk, back_blk );
+	    assert( (n > 0) && (n <= 2) );
+	    {
+	      int j;
+	      for( j = 0; j < n; j++ )
+		pstat->pTC[j] = es[j];
+	      assert( (j > 0) && (j <= 2) );
+	      if( j < 2 ) {
+		assert( j == 1 );
+		pstat->pTC[j] = NULL;
+	      }
+	    }
+	    cons_train_cmd( pstat );
+	    cnt++;
+	  }
+	}
+      }
+      purge_train_cmds();
+  
+      while( standby_train_cmds.phd ) {
+	assert( standby_train_cmds.pptl );
+	TINY_TRAIN_STATE_PTR pstat = standby_train_cmds.phd;
+	assert( pstat );
+	assert( pstat->rakeID > 0 );
+	assert( ! pstat->omit );
 	TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
 	int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
 	int back_blk = TRAIN_INFO_OCCUPIED_BLK_BACK( *(pstat->pTI) );
-	int n = alloc_train_cmd_entries( es, pstat, pstat->rakeID, front_blk, back_blk );
+	int n = standup_train_cmd_entries( es, pstat, pstat->rakeID, front_blk, back_blk );
 	assert( (n > 0) && (n <= 2) );
 	{
-	  int j;
-	  for( j = 0; j < n; j++ )
-	    pstat->pTC[j] = es[j];
-	  assert( (j > 0) && (j <= 2) );
-	  if( j < 2 ) {
-	    assert( j == 1 );
-	    pstat->pTC[j] = NULL;
+	  int k;
+	  for( k = 0; k < n; k++ )
+	    pstat->pTC[k] = es[k];
+	  assert( (k > 0) && (k <= 2) );
+	  if( k < 2 ) {
+	    assert( k == 1 );
+	    pstat->pTC[k] = NULL;
 	  }
 	}
-	cons_train_cmd( pstat );
 	cnt++;
+	assert( standby_train_cmds.phd->pNext ? TRUE : standby_train_cmds.pptl == &(standby_train_cmds.phd->pNext) );
+	standby_train_cmds.phd = standby_train_cmds.phd->pNext;
       }
+      fine_train_cmds();
+    
+      r_mutex_stat = -1;
+      r_mutex_stat = pthread_mutex_unlock( &cbtc_stat_infos_mutex );
+      assert( !r_mutex_stat );
     }
+    r_mutex_ctrl = -1;
+    r_mutex_ctrl = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+    assert( !r_mutex_ctrl );
   }
-  purge_train_cmds();
-  
-  while( standby_train_cmds.phd ) {
-    assert( standby_train_cmds.pptl );
-    TINY_TRAIN_STATE_PTR pstat = standby_train_cmds.phd;
-    assert( pstat );
-    assert( pstat->rakeID > 0 );
-    assert( ! pstat->omit );
-    TRAIN_COMMAND_ENTRY_PTR es[2] = {NULL, NULL};
-    int front_blk = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *(pstat->pTI) );
-    int back_blk = TRAIN_INFO_OCCUPIED_BLK_BACK( *(pstat->pTI) );
-    int n = standup_train_cmd_entries( es, pstat, pstat->rakeID, front_blk, back_blk );
-    assert( (n > 0) && (n <= 2) );
-    {
-      int k;
-      for( k = 0; k < n; k++ )
-	pstat->pTC[k] = es[k];
-      assert( (k > 0) && (k <= 2) );
-      if( k < 2 ) {
-	assert( k == 1 );
-	pstat->pTC[k] = NULL;
-      }
-    }
-    cnt++;
-    assert( standby_train_cmds.phd->pNext ? TRUE : standby_train_cmds.pptl == &(standby_train_cmds.phd->pNext) );
-    standby_train_cmds.phd = standby_train_cmds.phd->pNext;
-  }
-  
-  fine_train_cmds();
   return cnt;
 }
 
@@ -855,20 +853,39 @@ static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of
 
 void chk_solid_train_cmds ( void ) {
   int rakeIDs[END_OF_SCs][TRAIN_INFO_ENTRIES_NUM + 1];
-  int i;
-  memset( rakeIDs, 0, sizeof(rakeIDs) );
-  enum_alive_rakes( rakeIDs );
-  for( i = 0; i < END_OF_SCs; i++ ) {
-    int num_of_rakes = -1;
-    int j;
-    for( j = 0; j < TRAIN_INFO_ENTRIES_NUM; j++ )
-      if( rakeIDs[i][j] < 0 ) {
-	num_of_rakes = j;
-	break;
+  
+  int r_mutex_ctrl = -1;
+  r_mutex_ctrl = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+  if( r_mutex_ctrl ) {
+    assert( FALSE );
+  } else {
+    int r_mutex_stat = -1;
+    r_mutex_stat = pthread_mutex_lock( &cbtc_stat_infos_mutex );
+    if( r_mutex_stat ) {
+      assert( FALSE );
+    } else {
+      int i;
+      memset( rakeIDs, 0, sizeof(rakeIDs) );
+      enum_alive_rakes( rakeIDs );
+      for( i = 0; i < END_OF_SCs; i++ ) {
+	int num_of_rakes = -1;
+	int j;
+	for( j = 0; j < TRAIN_INFO_ENTRIES_NUM; j++ )
+	  if( rakeIDs[i][j] < 0 ) {
+	    num_of_rakes = j;
+	    break;
+	  }
+	assert( j < TRAIN_INFO_ENTRIES_NUM );
+	assert( num_of_rakes > -1 );
+	chk_massiv_train_cmds_array( i, rakeIDs[i], num_of_rakes );
       }
-    assert( j < TRAIN_INFO_ENTRIES_NUM );
-    assert( num_of_rakes > -1 );
-    chk_massiv_train_cmds_array( i, rakeIDs[i], num_of_rakes );
+      r_mutex_stat = -1;
+      r_mutex_stat = pthread_mutex_unlock( &cbtc_stat_infos_mutex );
+      assert( !r_mutex_stat );
+    }
+    r_mutex_ctrl = -1;
+    r_mutex_ctrl = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+    assert( !r_mutex_ctrl );
   }
 }
 
