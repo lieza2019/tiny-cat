@@ -15,86 +15,338 @@ static int frontier;
 pthread_mutex_t cbtc_ctrl_cmds_mutex;
 pthread_mutex_t cbtc_stat_infos_mutex;
 
-#if 0
-static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
-  assert( pT );
-  CBTC_BLOCK_PTR r = NULL;
-  
-  if( pT->pTI ) {
-    assert( pT->rakeID == TRAIN_INFO_RAKEID(*pT->pTI) );
-    const unsigned short blk_name_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pT->pTI );
-    CBTC_BLOCK_PTR pblk_forward = NULL;
-    pblk_forward = lookup_cbtc_block_prof( blk_name_forward );
-    if( pblk_forward ) {
-      BOOL stil_there = FALSE;
-      TINY_TRAIN_STATE_PTR p = NULL;
-      p = read_residents_CBTC_BLOCK( pblk_forward );
-      while( p ) {
-	assert( pT );
-	if( p == pT ) {
-	  assert( pT->occupancy.pblk_forward == pblk_forward );
-	  stil_there = TRUE;
-	  r = pblk_forward;
-	  break;
-	}
-	p = p->occupancy.pNext;
-      }
-      if( !stil_there ) {
-	assert( pT );
-	if( pT->occupancy.pblk_forward ) {
-	  const unsigned short blk_name_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pT->pTI );
-	  CBTC_BLOCK_PTR pblk_back = NULL;
-	  pblk_back = lookup_cbtc_block_prof( blk_name_back );
-	  if( pblk_back ) {
-	    if( pblk_back == pT->occupancy.pblk_forward ) {
-	      TINY_TRAIN_STATE_PTR r = NULL;
-	      pT->occupancy.pblk_back = pT->occupancy.pblk_forward;
-	      r = border_residents_CBTC_BLOCK(pblk_back, pT);
-	      if( r != pT )
-		goto no_elide;
-	    }
-	  } else {
-	    errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_forward, pT->rakeID );
-	    pT->occupancy.pblk_back = NULL;
-	  }
-	  {
-	    BOOL elided = FALSE;
-	    TINY_TRAIN_STATE_PTR *pp = NULL;
-	    pp = addr_residents_CBTC_BLOCK( pT->occupancy.pblk_forward );
-	    assert( pp );
-	    while( *pp ) {
-	      assert( *pp );
-	      assert( pT );
-	      if( *pp == pT ) {
-		assert( !elided );
-		*pp = pT->occupancy.pNext;
-		pT->occupancy.pNext = NULL;
-		elided = TRUE;
-		continue;
-	      }
-	      pp = &(*pp)->occupancy.pNext;
-	      assert( pp );
-	    }
-	  }
-	no_elide:
-	  pT->occupancy.pblk_forward = NULL;
-	}
-	assert( pblk_forward );
-	assert( pT );
-	pT->occupancy.pNext = read_residents_CBTC_BLOCK( pblk_forward );
-	write_residents_CBTC_BLOCK( pblk_forward, pT );
-	pT->occupancy.pblk_forward = pblk_forward;
-	r = pblk_forward;
-      }
-      assert( pT );
-      assert( pblk_forward );
-      assert( pT->occupancy.pblk_forward == pblk_forward );
-    } else
-      errorF( "%d: nknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
-  }
-  return r;
+uint8_t sp2_dst_platformID ( STOPPING_POINT_CODE dest_sp ) {
+  return 0x01;
 }
-#else
+uint8_t journeyID2_serviceID ( JOURNEY_ID journey_ID ) {
+  return (uint8_t)journey_ID;
+}
+
+uint16_t change_train_state_trainID ( TINY_TRAIN_STATE_PTR pT, const TRAIN_ID train_ID, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->train_ID = train_ID;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return (uint16_t)((sp2_dst_platformID(train_ID.dest) << 8) + journeyID2_serviceID(train_ID.jid));
+}
+
+int change_train_state_rakeID ( TINY_TRAIN_STATE_PTR pT, const int rakeID, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->rakeID = rakeID;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return rakeID;
+}
+
+int change_train_state_dest_blockID( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      ;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return dest_blockID;
+}
+
+BOOL change_train_state_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL skip_next_stop, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->skip_next_stop = skip_next_stop;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return skip_next_stop;
+}
+
+BOOL change_train_state_ATO_dept_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATO_dept_cmd, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->ATO_dept_cmd = ATO_dept_cmd;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return ATO_dept_cmd;
+}
+
+BOOL change_train_state_TH_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL TH_cmd, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->TH_cmd = TH_cmd;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return TH_cmd;
+}
+
+TRAIN_PERF_REGIME change_train_state_perf_regime ( TINY_TRAIN_STATE_PTR pT, const TRAIN_PERF_REGIME perf_regime, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->perf_regime = perf_regime;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return perf_regime;
+}
+
+BOOL change_train_state_turnback_siding ( TINY_TRAIN_STATE_PTR pT, const BOOL turnback_siding, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->turnback_siding = turnback_siding;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return turnback_siding;
+}
+
+int change_train_state_dwell_time ( TINY_TRAIN_STATE_PTR pT, const int dwell_time, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->dwell_time = dwell_time;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return dwell_time;
+}
+
+BOOL change_train_state_train_remove ( TINY_TRAIN_STATE_PTR pT, const BOOL train_remove, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->train_remove = train_remove;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return train_remove;
+}
+
+BOOL change_train_state_releasing_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL releasing_emergency_stop, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->releasing_emergency_stop = releasing_emergency_stop;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return releasing_emergency_stop;
+}
+
+BOOL change_train_state_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL ordering_emergency_stop, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->ordering_emergency_stop = ordering_emergency_stop;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return ordering_emergency_stop;
+}
+
+BOOL change_train_state_ATB_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATB_cmd, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->ATB_cmd = ATB_cmd;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return ATB_cmd;
+}
+
 static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
   assert( pT );
   CBTC_BLOCK_PTR crnt_forward_blk = NULL;
@@ -191,11 +443,10 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 	}
       }
     } else
-      errorF( "%d: Unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
+      errorF( "%d: unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
   }
   return crnt_forward_blk;
 }
-#endif
 
 static TINY_TRAIN_STATE_PTR enum_orphant_trains ( void ) {
   TINY_TRAIN_STATE_PTR r = NULL;
@@ -215,18 +466,18 @@ static TINY_TRAIN_STATE_PTR enum_orphant_trains ( void ) {
   return r;
 }
 
-static BOOL exam_consistency_with_train_info ( TINY_TRAIN_STATE_PTR pE, TRAIN_INFO_ENTRY_PTR pI ) {
-  assert( pE );
+static BOOL exam_consistency_with_train_info ( TINY_TRAIN_STATE_PTR pT, TRAIN_INFO_ENTRY_PTR pI ) {
+  assert( pT );
   assert( pI );
   return TRUE;
 }
 
-static void retrieve_from_train_info ( TINY_TRAIN_STATE_PTR pS, TRAIN_INFO_ENTRY_PTR pI ) {
-  assert( pS );
+static void retrieve_from_train_info ( TINY_TRAIN_STATE_PTR pT, TRAIN_INFO_ENTRY_PTR pI ) {
+  assert( pT );
   assert( pI );
-  pS->rakeID = TRAIN_INFO_RAKEID( *pI );
-  pS->skip_next_stop = TRAIN_INFO_SKIP_NEXT_STOP( *pI );
-  pS->perf_regime = TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( *pI );
+  pT->rakeID = TRAIN_INFO_RAKEID( *pI );
+  pT->skip_next_stop = TRAIN_INFO_SKIP_NEXT_STOP( *pI );
+  pT->perf_regime = TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( *pI );
 }
 
 static TINY_TRAIN_STATE_PTR update_train_state ( TRAIN_INFO_ENTRY_PTR pI ) {
@@ -248,12 +499,21 @@ static TINY_TRAIN_STATE_PTR update_train_state ( TRAIN_INFO_ENTRY_PTR pI ) {
 	break;
       }
     if( !pE ) {
-      assert( frontier < MAX_TRAIN_TRACKINGS );
       assert( i == frontier );
-      pE = &trains_tracking[frontier];
-      retrieve_from_train_info( pE, pI );
-      pE->pTI = NULL;
-      frontier++;
+      int r_mutex = -1;
+      r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+      if( r_mutex ) {
+	assert( FALSE );
+      } else {
+	assert( frontier < MAX_TRAIN_TRACKINGS );
+	pE = &trains_tracking[frontier];
+	retrieve_from_train_info( pE, pI );
+	pE->pTI = NULL;
+	frontier++;
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
     }
     assert( pE );
     if( pE->pTI )
@@ -354,25 +614,7 @@ static void expire_all_train_state ( void ) {
     trains_tracking[i].omit = TRUE;
 }
 
-static BOOL establish_SC_statinfo_recv ( TINY_SOCK_PTR pS ) {
-  assert( pS );
-  BOOL r = FALSE;
-  
-  int i = (int)SC801;
-  while( i < (int)END_OF_SCs ) {
-    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
-    SC_STAT_INFOSET_PTR p = NULL;
-    expire_all_train_state();
-    if( !(p = willing_to_recv_train_info( pS, (SC_ID)i )) )
-      goto exit;
-    assert( p );
-    assert( p->train_information.d_recv_train_info > -1 );
-    i++;
-  }
-  r = TRUE;
- exit:
-  return r;
-}
+
 static int establish_SC_comm_traininfo ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
   assert( pS );
   assert( pdescs );
@@ -436,26 +678,6 @@ static SC_CTRL_CMDSET_PTR willing_to_send_train_cmd ( TINY_SOCK_PTR pS, SC_ID sc
   return r;
 }
 
-static BOOL establish_SC_traincmd_send ( TINY_SOCK_PTR pS ) {
-  assert( pS );
-  BOOL r = FALSE;
-  
-  int i = (int)SC801;
-  while( i < (int)END_OF_SCs ) {
-    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
-    SC_CTRL_CMDSET_PTR p = NULL;
-    expire_all_train_cmds();
-    if(! (p = willing_to_send_train_cmd( pS, (SC_ID)i )) )
-      goto exit;
-    assert( p );
-    assert( p->train_command.d_send_train_cmd > -1 );
-    i++;
-  }
-  r = TRUE;
-  
- exit:
-  return r;
-}
 static int establish_SC_comm_traincmd ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
   assert( pS );
   assert( pdescs );
@@ -485,7 +707,48 @@ static int establish_SC_comm_traincmd ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs
   return r;
 }
 
-#if 1
+#if 0 // now obsoleted.
+static BOOL establish_SC_statinfo_recv ( TINY_SOCK_PTR pS ) {
+  assert( pS );
+  BOOL r = FALSE;
+  
+  int i = (int)SC801;
+  while( i < (int)END_OF_SCs ) {
+    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
+    SC_STAT_INFOSET_PTR p = NULL;
+    expire_all_train_state();
+    if( !(p = willing_to_recv_train_info( pS, (SC_ID)i )) )
+      goto exit;
+    assert( p );
+    assert( p->train_information.d_recv_train_info > -1 );
+    i++;
+  }
+  r = TRUE;
+ exit:
+  return r;
+}
+
+static BOOL establish_SC_traincmd_send ( TINY_SOCK_PTR pS ) {
+  assert( pS );
+  BOOL r = FALSE;
+  
+  int i = (int)SC801;
+  while( i < (int)END_OF_SCs ) {
+    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
+    SC_CTRL_CMDSET_PTR p = NULL;
+    expire_all_train_cmds();
+    if(! (p = willing_to_send_train_cmd( pS, (SC_ID)i )) )
+      goto exit;
+    assert( p );
+    assert( p->train_command.d_send_train_cmd > -1 );
+    i++;
+  }
+  r = TRUE;
+  
+ exit:
+  return r;
+}
+
 BOOL establish_SC_comm ( TINY_SOCK_PTR pS ) {
   assert( pS );
   BOOL r = FALSE;
@@ -497,6 +760,7 @@ BOOL establish_SC_comm ( TINY_SOCK_PTR pS ) {
   return r;
 }
 #endif
+
 int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs ) {
   assert( pS );
   assert( pdescs );
@@ -529,33 +793,35 @@ int establish_SC_comm_cmds ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const i
   return r;
 }
 
-static void cons_train_cmd ( TINY_TRAIN_STATE_PTR pTs ) {
-  assert( pTs );
+static void cons_train_cmd ( TINY_TRAIN_STATE_PTR pT ) {
+  assert( pT );
   int i;
   
   for( i = 0; i < 2; i++ ) {
-    if( pTs->pTC[i] ) {
-      TRAIN_COMMAND_ENTRY_PTR pE = pTs->pTC[i];
+    if( pT->pTC[i] ) {
+      TRAIN_COMMAND_ENTRY_PTR pE = pT->pTC[i];
       assert( pE );
-      assert( ntohs(pE->rakeID) == pTs->rakeID );
-#if 0
+      assert( ntohs(pE->rakeID) == pT->rakeID );
+
+#ifdef CHK_STRICT_CONSISTENCY
       {
-	char buf[TRAINID_MAX_LEN + 1];
-	buf[TRAINID_MAX_LEN] = 0;
-	assert( ! strncmp( pTs->trainID, TRAIN_CMD_TRAINID ( *pE, buf, TRAINID_MAX_LEN ), TRAINID_MAX_LEN ) );
+	assert( pE );
+	assert( pT );
+	const uint16_t train_id = (uint16_t)((sp2_dst_platformID(pT->train_ID.dest) << 8) + journeyID2_serviceID(pT->train_ID.jid));
+	assert( train_id == TRAIN_CMD_TRAINID( *pE, pT->train_ID ) );
       }
-#endif     
-      TRAIN_CMD_DESTINATION_BLOCKID( *pE, pTs->dest_blockID );
-      TRAIN_CMD_SKIP_NEXT_STOP( *pE, pTs->skip_next_stop );
-      TRAIN_CMD_ATO_DEPARTURE_COMMAND( *pE, pTs->ATO_dept_cmd );
-      TRAIN_CMD_TRAIN_HOLD_COMMAND( *pE, pTs->TH_cmd );
-      TRAIN_CMD_TRAIN_PERFORMANCE_REGIME_COMMAND( *pE, pTs->perf_regime );
-      TRAIN_CMD_TURNBACK_OR_SIDING( *pE, pTs->turnback_siding );
-      TRAIN_CMD_DWELL_TIME( *pE, pTs->dwell_time );
-      TRAIN_CMD_TRAIN_REMOVE( *pE, pTs->train_remove );
-      TRAIN_CMD_ORDERING_RELEASE_FOR_EMERGENCY_STOP( *pE, pTs->releasing_emergency_stop );
-      TRAIN_CMD_ORDERING_EMERGENCY_STOP( *pE, pTs->ordering_emergency_stop );
-      TRAIN_CMD_AUTOMATIC_TURNBACK_COMMAND( *pE, pTs->ATB_cmd );
+#endif // CHK_STRICT_CONSISTENCY
+      TRAIN_CMD_DESTINATION_BLOCKID( *pE, pT->dest_blockID );
+      TRAIN_CMD_SKIP_NEXT_STOP( *pE, pT->skip_next_stop );
+      TRAIN_CMD_ATO_DEPARTURE_COMMAND( *pE, pT->ATO_dept_cmd );
+      TRAIN_CMD_TRAIN_HOLD_COMMAND( *pE, pT->TH_cmd );
+      TRAIN_CMD_TRAIN_PERFORMANCE_REGIME_COMMAND( *pE, pT->perf_regime );
+      TRAIN_CMD_TURNBACK_OR_SIDING( *pE, pT->turnback_siding );
+      TRAIN_CMD_DWELL_TIME( *pE, pT->dwell_time );
+      TRAIN_CMD_TRAIN_REMOVE( *pE, pT->train_remove );
+      TRAIN_CMD_ORDERING_RELEASE_FOR_EMERGENCY_STOP( *pE, pT->releasing_emergency_stop );
+      TRAIN_CMD_ORDERING_EMERGENCY_STOP( *pE, pT->ordering_emergency_stop );
+      TRAIN_CMD_AUTOMATIC_TURNBACK_COMMAND( *pE, pT->ATB_cmd );
     }
   }
 }
@@ -891,8 +1157,8 @@ void chk_solid_train_cmds ( void ) {
   }
 }
 
-void *conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kind, void *pstat_prev, void *pstate, const int size ) {
-  assert( ptrain );
+void *conslt_cbtc_state ( TINY_TRAIN_STATE_PTR pT, const CBTC_CMDS_INFOS kind, void *pstat_prev, void *pstate, const int size ) {
+  assert( pT );
   assert( pstate );
   assert( size > 0 );
   void *r = NULL;
@@ -908,14 +1174,14 @@ void *conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kin
       r_mutex = pthread_mutex_trylock( &cbtc_stat_infos_mutex );
       if( !r_mutex ) {
 	void *psrc = NULL;
-	if( ptrain->pTI )
-	  psrc = ptrain->pTI;
+	if( pT->pTI )
+	  psrc = pT->pTI;
 	else
-	  psrc = &ptrain->TI_last;
+	  psrc = &pT->TI_last;
 	pdst = memcpy( pstate, psrc, sizeof(TRAIN_INFO_ENTRY) );
 	assert( pdst == pstate );
 	if( pstat_prev ) {
-	  pdst = memcpy( pstat_prev, &ptrain->TI_last, sizeof(TRAIN_INFO_ENTRY) );
+	  pdst = memcpy( pstat_prev, &pT->TI_last, sizeof(TRAIN_INFO_ENTRY) );
 	  assert( pdst == pstat_prev );
 	}
 	r = pstate;
@@ -924,7 +1190,7 @@ void *conslt_cbtc_state ( TINY_TRAIN_STATE_PTR ptrain, const CBTC_CMDS_INFOS kin
 	assert( !r_mutex );
       } else {
 	if( pstat_prev ) {
-	  pdst = memcpy( pstat_prev, &ptrain->TI_last, sizeof(TRAIN_INFO_ENTRY) );
+	  pdst = memcpy( pstat_prev, &pT->TI_last, sizeof(TRAIN_INFO_ENTRY) );
 	  assert( pdst == pstat_prev );
 	}
       }
@@ -959,7 +1225,6 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
   while( TRUE ) {
     assert( psocks_cbtc_cmds );
     int r_mutex = -1;
-    
     r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
     if( r_mutex ) {
       assert( FALSE );

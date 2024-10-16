@@ -85,7 +85,6 @@ typedef struct train_command {
 } TRAIN_COMMAND, *TRAIN_COMMAND_PTR;
 
 extern unsigned short TRAIN_CMD_RAKEID( TRAIN_COMMAND_ENTRY Ce, unsigned short rakeID );
-extern char *TRAIN_CMD_TRAINID ( TRAIN_COMMAND_ENTRY Ce, char *pbuf, int size );
 extern unsigned short TRAIN_CMD_DESTINATION_BLOCKID( TRAIN_COMMAND_ENTRY Ce, unsigned short dst_blockID );
 extern unsigned short TRAIN_CMD_CURRENT_BLOCKID( TRAIN_COMMAND_ENTRY Ce, unsigned short crnt_blockID );
 extern DST_ST_PLCODE TRAIN_CMD_DESTINATION_PLATFORM_CODE( TRAIN_COMMAND_ENTRY Ce, DST_ST_PLCODE dst_PLcode );
