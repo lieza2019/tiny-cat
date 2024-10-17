@@ -522,6 +522,8 @@ static TINY_TRAIN_STATE_PTR update_train_state ( TRAIN_INFO_ENTRY_PTR pI ) {
     pE->updated = TRUE;
     pE->omit = FALSE;
   }
+  assert( pE );
+  assert( pE->pTI );
   return pE;
 }
 
@@ -561,6 +563,7 @@ void reveal_train_tracking ( TINY_COMM_PROF_PTR pcomm_prof ) {
 	    //printf( "received rakeID in the %2d th Train info.: %3d.\n", (i + 1), rakeID );  // ***** for debugging.
 	    pE = update_train_state( &pSC->train_information.recv.train_info.entries[j] );
 	    assert( pE );
+	    assert( pE->pTI );
 	    update_train_resblock( pE );
 #if 0
 	    pSC->train_information.pTrain_stat[i] = pE; // ***** BUG? *****
@@ -1229,6 +1232,47 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
     if( r_mutex ) {
       assert( FALSE );
     } else {
+      if( sock_send( psocks_cbtc_cmds ) < 0 ) {
+	errorF( "%s", "failed to send cbtc control commands toward the SCs.\n" );
+      }
+      r_mutex = -1;
+      r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+      assert( !r_mutex );
+    }
+    {
+      int r = -1;
+      r = usleep( interval );
+      assert( !r );
+    }
+  }
+  return NULL;
+}
+void *_pth_emit_cbtc_ctrl_cmds ( void *arg ) {
+  assert( arg );
+  const useconds_t interval = 1000 * 1000 * 0.1;
+  TINY_COMM_PROF_PTR pcomm_threads_prof = (TINY_COMM_PROF_PTR)arg;
+  assert( pcomm_threads_prof );
+  TINY_SOCK_PTR psocks_cbtc_cmds = &pcomm_threads_prof->cbtc.cmd.socks;
+  assert( psocks_cbtc_cmds );
+  
+  while( TRUE ) {
+    assert( pcomm_threads_prof );
+    assert( psocks_cbtc_cmds );
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      int i = (int)SC801;
+      while( i < END_OF_SCs ) {
+	const TINY_SOCK_DESC sd_train_info = pcomm_threads_prof->cbtc.cmd.train_cmd.descs[i];
+	if( sd_train_info > -1 ) {
+	  int n = -1;
+	  n = sock_send_ready( psocks_cbtc_cmds, pcomm_threads_prof->cbtc.cmd.train_cmd.descs[i], ATS2OC_MSGSIZE );
+	  assert( n == ATS2OC_MSGSIZE );
+	}
+	i++;
+      }
       if( sock_send( psocks_cbtc_cmds ) < 0 ) {
 	errorF( "%s", "failed to send cbtc control commands toward the SCs.\n" );
       }

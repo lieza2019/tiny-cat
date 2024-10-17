@@ -119,19 +119,24 @@ static int show_tracking_train_stat ( FILE *fp_out ) {
   
   int i;
   for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ ) {
-    if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
-      TRAIN_INFO_ENTRY_PTR pTI = NULL;
-      TRAIN_INFO_ENTRY TI;
-      memset( &TI, 0, sizeof(TRAIN_INFO_ENTRY) );
-      pTI = (TRAIN_INFO_ENTRY_PTR)conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, NULL, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );
-      if( pTI ) {
-	assert( pTI == &TI );
-	fprintf( fp_out, "%s:\n", (which_SC_from_train_info(trains_tracking[i].pTI))->sc_name );
-	assert( trains_tracking[i].rakeID == (int)TRAIN_INFO_RAKEID(TI) );
-	diag_train_stat ( fp_out, &TI );
-	fprintf( fp_out, "\n" );
-	r++;
-      }
+    if( trains_tracking[i].rakeID > 0 ){
+      if( ! trains_tracking[i].omit ) {
+	TRAIN_INFO_ENTRY_PTR pTI = NULL;
+	TRAIN_INFO_ENTRY TI;
+	memset( &TI, 0, sizeof(TRAIN_INFO_ENTRY) );
+	pTI = (TRAIN_INFO_ENTRY_PTR)conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, NULL, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );
+	if( pTI ) {
+	  assert( pTI == &TI );
+	  //fprintf( fp_out, "%s:\n", (which_SC_from_train_info(trains_tracking[i].pTI))->sc_name );
+	  if( trains_tracking[i].rakeID != (int)TRAIN_INFO_RAKEID(TI) ) {
+	    printf( "(trains_tracking[i].rakeID, TRAIN_INFO_RAKEID(TI)) = (%03d, %03d)\n", trains_tracking[i].rakeID, (int)TRAIN_INFO_RAKEID(TI) );
+	  }
+	  diag_train_stat( fp_out, &TI );
+	  fprintf( fp_out, "\n" );
+	  r++;
+	}
+      } else
+	fprintf( fp_out, "rakeID:%03d, has no Train information now.\n", trains_tracking[i].rakeID );
     }
   }
   return r;
@@ -464,6 +469,20 @@ int main ( void ) {
 	}
       }
       
+#if 0
+      {
+	int i;
+	for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ ) {
+	  if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
+	    TINY_TRAIN_STATE_PTR pT = &trains_tracking[i];
+	    assert( pT );
+	    if( pT->rakeID == 9 ) {
+	      change_train_state_skip_next_stop( pT, TRUE, FALSE );
+	    }
+	  }
+	}
+      }
+#endif
       load_train_command();
 #ifdef CHK_STRICT_CONSISTENCY
       chk_solid_train_cmds();

@@ -1089,7 +1089,9 @@ void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, co
   int r_mutex_sendbuf = -1;
   
   r_mutex_sendbuf = pthread_mutex_lock( &cbi_ctrl_sendbuf_mutex );
-  if( !r_mutex_sendbuf ) {
+  if( r_mutex_sendbuf )
+    assert( FALSE );
+  else {
     int i = (int)ATS2OC801;
     while( i < (int)END_OF_ATS2OC ) {
       unsigned char *pmsg_buf = NULL;
@@ -1124,8 +1126,7 @@ void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, co
       errorF( "%s", "failed to send interlocking control for CBIs.\n" );
     r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
     assert( !r_mutex_sendbuf );
-  } else
-    assert( FALSE );
+  }
 }
 #endif
 
