@@ -546,8 +546,10 @@ void reveal_train_tracking ( TINY_COMM_PROF_PTR pcomm_prof ) {
   assert( pcomm_prof );
   int r_mutex = -1;
   
-  r_mutex = pthread_mutex_trylock( &cbtc_stat_infos_mutex );
-  if( !r_mutex ) {
+  r_mutex = pthread_mutex_lock( &cbtc_stat_infos_mutex );
+  if( r_mutex )
+    assert( FALSE );
+  else {
     int i;  
     expire_all_train_states();
     for( i = (int)SC801; i < END_OF_SCs; i++ ) {
@@ -1247,6 +1249,7 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
   }
   return NULL;
 }
+#if 1
 void *_pth_emit_cbtc_ctrl_cmds ( void *arg ) {
   assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.1;
@@ -1288,6 +1291,7 @@ void *_pth_emit_cbtc_ctrl_cmds ( void *arg ) {
   }
   return NULL;
 }
+#endif
 
 void *pth_reveal_cbtc_status ( void *arg ) {
   assert( arg );

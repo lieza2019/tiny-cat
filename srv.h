@@ -175,4 +175,5 @@ extern BOOL TINY_SRVSTAT_MSG_COMM_LOGGER2( MSG_TINY_SERVER_STATUS S, BOOL commLo
   (((S).flgs_1 = (((S).flgs_1 & ~FLG1_TINY_MSG_COMM_LOGGER2) | (_commLogger_2 << nbits_sft(FLG1_TINY_MSG_COMM_LOGGER2)))), \
    ((S).flgs_1 & FLG1_TINY_MSG_COMM_LOGGER2))
 
+extern void reveal_train_tracking ( TINY_COMM_PROF_PTR pcomm_prof );
 #endif //SRV_H_INCLUDED

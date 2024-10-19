@@ -67,12 +67,12 @@ struct send_buf_traincmd {
   TRAIN_COMMAND train_cmd;
 };
 typedef struct sc_ctrl_cmdprof {
-    const unsigned short dst_port;
-    TINY_SOCK_DESC d_send_train_cmd;
-    struct send_buf_traincmd send;
-    BOOL expired[TRAIN_COMMAND_ENTRIES_NUM];
-    TINY_TRAIN_STATE_PTR pTrain_stat[TRAIN_COMMAND_ENTRIES_NUM];
-    int frontier;
+  const unsigned short dst_port;
+  TINY_SOCK_DESC d_send_train_cmd;
+  struct send_buf_traincmd send;
+  BOOL expired[TRAIN_COMMAND_ENTRIES_NUM];
+  TINY_TRAIN_STATE_PTR pTrain_stat[TRAIN_COMMAND_ENTRIES_NUM];
+  int frontier;
 } SC_CTRL_CMDPROF, *SC_CTRL_CMDPROF_PTR;
 typedef struct SC_ctrl_cmdset {
   char sc_name[6];

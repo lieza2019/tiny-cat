@@ -127,12 +127,8 @@ static int show_tracking_train_stat ( FILE *fp_out ) {
 	pTI = (TRAIN_INFO_ENTRY_PTR)conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, NULL, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );
 	if( pTI ) {
 	  assert( pTI == &TI );
+	  assert( trains_tracking[i].rakeID != (int)TRAIN_INFO_RAKEID(TI) );
 	  fprintf( fp_out, "%s:\n", (which_SC_from_train_info(trains_tracking[i].pTI))->sc_name );
-#if 0
-	  if( trains_tracking[i].rakeID != (int)TRAIN_INFO_RAKEID(TI) ) {
-	    printf( "(trains_tracking[i].rakeID, TRAIN_INFO_RAKEID(TI)) = (%03d, %03d)\n", trains_tracking[i].rakeID, (int)TRAIN_INFO_RAKEID(TI) );
-	  }
-#endif
 	  diag_train_stat( fp_out, &TI );
 	  fprintf( fp_out, "\n" );
 	  r++;
@@ -419,8 +415,7 @@ int main ( void ) {
     
     creat_comm_threads( &comm_threads_prof );
     while( TRUE ) {
-      errorF( "%s", "waken up!\n" );
-      
+      errorF( "%s", "waken up!\n" );    
 #if 1
       show_tracking_train_stat( stdout );
 #endif

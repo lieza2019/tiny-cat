@@ -1,7 +1,6 @@
 #include "generic.h"
 #include "misc.h"
 #include "cbtc.h"
-#include "srv.h"
 
 typedef struct train_ID {
   STOPPING_POINT_CODE dest;
@@ -66,7 +65,6 @@ extern BOOL change_train_state_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT
 extern BOOL change_train_state_ATB_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATB_cmd, BOOL mindles );
 
 extern TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
-extern void reveal_train_tracking ( TINY_COMM_PROF_PTR pcomm_prof );
 #if 0
 extern BOOL establish_SC_comm ( TINY_SOCK_PTR pS );
 #endif
