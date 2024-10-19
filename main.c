@@ -127,10 +127,12 @@ static int show_tracking_train_stat ( FILE *fp_out ) {
 	pTI = (TRAIN_INFO_ENTRY_PTR)conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, NULL, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );
 	if( pTI ) {
 	  assert( pTI == &TI );
-	  //fprintf( fp_out, "%s:\n", (which_SC_from_train_info(trains_tracking[i].pTI))->sc_name );
+	  fprintf( fp_out, "%s:\n", (which_SC_from_train_info(trains_tracking[i].pTI))->sc_name );
+#if 0
 	  if( trains_tracking[i].rakeID != (int)TRAIN_INFO_RAKEID(TI) ) {
 	    printf( "(trains_tracking[i].rakeID, TRAIN_INFO_RAKEID(TI)) = (%03d, %03d)\n", trains_tracking[i].rakeID, (int)TRAIN_INFO_RAKEID(TI) );
 	  }
+#endif
 	  diag_train_stat( fp_out, &TI );
 	  fprintf( fp_out, "\n" );
 	  r++;
@@ -419,8 +421,6 @@ int main ( void ) {
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
       
-      reveal_train_tracking( &comm_threads_prof );
-      purge_block_restrains();
 #if 1
       show_tracking_train_stat( stdout );
 #endif
@@ -432,9 +432,12 @@ int main ( void ) {
 	const char ctl_bit_ident[] = "P_S821A_S801A";
 	engage_il_ctrl( &oc_id, &kind, ctl_bit_ident );
 	//errorF( "(oc_id): (%d)\n", OC_ID_CONV2INT(oc_id) ); // ***** for debugging.
-      }      
-      ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.descs, END_OF_ATS2OC );
+      }
 #endif
+      ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.descs, END_OF_ATS2OC );
+      reveal_train_tracking( &comm_threads_prof );
+      purge_block_restrains();
+      
       {
 	unsigned char *pmsg_buf = NULL;
 	int msglen = -1;
