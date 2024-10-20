@@ -157,10 +157,17 @@ static void creat_comm_threads ( TINY_COMM_PROF_PTR pcomm_threads_prof ) {
     errorF( "%s", "failed to invoke the CBTC status gathering thread.\n" );
     exit( 1 );
   }
+#if 0
   if( pthread_create( &P_cbtc_ctrl, NULL, pth_emit_cbtc_ctrl_cmds, (void *)&pcomm_threads_prof->cbtc.cmd.socks ) ) {
     errorF( "%s", "failed to invoke the CBTC control commands emitter thread.\n" );
     exit( 1 );
   }
+#else
+  if( pthread_create( &P_cbtc_ctrl, NULL, pth_emit_cbtc_ctrl_cmds, (void *)pcomm_threads_prof ) ) {
+    errorF( "%s", "failed to invoke the CBTC control commands emitter thread.\n" );
+    exit( 1 );
+  }
+#endif
   
   if( pthread_create( &P_il_ctrl_emit, NULL, pth_revise_il_ctrl_bits, (void *)&pcomm_threads_prof->cbi.ctrl.socks ) ) {
     errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
@@ -261,7 +268,7 @@ static void load_il_status_geometry ( void ) {
       strcat( strcpy(fname, "./cbi/"), il_status_geometry_resources[oc_id].csv_fname );
 #else
       strcpy( fname, il_status_geometry_resources[oc_id].csv_fname );
-#endif // IN_CBI_RESOURCEDRI
+#endif // IN_CBI_RESOURCEDIR
       n = load_cbi_code_tbl ( il_status_geometry_resources[oc_id].oc_id, fname );
       if( n < 0 ) {
 	errorF( "failed to open the CBI status csv file of %s.\n", fname );
@@ -439,7 +446,7 @@ int main ( void ) {
     
     creat_comm_threads( &comm_threads_prof );
     while( TRUE ) {
-      errorF( "%s", "waken up!\n" );    
+      errorF( "%s", "waken up!\n" );
 #if 1
       show_tracking_train_stat( stdout );
 #endif

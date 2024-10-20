@@ -1264,6 +1264,7 @@ void *conslt_cbtc_state ( TINY_TRAIN_STATE_PTR pT, const CBTC_CMDS_INFOS kind, v
   return r;
 }
 
+#if 0
 void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
   assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.1;
@@ -1292,8 +1293,8 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
   }
   return NULL;
 }
-#if 0
-void *_pth_emit_cbtc_ctrl_cmds ( void *arg ) {
+#else
+void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {  
   assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.1;
   TINY_COMM_PROF_PTR pcomm_threads_prof = (TINY_COMM_PROF_PTR)arg;
@@ -1311,11 +1312,26 @@ void *_pth_emit_cbtc_ctrl_cmds ( void *arg ) {
     } else {
       int i = (int)SC801;
       while( i < END_OF_SCs ) {
+#if 0
 	const TINY_SOCK_DESC sd_train_info = pcomm_threads_prof->cbtc.cmd.train_cmd.descs[i];
+#else
+	assert( pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i] );
+	const TINY_SOCK_DESC sd_train_info = pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i]->d_send_train_cmd;
+#endif
 	if( sd_train_info > -1 ) {
+	  const int sendsiz_traincmd = sizeof(pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i]->send);
+#ifdef CHK_STRICT_CONSISTENCY
+	  {
+	    unsigned char *pmsg_buf = NULL;
+	    int siz = -1;	  
+	    pmsg_buf = sock_send_buf_attached( psocks_cbtc_cmds, sd_train_info, &siz ); // socks_cbi_ctrl: psocks, sd_cbi_ctrl: pdescs.
+	    assert( pmsg_buf == (unsigned char *)&pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i]->send );
+	    assert( siz >= sendsiz_traincmd );
+	  }
+#endif // CHK_STRICT_CONSISTENCY
 	  int n = -1;
-	  n = sock_send_ready( psocks_cbtc_cmds, pcomm_threads_prof->cbtc.cmd.train_cmd.descs[i], ATS2OC_MSGSIZE );
-	  assert( n == ATS2OC_MSGSIZE );
+	  n = sock_send_ready( psocks_cbtc_cmds, sd_train_info, sendsiz_traincmd );
+	  assert( n == sendsiz_traincmd );
 	}
 	i++;
       }
