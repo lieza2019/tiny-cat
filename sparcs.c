@@ -4,27 +4,27 @@
 #include "sparcs.h"
 
 SC_CTRL_CMDSET SC_ctrl_cmds[END_OF_SCs] = {
-  {"SC801", {172, 21,  1, 1}, {UDP_BCAST_RECV_PORT_SC801_Train_command}},
-  {"SC802", {172, 21,  2, 1}, {UDP_BCAST_RECV_PORT_SC802_Train_command}},
-  {"SC803", {172, 21,  3, 1}, {UDP_BCAST_RECV_PORT_SC803_Train_command}},
-  {"SC804", {172, 21,  4, 1}, {UDP_BCAST_RECV_PORT_SC804_Train_command}},
-  {"SC805", {172, 21,  5, 1}, {UDP_BCAST_RECV_PORT_SC805_Train_command}},
-  {"SC806", {172, 21,  6, 1}, {UDP_BCAST_RECV_PORT_SC806_Train_command}},
-  {"SC807", {172, 21,  7, 1}, {UDP_BCAST_RECV_PORT_SC807_Train_command}},
-  {"SC808", {172, 21,  8, 1}, {UDP_BCAST_RECV_PORT_SC808_Train_command}},
-  {"SC809", {172, 21,  9, 1}, {UDP_BCAST_RECV_PORT_SC809_Train_command}},
-  {"SC810", {172, 21, 10, 1}, {UDP_BCAST_RECV_PORT_SC810_Train_command}},
-  {"SC811", {172, 21, 11, 1}, {UDP_BCAST_RECV_PORT_SC811_Train_command}},
-  {"SC812", {172, 21, 12, 1}, {UDP_BCAST_RECV_PORT_SC812_Train_command}},
-  {"SC813", {172, 21, 13, 1}, {UDP_BCAST_RECV_PORT_SC813_Train_command}},
-  {"SC814", {172, 21, 14, 1}, {UDP_BCAST_RECV_PORT_SC814_Train_command}},
-  {"SC815", {172, 21, 15, 1}, {UDP_BCAST_RECV_PORT_SC815_Train_command}},
-  {"SC816", {172, 21, 16, 1}, {UDP_BCAST_RECV_PORT_SC816_Train_command}},
-  {"SC817", {172, 21, 17, 1}, {UDP_BCAST_RECV_PORT_SC817_Train_command}},
-  {"SC818", {172, 21, 18, 1}, {UDP_BCAST_RECV_PORT_SC818_Train_command}},
-  {"SC819", {172, 21, 19, 1}, {UDP_BCAST_RECV_PORT_SC819_Train_command}},
-  {"SC820", {172, 21, 20, 1}, {UDP_BCAST_RECV_PORT_SC820_Train_command}},
-  {"SC821", {172, 21, 21, 1}, {UDP_BCAST_RECV_PORT_SC821_Train_command}}
+  {"SC801", {172, 21,  1, 1}, {{UDP_BCAST_RECV_PORT_SC801_Train_command}}},
+  {"SC802", {172, 21,  2, 1}, {{UDP_BCAST_RECV_PORT_SC802_Train_command}}},
+  {"SC803", {172, 21,  3, 1}, {{UDP_BCAST_RECV_PORT_SC803_Train_command}}},
+  {"SC804", {172, 21,  4, 1}, {{UDP_BCAST_RECV_PORT_SC804_Train_command}}},
+  {"SC805", {172, 21,  5, 1}, {{UDP_BCAST_RECV_PORT_SC805_Train_command}}},
+  {"SC806", {172, 21,  6, 1}, {{UDP_BCAST_RECV_PORT_SC806_Train_command}}},
+  {"SC807", {172, 21,  7, 1}, {{UDP_BCAST_RECV_PORT_SC807_Train_command}}},
+  {"SC808", {172, 21,  8, 1}, {{UDP_BCAST_RECV_PORT_SC808_Train_command}}},
+  {"SC809", {172, 21,  9, 1}, {{UDP_BCAST_RECV_PORT_SC809_Train_command}}},
+  {"SC810", {172, 21, 10, 1}, {{UDP_BCAST_RECV_PORT_SC810_Train_command}}},
+  {"SC811", {172, 21, 11, 1}, {{UDP_BCAST_RECV_PORT_SC811_Train_command}}},
+  {"SC812", {172, 21, 12, 1}, {{UDP_BCAST_RECV_PORT_SC812_Train_command}}},
+  {"SC813", {172, 21, 13, 1}, {{UDP_BCAST_RECV_PORT_SC813_Train_command}}},
+  {"SC814", {172, 21, 14, 1}, {{UDP_BCAST_RECV_PORT_SC814_Train_command}}},
+  {"SC815", {172, 21, 15, 1}, {{UDP_BCAST_RECV_PORT_SC815_Train_command}}},
+  {"SC816", {172, 21, 16, 1}, {{UDP_BCAST_RECV_PORT_SC816_Train_command}}},
+  {"SC817", {172, 21, 17, 1}, {{UDP_BCAST_RECV_PORT_SC817_Train_command}}},
+  {"SC818", {172, 21, 18, 1}, {{UDP_BCAST_RECV_PORT_SC818_Train_command}}},
+  {"SC819", {172, 21, 19, 1}, {{UDP_BCAST_RECV_PORT_SC819_Train_command}}},
+  {"SC820", {172, 21, 20, 1}, {{UDP_BCAST_RECV_PORT_SC820_Train_command}}},
+  {"SC821", {172, 21, 21, 1}, {{UDP_BCAST_RECV_PORT_SC821_Train_command}}}
 };
 SC_STAT_INFOSET SC_stat_infos[END_OF_SCs] = {
   {"SC801", {172, 21,  1, 1}, {UDP_BCAST_RECV_PORT_SC801_Train_information}},
@@ -99,24 +99,24 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTR
   int i;
   
   for( i = 0; i < TRAIN_COMMAND_ENTRIES_NUM; i++ )
-    if( (int)ntohs(pCs->train_command.send.train_cmd.entries[i].rakeID) == rakeID ) {
-      pE = &pCs->train_command.send.train_cmd.entries[i];
+    if( (int)ntohs(pCs->train_command.comm_prof.send.train_cmd.entries[i].rakeID) == rakeID ) {
+      pE = &pCs->train_command.comm_prof.send.train_cmd.entries[i];
       pCs->train_command.pTrain_stat[i] = pTs;
       pCs->train_command.expired[i] = FALSE;
       break;
     }
   if( pE ) {
     assert( i < TRAIN_COMMAND_ENTRIES_NUM );
-    assert( (int)ntohs(pCs->train_command.send.train_cmd.entries[i].rakeID) == rakeID );
+    assert( (int)ntohs(pCs->train_command.comm_prof.send.train_cmd.entries[i].rakeID) == rakeID );
     assert( pCs->train_command.pTrain_stat[i] );
     assert( pCs->train_command.pTrain_stat[i] == pTs );
     pCs->train_command.expired[i] = FALSE;   
   } else {
     int j;
     for( j = 0; j < pCs->train_command.frontier; j++ )
-      if( pCs->train_command.send.train_cmd.entries[j].rakeID == 0 ) {
+      if( pCs->train_command.comm_prof.send.train_cmd.entries[j].rakeID == 0 ) {
 	assert( pCs->train_command.expired[j] );
-	pE = &pCs->train_command.send.train_cmd.entries[j];
+	pE = &pCs->train_command.comm_prof.send.train_cmd.entries[j];
 	pCs->train_command.pTrain_stat[j] = pTs;
 	pCs->train_command.expired[j] = FALSE;
 	break;
@@ -125,9 +125,9 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTR
       assert( j == pCs->train_command.frontier );
       if( pCs->train_command.frontier < TRAIN_COMMAND_ENTRIES_NUM ) {
 	int f = pCs->train_command.frontier;
-	assert( pCs->train_command.send.train_cmd.entries[f].rakeID == 0 );
+	assert( pCs->train_command.comm_prof.send.train_cmd.entries[f].rakeID == 0 );
 	assert( pCs->train_command.expired[f] );
-	pE = &pCs->train_command.send.train_cmd.entries[f];
+	pE = &pCs->train_command.comm_prof.send.train_cmd.entries[f];
 	pCs->train_command.pTrain_stat[f] = pTs;
 	pCs->train_command.expired[f] = FALSE;
 	pCs->train_command.frontier++;
@@ -194,12 +194,12 @@ int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_P
       assert( pCs );
       int j;
       for( j = 0; j < TRAIN_COMMAND_ENTRIES_NUM; j++ ) {
-	if( pCs->train_command.send.train_cmd.entries[j].rakeID == 0 ) {
+	if( pCs->train_command.comm_prof.send.train_cmd.entries[j].rakeID == 0 ) {
 	  assert( pCs->train_command.expired[j] );
-	  TRAIN_CMD_RAKEID( pCs->train_command.send.train_cmd.entries[j], rakeID );
+	  TRAIN_CMD_RAKEID( pCs->train_command.comm_prof.send.train_cmd.entries[j], rakeID );
 	  pCs->train_command.pTrain_stat[j] = pTs;
 	  pCs->train_command.expired[j] = FALSE;
-	  es[i] = &pCs->train_command.send.train_cmd.entries[j];
+	  es[i] = &pCs->train_command.comm_prof.send.train_cmd.entries[j];
 	  if( j > pCs->train_command.frontier )
 	    pCs->train_command.frontier = j;
 	  assert( pCs->train_command.frontier < TRAIN_COMMAND_ENTRIES_NUM );
