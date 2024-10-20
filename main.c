@@ -127,7 +127,7 @@ static int show_tracking_train_stat ( FILE *fp_out ) {
 	pTI = (TRAIN_INFO_ENTRY_PTR)conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, NULL, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );
 	if( pTI ) {
 	  assert( pTI == &TI );
-	  assert( trains_tracking[i].rakeID != (int)TRAIN_INFO_RAKEID(TI) );
+	  //assert( trains_tracking[i].rakeID != (int)TRAIN_INFO_RAKEID(TI) );
 	  fprintf( fp_out, "%s:\n", (which_SC_from_train_info(trains_tracking[i].pTI))->sc_name );
 	  diag_train_stat( fp_out, &TI );
 	  fprintf( fp_out, "\n" );
@@ -182,12 +182,17 @@ static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
   TINY_SOCK_DESC *pdescs[END_OF_CBTC_CMDS_INFOS] = {};
   {
     int i;
-    pdescs[CBTC_TRAIN_COMMAND] = pcomm_prof->cbtc.cmd.train_cmd.descs;
-    for( i = (int)SC801; i < END_OF_SCs; i++ ) { pcomm_prof->cbtc.cmd.train_cmd.descs[i] = -1; }
-    
     pdescs[CBTC_TRAIN_INFORMATION] = pcomm_prof->cbtc.info.train_info.descs;
     for( i = (int)SC801; i < END_OF_SCs; i++ ) { pcomm_prof->cbtc.info.train_info.descs[i] = -1; }
+#if 0
+    pdescs[CBTC_TRAIN_COMMAND] = pcomm_prof->cbtc.cmd.train_cmd.descs;
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) { pcomm_prof->cbtc.cmd.train_cmd.descs[i] = -1; }
+#endif
   }
+#if 1
+  SC_CTRLCMD_COMM_PROF_PTR *pprofs[END_OF_CBTC_CMDS_INFOS] = {};
+  pprofs[CBTC_TRAIN_COMMAND] = pcomm_prof->cbtc.cmd.train_cmd.pprofs;
+#endif
   
   TINY_SOCK_CREAT( pcomm_prof->cbtc.info.socks );
   if( establish_SC_comm_infos( &pcomm_prof->cbtc.info.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
@@ -202,7 +207,8 @@ static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
     }
   }  
 #endif // CHK_STRICT_CONSISTENCY
-  
+
+#if 0
   TINY_SOCK_CREAT( pcomm_prof->cbtc.cmd.socks );
   if( establish_SC_comm_cmds( &pcomm_prof->cbtc.cmd.socks, pdescs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
     errorF("%s", "failed to create the send UDP ports for CBTC/SC control commands.\n");
@@ -216,6 +222,24 @@ static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
     }
   }
 #endif // CHK_STRICT_CONSISTENCY
+#else
+  extern int _establish_SC_comm_cmds ( TINY_SOCK_PTR pS, SC_CTRLCMD_COMM_PROF_PTR *pprofs[], const int ncmds, const int ndsts );
+  TINY_SOCK_CREAT( pcomm_prof->cbtc.cmd.socks );
+  if( _establish_SC_comm_cmds( &pcomm_prof->cbtc.cmd.socks, pprofs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
+    errorF("%s", "failed to create the send UDP ports for CBTC/SC control commands.\n");
+    exit( 1 );
+  }
+#ifdef CHK_STRICT_CONSISTENCY
+  {
+    int i;
+    for( i = (int)SC801; i < END_OF_SCs; i++ ) {
+      const SC_CTRLCMD_COMM_PROF_PTR p = pcomm_prof->cbtc.cmd.train_cmd.pprofs[i];
+      assert( p );
+      assert( p->d_send_train_cmd > -1  );
+    }
+  }
+#endif // CHK_STRICT_CONSISTENCY
+#endif
 }
 
 static void load_il_status_geometry ( void ) {

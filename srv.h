@@ -21,10 +21,10 @@ typedef struct tiny_comm_prof {
     struct {
       TINY_SOCK socks;
       struct {
-#if 1
+#if 0
 	TINY_SOCK_DESC descs[END_OF_SCs];
 #else
-	SC_CTRL_CMDPROF_PTR pprof[END_OF_SCs];
+	SC_CTRLCMD_COMM_PROF_PTR pprofs[END_OF_SCs];
 #endif
       } train_cmd;
     } cmd; // currently, for only Train command.
