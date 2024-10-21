@@ -1252,7 +1252,7 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
 	    {
 	      unsigned char *pmsg_buf = NULL;
 	      int siz = -1;
-	      pmsg_buf = sock_send_buf_attached( psocks_cbtc_cmds, sd_train_info, &siz ); // socks_cbi_ctrl: psocks, sd_cbi_ctrl: pdescs.
+	      pmsg_buf = sock_send_buf_attached( psocks_cbtc_cmds, sd_train_info, &siz );
 	      assert( pmsg_buf == (unsigned char *)&pprof_traincmd->send );
 	      assert( siz >= sendsiz_traincmd );
 	    }

@@ -1061,7 +1061,6 @@ int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   return r;
 }
 
-#if 1
 // psocks: socks_cbi_ctrl
 // pdescs: sd_cbi_ctrl
 void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, const int ndescs ) {
@@ -1076,18 +1075,19 @@ void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, co
   else {
     int i = (int)ATS2OC801;
     while( i < (int)END_OF_ATS2OC ) {
-      unsigned char *pmsg_buf = NULL;
-      int size = -1;
-      pmsg_buf = sock_send_buf_attached( psocks, pdescs[i], &size ); // socks_cbi_ctrl: psocks, sd_cbi_ctrl: pdescs.
 #ifdef CHK_STRICT_CONSISTENCY
-      assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
-      assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
+      {
+	unsigned char *pmsg_buf = NULL;
+	int size = -1;
+	pmsg_buf = sock_send_buf_attached( psocks, pdescs[i], &size ); // socks_cbi_ctrl: psocks, sd_cbi_ctrl: pdescs.
+	assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
+	assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
+      }
 #endif // CHK_STRICT_CONSISTENCY
       {
-	const uint8_t dstID = 101 + i;
+	const uint8_t dst_oc_id = 101 + i;
 	NXNS_HEADER_PTR phdr = NULL;
-	int n = -1;
-	assert( (OC_ID)((int)dstID - 101) == (OC_ID)i );
+	assert( (OC_ID)((int)dst_oc_id - 101) == (OC_ID)i );
 	if( !cbi_stat_ATS2OC[i].ats2oc.nx.emission_start )
 	  cbi_stat_ATS2OC[i].ats2oc.nx.emission_start = time( NULL );
 	phdr = &cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf.header;
@@ -1096,11 +1096,14 @@ void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, co
 	  uint32_t seq = cbi_stat_ATS2OC[i].ats2oc.nx.seq;
 	  seq++;
 	  seq = (seq %= NX_SEQNUM_MAX_PLUS1) ? seq : 1;
-	  mk_nxns_header( phdr, cbi_stat_ATS2OC[i].ats2oc.nx.emission_start, 99, dstID, seq );
+	  mk_nxns_header( phdr, cbi_stat_ATS2OC[i].ats2oc.nx.emission_start, 99, dst_oc_id, seq );
 	  cbi_stat_ATS2OC[i].ats2oc.nx.seq = seq;
 	}
-	n = sock_send_ready( psocks, pdescs[i], ATS2OC_MSGSIZE ); // socks_cbi_ctrl: socks, sd_cbi_ctrl: pdescs.
-	assert( n == ATS2OC_MSGSIZE );
+	{
+	  int n = -1;
+	  n = sock_send_ready( psocks, pdescs[i], ATS2OC_MSGSIZE ); // socks_cbi_ctrl: socks, sd_cbi_ctrl: pdescs.
+	  assert( n == ATS2OC_MSGSIZE );
+	}
       }
       i++;
     }
@@ -1110,7 +1113,6 @@ void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, co
     assert( !r_mutex_sendbuf );
   }
 }
-#endif
 
 void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
   assert( fp_out );
