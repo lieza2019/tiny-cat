@@ -67,9 +67,16 @@ struct send_buf_traincmd {
   TRAIN_COMMAND train_cmd;
 };
 typedef struct sc_ctrlcmd_comm_prof {
+  SC_ID dest_sc_id;
   const unsigned short dst_port;
-  const IP_ADDR_DESC dst_ipaddr;
+  IP_ADDR_DESC dst_ipaddr;
   TINY_SOCK_DESC d_send_train_cmd;
+#if 1
+  struct {
+    time_t emission_start;
+    uint32_t seq;
+  } nx;
+#endif
   struct send_buf_traincmd send;
 } SC_CTRLCMD_COMM_PROF, *SC_CTRLCMD_COMM_PROF_PTR;
 typedef struct sc_ctrl_cmdprof {

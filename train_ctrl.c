@@ -658,6 +658,7 @@ static SC_CTRL_CMDSET_PTR willing_to_send_traincmd ( TINY_SOCK_PTR pS, SC_ID sc_
   pSC = &SC_ctrl_cmds[(int)sc_id];
   assert( pSC );
   {
+    assert( pSC->train_command.comm_prof.dest_sc_id == sc_id );
     IP_ADDR_DESC bcast_dst_ipaddr = SC_ctrl_cmds[(int)sc_id].sc_ipaddr;
     assert( bcast_dst_ipaddr.oct_1st != 0 );
     assert( bcast_dst_ipaddr.oct_2nd != 0 );
@@ -665,11 +666,12 @@ static SC_CTRL_CMDSET_PTR willing_to_send_traincmd ( TINY_SOCK_PTR pS, SC_ID sc_
     assert( bcast_dst_ipaddr.oct_4th != 0 );
     bcast_dst_ipaddr.oct_3rd = 255;
     bcast_dst_ipaddr.oct_4th = 255;
+    pSC->train_command.comm_prof.dst_ipaddr = bcast_dst_ipaddr;
     
     pSC->train_command.comm_prof.d_send_train_cmd = -1;
     {
       TINY_SOCK_DESC d = -1;
-      if( (d = creat_sock_sendnx( pS, pSC->train_command.comm_prof.dst_port, TRUE, &bcast_dst_ipaddr )) < 0 ) {
+      if( (d = creat_sock_sendnx( pS, pSC->train_command.comm_prof.dst_port, TRUE, &pSC->train_command.comm_prof.dst_ipaddr )) < 0 ) {
 	errorF( "failed to create the socket to send Train command toward SC%d.\n", SC_ID_CONV_2_INT(sc_id) );
 	goto exit;
       }
@@ -1312,27 +1314,53 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
     } else {
       int i = (int)SC801;
       while( i < END_OF_SCs ) {
+	// for Train commands.
+	SC_CTRLCMD_COMM_PROF_PTR pprof_traincmd = pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i];
+	if( pprof_traincmd ) {
 #if 0
-	const TINY_SOCK_DESC sd_train_info = pcomm_threads_prof->cbtc.cmd.train_cmd.descs[i];
+	  const TINY_SOCK_DESC sd_train_info = pcomm_threads_prof->cbtc.cmd.train_cmd.descs[i];
 #else
-	assert( pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i] );
-	const TINY_SOCK_DESC sd_train_info = pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i]->d_send_train_cmd;
+	  assert( pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i] );
+	  const TINY_SOCK_DESC sd_train_info = pprof_traincmd->d_send_train_cmd;
 #endif
-	if( sd_train_info > -1 ) {
-	  const int sendsiz_traincmd = sizeof(pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i]->send);
+	  if( sd_train_info > -1 ) {
+	    const int sendsiz_traincmd = sizeof( pprof_traincmd->send );
 #ifdef CHK_STRICT_CONSISTENCY
-	  {
-	    unsigned char *pmsg_buf = NULL;
-	    int siz = -1;	  
-	    pmsg_buf = sock_send_buf_attached( psocks_cbtc_cmds, sd_train_info, &siz ); // socks_cbi_ctrl: psocks, sd_cbi_ctrl: pdescs.
-	    assert( pmsg_buf == (unsigned char *)&pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i]->send );
-	    assert( siz >= sendsiz_traincmd );
-	  }
+	    {
+	      unsigned char *pmsg_buf = NULL;
+	      int siz = -1;
+	      pmsg_buf = sock_send_buf_attached( psocks_cbtc_cmds, sd_train_info, &siz ); // socks_cbi_ctrl: psocks, sd_cbi_ctrl: pdescs.
+	      assert( pmsg_buf == (unsigned char *)&pprof_traincmd->send );
+	      assert( siz >= sendsiz_traincmd );
+	    }
 #endif // CHK_STRICT_CONSISTENCY
-	  int n = -1;
-	  n = sock_send_ready( psocks_cbtc_cmds, sd_train_info, sendsiz_traincmd );
-	  assert( n == sendsiz_traincmd );
+#if 1
+	    {
+	      const uint8_t dst_sc_id = 101 + i;
+	      NXNS_HEADER_PTR phdr = NULL;
+	      
+	      assert( (OC_ID)((int)dst_sc_id - 101) == (OC_ID)i );
+	      if( !pprof_traincmd->nx.emission_start )
+		pprof_traincmd->nx.emission_start = time( NULL );
+	      phdr = &pprof_traincmd->send.header;
+	      assert( phdr );
+	      {
+		uint32_t seq = pprof_traincmd->nx.seq;
+		seq++;
+		seq = (seq %= NX_SEQNUM_MAX_PLUS1) ? seq : 1;
+		mk_nxns_header( phdr, pprof_traincmd->nx.emission_start, 99, dst_sc_id, seq );
+		pprof_traincmd->nx.seq = seq;
+	      }
+	      {
+		int n = -1;
+		n = sock_send_ready( psocks_cbtc_cmds, sd_train_info, sendsiz_traincmd );
+		assert( n == sendsiz_traincmd );
+	      }
+	    }
+#endif
+	  }
 	}
+	// end of Train commands.
 	i++;
       }
       if( sock_send( psocks_cbtc_cmds ) < 0 ) {
