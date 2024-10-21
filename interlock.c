@@ -1062,24 +1062,6 @@ int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 }
 
 #if 1
-static void mk_nxns_header( NXNS_HEADER_PTR phdr, const time_t emission_start, const uint8_t msgType, const uint8_t dstID, const uint32_t seq ) {
-  assert( phdr );
-  NX_HEADER_CREAT( NEXUS_HDR(*phdr) );
-  NS_USRHDR_CREAT( NS_USRHDR(*phdr) );
-#ifdef CHK_STRICT_CONSISTENCY
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[0] == 'N' );
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[1] == 'U' );
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[2] == 'X' );
-  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[3] == 'M' );
-#endif // CHK_STRICT_CONSISTENCY
-  
-  phdr->nx_hdr.V_SEQ_versionSequenceNum = htonl( (uint32_t)emission_start );
-  phdr->nx_hdr.SEQ_sequenceNum = htonl( seq );
-  phdr->nx_hdr.TCD_transactionCode = htons( (uint16_t)msgType );
-  phdr->ns_usr_hdr.msgType = msgType;
-  phdr->ns_usr_hdr.dstID = dstID;
-}
-
 // psocks: socks_cbi_ctrl
 // pdescs: sd_cbi_ctrl
 void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, const int ndescs ) {

@@ -319,6 +319,24 @@ int sock_recv ( TINY_SOCK_PTR pS ) {
   return r;
 }
 
+void mk_nxns_header( NXNS_HEADER_PTR phdr, const time_t emission_start, const uint8_t msgType, const uint8_t dstID, const uint32_t seq ) {
+  assert( phdr );
+  NX_HEADER_CREAT( NEXUS_HDR(*phdr) );
+  NS_USRHDR_CREAT( NS_USRHDR(*phdr) );
+#ifdef CHK_STRICT_CONSISTENCY
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[0] == 'N' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[1] == 'U' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[2] == 'X' );
+  assert( NEXUS_HDR(*phdr).H_TYPE_headerType[3] == 'M' );
+#endif // CHK_STRICT_CONSISTENCY
+  
+  phdr->nx_hdr.V_SEQ_versionSequenceNum = htonl( (uint32_t)emission_start );
+  phdr->nx_hdr.SEQ_sequenceNum = htonl( seq );
+  phdr->nx_hdr.TCD_transactionCode = htons( (uint16_t)msgType );
+  phdr->ns_usr_hdr.msgType = msgType;
+  phdr->ns_usr_hdr.dstID = dstID;
+}
+
 static void envelop_with_the_header ( NXNS_HEADER_PTR phdr, unsigned char *psendto_buf, const int sendto_bufsiz ) {
   assert( phdr );
   assert( psendto_buf );
@@ -436,3 +454,4 @@ int sock_send ( TINY_SOCK_PTR pS ) {
     r = ((r > 0) ? r : 1) * -1;
   return r;
 }
+

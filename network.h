@@ -211,6 +211,8 @@ typedef struct NX_NS_header {
   }								\
 )
 
+extern void mk_nxns_header( NXNS_HEADER_PTR phdr, const time_t emission_start, const uint8_t msgType, const uint8_t dstID, const uint32_t seq );
+
 extern int sock_recv ( TINY_SOCK_PTR pS );
 extern int sock_send0 ( TINY_SOCK_PTR pS, NXNS_HEADER_PTR pnxns_hdr );
 extern int sock_send ( TINY_SOCK_PTR pS );

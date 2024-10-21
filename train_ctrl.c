@@ -1334,11 +1334,9 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
 	      assert( siz >= sendsiz_traincmd );
 	    }
 #endif // CHK_STRICT_CONSISTENCY
-#if 1
 	    {
 	      const uint8_t dst_sc_id = 101 + i;
 	      NXNS_HEADER_PTR phdr = NULL;
-	      
 	      assert( (OC_ID)((int)dst_sc_id - 101) == (OC_ID)i );
 	      if( !pprof_traincmd->nx.emission_start )
 		pprof_traincmd->nx.emission_start = time( NULL );
@@ -1357,7 +1355,6 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
 		assert( n == sendsiz_traincmd );
 	      }
 	    }
-#endif
 	  }
 	}
 	// end of Train commands.
