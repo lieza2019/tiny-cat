@@ -177,7 +177,7 @@ static void creat_comm_threads ( TINY_COMM_PROF_PTR pcomm_threads_prof ) {
   }
 }
 
-static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
+static void establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
   assert( pcomm_prof );
   TINY_SOCK_DESC *pdescs[END_OF_CBTC_CMDS_INFOS] = {};
   {
@@ -203,7 +203,7 @@ static void _establish_SC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
 #endif // CHK_STRICT_CONSISTENCY
   
   TINY_SOCK_CREAT( pcomm_prof->cbtc.cmd.socks );
-  if( _establish_SC_comm_cmds( &pcomm_prof->cbtc.cmd.socks, pprofs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
+  if( establish_SC_comm_cmds( &pcomm_prof->cbtc.cmd.socks, pprofs, (int)END_OF_CBTC_CMDS_INFOS, (int)END_OF_SCs ) < 0 ) {
     errorF("%s", "failed to create the send UDP ports for CBTC/SC control commands.\n");
     exit( 1 );
   }
@@ -333,16 +333,8 @@ int main ( void ) {
   
   tzset();
   cons_il_obj_tables();
-
-  TINY_SOCK_CREAT( socks_srvstat );  
-#if 0
-  if( ! establish_SC_comm( &socks_srvstat ) ) {
-    errorF("%s", "failed to create the recv/send UDP ports for Train information and Train command respectively.\n");
-    exit( 1 );
-  }
-#else
-  _establish_SC_comm( &comm_threads_prof );
-#endif
+  
+  establish_SC_comm( &comm_threads_prof );
   establish_OC_comm( &comm_threads_prof );
   
 #if 0
@@ -369,7 +361,8 @@ int main ( void ) {
   }
   exit( 0 );
 #endif
-  
+
+  TINY_SOCK_CREAT( socks_srvstat );
   if( ! launch_msg_srv_stat( &socks_srvstat, &sd_send_srvbeat, &sd_send_srvstat ) ) {
     errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
     exit( 1 );

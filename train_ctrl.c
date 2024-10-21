@@ -685,35 +685,7 @@ static SC_CTRL_CMDSET_PTR willing_to_send_traincmd ( TINY_SOCK_PTR pS, SC_ID sc_
   return r;
 }
 
-static int establish_SC_comm_traincmd ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
-  assert( pS );
-  assert( pdescs );
-  assert( ndescs > 0 );
-  BOOL r = FALSE;
-  
-  int i = (int)SC801;
-  while( i < (int)END_OF_SCs ) {
-    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
-    if( i < ndescs ) {
-      SC_CTRL_CMDSET_PTR p = NULL;
-      expire_all_train_cmds();
-      if(! (p = willing_to_send_traincmd( pS, (SC_ID)i )) )
-	goto exit;
-      assert( p );
-      assert( p->train_command.comm_prof.d_send_train_cmd > -1 );
-      assert( pdescs );
-      pdescs[i] = p->train_command.comm_prof.d_send_train_cmd;
-      i++;
-    } else
-      goto exit;
-  }
-  assert( i == END_OF_SCs );
-  assert( i <= ndescs );
-  r = i;
- exit:
-  return r;
-}
-static int _establish_SC_comm_traincmd ( TINY_SOCK_PTR pS, SC_CTRLCMD_COMM_PROF_PTR *pprof_traincmds, const int ndsts ) { // *****
+static int establish_SC_comm_traincmd ( TINY_SOCK_PTR pS, SC_CTRLCMD_COMM_PROF_PTR *pprof_traincmds, const int ndsts ) { // *****
   assert( pS );
   assert( pprof_traincmds );
   assert( ndsts > 0 );
@@ -812,22 +784,7 @@ int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const 
   return r;
 }
 
-int establish_SC_comm_cmds ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs ) {
-  assert( pS );
-  assert( pdescs );
-  assert( ninfos >= (int)END_OF_CBTC_CMDS_INFOS );
-  assert( ndescs > 0 );
-  int r = 1;
-  
-  assert( (int)CBTC_TRAIN_COMMAND < ninfos );
-  if( establish_SC_comm_traincmd( pS, pdescs[CBTC_TRAIN_COMMAND], ndescs ) < 0 ) {
-    r *= -1;
-    goto exit;
-  }
- exit:
-  return r;
-}
-int _establish_SC_comm_cmds ( TINY_SOCK_PTR pS, SC_CTRLCMD_COMM_PROF_PTR *pprofs[], const int ncmds, const int ndsts ) { // *****
+int establish_SC_comm_cmds ( TINY_SOCK_PTR pS, SC_CTRLCMD_COMM_PROF_PTR *pprofs[], const int ncmds, const int ndsts ) { // *****
   assert( pS );
   assert( pprofs );
   assert( ncmds >= (int)END_OF_CBTC_CMDS_INFOS ); 
@@ -835,7 +792,7 @@ int _establish_SC_comm_cmds ( TINY_SOCK_PTR pS, SC_CTRLCMD_COMM_PROF_PTR *pprofs
   int r = 1;
   
   assert( (int)CBTC_TRAIN_COMMAND < ncmds );
-  if( _establish_SC_comm_traincmd( pS, pprofs[CBTC_TRAIN_COMMAND], ndsts ) < 0 ) {
+  if( establish_SC_comm_traincmd( pS, pprofs[CBTC_TRAIN_COMMAND], ndsts ) < 0 ) {
     r *= -1;
     goto exit;
   }
