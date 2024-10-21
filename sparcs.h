@@ -60,11 +60,15 @@ typedef enum SC_ID {
 
 struct send_buf_traincmd {
   NXNS_HEADER header;
-  uint8_t flgs_1;
-  uint8_t spare_1;
-  uint8_t spare_2;
-  uint8_t spare_3;
-  TRAIN_COMMAND train_cmd;
+  union {
+    struct {
+      //uint8_t flgs_1;
+      //uint8_t spare_1;
+      //uint8_t spare_2;
+      //uint8_t spare_3;
+      TRAIN_COMMAND spol;
+    } train_cmd;
+  } u;
 };
 typedef struct sc_ctrlcmd_comm_prof {
   SC_ID dest_sc_id;
