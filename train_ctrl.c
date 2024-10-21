@@ -1266,36 +1266,6 @@ void *conslt_cbtc_state ( TINY_TRAIN_STATE_PTR pT, const CBTC_CMDS_INFOS kind, v
   return r;
 }
 
-#if 0
-void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
-  assert( arg );
-  const useconds_t interval = 1000 * 1000 * 0.1;
-  TINY_SOCK_PTR psocks_cbtc_cmds = (TINY_SOCK_PTR)arg;
-  assert( psocks_cbtc_cmds );
-  
-  while( TRUE ) {
-    assert( psocks_cbtc_cmds );
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      if( sock_send( psocks_cbtc_cmds ) < 0 ) {
-	errorF( "%s", "failed to send cbtc control commands toward the SCs.\n" );
-      }
-      r_mutex = -1;
-      r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-      assert( !r_mutex );
-    }
-    {
-      int r = -1;
-      r = usleep( interval );
-      assert( !r );
-    }
-  }
-  return NULL;
-}
-#else
 void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {  
   assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.1;
@@ -1317,12 +1287,8 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
 	// for Train commands.
 	SC_CTRLCMD_COMM_PROF_PTR pprof_traincmd = pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i];
 	if( pprof_traincmd ) {
-#if 0
-	  const TINY_SOCK_DESC sd_train_info = pcomm_threads_prof->cbtc.cmd.train_cmd.descs[i];
-#else
 	  assert( pcomm_threads_prof->cbtc.cmd.train_cmd.pprofs[i] );
 	  const TINY_SOCK_DESC sd_train_info = pprof_traincmd->d_send_train_cmd;
-#endif
 	  if( sd_train_info > -1 ) {
 	    const int sendsiz_traincmd = sizeof( pprof_traincmd->send );
 #ifdef CHK_STRICT_CONSISTENCY
@@ -1375,7 +1341,6 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
   }
   return NULL;
 }
-#endif
 
 void *pth_reveal_cbtc_status ( void *arg ) {
   assert( arg );
