@@ -461,15 +461,25 @@ int main ( void ) {
 	}
       }
       
-#if 0
+#if 1
       {
 	int i;
 	for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ ) {
 	  if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
 	    TINY_TRAIN_STATE_PTR pT = &trains_tracking[i];
 	    assert( pT );
-	    if( pT->rakeID == 9 ) {
-	      change_train_state_skip_next_stop( pT, TRUE, FALSE );
+	    if( pT->rakeID == 1 ) {
+	      int r_mutex = -1;
+	      r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+	      if( r_mutex ) {
+		assert( FALSE );
+	      } else {
+		change_train_state_skip_next_stop( pT, TRUE, TRUE );
+		change_train_state_ATO_dept_cmd( pT, TRUE, TRUE );
+		r_mutex = -1;
+		r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+		assert( !r_mutex );
+	      }
 	    }
 	  }
 	}
