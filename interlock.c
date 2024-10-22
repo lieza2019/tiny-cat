@@ -451,7 +451,9 @@ static CBI_CTRL_STAT_INFO_PTR willing_2_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC_
   CBI_CTRL_STAT_INFO_PTR pOC = NULL;
   pOC = &cbi_stat_ATS2OC[(int)msg_id];
   assert( pOC );
+
   {
+    assert( pOC->ats2oc.dest_oc_id == msg_id );
     IP_ADDR_DESC bcast_dst_ipaddr = pOC->oc_ipaddr[(int)msg_id];
     assert( bcast_dst_ipaddr.oct_1st != 0 );
     assert( bcast_dst_ipaddr.oct_2nd != 0 );
@@ -459,11 +461,12 @@ static CBI_CTRL_STAT_INFO_PTR willing_2_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC_
     assert( bcast_dst_ipaddr.oct_4th != 0 );
     bcast_dst_ipaddr.oct_3rd = 255;
     bcast_dst_ipaddr.oct_4th = 255;
+    pOC->ats2oc.dst_ipaddr = bcast_dst_ipaddr;
     
     pOC->ats2oc.d_sent_cbi_ctrl = -1;
     {
       TINY_SOCK_DESC d = -1;
-      if( (d = creat_sock_sendnx( pS, pOC->ats2oc.dst_port, TRUE, &bcast_dst_ipaddr )) < 0 ) {
+      if( (d = creat_sock_sendnx( pS, pOC->ats2oc.dst_port, TRUE, &pOC->ats2oc.dst_ipaddr )) < 0 ) {
 	errorF( "failed to create the socket to send CBI control commands  toward OC%d.\n", OC_ID_CONV2INT(msg_id) );
 	goto exit;
       }

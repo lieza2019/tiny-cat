@@ -138,8 +138,9 @@ typedef struct cbi_ctrl_stat_infoset {
   IP_ADDR_DESC oc_ipaddr[END_OF_OCs];
   uint16_t LNN[END_OF_OCs];
   struct {
-    OC_ID dest_oc_id;
+    ATS2OC_CMD dest_oc_id;
     const unsigned short dst_port;
+    IP_ADDR_DESC dst_ipaddr;
     TINY_SOCK_DESC d_sent_cbi_ctrl;
     struct {
       time_t emission_start;
