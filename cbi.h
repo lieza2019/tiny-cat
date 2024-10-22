@@ -133,10 +133,22 @@ typedef struct recv_buf_cbi_stat SENT_BUF_CBI_CTRL;
 typedef struct recv_buf_cbi_stat *SENT_BUF_CBI_CTRL_PTR;
 extern RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 
+typedef struct cbi_ctrl_stat_comm_prof {
+  ATS2OC_CMD dest_oc_id;
+  const unsigned short dst_port;
+  IP_ADDR_DESC dst_ipaddr;
+  TINY_SOCK_DESC d_sent_cbi_ctrl;
+  struct {
+    time_t emission_start;
+    uint32_t seq;
+  } nx;
+  SENT_BUF_CBI_CTRL sent;
+} CBI_CTRL_STAT_COMM_PROF, *CBI_CTRL_STAT_COMM_PROF_PTR;
 typedef struct cbi_ctrl_stat_infoset {
   char oc_name[END_OF_OCs][6];
   IP_ADDR_DESC oc_ipaddr[END_OF_OCs];
   uint16_t LNN[END_OF_OCs];
+#if 0
   struct {
     ATS2OC_CMD dest_oc_id;
     const unsigned short dst_port;
@@ -148,6 +160,9 @@ typedef struct cbi_ctrl_stat_infoset {
     } nx;
     SENT_BUF_CBI_CTRL sent;
   } ats2oc;
+#else
+  CBI_CTRL_STAT_COMM_PROF ats2oc;
+#endif
   struct {
     const unsigned short dst_port;
     TINY_SOCK_DESC d_recv_cbi_stat;

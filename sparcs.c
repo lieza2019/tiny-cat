@@ -102,7 +102,7 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTR
     if( (int)ntohs(pCs->train_command.comm_prof.send.u.train_cmd.spol.entries[i].rakeID) == rakeID ) {
       pE = &pCs->train_command.comm_prof.send.u.train_cmd.spol.entries[i];
       pCs->train_command.attribs.u.train_cmd.pTrain_stat[i] = pTs;
-      pCs->train_command.expired[i] = FALSE;
+      pCs->train_command.attribs.u.train_cmd.expired[i] = FALSE;
       break;
     }
   if( pE ) {
@@ -110,15 +110,15 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTR
     assert( (int)ntohs(pCs->train_command.comm_prof.send.u.train_cmd.spol.entries[i].rakeID) == rakeID );
     assert( pCs->train_command.attribs.u.train_cmd.pTrain_stat[i] );
     assert( pCs->train_command.attribs.u.train_cmd.pTrain_stat[i] == pTs );
-    pCs->train_command.expired[i] = FALSE;   
+    pCs->train_command.attribs.u.train_cmd.expired[i] = FALSE;   
   } else {
     int j;
     for( j = 0; j < pCs->train_command.attribs.u.train_cmd.frontier; j++ )
       if( pCs->train_command.comm_prof.send.u.train_cmd.spol.entries[j].rakeID == 0 ) {
-	assert( pCs->train_command.expired[j] );
+	assert( pCs->train_command.attribs.u.train_cmd.expired[j] );
 	pE = &pCs->train_command.comm_prof.send.u.train_cmd.spol.entries[j];
 	pCs->train_command.attribs.u.train_cmd.pTrain_stat[j] = pTs;
-	pCs->train_command.expired[j] = FALSE;
+	pCs->train_command.attribs.u.train_cmd.expired[j] = FALSE;
 	break;
       }
     if( !pE ) {
@@ -126,10 +126,10 @@ static TRAIN_COMMAND_ENTRY_PTR lkup_train_cmd ( TINY_TRAIN_STATE_PTR pTs, SC_CTR
       if( pCs->train_command.attribs.u.train_cmd.frontier < TRAIN_COMMAND_ENTRIES_NUM ) {
 	int f = pCs->train_command.attribs.u.train_cmd.frontier;
 	assert( pCs->train_command.comm_prof.send.u.train_cmd.spol.entries[f].rakeID == 0 );
-	assert( pCs->train_command.expired[f] );
+	assert( pCs->train_command.attribs.u.train_cmd.expired[f] );
 	pE = &pCs->train_command.comm_prof.send.u.train_cmd.spol.entries[f];
 	pCs->train_command.attribs.u.train_cmd.pTrain_stat[f] = pTs;
-	pCs->train_command.expired[f] = FALSE;
+	pCs->train_command.attribs.u.train_cmd.expired[f] = FALSE;
 	pCs->train_command.attribs.u.train_cmd.frontier++;
       } else {
 	if( standby_train_cmds.pptl )
@@ -195,10 +195,10 @@ int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_P
       int j;
       for( j = 0; j < TRAIN_COMMAND_ENTRIES_NUM; j++ ) {
 	if( pCs->train_command.comm_prof.send.u.train_cmd.spol.entries[j].rakeID == 0 ) {
-	  assert( pCs->train_command.expired[j] );
+	  assert( pCs->train_command.attribs.u.train_cmd.expired[j] );
 	  TRAIN_CMD_RAKEID( pCs->train_command.comm_prof.send.u.train_cmd.spol.entries[j], rakeID );
 	  pCs->train_command.attribs.u.train_cmd.pTrain_stat[j] = pTs;
-	  pCs->train_command.expired[j] = FALSE;
+	  pCs->train_command.attribs.u.train_cmd.expired[j] = FALSE;
 	  es[i] = &pCs->train_command.comm_prof.send.u.train_cmd.spol.entries[j];
 	  if( j > pCs->train_command.attribs.u.train_cmd.frontier )
 	    pCs->train_command.attribs.u.train_cmd.frontier = j;

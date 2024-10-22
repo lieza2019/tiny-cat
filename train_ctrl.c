@@ -532,7 +532,7 @@ static void expire_all_train_cmds ( void ) {
   for( i = 0; i < END_OF_SCs; i++ ) {
     int j;
     for( j = 0; j < TRAIN_COMMAND_ENTRIES_NUM; j++ )
-      SC_ctrl_cmds[i].train_command.expired[j] = TRUE;
+      SC_ctrl_cmds[i].train_command.attribs.u.train_cmd.expired[j] = TRUE;
   }
 }
 
@@ -838,7 +838,7 @@ static void purge_train_cmds ( void ) {
   for ( i = 0; i < END_OF_SCs; i++ ) {
     int j;
     for( j = 0; j < TRAIN_COMMAND_ENTRIES_NUM; j++ )
-      if( SC_ctrl_cmds[i].train_command.expired[j] ) {
+      if( SC_ctrl_cmds[i].train_command.attribs.u.train_cmd.expired[j] ) {
 	TRAIN_CMD_RAKEID( SC_ctrl_cmds[i].train_command.comm_prof.send.u.train_cmd.spol.entries[j], 0 );
       }
   }
@@ -853,7 +853,7 @@ static void fine_train_cmds ( void ) {
     int j = 0;
     while( j < TRAIN_COMMAND_ENTRIES_NUM ) {
       if( pSc->train_command.comm_prof.send.u.train_cmd.spol.entries[j].rakeID == 0 ) {
-	assert( pSc->train_command.expired[j] );
+	assert( pSc->train_command.attribs.u.train_cmd.expired[j] );
 	if( maiden < 0 )
 	  maiden = j;
 	j++;
@@ -870,10 +870,10 @@ static void fine_train_cmds ( void ) {
 	    assert( FALSE );
 	  pSc->train_command.attribs.u.train_cmd.pTrain_stat[maiden] = pTs;
 	}
-	pSc->train_command.expired[maiden] = FALSE;
+	pSc->train_command.attribs.u.train_cmd.expired[maiden] = FALSE;
 	
 	TRAIN_CMD_RAKEID( pSc->train_command.comm_prof.send.u.train_cmd.spol.entries[j], 0 );
-	pSc->train_command.expired[j] = TRUE;
+	pSc->train_command.attribs.u.train_cmd.expired[j] = TRUE;
 	j = maiden + 1;
 	maiden = -1;
       } else
