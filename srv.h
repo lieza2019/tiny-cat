@@ -10,7 +10,11 @@ typedef struct tiny_comm_prof {
   struct {
     struct {
       TINY_SOCK socks;
+#if 0
       TINY_SOCK_DESC descs[END_OF_ATS2OC];
+#else
+      CBI_CTRL_STAT_COMM_PROF_PTR pprofs[END_OF_ATS2OC];
+#endif
     } ctrl;
     struct {
       TINY_SOCK socks;

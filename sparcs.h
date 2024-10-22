@@ -73,8 +73,8 @@ struct send_buf_traincmd {
 typedef struct sc_ctrlcmd_comm_prof {
   SC_ID dest_sc_id;
   const unsigned short dst_port;
-  IP_ADDR_DESC dst_ipaddr;
   TINY_SOCK_DESC d_send_train_cmd;
+  IP_ADDR_DESC dst_ipaddr;
   struct {
     time_t emission_start;
     uint32_t seq;
@@ -152,5 +152,5 @@ extern int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_
 extern SC_CTRL_CMDSET_PTR emit_train_cmd( TINY_SOCK_PTR pS, SC_ID sc_id );
 extern SC_STAT_INFOSET_PTR snif_train_info( TINY_SOCK_PTR pS, SC_ID sc_id );
 
-extern int establish_SC_comm_cmds ( TINY_SOCK_PTR pS, SC_CTRLCMD_COMM_PROF_PTR *pprofs[], const int ncmds, const int ndsts );
+extern int establish_SC_comm_cmds ( TINY_SOCK_PTR pS, SC_CTRLCMD_COMM_PROF_PTR *pprofs[], const int nprofs, const int ndsts );
 #endif //SPARCS_H_INCLUDED

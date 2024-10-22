@@ -136,8 +136,8 @@ extern RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 typedef struct cbi_ctrl_stat_comm_prof {
   ATS2OC_CMD dest_oc_id;
   const unsigned short dst_port;
-  IP_ADDR_DESC dst_ipaddr;
   TINY_SOCK_DESC d_sent_cbi_ctrl;
+  IP_ADDR_DESC dst_ipaddr;
   struct {
     time_t emission_start;
     uint32_t seq;

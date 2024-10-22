@@ -478,6 +478,40 @@ static CBI_CTRL_STAT_INFO_PTR willing_2_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC_
  exit:
   return r;
 }
+static CBI_CTRL_STAT_COMM_PROF_PTR _willing_2_send_OC_ctrl ( TINY_SOCK_PTR pS, ATS2OC_CMD msg_id ) { // *****
+  assert( pS );
+  assert( (msg_id >= ATS2OC801) && (msg_id < END_OF_ATS2OC) );
+  CBI_CTRL_STAT_COMM_PROF_PTR r = NULL;
+  
+  CBI_CTRL_STAT_INFO_PTR pOC = NULL;
+  pOC = &cbi_stat_ATS2OC[(int)msg_id];
+  assert( pOC );
+  {
+    assert( pOC->ats2oc.dest_oc_id == msg_id );
+    IP_ADDR_DESC bcast_dst_ipaddr = pOC->oc_ipaddr[(int)msg_id];
+    assert( bcast_dst_ipaddr.oct_1st != 0 );
+    assert( bcast_dst_ipaddr.oct_2nd != 0 );
+    assert( bcast_dst_ipaddr.oct_3rd != 0 );
+    assert( bcast_dst_ipaddr.oct_4th != 0 );
+    bcast_dst_ipaddr.oct_3rd = 255;
+    bcast_dst_ipaddr.oct_4th = 255;
+    pOC->ats2oc.dst_ipaddr = bcast_dst_ipaddr;
+    
+    pOC->ats2oc.d_sent_cbi_ctrl = -1;
+    {
+      TINY_SOCK_DESC d = -1;
+      if( (d = creat_sock_sendnx( pS, pOC->ats2oc.dst_port, TRUE, &pOC->ats2oc.dst_ipaddr )) < 0 ) {
+	errorF( "failed to create the socket to send CBI control commands  toward OC%d.\n", OC_ID_CONV2INT(msg_id) );
+	goto exit;
+      }
+      pOC->ats2oc.d_sent_cbi_ctrl = d;
+      sock_attach_send_buf( pS, pOC->ats2oc.d_sent_cbi_ctrl, (unsigned char *)&(pOC->ats2oc.sent.msgs[0].buf), (int)sizeof(pOC->ats2oc.sent.msgs[0].buf) );
+    }
+    r = &pOC->ats2oc;
+  }
+ exit:
+  return r;
+}
 
 int establish_OC_comm_ctrl ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
   assert( pS );
@@ -501,6 +535,40 @@ int establish_OC_comm_ctrl ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int
   }
   assert( i == (int)END_OF_ATS2OC );
   assert( i <= ndescs );
+  r = i;
+ exit:
+  return r;
+}
+int _establish_OC_comm_ctrl ( TINY_SOCK_PTR pS, CBI_CTRL_STAT_COMM_PROF_PTR pprofs[], const int nprofs, const int ndsts ) { // *****
+  assert( pS );
+  assert( pprofs );
+  assert( ndsts >= (int)END_OF_ATS2OC );
+  int r = -1;
+  
+  int i = (int)ATS2OC801;
+  while( i < (int)END_OF_ATS2OC ) {
+    assert( (i >= ATS2OC801) && (i < (int)END_OF_ATS2OC) );
+    if( i < ndsts ) {
+#if 0
+      CBI_CTRL_STAT_INFO_PTR p = NULL;
+      if( !(p = _willing_2_send_OC_ctrl( pS, pprofs[i], (ATS2OC_CMD)i )) )
+	goto exit;
+      assert( p );
+      assert( p->ats2oc.d_sent_cbi_ctrl > -1 );
+      pdescs[i] = p->ats2oc.d_sent_cbi_ctrl;
+#else
+      assert( i < nprofs );
+      if( !(pprofs[i] = _willing_2_send_OC_ctrl( pS, (ATS2OC_CMD)i )) )
+	goto exit;
+      assert( pprofs[i] );
+      assert( pprofs[i]->d_sent_cbi_ctrl > -1 );
+#endif
+      i++;
+    } else
+      goto exit;
+  }
+  assert( i == (int)END_OF_ATS2OC );
+  assert( i <= ndsts );
   r = i;
  exit:
   return r;
@@ -1105,6 +1173,62 @@ void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, co
 	{
 	  int n = -1;
 	  n = sock_send_ready( psocks, pdescs[i], ATS2OC_MSGSIZE ); // socks_cbi_ctrl: socks, sd_cbi_ctrl: pdescs.
+	  assert( n == ATS2OC_MSGSIZE );
+	}
+      }
+      i++;
+    }
+    if( sock_send(psocks) < 1 )
+      errorF( "%s", "failed to send interlocking control for CBIs.\n" );
+    r_mutex_sendbuf = pthread_mutex_unlock( &cbi_ctrl_sendbuf_mutex );
+    assert( !r_mutex_sendbuf );
+  }
+}
+void _ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, CBI_CTRL_STAT_COMM_PROF_PTR pprofs[], const int nprofs, const int ndescs ) { // *****
+  //TINY_SOCK_DESC_PTR pdescs = NULL;
+  
+  assert( psocks );
+  assert( pprofs );
+  assert( ndescs == END_OF_ATS2OC );
+  int r_mutex_sendbuf = -1;
+  
+  r_mutex_sendbuf = pthread_mutex_lock( &cbi_ctrl_sendbuf_mutex );
+  if( r_mutex_sendbuf )
+    assert( FALSE );
+  else {
+    int i = (int)ATS2OC801;
+    while( i < (int)END_OF_ATS2OC ) {
+#ifdef CHK_STRICT_CONSISTENCY
+      {
+	unsigned char *pmsg_buf = NULL;
+	int size = -1;
+	assert( i < nprofs );
+	//pmsg_buf = sock_send_buf_attached( psocks, pdescs[i], &size ); // socks_cbi_ctrl: psocks, sd_cbi_ctrl: pdescs.
+	pmsg_buf = sock_send_buf_attached( psocks, pprofs[i]->d_sent_cbi_ctrl, &size );
+	assert( pmsg_buf == (unsigned char *)&cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf );
+	assert( size >= sizeof(cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf) );
+      }
+#endif // CHK_STRICT_CONSISTENCY
+      {
+	const uint8_t dst_oc_id = 101 + i;
+	NXNS_HEADER_PTR phdr = NULL;
+	assert( (OC_ID)((int)dst_oc_id - 101) == (OC_ID)i );
+	if( !cbi_stat_ATS2OC[i].ats2oc.nx.emission_start )
+	  cbi_stat_ATS2OC[i].ats2oc.nx.emission_start = time( NULL );
+	phdr = &cbi_stat_ATS2OC[i].ats2oc.sent.msgs[0].buf.header;
+	assert( phdr );
+	{
+	  uint32_t seq = cbi_stat_ATS2OC[i].ats2oc.nx.seq;
+	  seq++;
+	  seq = (seq %= NX_SEQNUM_MAX_PLUS1) ? seq : 1;
+	  mk_nxns_header( phdr, cbi_stat_ATS2OC[i].ats2oc.nx.emission_start, 99, dst_oc_id, seq );
+	  cbi_stat_ATS2OC[i].ats2oc.nx.seq = seq;
+	}
+	{
+	  int n = -1;
+	  assert( i < nprofs );
+	  //n = sock_send_ready( psocks, pdescs[i], ATS2OC_MSGSIZE ); // socks_cbi_ctrl: socks, sd_cbi_ctrl: pdescs.
+	  n = sock_send_ready( psocks, pprofs[i]->d_sent_cbi_ctrl, ATS2OC_MSGSIZE );
 	  assert( n == ATS2OC_MSGSIZE );
 	}
       }
