@@ -264,30 +264,14 @@ static void establish_OC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
   int nsocks_ctrl = -1;
   int nsocks_stat = -1;
   
-#if 0
-  int i;
-  for( i = 0; i < END_OF_ATS2OC; i++ )
-    pcomm_prof->cbi.ctrl.descs[i] = -1;
-#endif
-  
   TINY_SOCK_CREAT( pcomm_prof->cbi.ctrl.socks );
-#if 0
-  nsocks_ctrl = establish_OC_comm_ctrl( &pcomm_prof->cbi.ctrl.socks, pcomm_prof->cbi.ctrl.descs, (int)END_OF_ATS2OC );
-#else
-  extern int _establish_OC_comm_ctrl ( TINY_SOCK_PTR pS, CBI_CTRL_STAT_COMM_PROF_PTR pprofs[], const int nprofs, const int ndsts );
-  nsocks_ctrl = _establish_OC_comm_ctrl( &pcomm_prof->cbi.ctrl.socks, pcomm_prof->cbi.ctrl.pprofs, END_OF_ATS2OC, (int)END_OF_ATS2OC );
-#endif
+  nsocks_ctrl = establish_OC_comm_ctrl( &pcomm_prof->cbi.ctrl.socks, pcomm_prof->cbi.ctrl.pprofs, END_OF_ATS2OC, (int)END_OF_ATS2OC );
   if( nsocks_ctrl > 0 ) {
     assert( nsocks_ctrl == END_OF_ATS2OC );
     int j;
 #ifdef CHK_STRICT_CONSISTENCY
-    for( j = 0; j < nsocks_ctrl; j++ ) {
-#if 0
-      assert( pcomm_prof->cbi.ctrl.descs[j] > -1 );
-#else
+    for( j = 0; j < nsocks_ctrl; j++ )
       assert( pcomm_prof->cbi.ctrl.pprofs[j]->d_sent_cbi_ctrl > -1 );
-#endif
-    }
 #endif // CHK_STRICT_CONSISTENCY
     for( j = 0; j < END_OF_OC2ATS; j++ )
       pcomm_prof->cbi.stat.descs[j] = -1;
@@ -436,12 +420,8 @@ int main ( void ) {
 	//errorF( "(oc_id): (%d)\n", OC_ID_CONV2INT(oc_id) ); // ***** for debugging.
       }
 #endif
-#if 0
-      ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.descs, END_OF_ATS2OC );
-#else
-      extern void _ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, CBI_CTRL_STAT_COMM_PROF_PTR pprofs[], const int nprofs, const int ndescs );
-      _ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.pprofs, END_OF_ATS2OC, END_OF_ATS2OC );
-#endif
+      ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.pprofs, END_OF_ATS2OC );
+      
       reveal_train_tracking( &comm_threads_prof );
       purge_block_restrains();
       

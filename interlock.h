@@ -114,7 +114,7 @@ extern void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock );
 extern void cons_il_obj_tables ( void );
 
 extern int establish_OC_comm_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs );
-extern int establish_OC_comm_ctrl ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs );
+extern int establish_OC_comm_ctrl ( TINY_SOCK_PTR pS, CBI_CTRL_STAT_COMM_PROF_PTR pprofs[], const int nprofs, const int ndsts );
 extern pthread_mutex_t cbi_ctrl_dispatch_mutex;
 extern pthread_mutex_t cbi_ctrl_sendbuf_mutex;
 extern pthread_mutex_t cbi_stat_info_mutex;
@@ -125,7 +125,7 @@ extern void *pth_revise_il_ctrl_bits ( void *arg );
 
 extern int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
 extern int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
-extern void ready_on_emit_OC_ctrl( TINY_SOCK_PTR psocks, TINY_SOCK_DESC_PTR pdescs, const int ndescs );
+extern void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, CBI_CTRL_STAT_COMM_PROF_PTR pprofs[], const int nprofs );
 
 extern void diag_cbi_stat_attrib ( FILE *fp_out, char *ident );
 

@@ -148,21 +148,7 @@ typedef struct cbi_ctrl_stat_infoset {
   char oc_name[END_OF_OCs][6];
   IP_ADDR_DESC oc_ipaddr[END_OF_OCs];
   uint16_t LNN[END_OF_OCs];
-#if 0
-  struct {
-    ATS2OC_CMD dest_oc_id;
-    const unsigned short dst_port;
-    IP_ADDR_DESC dst_ipaddr;
-    TINY_SOCK_DESC d_sent_cbi_ctrl;
-    struct {
-      time_t emission_start;
-      uint32_t seq;
-    } nx;
-    SENT_BUF_CBI_CTRL sent;
-  } ats2oc;
-#else
   CBI_CTRL_STAT_COMM_PROF ats2oc;
-#endif
   struct {
     const unsigned short dst_port;
     TINY_SOCK_DESC d_recv_cbi_stat;
