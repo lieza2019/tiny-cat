@@ -84,8 +84,14 @@ typedef struct sc_ctrlcmd_comm_prof {
 typedef struct sc_ctrl_cmdprof {
   SC_CTRLCMD_COMM_PROF comm_prof;
   BOOL expired[TRAIN_COMMAND_ENTRIES_NUM];
-  TINY_TRAIN_STATE_PTR pTrain_stat[TRAIN_COMMAND_ENTRIES_NUM];
-  int frontier;
+  struct {
+    union {
+      struct {
+	TINY_TRAIN_STATE_PTR pTrain_stat[TRAIN_COMMAND_ENTRIES_NUM];
+	int frontier;
+      } train_cmd;
+    } u;
+  } attribs;
 } SC_CTRL_CMDPROF, *SC_CTRL_CMDPROF_PTR;
 
 typedef struct SC_ctrl_cmdset {

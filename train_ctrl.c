@@ -860,7 +860,7 @@ static void fine_train_cmds ( void ) {
       } else if( maiden >= 0 ) {
 	pSc->train_command.comm_prof.send.u.train_cmd.spol.entries[maiden] = pSc->train_command.comm_prof.send.u.train_cmd.spol.entries[j];
 	{
-	  TINY_TRAIN_STATE_PTR pTs = pSc->train_command.pTrain_stat[j];
+	  TINY_TRAIN_STATE_PTR pTs = pSc->train_command.attribs.u.train_cmd.pTrain_stat[j];
 	  assert( pTs );
 	  if( pTs->pTC[0] == &pSc->train_command.comm_prof.send.u.train_cmd.spol.entries[j] )
 	    pTs->pTC[0] = &pSc->train_command.comm_prof.send.u.train_cmd.spol.entries[maiden];
@@ -868,7 +868,7 @@ static void fine_train_cmds ( void ) {
 	    pTs->pTC[1] = &pSc->train_command.comm_prof.send.u.train_cmd.spol.entries[maiden];
 	  else
 	    assert( FALSE );
-	  pSc->train_command.pTrain_stat[maiden] = pTs;
+	  pSc->train_command.attribs.u.train_cmd.pTrain_stat[maiden] = pTs;
 	}
 	pSc->train_command.expired[maiden] = FALSE;
 	
@@ -880,13 +880,13 @@ static void fine_train_cmds ( void ) {
 	j++;
       assert( maiden < TRAIN_COMMAND_ENTRIES_NUM );
     }
-    pSc->train_command.frontier = TRAIN_COMMAND_ENTRIES_NUM;
+    pSc->train_command.attribs.u.train_cmd.frontier = TRAIN_COMMAND_ENTRIES_NUM;
     if( maiden >= 0 ) {
       int n = TRAIN_COMMAND_ENTRIES_NUM - maiden;
       memset( &pSc->train_command.comm_prof.send.u.train_cmd.spol.entries[maiden], 0, ((int)sizeof(TRAIN_COMMAND_ENTRY) * n) );
-      pSc->train_command.frontier = maiden;
+      pSc->train_command.attribs.u.train_cmd.frontier = maiden;
     }
-    assert( pSc->train_command.frontier <= TRAIN_COMMAND_ENTRIES_NUM );
+    assert( pSc->train_command.attribs.u.train_cmd.frontier <= TRAIN_COMMAND_ENTRIES_NUM );
   }
 }
 
