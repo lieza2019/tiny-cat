@@ -11,6 +11,7 @@ typedef struct tiny_comm_prof {
     struct {
       TINY_SOCK socks;
       CBI_CTRL_STAT_COMM_PROF_PTR pprofs[END_OF_ATS2OC];
+      BOOL ready;
     } ctrl;
     struct {
       TINY_SOCK socks;

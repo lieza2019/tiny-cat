@@ -954,7 +954,7 @@ void *_pth_revise_il_ctrl_bits ( void *arg ) {
 	  _render_il_ctrl_bits( (ATS2OC_CMD)oc_id );
 	}
 #if 1
-	if( ready_on_il_ctrl_emission )
+	if( pcomm_threads_prof->cbi.ctrl.ready )
 	  _ready_on_emit_il_ctrl_bits( &pcomm_threads_prof->cbi.ctrl.socks, pcomm_threads_prof->cbi.ctrl.pprofs, END_OF_ATS2OC );
 #else
 	_ready_on_emit_il_ctrl_bits( &pcomm_threads_prof->cbi.ctrl.socks, pcomm_threads_prof->cbi.ctrl.pprofs, END_OF_ATS2OC );

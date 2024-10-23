@@ -168,7 +168,7 @@ static void creat_comm_threads ( TINY_COMM_PROF_PTR pcomm_threads_prof ) {
     exit( 1 );
   }
 #else
-  if( pthread_create( &P_il_ctrl_emit, NULL, _pth_revise_il_ctrl_bits, (void *)&pcomm_threads_prof  ) ) {
+  if( pthread_create( &P_il_ctrl_emit, NULL, _pth_revise_il_ctrl_bits, (void *)pcomm_threads_prof  ) ) {
     errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
     exit( 1 );
   }
@@ -326,7 +326,6 @@ BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_
   return r;
 }
 
-BOOL ready_on_il_ctrl_emission = FALSE;
 int main ( void ) {
   TINY_SOCK socks_srvstat;
   TINY_SOCK_DESC sd_send_srvbeat = -1;

@@ -3,8 +3,6 @@
 #include "cbi.h"
 #include "cbtc.h"
 
-extern BOOL ready_on_il_ctrl_emission;
-
 typedef struct route_lock {
   BOOL app;
   CBI_STAT_KIND kind;
