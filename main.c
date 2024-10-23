@@ -412,6 +412,7 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
     
     creat_comm_threads( &comm_threads_prof );
+    comm_threads_prof.cbi.ctrl.ready = TRUE;
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
 #if 0
@@ -427,10 +428,8 @@ int main ( void ) {
 	//errorF( "(oc_id): (%d)\n", OC_ID_CONV2INT(oc_id) ); // ***** for debugging.
       }
 #endif
-#if 1
+#if 0
       ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.pprofs, END_OF_ATS2OC );
-#else
-      ready_on_il_ctrl_emission = TRUE;
 #endif
       reveal_train_tracking( &comm_threads_prof );
       purge_block_restrains();

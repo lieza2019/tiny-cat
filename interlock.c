@@ -678,7 +678,7 @@ void *pth_expire_il_ctrl_bits ( void *arg ) {
   return NULL;
 }
 
-#if 1
+#if 0
 static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   assert( cmd_id < END_OF_ATS2OC );
   int cnt = 0;
@@ -742,7 +742,7 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   return cnt;
 }
 #endif
-static int _render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
+static int _render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) { // *****
   assert( cmd_id < END_OF_ATS2OC );
   int cnt = 0;
   BOOL err = FALSE;
@@ -786,7 +786,7 @@ static int _render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   return cnt;
 }
 
-#if 1
+#if 0
 void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, CBI_CTRL_STAT_COMM_PROF_PTR pprofs[], const int nprofs ) {
   assert( psocks );
   assert( pprofs );
@@ -840,7 +840,7 @@ void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, CBI_CTRL_STAT_COMM_PROF_PTR p
   }
 }
 #endif
-static void _ready_on_emit_il_ctrl_bits ( TINY_SOCK_PTR psocks, CBI_CTRL_STAT_COMM_PROF_PTR pprofs[], const int nprofs ) {
+static void _ready_on_emit_il_ctrl_bits ( TINY_SOCK_PTR psocks, CBI_CTRL_STAT_COMM_PROF_PTR pprofs[], const int nprofs ) { // *****
   assert( psocks );
   assert( pprofs );
   
@@ -885,7 +885,7 @@ static void _ready_on_emit_il_ctrl_bits ( TINY_SOCK_PTR psocks, CBI_CTRL_STAT_CO
     errorF( "%s", "failed to send interlocking control for CBIs.\n" );
 }
 
-#if 1
+#if 0
 void *pth_revise_il_ctrl_bits ( void *arg ) {
   assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.01;
@@ -932,7 +932,7 @@ void *pth_revise_il_ctrl_bits ( void *arg ) {
   return NULL;
 }
 #endif
-void *_pth_revise_il_ctrl_bits ( void *arg ) {
+void *_pth_revise_il_ctrl_bits ( void *arg ) { // *****
   assert( arg );
   const useconds_t interval = 1000 * 1000 * 0.01;
   int oc_id = (int)END_OF_OCs;
