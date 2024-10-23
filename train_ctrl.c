@@ -590,7 +590,7 @@ void reveal_train_tracking ( TINY_COMM_PROF_PTR pcomm_prof ) {
   }
 }
 
-static SC_STAT_INFOSET_PTR willing_to_recv_train_info ( TINY_SOCK_PTR pS, SC_ID sc_id ) {
+static SC_STAT_INFOSET_PTR willing2_recv_train_info ( TINY_SOCK_PTR pS, SC_ID sc_id ) {
   assert( pS );
   assert( (sc_id >= 0) && (sc_id < END_OF_SCs) );
   SC_STAT_INFOSET_PTR r = NULL;
@@ -632,7 +632,7 @@ static int establish_SC_comm_traininfo ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdesc
     if( i < ndescs ) {
       SC_STAT_INFOSET_PTR p = NULL;
       expire_all_train_state();
-      if( !(p = willing_to_recv_train_info( pS, (SC_ID)i )) )
+      if( !(p = willing2_recv_train_info( pS, (SC_ID)i )) )
 	goto exit;
       assert( p );
       assert( p->train_information.d_recv_train_info > -1 );
@@ -649,7 +649,7 @@ static int establish_SC_comm_traininfo ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdesc
   return r;
 }
 
-static SC_CTRL_CMDSET_PTR willing_to_send_traincmd ( TINY_SOCK_PTR pS, SC_ID sc_id ) {
+static SC_CTRL_CMDSET_PTR willing2_send_traincmd ( TINY_SOCK_PTR pS, SC_ID sc_id ) {
   assert( pS );
   assert( (sc_id >= 0) && (sc_id < END_OF_SCs) );
   SC_CTRL_CMDSET_PTR r = NULL;
@@ -697,7 +697,7 @@ static int establish_SC_comm_traincmd ( TINY_SOCK_PTR pS, SC_CTRLCMD_COMM_PROF_P
     if( i < ndsts ) {
       SC_CTRL_CMDSET_PTR p = NULL;
       expire_all_train_cmds();
-      if(! (p = willing_to_send_traincmd( pS, (SC_ID)i )) )
+      if(! (p = willing2_send_traincmd( pS, (SC_ID)i )) )
 	goto exit;
       assert( p );
       assert( p->train_command.comm_prof.d_send_train_cmd > -1 );
@@ -713,60 +713,6 @@ static int establish_SC_comm_traincmd ( TINY_SOCK_PTR pS, SC_CTRLCMD_COMM_PROF_P
  exit:
   return r;
 }
-
-#if 0 // now obsoleted.
-static BOOL establish_SC_statinfo_recv ( TINY_SOCK_PTR pS ) {
-  assert( pS );
-  BOOL r = FALSE;
-  
-  int i = (int)SC801;
-  while( i < (int)END_OF_SCs ) {
-    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
-    SC_STAT_INFOSET_PTR p = NULL;
-    expire_all_train_state();
-    if( !(p = willing_to_recv_train_info( pS, (SC_ID)i )) )
-      goto exit;
-    assert( p );
-    assert( p->train_information.d_recv_train_info > -1 );
-    i++;
-  }
-  r = TRUE;
- exit:
-  return r;
-}
-
-static BOOL establish_SC_traincmd_send ( TINY_SOCK_PTR pS ) {
-  assert( pS );
-  BOOL r = FALSE;
-  
-  int i = (int)SC801;
-  while( i < (int)END_OF_SCs ) {
-    assert( (i >= (int)SC801) && (i < (int)END_OF_SCs) );
-    SC_CTRL_CMDSET_PTR p = NULL;
-    expire_all_train_cmds();
-    if(! (p = willing_to_send_train_cmd( pS, (SC_ID)i )) )
-      goto exit;
-    assert( p );
-    assert( p->train_command.d_send_train_cmd > -1 );
-    i++;
-  }
-  r = TRUE;
-  
- exit:
-  return r;
-}
-
-BOOL establish_SC_comm ( TINY_SOCK_PTR pS ) {
-  assert( pS );
-  BOOL r = FALSE;
-  
-  if( establish_SC_statinfo_recv( pS ) )
-    if( establish_SC_traincmd_send( pS ) )
-    r = TRUE;
-  
-  return r;
-}
-#endif
 
 int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs ) {
   assert( pS );

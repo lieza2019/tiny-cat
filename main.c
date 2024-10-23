@@ -161,18 +161,11 @@ static void creat_comm_threads ( TINY_COMM_PROF_PTR pcomm_threads_prof ) {
     errorF( "%s", "failed to invoke the CBTC control commands emitter thread.\n" );
     exit( 1 );
   }
-
-#if 0
-  if( pthread_create( &P_il_ctrl_emit, NULL, pth_revise_il_ctrl_bits, (void *)&pcomm_threads_prof->cbi.ctrl.socks ) ) {
+  
+  if( pthread_create( &P_il_ctrl_emit, NULL, pth_revise_il_ctrl_bits, (void *)pcomm_threads_prof  ) ) {
     errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
     exit( 1 );
   }
-#else
-  if( pthread_create( &P_il_ctrl_emit, NULL, _pth_revise_il_ctrl_bits, (void *)pcomm_threads_prof  ) ) {
-    errorF( "%s", "failed to invoke the CBI control emission thread.\n" );
-    exit( 1 );
-  }
-#endif
   pthread_mutex_init( &cbi_stat_info_mutex, NULL );
   if( pthread_create( &P_il_stat, NULL, pth_reveal_il_status, (void *)&pcomm_threads_prof->cbi.stat.socks ) ) {
     errorF( "%s", "failed to invoke the CBI status gathering thread.\n" );
@@ -427,9 +420,6 @@ int main ( void ) {
 	engage_il_ctrl( &oc_id, &kind, ctl_bit_ident );
 	//errorF( "(oc_id): (%d)\n", OC_ID_CONV2INT(oc_id) ); // ***** for debugging.
       }
-#endif
-#if 0
-      ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.pprofs, END_OF_ATS2OC );
 #endif
       reveal_train_tracking( &comm_threads_prof );
       purge_block_restrains();

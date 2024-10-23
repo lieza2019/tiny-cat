@@ -121,11 +121,7 @@ extern pthread_mutex_t cbi_stat_info_mutex;
 extern int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
 extern void *pth_reveal_il_status ( void *arg );
 extern void *pth_expire_il_ctrl_bits ( void *arg );
-#if 0
 extern void *pth_revise_il_ctrl_bits ( void *arg );
-#else
-extern void *_pth_revise_il_ctrl_bits ( void *arg );
-#endif
 
 extern int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
 extern int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident );
