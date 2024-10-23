@@ -326,6 +326,7 @@ BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_
   return r;
 }
 
+BOOL ready_on_il_ctrl_emission = FALSE;
 int main ( void ) {
   TINY_SOCK socks_srvstat;
   TINY_SOCK_DESC sd_send_srvbeat = -1;
@@ -429,6 +430,8 @@ int main ( void ) {
 #endif
 #if 1
       ready_on_emit_OC_ctrl( &comm_threads_prof.cbi.ctrl.socks, comm_threads_prof.cbi.ctrl.pprofs, END_OF_ATS2OC );
+#else
+      ready_on_il_ctrl_emission = TRUE;
 #endif
       reveal_train_tracking( &comm_threads_prof );
       purge_block_restrains();

@@ -953,7 +953,12 @@ void *_pth_revise_il_ctrl_bits ( void *arg ) {
 	for( oc_id = OC801; oc_id < END_OF_OCs; oc_id++ ) {
 	  _render_il_ctrl_bits( (ATS2OC_CMD)oc_id );
 	}
-	//_ready_on_emit_il_ctrl_bits( &pcomm_threads_prof->cbi.ctrl.socks, pcomm_threads_prof->cbi.ctrl.pprofs, END_OF_ATS2OC );
+#if 1
+	if( ready_on_il_ctrl_emission )
+	  _ready_on_emit_il_ctrl_bits( &pcomm_threads_prof->cbi.ctrl.socks, pcomm_threads_prof->cbi.ctrl.pprofs, END_OF_ATS2OC );
+#else
+	_ready_on_emit_il_ctrl_bits( &pcomm_threads_prof->cbi.ctrl.socks, pcomm_threads_prof->cbi.ctrl.pprofs, END_OF_ATS2OC );
+#endif
 	r_mutex_dispatch = -1;
 	r_mutex_dispatch = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
 	assert( !r_mutex_dispatch );
