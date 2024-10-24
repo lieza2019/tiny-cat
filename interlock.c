@@ -558,7 +558,7 @@ static RECV_BUF_CBI_STAT_PTR update_cbi_status ( TINY_SOCK_PTR pS, OC2ATS_STAT m
   {
     TINY_SOCK_DESC d = -1;
     int len = -1;
-l    d = pOC->oc2ats.d_recv_cbi_stat;
+    d = pOC->oc2ats.d_recv_cbi_stat;
     assert( d > -1 );
     assert( sock_recv_socket_attached( pS, d ) > 0 );
     {
