@@ -256,7 +256,15 @@ typedef struct cbi_stat_attr {
   BOOL dirty;
   struct cbi_stat_attr *pNext_dirt;
   struct cbi_stat_attr *pNext_hash;
+#if 0
   struct cbi_stat_attr *pNext_decl;
+#else
+  struct {
+    int nentities;
+    struct cbi_stat_attr *pNext;
+    struct cbi_stat_attr *pFamily;
+  } decl_gen;
+#endif
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
 #define CBI_MAX_STAT_BITS 65536

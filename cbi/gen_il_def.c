@@ -65,7 +65,7 @@ struct {
   CBI_STAT_ATTR sea[CBI_MAX_STAT_BITS];
   int frontier;
   CBI_STAT_ATTR_PTR ptop;
-  CBI_STAT_ATTR_PTR *pprev;
+  CBI_STAT_ATTR_PTR *pplast;
 } il_objs_hash;
 
 static CBI_LEX_SYMBOL_PTR regist_symbol ( CBI_LEX_SYMTBL_PTR psymtbl, CBI_LEX_SYMBOL_PTR ancest, char *id, int id_len ) {
@@ -451,6 +451,10 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
   
   int cnt = 0;
   {
+    struct {
+      CBI_STAT_ATTR_PTR fst;
+      CBI_STAT_ATTR_PTR *pp;
+    } family = { NULL, NULL };
     int i;
     for( i = 0; i < CBI_EXPAND_PAT_MAXNUM; i++ ) {
       char emit_buf[CBI_EXPAND_EMIT_MAXLEN + 1];
@@ -458,12 +462,12 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
       if( ! plex->exp[i].pat[0] )
 	break;
       {
+	CBI_STAT_ATTR_PTR pE = NULL;
 	int n = -1;
 	n = lex_exp_pattrn( errfp, pprsf, line, (i + 1), emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp[i].pat, strnlen(plex->exp[i].pat, CBI_LEX_PAT_MAXLEN) );
 	assert( (abs(n) >= 0) && (abs(n) < CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[abs(n)] = 0;
-	if( n > 0 ) {
-	  CBI_STAT_ATTR_PTR pE = NULL;
+	if( n > 0 ) {	  
 	  assert( il_objs_hash.frontier < CBI_MAX_STAT_BITS );
 	  pE = &il_objs_hash.sea[il_objs_hash.frontier++];
 	  assert( pE );
@@ -477,11 +481,12 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 #if 0
 	  printf( "HIT: (line: pat, name, ident) = (%d: %s, %s, %s)\n", line, plex->exp[i].pat, plex->raw_name, emit_buf ); // ***** for debugging.
 #endif
+#if 0 // *****
 	  {
 	    CBI_STAT_ATTR_PTR w = NULL;
 	    w = hash_regist( pE, line );
+	    assert( w );
 	    if( w != pE ) {
-	      assert( w );
 	      err = TRUE;
 	      break;
 	    }
@@ -489,11 +494,35 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	      assert( ! *(il_objs_hash.pprev) );
 	      *(il_objs_hash.pprev) = w;
 	    }
-	    il_objs_hash.pprev = &w->pNext_decl;
-	    
+	    il_objs_hash.pprev = &w->decl_gen.pNext;
 	    if( ! il_objs_hash.ptop )
 	      il_objs_hash.ptop = w;
 	  }
+#else
+	  {
+	    assert( pE );
+	    CBI_STAT_ATTR_PTR w = NULL;
+	    w = hash_regist( pE, line );
+	    assert( w );
+	    if( w != pE ) { // *****
+	      err = TRUE;
+	      break;
+	    } else {
+	      assert( w == pE );
+	      assert( w );
+	      w->decl_gen.pNext = NULL;
+	      w->decl_gen.pFamily = NULL;
+	      if( !family.fst ) {
+		assert( !family.pp );
+		family.fst = w;
+	      } else {
+		assert( family.pp );
+		*family.pp = w;
+	      }
+	      family.pp = &w->decl_gen.pFamily;
+	    }
+	  }
+#endif
 	  cnt++;
 	} else {
 	  err = TRUE;
@@ -501,6 +530,22 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	}
       }
     }
+#if 1 // *****
+    if( cnt > 0 ) {
+      assert( family.fst );
+      assert( family.pp );
+      assert( !(*family.pp) );
+      family.fst->decl_gen.nentities = cnt;
+      if( ! il_objs_hash.ptop ) {
+	assert( !il_objs_hash.pplast );
+	il_objs_hash.ptop = family.fst;
+      } else {
+	assert( il_objs_hash.pplast );
+	*(il_objs_hash.pplast) = family.fst;
+      }
+      il_objs_hash.pplast = &family.fst->decl_gen.pNext;
+    }
+#endif
   }
   return ( cnt * (err ? -1 : 1) );
 }
@@ -545,14 +590,14 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
   return (err ? -1 : 1);
 }
 
-static BOOL transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
+static int transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_IL_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
   assert( fp );
   assert( errfp );
   assert( pprsf );
   assert( psymtbl );
   assert( plex );
   assert( pattr );  
-  BOOL r = FALSE;
+  int r = -1;
   
   strncpy( plex->raw_name, pattr->name, CBI_STAT_NAME_LEN );
   {
@@ -572,8 +617,8 @@ static BOOL transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, 
 	  strncpy( pprsf->prefix.emit, "{", CBI_LEX_EMIT_PREFX_MAXCHRS );
 	  strncpy( pprsf->suffix.emit, "}," , CBI_LEX_EMIT_PREFX_MAXCHRS );
 	  if( (r_emit_abb = emit_stat_abbrev( fp, errfp, pprsf, line, psymtbl, plex, pattr )) > 0 )
-	    if( (r_emit_ins = emit_il_instances( fp, errfp, pprsf, line, psymtbl, plex, pattr )) > 0 )
-	      r = TRUE;
+	    if( (r_emit_ins = emit_il_instances( fp, errfp, pprsf, line, psymtbl, plex, pattr )) >= 0 )
+	      r = r_emit_ins;
 	  if( (abs(r_emit_abb) + abs(r_emit_ins)) > 0 )
 	    fprintf( fp, "\n" );
 	}
@@ -664,8 +709,26 @@ int main ( void ) {
     CBI_STAT_ATTR_PTR p = NULL;
     p = il_objs_hash.ptop;
     while( p ) {
-      assert( p->ident );
-      fprintf( fp_out, "IL_OBJ_INSTANCE_DESC( " );
+      assert( p );
+      switch( p->decl_gen.nentities ) {
+      case 1:
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC( " );
+	break;
+      case 2:
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC2( " );
+	break;
+      case 3:
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC3( " );
+	break;
+      case 4:
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC4( " );
+	break;
+      case 5:
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC5( " );
+	break;
+      default:
+	assert( FALSE );
+      }
       K = p->kind;
       fprintf( fp_out, "%s, ", cnv2str_cbi_stat_kind[K] );
       assert( p->name );
@@ -673,13 +736,32 @@ int main ( void ) {
       name[CBI_STAT_NAME_LEN] = 0;
       strncpy( name, p->name, CBI_STAT_NAME_LEN );
       fprintf( fp_out, "%s, ", name );
+      assert( p->ident );
       p->ident[CBI_STAT_IDENT_LEN] = 0;
+#if 0 // *****
       fprintf( fp_out, "IL_3t(%s,", p->ident );
       fprintf( fp_out, " \"%s\",", p->ident );
       fprintf( fp_out, " %d)", cnt );
       fprintf( fp_out, " )\n" );
       cnt++;
-      p = p->pNext_decl;
+#else
+      {
+	assert( p );
+	CBI_STAT_ATTR_PTR q = p;
+	while( q ) {
+	  assert( q );
+	  fprintf( fp_out, "IL_3t(%s,", q->ident );
+	  fprintf( fp_out, " \"%s\",", q->ident );
+	  fprintf( fp_out, " %d)", cnt );
+	  cnt++;
+	  q = q->decl_gen.pFamily;
+	  if( q )
+	    fprintf( fp_out, ", " );
+	}
+      }
+      fprintf( fp_out, " )\n" );
+#endif
+      p = p->decl_gen.pNext;
     }
   }
   return 0;
