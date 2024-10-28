@@ -23,13 +23,11 @@ typedef struct prefx_sufix {
 #define CBI_STAT_RAWNAME_MAXLEN CBI_STAT_NAME_LEN
 #define CBI_EXPAND_PAT_MAXNUM 5
 typedef struct lex_il_obj {
-  CBI_STAT_KIND kind;
+  CBI_STAT_KIND il_stat_kind;
   char match_pat[CBI_LEX_PAT_MAXLEN + 1];
   char exp_ident_pat[CBI_LEX_PAT_MAXLEN + 1];
   struct {
-#if 1
-    CBI_STAT_KIND kind;
-#endif
+    CBI_STAT_KIND il_sym_kind;
     char pat[CBI_LEX_PAT_MAXLEN + 1];
   } exp[CBI_EXPAND_PAT_MAXNUM];
   char raw_name[CBI_STAT_RAWNAME_MAXLEN + 1];
@@ -477,7 +475,7 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	  strncpy( pE->ident, emit_buf, CBI_STAT_IDENT_LEN );
 	  pE->name[CBI_STAT_RAWNAME_MAXLEN] = 0;
 	  strncpy( pE->name, plex->raw_name, CBI_STAT_NAME_LEN );
-	  pE->kind = plex->kind;
+	  pE->kind = plex->il_stat_kind;
 	  pE->src.fname = pattr->src.fname;
 	  pE->src.line = pattr->src.line;
 #if 0
@@ -544,7 +542,7 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
   assert( plex->raw_name );
   {
     const char *kind_s = NULL;
-    kind_s = cnv2str_cbi_stat_kind[plex->kind];
+    kind_s = cnv2str_cbi_stat_kind[plex->il_stat_kind];
     assert( kind_s );
     if( plex->exp_ident_pat[0] ) {
       char emit_buf[CBI_EXPAND_EMIT_MAXLEN + 1];
@@ -654,7 +652,7 @@ int main ( void ) {
 	{
 	  CBI_LEX_SYMTBL_PTR pS = &S;
 	  int i = 0;
-	  while( cbi_lex_def[i].kind != END_OF_CBI_STAT_KIND ) {
+	  while( cbi_lex_def[i].il_stat_kind != END_OF_CBI_STAT_KIND ) {
 	    int j;
 	    for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_prof[oc_id].codes[j].name[0]; j++ ) {
 	      assert( pS );
