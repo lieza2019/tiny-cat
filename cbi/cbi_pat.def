@@ -69,7 +69,7 @@
 {_MBL, "[SRAM]MBLxxxy", "MBLx[1]x[2]x[3]y[1]", {{_MBL, "MBLx[1]x[2]x[3]y[1]"}}},
 {_ROUTE, "[L\\o]Sxxxy_Sxxxy_R", "Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]", {{_ROUTE, "Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]"}}},
 //{_ROUTE, "[L\\o]Sxxxy_VSxxxy_R", "Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]", {{_ROUTE, "Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]"}}},
-{_ROUTE, "[L\\o]Sxxxy_VSxxxy_R", "Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]", {{_ROUTE, "Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]"}, {_ROUTE, "VSx[4]x[5]x[6]y[2]"}}},
+{_ROUTE, "[L\\o]Sxxxy_VSxxxy_R", "Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]", {{_ROUTE, "Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]"}, {_SIGNAL, "VSx[4]x[5]x[6]y[2]"}}},
 {_SIGNAL, "[\\o1]\\o_Sxxxy_VR1", "Sx[1]x[2]x[3]y[1]", {{_SIGNAL, "Sx[1]x[2]x[3]y[1]"}}},
 {_SIGNAL, "[\\o2]\\o_Sxxxy_VR1", "Sx[1]x[2]x[3]y[1]", {{_SIGNAL, "Sx[1]x[2]x[3]y[1]"}}},
 {_SIGNAL, "[\\o3]\\o_Sxxxy_VR1", "Sx[1]x[2]x[3]y[1]", {{_SIGNAL, "Sx[1]x[2]x[3]y[1]"}}},
