@@ -950,7 +950,7 @@ const CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj ) {
 }
 
 const char *cnv2str_il_obj_instances[] = {
-#define IL_3t(exp, str, code) str
+#define IL_SYM_ATTRIB(kind, sym, str, code) str
 #define IL_OBJ_INSTANCE_DESC(kind, raw_name, exp) exp,
 #define IL_OBJ_INSTANCE_DESC1(kind, raw_name, exp1) exp1,
 #define IL_OBJ_INSTANCE_DESC2(kind, raw_name, exp1, exp2) exp1, exp2,
@@ -964,7 +964,7 @@ const char *cnv2str_il_obj_instances[] = {
 #undef IL_OBJ_INSTANCE_DESC3
 #undef IL_OBJ_INSTANCE_DESC4
 #undef IL_OBJ_INSTANCE_DESC5
-#undef IL_3t
+#undef IL_SYM_ATTRIB
   NULL
 };
 const char *cnv2str_il_obj ( IL_OBJ_INSTANCES obj ) {

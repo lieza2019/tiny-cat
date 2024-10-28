@@ -475,7 +475,11 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	  strncpy( pE->ident, emit_buf, CBI_STAT_IDENT_LEN );
 	  pE->name[CBI_STAT_RAWNAME_MAXLEN] = 0;
 	  strncpy( pE->name, plex->raw_name, CBI_STAT_NAME_LEN );
+#if 0 // *****
 	  pE->kind = plex->il_stat_kind;
+#else
+	  pE->kind = plex->exp[i].il_sym_kind;
+#endif
 	  pE->src.fname = pattr->src.fname;
 	  pE->src.line = pattr->src.line;
 #if 0
@@ -718,6 +722,7 @@ int main ( void ) {
       fprintf( fp_out, "%s, ", name );
       assert( p->ident );
       p->ident[CBI_STAT_IDENT_LEN] = 0;
+#if 0
       {
 	assert( p );
 	CBI_STAT_ATTR_PTR q = p;
@@ -732,6 +737,23 @@ int main ( void ) {
 	    fprintf( fp_out, ", " );
 	}
       }
+#else
+      {
+	assert( p );
+	CBI_STAT_ATTR_PTR q = p;
+	while( q ) {
+	  assert( q );
+	  fprintf( fp_out, "IL_SYM_ATTRIB(%s, ", cnv2str_cbi_stat_kind[q->kind] );
+	  fprintf( fp_out, "%s, ", q->ident );
+	  fprintf( fp_out, "\"%s\", ", q->ident );
+	  fprintf( fp_out, "%d)", cnt );
+	  cnt++;
+	  q = q->decl_gen.pFamily;
+	  if( q )
+	    fprintf( fp_out, ", " );
+	}
+      }
+#endif
       fprintf( fp_out, " )\n" );
       p = p->decl_gen.pNext;
     }
