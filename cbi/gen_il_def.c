@@ -480,39 +480,15 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 #if 0
 	  printf( "HIT: (line: pat, name, ident) = (%d: %s, %s, %s)\n", line, plex->exp[i].pat, plex->raw_name, emit_buf ); // ***** for debugging.
 #endif
-#if 0 // *****
-	  {
-	    CBI_STAT_ATTR_PTR w = NULL;
-	    w = hash_regist( pE, line );
-	    assert( w );
-	    if( w != pE ) {
-	      assert( !strncmp( w->ident, pE->ident, CBI_STAT_IDENT_LEN ) );
-	      err = TRUE;
-	      break;
-	    }
-	    if( il_objs_hash.pprev ) {
-	      assert( ! *(il_objs_hash.pprev) );
-	      *(il_objs_hash.pprev) = w;
-	    }
-	    il_objs_hash.pprev = &w->decl_gen.pNext;
-	    if( ! il_objs_hash.ptop )
-	      il_objs_hash.ptop = w;
-	  }
-#else
 	  {
 	    assert( pE );
 	    CBI_STAT_ATTR_PTR w = NULL;
 	    w = hash_regist( pE, line );
 	    assert( w );
-	    if( w != pE ) { // *****
+	    if( w != pE ) {
 	      assert( !strncmp( w->ident, pE->ident, CBI_STAT_IDENT_LEN ) );
-#if 0
-	      err = TRUE;
-	      break;
-#else
 	      fprintf( errfp, "%d: found redeclaration of %s, and ignored.", line );
 	      continue;
-#endif
 	    }
 	    assert( w == pE );
 	    assert( w );
@@ -527,7 +503,6 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    }
 	    family.pp = &w->decl_gen.pFamily;
 	  }
-#endif
 	  cnt++;
 	} else {
 	  err = TRUE;
@@ -535,7 +510,6 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	}
       }
     }
-#if 1 // *****
     if( cnt > 0 ) {
       assert( family.fst );
       assert( family.pp );
@@ -550,7 +524,6 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
       }
       il_objs_hash.pplast = &family.fst->decl_gen.pNext;
     }
-#endif
   }
   return ( cnt * (err ? -1 : 1) );
 }
@@ -743,13 +716,6 @@ int main ( void ) {
       fprintf( fp_out, "%s, ", name );
       assert( p->ident );
       p->ident[CBI_STAT_IDENT_LEN] = 0;
-#if 0 // *****
-      fprintf( fp_out, "IL_3t(%s,", p->ident );
-      fprintf( fp_out, " \"%s\",", p->ident );
-      fprintf( fp_out, " %d)", cnt );
-      fprintf( fp_out, " )\n" );
-      cnt++;
-#else
       {
 	assert( p );
 	CBI_STAT_ATTR_PTR q = p;
@@ -765,7 +731,6 @@ int main ( void ) {
 	}
       }
       fprintf( fp_out, " )\n" );
-#endif
       p = p->decl_gen.pNext;
     }
   }
