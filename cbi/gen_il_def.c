@@ -27,6 +27,9 @@ typedef struct lex_il_obj {
   char match_pat[CBI_LEX_PAT_MAXLEN + 1];
   char exp_ident_pat[CBI_LEX_PAT_MAXLEN + 1];
   struct {
+#if 1
+    CBI_STAT_KIND kind;
+#endif
     char pat[CBI_LEX_PAT_MAXLEN + 1];
   } exp[CBI_EXPAND_PAT_MAXNUM];
   char raw_name[CBI_STAT_RAWNAME_MAXLEN + 1];
@@ -56,7 +59,7 @@ LEX_IL_OBJ cbi_lex_def[] = {
    * grammar': {{kind, match_pattern, expand_pat_4ident, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}}}
    */
 #include "cbi_pat.def"
-  {END_OF_CBI_STAT_KIND, "", "", {{""}}}
+  {END_OF_CBI_STAT_KIND, "", "", {{END_OF_CBI_STAT_KIND, ""}}}
 };
 
 #define IL_OBJ_HASH_BUDGETS_NUM 256
@@ -486,8 +489,9 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    w = hash_regist( pE, line );
 	    assert( w );
 	    if( w != pE ) {
+	      w->ident[CBI_STAT_IDENT_LEN] = 0;
 	      assert( !strncmp( w->ident, pE->ident, CBI_STAT_IDENT_LEN ) );
-	      fprintf( errfp, "%d: found redeclaration of %s, and ignored.", line );
+	      fprintf( errfp, "%d: found redeclaration of %s, and overridden.\n", line, w->ident );
 	      continue;
 	    }
 	    assert( w == pE );
