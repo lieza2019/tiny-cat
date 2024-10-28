@@ -133,7 +133,7 @@ static char *match_name ( char *matched, int max_match_len, char *src, CBI_LEX_S
   assert( ppat );
   
   assert( strnlen(ppat->ident, CBI_LEX_PAT_MAXLEN) == 1 );
-  assert( islower(ppat->ident[0]) );
+  assert( islower((int)ppat->ident[0]) );
   if( *src ) {
     matched[0] = *src;
     matched[1] = 0;
@@ -160,7 +160,7 @@ static char *lex_match_pattrn ( BOOL *pr, FILE *errfp, PREFX_SUFIX_PTR pprsf, in
   assert( ppat );
   *pr = FALSE;
   while( *ppat && (ppat < (plex->match_pat + CBI_LEX_PAT_MAXLEN)) ) {
-    if( (*ppat != '\\') && islower(*ppat) ) {
+    if( (*ppat != '\\') && islower((int)*ppat) ) {
       char var_id[2];
       int id_len = -1;
       var_id[0] = *ppat;
@@ -247,14 +247,14 @@ static char *trim_pat_ident ( char *ident, int rem_chrs ) {
   while( *p && (p < (ident + rem_chrs)) ) {
     assert( p < (ident + rem_chrs) );
     if( p == ident ) {
-      if( isalpha(*p) || (*p == '_') ) {
-	if( islower(*p) )
+      if( isalpha((int)*p) || (*p == '_') ) {
+	if( islower((int)*p) )
 	  break;
       } else
 	break;
     } else {
-      if( isalnum(*p) || (*p == '_') ) {
-	if( islower(*p) )
+      if( isalnum((int)*p) || (*p == '_') ) {
+	if( islower((int)*p) )
 	  break;
       } else
 	break;
@@ -270,7 +270,7 @@ static char *lex_pat_idx( int *pidx, char *digits, int rem_chrs ) {
   char *p = digits;
   while( *p && (p < (digits + rem_chrs)) ) {
     assert( p < (digits + rem_chrs) );
-    if( ! isdigit(*p) )
+    if( ! isdigit((int)*p) )
       break;
     p++;
   }
@@ -311,7 +311,7 @@ static int lex_exp_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, int pa
     assert( pp1 <= plim );
     if( (pp1 == ppat) && (ppat < plim) ) {  // identifier over patterns, should be only 1 lowercase alphabet.
       assert( ppat );
-      if( islower(*ppat) ) {
+      if( islower((int)*ppat) ) {
 	char id[CBI_IDENT_MAXLEN + 1];
 	id[CBI_IDENT_MAXLEN] = 0;
 	strncpy( id, ppat, 1 );
@@ -512,20 +512,19 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 #else
 	      fprintf( errfp, "%d: found redeclaration of %s, and ignored.", line );
 #endif
-	    } else {
-	      assert( w == pE );
-	      assert( w );
-	      w->decl_gen.pNext = NULL;
-	      w->decl_gen.pFamily = NULL;
-	      if( !family.fst ) {
-		assert( !family.pp );
-		family.fst = w;
-	      } else {
-		assert( family.pp );
-		*family.pp = w;
-	      }
-	      family.pp = &w->decl_gen.pFamily;
 	    }
+	    assert( w == pE );
+	    assert( w );
+	    w->decl_gen.pNext = NULL;
+	    w->decl_gen.pFamily = NULL;
+	    if( !family.fst ) {
+	      assert( !family.pp );
+	      family.fst = w;
+	    } else {
+	      assert( family.pp );
+	      *family.pp = w;
+	    }
+	    family.pp = &w->decl_gen.pFamily;
 	  }
 #endif
 	  cnt++;
