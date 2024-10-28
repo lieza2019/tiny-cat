@@ -506,11 +506,12 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    assert( w );
 	    if( w != pE ) { // *****
 	      assert( !strncmp( w->ident, pE->ident, CBI_STAT_IDENT_LEN ) );
-#if 1
+#if 0
 	      err = TRUE;
 	      break;
 #else
 	      fprintf( errfp, "%d: found redeclaration of %s, and ignored.", line );
+	      continue;
 #endif
 	    }
 	    assert( w == pE );
