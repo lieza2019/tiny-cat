@@ -431,7 +431,6 @@ static CBI_STAT_ATTR_PTR hash_regist ( CBI_STAT_ATTR_PTR pE, int line ) {
   assert( line > 0 );
   char buf[256];
   buf[255] = 0;
-  
   {
     int n = -1;
     n = snprintf( buf, 256, "%d: ", line );
@@ -487,6 +486,7 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    w = hash_regist( pE, line );
 	    assert( w );
 	    if( w != pE ) {
+	      assert( !strncmp( w->ident, pE->ident, CBI_STAT_IDENT_LEN ) );
 	      err = TRUE;
 	      break;
 	    }
@@ -505,8 +505,13 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    w = hash_regist( pE, line );
 	    assert( w );
 	    if( w != pE ) { // *****
+	      assert( !strncmp( w->ident, pE->ident, CBI_STAT_IDENT_LEN ) );
+#if 1
 	      err = TRUE;
 	      break;
+#else
+	      fprintf( errfp, "%d: found redeclaration of %s, and ignored.", line );
+#endif
 	    } else {
 	      assert( w == pE );
 	      assert( w );
