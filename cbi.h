@@ -303,7 +303,7 @@ extern CBI_STAT_BIT_MASK cbi_stat_bit_maskpat ( int pos );
 
 typedef struct cbi_stat_label {
   CBI_STAT_KIND kind;
-  char name[CBI_STAT_NAME_LEN + 1];  
+  char name[CBI_STAT_NAME_LEN + 1];
   char ident[CBI_STAT_IDENT_LEN + 1];
 } CBI_STAT_LABEL, *CBI_STAT_LABEL_PTR;
 

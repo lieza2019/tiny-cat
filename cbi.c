@@ -289,8 +289,26 @@ static const CBI_STAT_LABEL cbi_stat_labeling[] = {
 CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
 #else
 CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
+#define IL_SYM_IDENTCHRS_LEN
+#define MAX_IL_SYMS 65536
+struct {
+  CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
+  struct {
+    CBI_STAT_KIND kind;
+    IL_OBJ_INSTANCES id;
+    char name[IL_SYM_IDENTCHRS_LEN + 1];
+    int code;
+  } il_sym_attr[MAX_IL_SYMS];
+} cbi_lexica;
 #endif
+#if 0
 static int frontier[END_OF_OCs];
+#else
+static struct {
+  int cbi_stat[END_OF_OCs];
+  int il_syms;
+} frontier;
+#endif
 
 static CBI_STAT_ATTR_PTR cbi_stat_hash_budgets[CBI_STAT_HASH_BUDGETS_NUM];
 
@@ -399,7 +417,7 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
   assert( r );
   return r;
 }
-static CBI_STAT_ATTR_PTR regist_hash_local ( CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre ) {
+static CBI_STAT_ATTR_PTR regist_hash_cbistat ( CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre ) {
   assert( pE );
   return regist_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, pE, mode, errmsg_pre );
 }
@@ -705,7 +723,7 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
     char sh_name[CBI_STAT_NAME_LEN + 1];
     bit_name[CBI_STAT_NAME_LEN] = 0;
     sh_name[CBI_STAT_NAME_LEN] = 0;
-    while( (! feof(fp)) && (frontier[oc_id] < CBI_MAX_STAT_BITS) ) {
+    while( (! feof(fp)) && (frontier.cbi_stat[oc_id] < CBI_MAX_STAT_BITS) ) {
       char buf[CBI_STAT_BITS_LEXBUF_SIZE + 1];
       buf[CBI_STAT_BITS_LEXBUF_SIZE] = 0;
       fscanf( fp, "%s\n", buf );
@@ -713,7 +731,7 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	errorF( "failed lexical analyzing the CBI OC%3d code-table of %s, in the line: %d.\n,", OC_ID_CONV2INT(oc_id), fname, lines );
 	assert( FALSE );
       } else {
-	CBI_STAT_ATTR_PTR pA = &cbi_stat_prof[oc_id].codes[frontier[oc_id]];
+	CBI_STAT_ATTR_PTR pA = &cbi_stat_prof[oc_id].codes[frontier.cbi_stat[oc_id]];
 	assert( pA );		       
 	if( (err = (BOOL)ferror( fp )) )
 	  break;
@@ -762,7 +780,7 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	  pctrlbit_lst = pA;
 	}
 	pA->dirty = FALSE;
-	frontier[oc_id]++;
+	frontier.cbi_stat[oc_id]++;
       }
       lines++;
       //dup_CBI_code_tbl( name, group, disp ); // ***** for debugging.
@@ -777,13 +795,13 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   }
   if( !err ) {
     int i;
-    for( i = 0; i < frontier[oc_id]; i++ )
-      regist_hash_local( &cbi_stat_prof[oc_id].codes[i], TRUE, "loading: " );
-    assert( i == frontier[oc_id] );
+    for( i = 0; i < frontier.cbi_stat[oc_id]; i++ )
+      regist_hash_cbistat( &cbi_stat_prof[oc_id].codes[i], TRUE, "loading: " );
+    assert( i == frontier.cbi_stat[oc_id] );
   }
   
   {
-    int r = frontier[oc_id];
+    int r = frontier.cbi_stat[oc_id];
     assert( r >= 0 );
     if( err ) {
       if( r == 0 )
@@ -793,6 +811,21 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
     return r;
   }
 }
+
+#if 0
+#define IL_SYM_HASH_BUDGETS_NUM 256
+CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
+static CBI_STAT_ATTR_PTR il_sym_hash_budgets[IL_SYM_HASH_BUDGETS_NUM];
+
+static CBI_STAT_ATTR_PTR regist_hash_ilsym ( CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre ) {
+  assert( pE );
+  return regist_hash( il_sym_hash_budgets, IL_SYM_HASH_BUDGETS_NUM, pE, mode, errmsg_pre );
+}
+
+static void foo() {
+  ;
+}
+#endif
 
 int revise_cbi_codetbl ( const char *errmsg_pre ) {
   int cnt = 0;
