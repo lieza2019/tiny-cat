@@ -283,8 +283,24 @@ typedef struct cbi_code_tbl {
     CBI_STAT_ATTR_PTR ptl;
   } dirty_bits;
 #endif  
-} CBI_CODE_TBL, *CBI_CODE_TBL_PTR;
+} CBI_CODETBL, *CBI_CODETBL_PTR;
+#if 0
 extern CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
+#else
+#define IL_SYM_IDENTCHRS_LEN
+#define MAX_IL_SYMS 65536
+typedef struct il_sym_attrib {
+  CBI_STAT_KIND kind;
+  IL_OBJ_INSTANCES id;
+  char identchrs[IL_SYM_IDENTCHRS_LEN + 1];
+  int code;
+} IL_SYM_ATTR, *IL_SYM_ATTR_PTR;
+typedef struct cbi_lexica {
+  CBI_CODETBL cbi_stat_prof[END_OF_OCs];
+  IL_SYM_ATTR il_sym_attrs[MAX_IL_SYMS];
+} CBI_LEXICA, *CBI_LEXICA_PTR;
+extern CBI_LEXICA cbi_stat_syms;
+#endif
 #endif
 
 #define CBI_STAT_HASH_BUDGETS_NUM 256

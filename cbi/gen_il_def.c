@@ -723,7 +723,7 @@ int main ( void ) {
 	CBI_STAT_ATTR_PTR q = p;
 	while( q ) {
 	  assert( q );
-	  fprintf( fp_out, "IL_SYM_ATTRIB(%s, ", cnv2str_cbi_stat_kind[q->kind] );
+	  fprintf( fp_out, "IL_SYMS(%s, ", cnv2str_cbi_stat_kind[q->kind] );
 	  fprintf( fp_out, "%s, ", q->ident );
 	  fprintf( fp_out, "\"%s\", ", q->ident );
 	  fprintf( fp_out, "%d)", cnt );

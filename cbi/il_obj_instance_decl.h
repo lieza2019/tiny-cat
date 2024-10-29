@@ -2,7 +2,7 @@
 #define IL_OBJ_INSTANCES_DECL
 
 typedef enum _il_obj_instances {
-#define IL_SYM_ATTRIB(kind, sym, str, code) sym=code
+#define IL_SYMS(kind, sym, str, code) sym=code
 #define IL_OBJ_INSTANCE_DESC(route, raw_name, exp) exp,
 #define IL_OBJ_INSTANCE_DESC1(route, raw_name, exp1) exp1,
 #define IL_OBJ_INSTANCE_DESC2(route, raw_name, exp1, exp2) exp1, exp2,
@@ -16,7 +16,7 @@ typedef enum _il_obj_instances {
 #undef IL_OBJ_INSTANCE_DESC3
 #undef IL_OBJ_INSTANCE_DESC4
 #undef IL_OBJ_INSTANCE_DESC5
-#undef IL_SYM_ATTRIB
+#undef IL_SYMS
   END_OF_IL_OBJ_INSTANCES
 } IL_OBJ_INSTANCES;
 

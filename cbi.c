@@ -286,21 +286,12 @@ static const CBI_STAT_LABEL cbi_stat_labeling[] = {
 #endif
 
 #if 0
-CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
-#else
+//CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
 CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
-#define IL_SYM_IDENTCHRS_LEN
-#define MAX_IL_SYMS 65536
-struct {
-  CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
-  struct {
-    CBI_STAT_KIND kind;
-    IL_OBJ_INSTANCES id;
-    char name[IL_SYM_IDENTCHRS_LEN + 1];
-    int code;
-  } il_sym_attr[MAX_IL_SYMS];
-} cbi_lexica;
+#else
+CBI_LEXICA cbi_stat_syms;
 #endif
+
 #if 0
 static int frontier[END_OF_OCs];
 #else
@@ -693,15 +684,15 @@ static void dup_CBI_code_tbl ( const char *name, int group, int disp ) { // ****
 void dump_cbi_stat_prof ( OC_ID oc_id ) {
   int i;
   for( i = 0; i < CBI_MAX_STAT_BITS; i++ ) {
-    printf( "name: %s\n", cbi_stat_prof[oc_id].codes[i].name );
-    printf( "ident: %s\n", cbi_stat_prof[oc_id].codes[i].ident );
-    printf( "disp.raw: %d\n", cbi_stat_prof[oc_id].codes[i].disp.raw );
-    printf( "disp.bytes: %d\n", cbi_stat_prof[oc_id].codes[i].disp.bytes );
-    printf( "disp.bits: %d\n", cbi_stat_prof[oc_id].codes[i].disp.bits );
+    printf( "name: %s\n", cbi_stat_syms.cbi_stat_prof[oc_id].codes[i].name );
+    printf( "ident: %s\n", cbi_stat_syms.cbi_stat_prof[oc_id].codes[i].ident );
+    printf( "disp.raw: %d\n", cbi_stat_syms.cbi_stat_prof[oc_id].codes[i].disp.raw );
+    printf( "disp.bytes: %d\n", cbi_stat_syms.cbi_stat_prof[oc_id].codes[i].disp.bytes );
+    printf( "disp.bits: %d\n", cbi_stat_syms.cbi_stat_prof[oc_id].codes[i].disp.bits );
     {
       char str[CBI_STAT_MASKNAME_MAXLEN + 1];
       str[CBI_STAT_MASKNAME_MAXLEN] = 0;
-      show_cbi_stat_bitmask( str, CBI_STAT_MASKNAME_MAXLEN, cbi_stat_prof[oc_id].codes[i].disp.mask );
+      show_cbi_stat_bitmask( str, CBI_STAT_MASKNAME_MAXLEN, cbi_stat_syms.cbi_stat_prof[oc_id].codes[i].disp.mask );
       printf( "disp.mask: %s\n", str );
     }
     printf( "\n" );
@@ -731,7 +722,7 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	errorF( "failed lexical analyzing the CBI OC%3d code-table of %s, in the line: %d.\n,", OC_ID_CONV2INT(oc_id), fname, lines );
 	assert( FALSE );
       } else {
-	CBI_STAT_ATTR_PTR pA = &cbi_stat_prof[oc_id].codes[frontier.cbi_stat[oc_id]];
+	CBI_STAT_ATTR_PTR pA = &cbi_stat_syms.cbi_stat_prof[oc_id].codes[frontier.cbi_stat[oc_id]];
 	assert( pA );		       
 	if( (err = (BOOL)ferror( fp )) )
 	  break;
@@ -786,7 +777,7 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
       //dup_CBI_code_tbl( name, group, disp ); // ***** for debugging.
     }
     fclose( fp );
-    cbi_stat_prof[oc_id].pctrl_codes = pctrlbit_fst;
+    cbi_stat_syms.cbi_stat_prof[oc_id].pctrl_codes = pctrlbit_fst;
     //fclose( fp_out ); // ***** for debugging.
   } else {
     errorF( "failed to open the file: %s.\n", fname );
@@ -796,7 +787,7 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   if( !err ) {
     int i;
     for( i = 0; i < frontier.cbi_stat[oc_id]; i++ )
-      regist_hash_cbistat( &cbi_stat_prof[oc_id].codes[i], TRUE, "loading: " );
+      regist_hash_cbistat( &cbi_stat_syms.cbi_stat_prof[oc_id].codes[i], TRUE, "loading: " );
     assert( i == frontier.cbi_stat[oc_id] );
   }
   
@@ -983,7 +974,7 @@ const CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj ) {
 }
 
 const char *cnv2str_il_obj_instances[] = {
-#define IL_SYM_ATTRIB(kind, sym, str, code) str
+#define IL_SYMS(kind, sym, str, code) str
 #define IL_OBJ_INSTANCE_DESC(kind, raw_name, exp) exp,
 #define IL_OBJ_INSTANCE_DESC1(kind, raw_name, exp1) exp1,
 #define IL_OBJ_INSTANCE_DESC2(kind, raw_name, exp1, exp2) exp1, exp2,
@@ -997,7 +988,7 @@ const char *cnv2str_il_obj_instances[] = {
 #undef IL_OBJ_INSTANCE_DESC3
 #undef IL_OBJ_INSTANCE_DESC4
 #undef IL_OBJ_INSTANCE_DESC5
-#undef IL_SYM_ATTRIB
+#undef IL_SYMS
   NULL
 };
 const char *cnv2str_il_obj ( IL_OBJ_INSTANCES obj ) {
