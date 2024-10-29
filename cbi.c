@@ -689,7 +689,7 @@ void dump_cbi_stat_prof ( OC_ID oc_id ) {
     printf( "\n" );
   }
 }
-int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
+int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   assert( fname );
   BOOL err = FALSE;
   FILE *fp = NULL;
@@ -794,7 +794,7 @@ int load_cbi_code_tbl ( OC_ID oc_id, const char *fname ) {
   }
 }
 
-int revise_cbi_code_tbl( const char *errmsg_pre ) {
+int revise_cbi_codetbl ( const char *errmsg_pre ) {
   int cnt = 0;
   int j = 0;
   

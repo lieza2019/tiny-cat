@@ -239,7 +239,7 @@ static void load_il_status_geometry ( void ) {
 #else
       strcpy( fname, il_status_geometry_resources[oc_id].csv_fname );
 #endif // IN_CBI_RESOURCEDIR
-      n = load_cbi_code_tbl ( il_status_geometry_resources[oc_id].oc_id, fname );
+      n = load_cbi_code( il_status_geometry_resources[oc_id].oc_id, fname );
       if( n < 0 ) {
 	errorF( "failed to open the CBI status csv file of %s.\n", fname );
 	exit( 1 );
@@ -253,7 +253,7 @@ static void load_il_status_geometry ( void ) {
   
   {
     int m = -1;
-    m = revise_cbi_code_tbl( NULL );
+    m = revise_cbi_codetbl( NULL );
     assert( m > -1 );
     errorF( "revised %d entries of CSV status.\n", m );
   }

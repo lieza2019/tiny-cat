@@ -636,7 +636,7 @@ int main ( void ) {
       assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
       
       fprintf( fp_err, "reading the csv file: %s.\n", il_status_geometry_resources[oc_id].csv_fname );
-      n = load_cbi_code_tbl ( il_status_geometry_resources[oc_id].oc_id, il_status_geometry_resources[oc_id].csv_fname );
+      n = load_cbi_code( il_status_geometry_resources[oc_id].oc_id, il_status_geometry_resources[oc_id].csv_fname );
       assert( n >= 0 );
       fprintf( fp_err, "read %d entries from the csv file: %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
       {

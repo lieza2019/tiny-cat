@@ -293,9 +293,9 @@ extern CBI_STAT_ATTR_PTR cbi_stat_rehash ( CBI_STAT_ATTR_PTR budgets[], const in
 extern CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident );
 
 #define CBI_STAT_BITS_LEXBUF_SIZE 256
-extern int load_cbi_code_tbl ( OC_ID oc_id, const char *fname );
+extern int load_cbi_code ( OC_ID oc_id, const char *fname );
 extern CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( const char *ident );
-extern int revise_cbi_code_tbl( const char *errmsg_pre );
+extern int revise_cbi_codetbl ( const char *errmsg_pre );
 extern void dump_cbi_stat_prof ( OC_ID oc_id );
 
 extern char *show_cbi_stat_bitmask ( char *mask_name, int len, CBI_STAT_BIT_MASK mask );
