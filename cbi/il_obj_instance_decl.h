@@ -1,7 +1,7 @@
 #ifndef IL_OBJ_INSTANCES_DECL
 #define IL_OBJ_INSTANCES_DECL
 
-typedef enum _il_obj_instances {
+typedef enum il_sym {
 #define IL_SYMS(sym_kind, sym, str, code) sym=code
 #define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, exp) exp,
 #define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, exp1) exp1,
@@ -18,6 +18,6 @@ typedef enum _il_obj_instances {
 #undef IL_OBJ_INSTANCE_DESC5
 #undef IL_SYMS
   END_OF_IL_OBJ_INSTANCES
-} IL_OBJ_INSTANCES;
+} IL_SYM;
 
 #endif // IL_OBJ_INSTANCES_DECL

@@ -14,13 +14,6 @@
 #include "interlock.h"
 #undef INTERLOCK_C
 
-const CBI_STAT_KIND ROUTE_KIND2GENERIC[] = {
-  _SIGNAL, // MAIN_ROUTE,
-  _SIGNAL, // SHUNTING_ROUTE,
-  _SIGNAL, // EMERGENCY_ROUTE,
-  _CBI_KIND_NONSENS // END_OF_ROUTE_KINDS
-};
-
 pthread_mutex_t cbi_ctrl_dispatch_mutex;
 pthread_mutex_t cbi_ctrl_sendbuf_mutex;
 pthread_mutex_t cbi_stat_info_mutex;
@@ -68,7 +61,7 @@ static void cons_track_prof_lkup_tbl ( void ) {
 #endif // CHK_STRICT_CONSISTENCY
 }
 
-TRACK_C_PTR conslt_track_prof ( IL_OBJ_INSTANCES track_id ) {
+TRACK_C_PTR conslt_track_prof ( IL_SYM track_id ) {
   assert( (track_id >= 0) && (track_id < END_OF_IL_OBJ_INSTANCES) );
   return lkup_track_prof[track_id];
 }
@@ -118,7 +111,7 @@ static void cons_route_prof_lkup_tbl ( void ) {
 #endif // CHK_STRICT_CONSISTENCY
 }
 
-ROUTE_C_PTR conslt_route_prof ( IL_OBJ_INSTANCES route_id ) {
+ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id ) {
   assert( (route_id >= 0) && (route_id < END_OF_IL_OBJ_INSTANCES) );
   return lkup_route_prof[route_id];
 }

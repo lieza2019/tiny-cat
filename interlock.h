@@ -6,13 +6,13 @@
 typedef struct route_lock {
   BOOL app;
   CBI_STAT_KIND kind;
-  IL_OBJ_INSTANCES id;
+  IL_SYM id;
 } ROUTE_LOCK, *ROUTE_LOCK_PTR;
 
 #define MAX_TRACK_BLOCKS 21
 typedef struct track {
   const CBI_STAT_KIND kind_cbi;
-  const IL_OBJ_INSTANCES id;
+  const IL_SYM id;
   const char *name;
   struct {
     const int num_blocks;
@@ -47,22 +47,22 @@ extern const CBI_STAT_KIND ROUTE_KIND2GENERIC[];
 typedef struct route {
   const CBI_STAT_KIND kind_cbi;
   const ROUTE_KIND kind_route;
-  const IL_OBJ_INSTANCES id;
+  const IL_SYM id;
   const char *name;
   struct {
     const int num_tracks;
-    const IL_OBJ_INSTANCES tracks[MAX_ROUTE_TRACKS];
+    const IL_SYM tracks[MAX_ROUTE_TRACKS];
     TRACK_C_PTR ptracks[MAX_ROUTE_TRACKS];
   } body;
   struct {
     struct {
-      IL_OBJ_INSTANCES sig;
+      IL_SYM sig;
       CBTC_BLOCK_ID blk;  // data not implemented yet.
       CBTC_BLOCK_C_PTR pblk; // data not implemented yet.
       STOPPING_POINT_CODE sp; // data not implemented yet.
     } src;
     struct {
-      IL_OBJ_INSTANCES sig;
+      IL_SYM sig;
       CBTC_BLOCK_ID blk; // data not implemented yet.
       CBTC_BLOCK_C_PTR pblk; // data not implemented yet.
       STOPPING_POINT_CODE sp; // data not implemented yet.
@@ -78,9 +78,9 @@ typedef struct route {
     struct {
       const int num_tracks_lok;
       const int num_tracks_occ;
-      const IL_OBJ_INSTANCES chk_trks[MAX_ROUTE_TRACKS];
+      const IL_SYM chk_trks[MAX_ROUTE_TRACKS];
       const int num_ahead_tracks;
-      const IL_OBJ_INSTANCES ahead_trks[MAX_ROUTE_TRACKS];
+      const IL_SYM ahead_trks[MAX_ROUTE_TRACKS];
       TRACK_C_PTR pchk_trks[MAX_ROUTE_TRACKS];
       TRACK_C_PTR pahead_trks[MAX_ROUTE_TRACKS];
     } ctrl_tracks;
@@ -105,8 +105,8 @@ typedef const struct route *ROUTE_C_PTR;
 #include "interlock_def.h"
 #undef ROUTE_ATTRIB_DEFINITION
 
-extern TRACK_C_PTR conslt_track_prof ( IL_OBJ_INSTANCES track_id );
-extern ROUTE_C_PTR conslt_route_prof ( IL_OBJ_INSTANCES route_id );
+extern TRACK_C_PTR conslt_track_prof ( IL_SYM track_id );
+extern ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id );
 
 extern void cons_track_state ( TRACK_PTR ptrack );
 extern void cons_route_state ( ROUTE_PTR proute );

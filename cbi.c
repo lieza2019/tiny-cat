@@ -277,8 +277,8 @@ RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 
 #include "./cbi/cbi_stat_label.h"
 #ifndef CBI_STAT_LABELING
-static const CBI_STAT_LABEL cbi_stat_labeling[] = {
-  { _CBI_KIND_NONSENS, "", "" }
+static const CBI_STAT_LABEL cbi_stat_label[] = {
+  { _CBI_STAT_KIND_NONSENS, "", "" }
 };
 #endif
 #ifdef CBI_STAT_LABELING
@@ -799,9 +799,9 @@ int revise_cbi_codetbl ( const char *errmsg_pre ) {
   int cnt = 0;
   int j = 0;
   
-  while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS ) {
+  while( cbi_stat_label[j].kind != _CBI_STAT_KIND_NONSENS ) {
     CBI_STAT_ATTR_PTR pS = NULL;
-    pS = conslt_hash_cbistat( cbi_stat_labeling[j].name );
+    pS = conslt_hash_cbistat( cbi_stat_label[j].name );
 #if 0 // ***** for debugging.
     if( !pS ) {
       printf( "(j, name) = (%d, %s)\n", j, cbi_stat_labeling[j].name );
@@ -809,8 +809,8 @@ int revise_cbi_codetbl ( const char *errmsg_pre ) {
 #endif
     if( pS ) {
       CBI_STAT_ATTR_PTR pE = NULL;
-      pS->kind = cbi_stat_labeling[j].kind;
-      pE = re_hash_cbistat( pS->ident, cbi_stat_labeling[j].ident, errmsg_pre );
+      pS->kind = cbi_stat_label[j].kind;
+      pE = re_hash_cbistat( pS->ident, cbi_stat_label[j].ident, errmsg_pre );
       if( pE )
 	cnt++;
 #ifdef CHK_STRICT_CONSISTENCY
@@ -851,7 +851,7 @@ int main ( void ) {
       CBI_STAT_LABEL_PTR pL = NULL;
       int j = 0;
       pE = &cbi_stat_prof[oc_id][i];
-      while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS )  {
+      while( cbi_stat_labeling[j].kind != _CBI_STAT_KIND_NONSENS )  {
 	if( ! strncmp(cbi_stat_labeling[j].name, cbi_stat_prof[oc_id][i].name, CBI_STAT_NAME_LEN) ) {
 	  pL = &cbi_stat_labeling[j];
 	  break;
@@ -913,7 +913,7 @@ int main ( void ) {
   // test correctness on construction of hash-map for cbi state bits.
   {
     int i = 0;
-    while( cbi_stat_labeling[i].kind != _CBI_KIND_NONSENS ) {
+    while( cbi_stat_labeling[i].kind != _CBI_STAT_KIND_NONSENS ) {
       CBI_STAT_ATTR_PTR pE = NULL;
       pE = conslt_hash_local( cbi_stat_labeling[i].ident );
       assert( pE );
@@ -926,7 +926,7 @@ int main ( void ) {
 #endif
 #endif
 
-const CBI_STAT_KIND il_obj_kind[] = {
+static const CBI_STAT_KIND il_sym_kind[] = {
 #define IL_SYMS(sym_kind, sym, str, code) sym_kind
 #define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, exp) exp,
 #define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, exp1) exp1,
@@ -942,16 +942,16 @@ const CBI_STAT_KIND il_obj_kind[] = {
 #undef IL_OBJ_INSTANCE_DESC4
 #undef IL_OBJ_INSTANCE_DESC5
 #undef IL_SYMS
-  _CBI_KIND_NONSENS
+  _CBI_SYM_KIND_NONSENS
 };
-const CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj ) {
+const CBI_STAT_KIND whats_kind_of_il_sym ( IL_SYM obj ) {
   assert( (obj >= 0) && (obj < END_OF_IL_OBJ_INSTANCES) );
-  CBI_STAT_KIND r = _CBI_KIND_NONSENS;
-  r = il_obj_kind[obj];
+  CBI_STAT_KIND r = _CBI_SYM_KIND_NONSENS;
+  r = il_sym_kind[obj];
   return r;
 }
 
-const char *cnv2str_il_obj_instances[] = {
+static const char *il_sym_namechrs [] = {
 #define IL_SYMS(sym_kind, sym, str, code) str
 #define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, exp) exp,
 #define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, exp1) exp1,
@@ -969,7 +969,7 @@ const char *cnv2str_il_obj_instances[] = {
 #undef IL_SYMS
   NULL
 };
-const char *cnv2str_il_obj ( IL_OBJ_INSTANCES obj ) {
+const char *cnv2str_il_sym ( IL_SYM obj ) {
   assert( (obj >= 0) && (obj < END_OF_IL_OBJ_INSTANCES) );
-  return cnv2str_il_obj_instances[obj];
+  return il_sym_namechrs[obj];
 }

@@ -173,7 +173,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
       int stat = -1;
       if( ptr->lock.TLSR.app ) {
 	assert( ptr->lock.TLSR.kind == _TLSR );
-	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(ptr->lock.TLSR.id) );
+	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(ptr->lock.TLSR.id) );
 	if( stat <= 0 ) {
 	  if( stat == 0 )
 	    assert( kind == _TLSR );
@@ -185,7 +185,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
       }
       if( ptr->lock.TRSR.app ) {
 	assert( ptr->lock.TRSR.kind == _TRSR );
-	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(ptr->lock.TRSR.id) );
+	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(ptr->lock.TRSR.id) );
 	if( stat <= 0 ) {
 	  if( stat == 0 )
 	    assert( kind == _TRSR );
@@ -197,7 +197,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
       }
       if( ptr->lock.sTLSR.app ) {
 	assert( ptr->lock.sTLSR.kind == _sTLSR );
-	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(ptr->lock.sTLSR.id) );
+	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(ptr->lock.sTLSR.id) );
 	if( stat <= 0 ) {
 	  if( stat == 0 )
 	    assert( kind == _sTLSR );
@@ -209,7 +209,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
       }
       if( ptr->lock.sTRSR.app ) {
 	assert( ptr->lock.sTRSR.kind == _sTRSR );
-	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(ptr->lock.sTRSR.id) );
+	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(ptr->lock.sTRSR.id) );
 	if( stat <= 0 ) {
 	  if( stat == 0 )
 	    assert( kind == _sTRSR );
@@ -221,8 +221,8 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
       }
       if( ptr->lock.eTLSR.app ) {
 	assert( ptr->lock.eTLSR.kind == _eTLSR );
-	assert( ! strncmp(ptr->name, cnv2str_il_obj(ptr->lock.eTLSR.id), CBI_STAT_IDENT_LEN) );
-	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(ptr->lock.eTLSR.id) );
+	assert( ! strncmp(ptr->name, cnv2str_il_sym(ptr->lock.eTLSR.id), CBI_STAT_IDENT_LEN) );
+	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(ptr->lock.eTLSR.id) );
 	if( stat <= 0 ) {
 	  if( stat == 0 )
 	    assert( kind == _eTLSR );
@@ -234,7 +234,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
       }
       if( ptr->lock.eTRSR.app ) {
 	assert( ptr->lock.eTRSR.kind == _eTRSR );
-	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(ptr->lock.eTRSR.id) );
+	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(ptr->lock.eTRSR.id) );
 	if( stat <= 0 ) {
 	  if( stat == 0 )
 	    assert( kind == _eTRSR );
@@ -265,7 +265,7 @@ static int ars_chk_cond_trackcirc ( ROUTE_C_PTR proute ) {
     ptr = proute->ars_ctrl.ctrl_tracks.pchk_trks[i];
     assert( ptr );
     assert( ptr->kind_cbi == _TRACK );
-    assert( ! strncmp(ptr->name, cnv2str_il_obj(ptr->id), CBI_STAT_IDENT_LEN) );
+    assert( ! strncmp(ptr->name, cnv2str_il_sym(ptr->id), CBI_STAT_IDENT_LEN) );
     stat = conslt_il_state( &oc_id, &kind, ptr->name );
     if( stat <= 0 ) {
       if( stat == 0 )
@@ -353,7 +353,7 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
   assert( sch_dst );
   assert( pC );
   assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
-  assert( whats_kind_of_il_obj( pC->attr.sch_roset.route_id ) == _ROUTE );
+  assert( whats_kind_of_il_sym( pC->attr.sch_roset.route_id ) == _ROUTE );
   int r = -1;
   
   ROUTE_C_PTR pR = NULL;
@@ -443,7 +443,7 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
   assert( sch_dep );
   assert( pC );
   assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
-  assert( whats_kind_of_il_obj( pC->attr.sch_roset.route_id ) == _ROUTE );
+  assert( whats_kind_of_il_sym( pC->attr.sch_roset.route_id ) == _ROUTE );
   int r = -1;
   
   ROUTE_C_PTR pR = NULL;
@@ -557,7 +557,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
     assert( pC );
     assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
     if( pC->cmd == ARS_SCHEDULED_ROUTESET ) {
-      assert( whats_kind_of_il_obj( pC->attr.sch_roset.route_id ) == _ROUTE );
+      assert( whats_kind_of_il_sym( pC->attr.sch_roset.route_id ) == _ROUTE );
       ROUTE_C_PTR pR = NULL;
       pR = conslt_route_prof( pC->attr.sch_roset.route_id );
       assert( pR );
@@ -652,7 +652,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 		      {
 			OC_ID oc_id;
 			CBI_STAT_KIND kind;
-			conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_roset.route_id) );
+			conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pC->attr.sch_roset.route_id) );
 		      }
 #endif
 		      assert( pC );
@@ -703,7 +703,7 @@ SCHEDULED_COMMAND_PTR ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
 	      OC_ID oc_id;
 	      CBI_STAT_KIND kind;
 	      int stat = -1;
-	      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_obj(pC->attr.sch_roset.route_id) );
+	      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pC->attr.sch_roset.route_id) );
 	      if( stat > 0 ) {
 		timestamp( &pC->attr.sch_roset.dept_time );
 		make_it_past( pJ, pC );

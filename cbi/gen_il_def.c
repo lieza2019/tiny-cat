@@ -650,7 +650,7 @@ int main ( void ) {
 	  fprintf( fp_out, "#ifndef CBI_STAT_LABELING\n" );
 	  fprintf( fp_out, "#define CBI_STAT_LABELING\n" );
 	  fprintf( fp_out, "#endif\n" );
-	  fprintf( fp_out, "static CBI_STAT_LABEL cbi_stat_labeling[] = {\n" );
+	  fprintf( fp_out, "static CBI_STAT_LABEL cbi_stat_label[] = {\n" );
 	  prolog = FALSE;
 	}
 	{
@@ -671,7 +671,7 @@ int main ( void ) {
       }
       oc_id++;
     }
-    fprintf( fp_out, "{ _CBI_KIND_NONSENS, \"\", \"\" }\n" );
+    fprintf( fp_out, "{ _CBI_STAT_KIND_NONSENS, \"\", \"\" }\n" );
     fprintf( fp_out, "};\n" );
     fflush( fp_err );
     if( fp_out ) {

@@ -82,13 +82,13 @@ typedef struct scheduled_command {
   union {
     struct { // for ARS_SCHEDULED_ROUTESET
       int nth_routeset;
-      IL_OBJ_INSTANCES route_id;
+      IL_SYM route_id;
       BOOL is_dept_route;
       ARS_ASSOC_TIME dept_time;
     } sch_roset;
     struct { // for ARS_SCHEDULED_ROUTEREL
       int nth_routerel;
-      IL_OBJ_INSTANCES route_id;
+      IL_SYM route_id;
       ARS_ASSOC_TIME dept_time;
     } sch_rorel;
     struct { // for ARS_SCHEDULED_ARRIVAL

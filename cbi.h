@@ -7,8 +7,6 @@
 #include "network.h"
 
 #include "./cbi/il_obj_instance_decl.h"
-extern const char *cnv2str_il_obj_instances[];
-const char *cnv2str_il_obj ( IL_OBJ_INSTANCES obj );
 
 #define CBI_STAT_CSV_FNAME_BCGN "BOTANICAL_GARDEN.csv"
 #define CBI_STAT_CSV_FNAME_JLA "JASOLA_VIHAR.csv"
@@ -211,12 +209,8 @@ typedef enum cbi_stat_kind {
 } CBI_STAT_KIND;
 extern const char *cnv2str_cbi_stat_kind[];
 
-extern const CBI_STAT_KIND il_obj_kind[];
-extern const CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj );
-  
 typedef struct cbi_stat_csv_fnames {
   OC_ID oc_id;
-  //char *fname;
   char *csv_fname;
 } CBI_STAT_CSV_FNAMES, *CBI_STAT_CSV_FNAMES_PTR;
 
@@ -264,7 +258,6 @@ typedef struct cbi_stat_attr {
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
 #define CBI_MAX_STAT_BITS 65536
-
 typedef struct cbi_code_tbl {
   CBI_STAT_ATTR codes[CBI_MAX_STAT_BITS];
   CBI_STAT_ATTR_PTR pctrl_codes;
@@ -275,7 +268,7 @@ typedef struct cbi_code_tbl {
 #define MAX_IL_SYMS 65536
 typedef struct il_sym_attrib {
   CBI_STAT_KIND kind;
-  IL_OBJ_INSTANCES id;
+  IL_SYM id;
   char identchrs[IL_SYM_IDENTCHRS_LEN + 1];
   int code;
 } IL_SYM_ATTR, *IL_SYM_ATTR_PTR;
@@ -284,6 +277,9 @@ typedef struct cbi_lexica {
   IL_SYM_ATTR il_sym_attrs[MAX_IL_SYMS];
 } CBI_LEXICA, *CBI_LEXICA_PTR;
 extern CBI_LEXICA cbi_stat_syms;
+
+extern const CBI_STAT_KIND whats_kind_of_il_sym ( IL_SYM obj );
+extern const char *cnv2str_il_sym( IL_SYM obj );
 
 #define CBI_STAT_HASH_BUDGETS_NUM 256
 extern CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre );

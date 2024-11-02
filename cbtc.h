@@ -21,7 +21,7 @@ typedef struct block {
   const char *virt_blkname_str;
   const int len;
   struct {
-    const IL_OBJ_INSTANCES track;
+    const IL_SYM track;
     const struct track *ptrack;
   } belonging_tr;
   struct {
