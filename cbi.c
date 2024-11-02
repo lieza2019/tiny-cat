@@ -285,10 +285,8 @@ static const CBI_STAT_LABEL cbi_stat_labeling[] = {
 #undef CBI_STAT_LABELING
 #endif
 
-#if 0
-CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
-#else
 CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
+
 #define IL_SYM_IDENTCHRS_LEN
 #define MAX_IL_SYMS 65536
 struct {
@@ -300,15 +298,10 @@ struct {
     int code;
   } il_sym_attr[MAX_IL_SYMS];
 } cbi_lexica;
-#endif
-#if 0
-static int frontier[END_OF_OCs];
-#else
 static struct {
   int cbi_stat[END_OF_OCs];
   int il_syms;
 } frontier;
-#endif
 
 static CBI_STAT_ATTR_PTR cbi_stat_hash_budgets[CBI_STAT_HASH_BUDGETS_NUM];
 
@@ -465,7 +458,7 @@ static CBI_STAT_ATTR_PTR re_hash ( CBI_STAT_ATTR_PTR budgets[], const int budget
   }
   return pE;
 }
-static CBI_STAT_ATTR_PTR re_hash_local ( const char *ident, const char *ident_new, const char *errmsg_pre ) {
+static CBI_STAT_ATTR_PTR re_hash_cbistat ( const char *ident, const char *ident_new, const char *errmsg_pre ) {
   assert( ident );
   assert( ident_new );
   return re_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, ident, ident_new, errmsg_pre );
@@ -502,13 +495,13 @@ static CBI_STAT_ATTR_PTR conslt_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
   }
   return r;
 }
-static CBI_STAT_ATTR_PTR conslt_hash_local ( const char *ident ) {
+static CBI_STAT_ATTR_PTR conslt_hash_cbistat ( const char *ident ) {
   assert( ident );
   return conslt_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, ident );
 }
 CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( const char *ident ) {
   assert( ident );
-  return conslt_hash_local( ident );
+  return conslt_hash_cbistat( ident );
 }
 
 CBI_STAT_ATTR_PTR cbi_stat_idntify ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident ) {
@@ -689,6 +682,7 @@ static void dup_CBI_code_tbl ( const char *name, int group, int disp ) { // ****
   fprintf( fp_out, "%s,%d,%d\n", name, group, disp );
 }
 #endif
+
 #define CBI_STAT_MASKNAME_MAXLEN 256
 void dump_cbi_stat_prof ( OC_ID oc_id ) {
   int i;
@@ -707,6 +701,7 @@ void dump_cbi_stat_prof ( OC_ID oc_id ) {
     printf( "\n" );
   }
 }
+
 int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   assert( fname );
   BOOL err = FALSE;
@@ -812,28 +807,13 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   }
 }
 
-#if 0
-#define IL_SYM_HASH_BUDGETS_NUM 256
-CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
-static CBI_STAT_ATTR_PTR il_sym_hash_budgets[IL_SYM_HASH_BUDGETS_NUM];
-
-static CBI_STAT_ATTR_PTR regist_hash_ilsym ( CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre ) {
-  assert( pE );
-  return regist_hash( il_sym_hash_budgets, IL_SYM_HASH_BUDGETS_NUM, pE, mode, errmsg_pre );
-}
-
-static void foo() {
-  ;
-}
-#endif
-
 int revise_cbi_codetbl ( const char *errmsg_pre ) {
   int cnt = 0;
   int j = 0;
   
   while( cbi_stat_labeling[j].kind != _CBI_KIND_NONSENS ) {
     CBI_STAT_ATTR_PTR pS = NULL;
-    pS = conslt_hash_local( cbi_stat_labeling[j].name );
+    pS = conslt_hash_cbistat( cbi_stat_labeling[j].name );
 #if 0 // ***** for debugging.
     if( !pS ) {
       printf( "(j, name) = (%d, %s)\n", j, cbi_stat_labeling[j].name );
@@ -842,7 +822,7 @@ int revise_cbi_codetbl ( const char *errmsg_pre ) {
     if( pS ) {
       CBI_STAT_ATTR_PTR pE = NULL;
       pS->kind = cbi_stat_labeling[j].kind;
-      pE = re_hash_local( pS->ident, cbi_stat_labeling[j].ident, errmsg_pre );
+      pE = re_hash_cbistat( pS->ident, cbi_stat_labeling[j].ident, errmsg_pre );
       if( pE )
 	cnt++;
 #ifdef CHK_STRICT_CONSISTENCY
@@ -906,8 +886,7 @@ int main ( void ) {
       }
     }
   }
-  assert( n == cnt );
-  
+  assert( n == cnt );  
   return 0;
 }
 #else

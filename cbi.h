@@ -256,37 +256,22 @@ typedef struct cbi_stat_attr {
   BOOL dirty;
   struct cbi_stat_attr *pNext_dirt;
   struct cbi_stat_attr *pNext_hash;
-#if 0
-  struct cbi_stat_attr *pNext_decl;
-#else
   struct {
     int nentities;
     struct cbi_stat_attr *pNext;
     struct cbi_stat_attr *pFamily;
     void *plex_il_obj;
   } decl_gen;
-#endif
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
 #define CBI_MAX_STAT_BITS 65536
 
-#if 0
-extern CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
-#else
 typedef struct cbi_code_tbl {
   CBI_STAT_ATTR codes[CBI_MAX_STAT_BITS];
   CBI_STAT_ATTR_PTR pctrl_codes;
-#if 1
   CBI_STAT_ATTR_PTR pdirty_bits;
-#else
-  struct {
-    CBI_STAT_ATTR_PTR phd;
-    CBI_STAT_ATTR_PTR ptl;
-  } dirty_bits;
-#endif  
 } CBI_CODE_TBL, *CBI_CODE_TBL_PTR;
 extern CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
-#endif
 
 #define CBI_STAT_HASH_BUDGETS_NUM 256
 extern CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre );
