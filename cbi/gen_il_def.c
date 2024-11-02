@@ -53,8 +53,7 @@ typedef struct cbi_lex_symtbl {
 
 LEX_IL_OBJ cbi_lex_def[] = {
   /*
-   * grammar:  {{kind, match_pattern, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}, raw-stat-name}}
-   * grammar': {{kind, match_pattern, expand_pat_4ident, {expand_pat_1, expand_pat_2, expand_pat_3, expand_pat_4, expand_pat_5}}}
+   * grammar': {cbi_stat_kind, cbi_stat_match_pattern, cbi_stat_expand_label, {{sym_kind1, sym_expand_instance1, sym_expand_str1}, ..., {sym_kind3, sym_expand_instance3, sym_expand_str3}}}
    */
 #include "cbi_pat.def"
   {END_OF_CBI_STAT_KIND, "", "", {{END_OF_CBI_STAT_KIND, ""}}}
