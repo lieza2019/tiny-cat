@@ -269,14 +269,7 @@ typedef struct cbi_stat_attr {
 typedef struct cbi_code_tbl {
   CBI_STAT_ATTR codes[CBI_MAX_STAT_BITS];
   CBI_STAT_ATTR_PTR pctrl_codes;
-#if 1
   CBI_STAT_ATTR_PTR pdirty_bits;
-#else
-  struct {
-    CBI_STAT_ATTR_PTR phd;
-    CBI_STAT_ATTR_PTR ptl;
-  } dirty_bits;
-#endif  
 } CBI_CODETBL, *CBI_CODETBL_PTR;
 
 #if 0
