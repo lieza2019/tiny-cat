@@ -624,7 +624,7 @@ static int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
   int cnt = 0;
   CBI_STAT_ATTR_PTR pA_ctl = NULL;
   
-  pA_ctl = cbi_stat_prof[oc_id].pctrl_codes;
+  pA_ctl = cbi_stat_syms.cbi_stat_prof[oc_id].pctrl_codes;
   while( pA_ctl ) {
     assert( pA_ctl->attr_ctrl.ctrl_bit );
     if( pA_ctl->attr_ctrl.ctrl_bit ) {
@@ -643,8 +643,8 @@ static int expire_cbi_ctrl_bits ( OC_ID oc_id ) {
 	    assert( pA_ctl->pNext_dirt == NULL );
 	    pA_ctl->attr_ctrl.setval = FALSE;
 	    pA_ctl->dirty = TRUE;
-	    pA_ctl->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
-	    cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
+	    pA_ctl->pNext_dirt = cbi_stat_syms.cbi_stat_prof[oc_id].pdirty_bits;
+	    cbi_stat_syms.cbi_stat_prof[oc_id].pdirty_bits = pA_ctl;
 	    cnt++;
 	  } else
 	    assert( pA_ctl->attr_ctrl.cnt_2_kil > 0 );
@@ -732,7 +732,7 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
   unsigned char *pa = cbi_stat_ATS2OC[cmd_id].ats2oc.sent.msgs[0].buf.arena;
   assert( pa );
   
-  pphd = &cbi_stat_prof[cmd_id].pdirty_bits;
+  pphd = &cbi_stat_syms.cbi_stat_prof[cmd_id].pdirty_bits;
   assert( pphd );
   while( *pphd ) {
     assert( pphd );
@@ -954,7 +954,7 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 #endif // CHK_STRICT_CONSISTENCY
 #else
 	      {
-		CBI_STAT_ATTR_PTR *pp = &cbi_stat_prof[oc_id].pdirty_bits;
+		CBI_STAT_ATTR_PTR *pp = &cbi_stat_syms.cbi_stat_prof[oc_id].pdirty_bits;
 		assert( pp );
 		while( *pp ) {
 		  assert( *pp );
@@ -1032,11 +1032,11 @@ int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 	      pA->attr_ctrl.setval = FALSE;
 	      pA->dirty = TRUE;
 #if 1
-	      pA->pNext_dirt = cbi_stat_prof[oc_id].pdirty_bits;
-	      cbi_stat_prof[oc_id].pdirty_bits = pA;
+	      pA->pNext_dirt = cbi_stat_syms.cbi_stat_prof[oc_id].pdirty_bits;
+	      cbi_stat_syms.cbi_stat_prof[oc_id].pdirty_bits = pA;
 #if CHK_STRICT_CONSISTENCY
 	      {
-		CBI_STAT_ATTR_PTR p = cbi_stat_prof[oc_id].pdirty_bits;
+		CBI_STAT_ATTR_PTR p = cbi_stat_syms.cbi_stat_prof[oc_id].pdirty_bits;
 		assert( p == pA );
 		do {
 		  assert( p->dirty );

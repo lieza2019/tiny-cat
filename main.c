@@ -411,8 +411,8 @@ int main ( void ) {
 #if 0
       show_tracking_train_stat( stdout );
 #endif
-#if 1
       diag_cbi_stat_attrib( stdout, "S803A_S811A" );
+#if 0
       {
 	OC_ID oc_id = END_OF_OCs;
 	CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
