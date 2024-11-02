@@ -118,12 +118,9 @@ ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id ) {
 
 void cons_track_state ( TRACK_PTR ptrack ) {
   assert( ptrack );
-  
   assert( ptrack->kind == _TRACK );
   assert( ptrack->id < END_OF_IL_OBJ_INSTANCES );
-#if 0 // *****
-  assert( ptrack->name != NULL );
-#endif
+  
   int i;
   for( i = 0; i < ptrack->cbtc.num_blocks; i++ ) {
     assert( ptrack->cbtc.blocks[i] );
@@ -150,7 +147,6 @@ void cons_route_state ( ROUTE_PTR proute ) {
   
   assert( (proute->kind_cbi == _ROUTE) && (proute->kind_route < END_OF_ROUTE_KINDS) );
   assert( proute->id < END_OF_IL_OBJ_INSTANCES );
-  assert( proute->name != NULL );
   {
     int i;
     for( i = 0; i < proute->body.num_tracks; i++ ) {

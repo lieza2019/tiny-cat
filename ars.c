@@ -221,9 +221,6 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) {
       }
       if( ptr->lock.eTLSR.app ) {
 	assert( ptr->lock.eTLSR.kind == _eTLSR );
-#if 0 // *****
-	assert( ! strncmp(ptr->name, cnv2str_il_sym(ptr->lock.eTLSR.id), CBI_STAT_IDENT_LEN) );
-#endif
 	stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(ptr->lock.eTLSR.id) );
 	if( stat <= 0 ) {
 	  if( stat == 0 )
@@ -267,14 +264,7 @@ static int ars_chk_cond_trackcirc ( ROUTE_C_PTR proute ) {
     ptr = proute->ars_ctrl.ctrl_tracks.pchk_trks[i];
     assert( ptr );
     assert( ptr->kind == _TRACK );
-#if 0 // *****
-    assert( ! strncmp(ptr->name, cnv2str_il_sym(ptr->id), CBI_STAT_IDENT_LEN) );
-#endif
-#if 0 // *****
-    stat = conslt_il_state( &oc_id, &kind, ptr->name );
-#else
     stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(ptr->id) );
-#endif
     if( stat <= 0 ) {
       if( stat == 0 )
 	assert( kind == _TRACK );
