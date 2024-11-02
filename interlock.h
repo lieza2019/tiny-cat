@@ -11,9 +11,11 @@ typedef struct route_lock {
 
 #define MAX_TRACK_BLOCKS 21
 typedef struct track {
-  const IL_SYM_KIND kind_cbi;
+  const IL_SYM_KIND kind;
   const IL_SYM id;
+#if 0 // *****
   const char *name;
+#endif
   struct {
     const int num_blocks;
     const CBTC_BLOCK_ID blocks[MAX_TRACK_BLOCKS];

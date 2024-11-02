@@ -21,14 +21,14 @@ pthread_mutex_t cbi_stat_info_mutex;
 static TRACK_C_PTR lkup_track_prof[END_OF_IL_OBJ_INSTANCES];
 static void cons_track_prof_lkup_tbl ( void ) {
   int i = 0;
-  while( track_dataset_def[i].kind_cbi != END_OF_CBI_STAT_KIND ) {
-    assert( track_dataset_def[i].kind_cbi == _TRACK );
+  while( track_dataset_def[i].kind != END_OF_CBI_STAT_KIND ) {
+    assert( track_dataset_def[i].kind == _TRACK );
     assert( (track_dataset_def[i].id >= 0) && (track_dataset_def[i].id < END_OF_IL_OBJ_INSTANCES) );
     lkup_track_prof[track_dataset_def[i].id] = &track_dataset_def[i];
     assert( lkup_track_prof[track_dataset_def[i].id] );
     i++;
   }
-  assert( track_dataset_def[i].kind_cbi == END_OF_CBI_STAT_KIND );
+  assert( track_dataset_def[i].kind == END_OF_CBI_STAT_KIND );
 #ifdef CHK_STRICT_CONSISTENCY
   {
     int cnt = 0;
@@ -40,7 +40,7 @@ static void cons_track_prof_lkup_tbl ( void ) {
     assert( cnt == i );
     {
       int k = 0;
-      while( track_dataset_def[k].kind_cbi != END_OF_CBI_STAT_KIND ) {
+      while( track_dataset_def[k].kind != END_OF_CBI_STAT_KIND ) {
 	int found = -1;
 	int l;
 	for( l = 0; l < END_OF_IL_OBJ_INSTANCES; l++ ) {
@@ -54,7 +54,7 @@ static void cons_track_prof_lkup_tbl ( void ) {
 	cnt--;
 	k++;
       }
-      assert( track_dataset_def[k].kind_cbi == END_OF_CBI_STAT_KIND );
+      assert( track_dataset_def[k].kind == END_OF_CBI_STAT_KIND );
       assert( cnt == 0 );
     }
   }
@@ -119,9 +119,11 @@ ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id ) {
 void cons_track_state ( TRACK_PTR ptrack ) {
   assert( ptrack );
   
-  assert( ptrack->kind_cbi == _TRACK );
+  assert( ptrack->kind == _TRACK );
   assert( ptrack->id < END_OF_IL_OBJ_INSTANCES );
+#if 0 // *****
   assert( ptrack->name != NULL );
+#endif
   int i;
   for( i = 0; i < ptrack->cbtc.num_blocks; i++ ) {
     assert( ptrack->cbtc.blocks[i] );
@@ -155,8 +157,8 @@ void cons_route_state ( ROUTE_PTR proute ) {
       assert( proute->body.tracks[i] );
       int found = -1;
       int j = 0;
-      while( track_dataset_def[j].kind_cbi != END_OF_CBI_STAT_KIND ) {
-	assert( track_dataset_def[j].kind_cbi == _TRACK );
+      while( track_dataset_def[j].kind != END_OF_CBI_STAT_KIND ) {
+	assert( track_dataset_def[j].kind == _TRACK );
 	if( track_dataset_def[j].id == proute->body.tracks[i] ) {
 	  assert( found < 0 );
 	  proute->body.ptracks[i] = &track_dataset_def[j];
@@ -165,7 +167,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	}
 	j++;
       }
-      assert( track_dataset_def[j].kind_cbi == END_OF_CBI_STAT_KIND );
+      assert( track_dataset_def[j].kind == END_OF_CBI_STAT_KIND );
       assert( found > -1 );
       assert( proute->body.ptracks[i] == &track_dataset_def[found] );
     }
@@ -198,8 +200,8 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	assert( proute->ars_ctrl.ctrl_tracks.chk_trks[i] );
 	int found = -1;
 	int j = 0;
-	while( track_dataset_def[j].kind_cbi != END_OF_CBI_STAT_KIND ) {
-	  assert( track_dataset_def[j].kind_cbi == _TRACK );
+	while( track_dataset_def[j].kind != END_OF_CBI_STAT_KIND ) {
+	  assert( track_dataset_def[j].kind == _TRACK );
 	  if( track_dataset_def[j].id == proute->ars_ctrl.ctrl_tracks.chk_trks[i] ) {
 	    assert( found < 0 );
 	    proute->ars_ctrl.ctrl_tracks.pchk_trks[i] = &track_dataset_def[j];
@@ -208,7 +210,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	  }
 	  j++;
 	}
-	assert( track_dataset_def[j].kind_cbi == END_OF_CBI_STAT_KIND );
+	assert( track_dataset_def[j].kind == END_OF_CBI_STAT_KIND );
 	assert( found > -1 );
 	assert( proute->ars_ctrl.ctrl_tracks.pchk_trks[i] == &track_dataset_def[found] );
       }
@@ -267,8 +269,8 @@ void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
   assert( pblock->virt_blkname_str != NULL );
   int found = -1;
   int i = 0;
-  while( track_dataset_def[i].kind_cbi != END_OF_CBI_STAT_KIND ) {
-    assert( track_dataset_def[i].kind_cbi == _TRACK );
+  while( track_dataset_def[i].kind != END_OF_CBI_STAT_KIND ) {
+    assert( track_dataset_def[i].kind == _TRACK );
     if( track_dataset_def[i].id == pblock->belonging_tr.track ) {
       assert( found < 0 );
       pblock->belonging_tr.ptrack = &track_dataset_def[i];
@@ -288,7 +290,7 @@ void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
     }
     i++;
   }
-  assert( track_dataset_def[i].kind_cbi == END_OF_CBI_STAT_KIND );
+  assert( track_dataset_def[i].kind == END_OF_CBI_STAT_KIND );
   assert( found > -1 );
   assert( pblock->belonging_tr.ptrack == &track_dataset_def[found] );
   
@@ -350,11 +352,11 @@ static void chk_consistency_over_sp_links ( void ) {
 
 void cons_il_obj_tables ( void ) {
   int i = 0;
-  while( track_dataset_def[i].kind_cbi != END_OF_CBI_STAT_KIND ) {
+  while( track_dataset_def[i].kind != END_OF_CBI_STAT_KIND ) {
     cons_track_state( &track_dataset_def[i] );
     i++;
   }
-  assert( track_dataset_def[i].kind_cbi == END_OF_CBI_STAT_KIND );
+  assert( track_dataset_def[i].kind == END_OF_CBI_STAT_KIND );
   cons_track_prof_lkup_tbl();
   
   {
