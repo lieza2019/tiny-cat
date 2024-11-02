@@ -41,7 +41,7 @@ surveill.h : generic.h misc.h
 ars.h : generic.h misc.h cbi.h
 	$(TOUCH) $@
 #timetable.h : generic.h misc.h sparcs.h cbtc.h timetable_def.h
-timetable.h : generic.h misc.h sparcs.h cbtc.h
+timetable.h : generic.h misc.h sparcs.h cbtc.h interlock.h
 	$(TOUCH) $@
 network.h : generic.h
 	$(TOUCH) $@
@@ -56,7 +56,7 @@ train_ctrl.o : generic.h misc.h network.h sparcs.h train_ctrl.c
 cbi.o: generic.h misc.h cbi.h ./cbi/cbi_stat_kind.def ./cbi/cbi_stat_label.h ./cbi/il_obj_instance_desc.h cbi.c
 interlock.o : generic.h misc.h network.h cbi.h srv.h interlock.h interlock.c
 surveill.o : generic.h misc.h sparcs.h cbi.h interlock.h surveill.h surveill.c
-ars.o : generic.h misc.h sparcs.h cbi.h interlock.h ars.h timetable.h ars.c
+ars.o : generic.h misc.h sparcs.h cbi.h ars.h surveill.h timetable.h ars.c
 cbtc.o : generic.h misc.h cbtc.h interlock.h sparcs.h cbtc.c
 timetable.o : generic.h misc.h timetable.h timetable.c
 main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h srv.h main.c

@@ -3,11 +3,11 @@
 
 #include "generic.h"
 #include "misc.h"
-#include "ars.h"
 
 #define BLOCK_ID_DEFINITIONS
 #include "cbtc_def.h"
 #undef BLOCK_ID_DEFINITIONS
+#include "ars.h"
 
 typedef enum stop_detection_cond {
   P0_COUPLING,

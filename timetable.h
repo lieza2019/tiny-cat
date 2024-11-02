@@ -6,9 +6,67 @@
 #include "misc.h"
 #include "sparcs.h"
 #include "cbtc.h"
+#include "interlock.h"
 
 #define MAX_JOURNEYS_IN_TIMETABLE 1024
 #define SCHEDULED_COMMANDS_NODEBUF_SIZE 65536
+
+typedef struct scheduled_command {
+  ARS_SCHEDULED_CMD cmd;
+  union {
+    struct { // for ARS_SCHEDULED_ROUTESET
+      int nth_routeset;
+      IL_SYM route_id;
+      BOOL is_dept_route;
+      ARS_ASSOC_TIME dept_time;
+      ROUTE_PTR *proute_prof;
+    } sch_roset;
+    struct { // for ARS_SCHEDULED_ROUTEREL
+      int nth_routerel;
+      IL_SYM route_id;
+      ARS_ASSOC_TIME dept_time;
+    } sch_rorel;
+    struct { // for ARS_SCHEDULED_ARRIVAL
+      DWELL_ID dw_seq;
+      STOPPING_POINT_CODE arr_sp;
+      ARS_ASSOC_TIME arr_time;
+    } sch_arriv;
+    struct { // for ARS_SCHEDULED_DEPT
+      DWELL_ID dw_seq;
+      TIME_DIFF dwell;
+      STOPPING_POINT_CODE dept_sp;
+      ARS_ASSOC_TIME dept_time;
+      BOOL is_revenue;
+      PERFREG_LEVEL perf_lev;
+      CREW_ID crew_id;
+      struct {
+	BOOL L, R;
+      } dept_dir;
+    } sch_dept;
+    struct { // ARS_SCHEDULED_SKIP
+      DWELL_ID dw_seq;
+      STOPPING_POINT_CODE ss_sp;
+      ARS_ASSOC_TIME pass_time;
+      STOPPING_POINT_CODE pass_sp;
+      BOOL is_revenue;
+      PERFREG_LEVEL perf_lev;
+      CREW_ID crew_id;
+    } sch_skip;
+  } attr;
+  JOURNEY_ID jid;
+  BOOL check;
+  struct {
+    struct {
+      struct scheduled_command *pNext;
+      struct scheduled_command *pSucc;
+    } journey;
+    struct {
+      struct scheduled_command *pNext;
+      struct scheduled_command *pFellow;
+    } sp_sch;
+  } ln;
+} SCHEDULED_COMMAND, *SCHEDULED_COMMAND_PTR;
+typedef const struct scheduled_command *SCHEDULED_COMMAND_C_PTR;
 
 typedef int JOURNEY_ID;
 typedef struct journey {

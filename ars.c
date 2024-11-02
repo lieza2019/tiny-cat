@@ -5,7 +5,6 @@
 #include "misc.h"
 #include "sparcs.h"
 #include "cbi.h"
-#include "interlock.h"
 #include "ars.h"
 #include "surveill.h"
 #include "timetable.h"
