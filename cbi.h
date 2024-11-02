@@ -201,20 +201,20 @@ typedef enum cbi_stat_bit_mask {
   END_OF_CBI_STAT_BIT_MASK
 } CBI_STAT_BIT_MASK;
 
-typedef enum cbi_stat_kind {
-#define CBI_STAT_KIND_DESC(enum, name) enum,
-#include "./cbi/cbi_stat_kind.def"
-#undef CBI_STAT_KIND_DESC
-  END_OF_CBI_STAT_KIND
-} CBI_STAT_KIND;
-extern const char *cnv2str_cbi_stat_kind[];
-
 typedef struct cbi_stat_csv_fnames {
   OC_ID oc_id;
   char *csv_fname;
 } CBI_STAT_CSV_FNAMES, *CBI_STAT_CSV_FNAMES_PTR;
 
 extern const CBI_STAT_CSV_FNAMES il_status_geometry_resources[END_OF_OCs + 1];
+
+typedef enum cbi_stat_kind {
+#define CBI_STAT_KIND_DESC(enum, name) enum,
+#include "./cbi/cbi_stat_kind.def"
+#undef CBI_STAT_KIND_DESC
+  END_OF_CBI_STAT_KIND
+} CBI_STAT_KIND;
+typedef CBI_STAT_KIND IL_SYM_KIND;
 
 #define CTRL_LIT_SUSTAIN_CNT 50
 #define CBI_STAT_IDENT_LEN 32
@@ -278,6 +278,8 @@ typedef struct cbi_lexica {
 } CBI_LEXICA, *CBI_LEXICA_PTR;
 extern CBI_LEXICA cbi_stat_syms;
 
+extern const CBI_STAT_KIND cbi_stat_kind[];
+extern const char *cnv2str_cbi_stat[];
 extern const CBI_STAT_KIND whats_kind_of_il_sym ( IL_SYM obj );
 extern const char *cnv2str_il_sym( IL_SYM obj );
 

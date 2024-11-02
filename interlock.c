@@ -1095,7 +1095,7 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
     fprintf( fp_out, "ident: %s\n", pA->ident );
     fprintf( fp_out, "oc_id: OC%3d\n", OC_ID_CONV2INT(pA->oc_id) );
     fprintf( fp_out, "name: %s\n", pA->name );
-    fprintf( fp_out, "kind: %s\n", cnv2str_cbi_stat_kind[pA->kind] );
+    fprintf( fp_out, "kind: %s\n", cnv2str_cbi_stat[pA->kind] );
     fprintf( fp_out, "group of (raw, oc_from, addr): (%s, OC2ATS%d, %d)\n",
 	     CBI_STAT_GROUP_CONV2STR[pA->group.raw], OC_MSG_ID_CONV2INT(pA->group.msg_id), pA->group.addr );
     {

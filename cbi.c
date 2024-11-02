@@ -6,8 +6,14 @@
 #include "misc.h"
 #include "cbi.h"
 
-const char *cnv2str_cbi_stat_kind[] = {
-#define CBI_STAT_KIND_DESC(enum, name) name,
+const CBI_STAT_KIND cbi_stat_kind[] = {
+#define CBI_STAT_KIND_DESC(stat_kind, name) stat_kind,
+#include "./cbi/cbi_stat_kind.def"
+#undef CBI_STAT_KIND_DESC
+  _CBI_STAT_KIND_NONSENS
+};
+const char *cnv2str_cbi_stat[] = {
+#define CBI_STAT_KIND_DESC(stat_kind, name) name,
 #include "./cbi/cbi_stat_kind.def"
 #undef CBI_STAT_KIND_DESC
   NULL

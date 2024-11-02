@@ -40,7 +40,6 @@ typedef enum route_kind {
   EMERGE_ROUTE,
   END_OF_ROUTE_KINDS
 } ROUTE_KIND;
-extern const CBI_STAT_KIND ROUTE_KIND2GENERIC[];
 
 #define MAX_ROUTE_TRACKS 21
 #define MAX_ROUTE_TRG_BLOCKS 21

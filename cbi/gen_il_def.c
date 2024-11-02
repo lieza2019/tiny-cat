@@ -543,7 +543,7 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
   assert( plex->raw_name );
   {
     const char *kind_s = NULL;
-    kind_s = cnv2str_cbi_stat_kind[plex->il_stat_kind];
+    kind_s = cnv2str_cbi_stat[plex->il_stat_kind];
     assert( kind_s );
     if( plex->exp_ident_pat[0] ) {
       char emit_buf[CBI_EXPAND_EMIT_MAXLEN + 1];
@@ -712,7 +712,7 @@ int main ( void ) {
 	assert( FALSE );
       }
       assert( p );
-      fprintf( fp_out, "%s, ", cnv2str_cbi_stat_kind[p->kind] );
+      fprintf( fp_out, "%s, ", cnv2str_cbi_stat[p->kind] );
       {
 	assert( p );
 	assert( p->name );
@@ -732,7 +732,7 @@ int main ( void ) {
 	CBI_STAT_ATTR_PTR q = p;
 	while( q ) {
 	  assert( q );
-	  fprintf( fp_out, "IL_SYMS(%s, ", cnv2str_cbi_stat_kind[q->kind] );
+	  fprintf( fp_out, "IL_SYMS(%s, ", cnv2str_cbi_stat[q->kind] );
 	  fprintf( fp_out, "%s, ", q->ident );
 	  fprintf( fp_out, "\"%s\", ", q->ident );
 	  fprintf( fp_out, "%d)", cnt );
