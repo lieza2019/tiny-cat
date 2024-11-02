@@ -960,12 +960,13 @@ int main ( void ) {
 #endif
 
 const CBI_STAT_KIND il_obj_kind[] = {
-#define IL_OBJ_INSTANCE_DESC(kind, raw_name, exp) kind,
-#define IL_OBJ_INSTANCE_DESC1(kind, raw_name, exp1) kind,
-#define IL_OBJ_INSTANCE_DESC2(kind, raw_name, exp1, exp2) kind,
-#define IL_OBJ_INSTANCE_DESC3(kind, raw_name, exp1, exp2, exp3) kind,
-#define IL_OBJ_INSTANCE_DESC4(kind, raw_name, exp1, exp2, exp3, exp4) kind,
-#define IL_OBJ_INSTANCE_DESC5(kind, raw_name, exp1, exp2, exp3, exp4, exp5) kind,
+#define IL_SYMS(sym_kind, sym, str, code) sym_kind
+#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, exp) exp,
+#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, exp1) exp1,
+#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, exp1, exp2) exp1, exp2,
+#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, exp1, exp2, exp3) exp1, exp2, exp3,
+#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
+#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
 #include "./cbi/il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
 #undef IL_OBJ_INSTANCE_DESC1
@@ -973,6 +974,7 @@ const CBI_STAT_KIND il_obj_kind[] = {
 #undef IL_OBJ_INSTANCE_DESC3
 #undef IL_OBJ_INSTANCE_DESC4
 #undef IL_OBJ_INSTANCE_DESC5
+#undef IL_SYMS
   _CBI_KIND_NONSENS
 };
 const CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj ) {
@@ -983,13 +985,13 @@ const CBI_STAT_KIND whats_kind_of_il_obj ( IL_OBJ_INSTANCES obj ) {
 }
 
 const char *cnv2str_il_obj_instances[] = {
-#define IL_SYM_ATTRIB(kind, sym, str, code) str
-#define IL_OBJ_INSTANCE_DESC(kind, raw_name, exp) exp,
-#define IL_OBJ_INSTANCE_DESC1(kind, raw_name, exp1) exp1,
-#define IL_OBJ_INSTANCE_DESC2(kind, raw_name, exp1, exp2) exp1, exp2,
-#define IL_OBJ_INSTANCE_DESC3(kind, raw_name, exp1, exp2, exp3) exp1, exp2, exp3,
-#define IL_OBJ_INSTANCE_DESC4(kind, raw_name, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
-#define IL_OBJ_INSTANCE_DESC5(kind, raw_name, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
+#define IL_SYMS(sym_kind, sym, str, code) str
+#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, exp) exp,
+#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, exp1) exp1,
+#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, exp1, exp2) exp1, exp2,
+#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, exp1, exp2, exp3) exp1, exp2, exp3,
+#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
+#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
 #include "./cbi/il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
 #undef IL_OBJ_INSTANCE_DESC1
@@ -997,7 +999,7 @@ const char *cnv2str_il_obj_instances[] = {
 #undef IL_OBJ_INSTANCE_DESC3
 #undef IL_OBJ_INSTANCE_DESC4
 #undef IL_OBJ_INSTANCE_DESC5
-#undef IL_SYM_ATTRIB
+#undef IL_SYMS
   NULL
 };
 const char *cnv2str_il_obj ( IL_OBJ_INSTANCES obj ) {

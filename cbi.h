@@ -263,6 +263,7 @@ typedef struct cbi_stat_attr {
     int nentities;
     struct cbi_stat_attr *pNext;
     struct cbi_stat_attr *pFamily;
+    void *plex_il_obj;
   } decl_gen;
 #endif
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;

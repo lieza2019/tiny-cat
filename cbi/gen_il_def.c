@@ -20,7 +20,6 @@ typedef struct prefx_sufix {
 } PREFX_SUFIX, *PREFX_SUFIX_PTR;
 
 #define CBI_LEX_PAT_MAXLEN 256
-#define CBI_STAT_RAWNAME_MAXLEN CBI_STAT_NAME_LEN
 #define CBI_EXPAND_PAT_MAXNUM 3
 typedef struct lex_il_obj {
   CBI_STAT_KIND il_stat_kind;
@@ -30,7 +29,8 @@ typedef struct lex_il_obj {
     CBI_STAT_KIND il_sym_kind;
     char pat[CBI_LEX_PAT_MAXLEN + 1];
   } exp[CBI_EXPAND_PAT_MAXNUM];
-  char raw_name[CBI_STAT_RAWNAME_MAXLEN + 1];
+  char raw_name[CBI_STAT_NAME_LEN + 1];
+  char label[CBI_STAT_IDENT_LEN + 1];
 } LEX_IL_OBJ, *LEX_IL_OBJ_PTR;
 
 #define CBI_IDENT_MAXLEN 256
@@ -467,17 +467,19 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	n = lex_exp_pattrn( errfp, pprsf, line, (i + 1), emit_buf, CBI_EXPAND_EMIT_MAXLEN, psymtbl, plex->exp[i].pat, strnlen(plex->exp[i].pat, CBI_LEX_PAT_MAXLEN) );
 	assert( (abs(n) >= 0) && (abs(n) < CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[abs(n)] = 0;
-	if( n > 0 ) {	  
+	if( n > 0 ) {
 	  assert( il_objs_hash.frontier < CBI_MAX_STAT_BITS );
 	  pE = &il_objs_hash.sea[il_objs_hash.frontier++];
 	  assert( pE );
 	  pE->ident[CBI_STAT_IDENT_LEN] = 0;
 	  strncpy( pE->ident, emit_buf, CBI_STAT_IDENT_LEN );
-	  pE->name[CBI_STAT_RAWNAME_MAXLEN] = 0;
+	  pE->name[CBI_STAT_NAME_LEN] = 0;
 	  strncpy( pE->name, plex->raw_name, CBI_STAT_NAME_LEN );
 	  pE->kind = plex->exp[i].il_sym_kind;
 	  pE->src.fname = pattr->src.fname;
 	  pE->src.line = pattr->src.line;
+	  assert( plex );
+	  pE->decl_gen.plex_il_obj = (void *)plex;
 #if 0
 	  printf( "HIT: (line: pat, name, ident) = (%d: %s, %s, %s)\n", line, plex->exp[i].pat, plex->raw_name, emit_buf ); // ***** for debugging.
 #endif
@@ -552,10 +554,13 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
       assert( (abs(n) >= 0) && (abs(n) < CBI_EXPAND_EMIT_MAXLEN) );
       emit_buf[abs(n)] = 0;
       if( n > 0 ) {
+	assert( plex );
 	fprintf( fp, "%s ", pprsf->prefix.emit );
 	fprintf( fp, "%s", kind_s );
 	fprintf( fp, ", \"%s\"", plex->raw_name );
-	fprintf( fp, ", \"%s\"", emit_buf );
+	strncpy( plex->label, emit_buf, CBI_STAT_IDENT_LEN );
+	plex->label[CBI_STAT_IDENT_LEN] = 0;
+	fprintf( fp, ", \"%s\"", plex->label );
 	fprintf( fp, " %s", pprsf->suffix.emit );
       } else
 	err = TRUE;
@@ -684,8 +689,6 @@ int main ( void ) {
   }
   {
     int cnt = 0;
-    char name[CBI_STAT_NAME_LEN + 1];   
-    CBI_STAT_KIND K;
     CBI_STAT_ATTR_PTR p = NULL;
     p = il_objs_hash.ptop;
     while( p ) {
@@ -709,21 +712,28 @@ int main ( void ) {
       default:
 	assert( FALSE );
       }
-      K = p->kind;
-      fprintf( fp_out, "%s, ", cnv2str_cbi_stat_kind[K] );
-      assert( p->name );
-      p->name[CBI_STAT_NAME_LEN] = 0;
-      name[CBI_STAT_NAME_LEN] = 0;
-      strncpy( name, p->name, CBI_STAT_NAME_LEN );
-      fprintf( fp_out, "%s, ", name );
+      assert( p );
+      fprintf( fp_out, "%s, ", cnv2str_cbi_stat_kind[p->kind] );
+      {
+	assert( p );
+	assert( p->name );
+	p->name[CBI_STAT_NAME_LEN] = 0;
+	fprintf( fp_out, "%s, ", p->name );
+      }
+      {
+	assert( p );
+	assert( p->decl_gen.plex_il_obj );
+	((LEX_IL_OBJ_PTR)(p->decl_gen.plex_il_obj))->label[CBI_STAT_IDENT_LEN] = 0;
+	fprintf( fp_out, "%s, ", ((LEX_IL_OBJ_PTR)(p->decl_gen.plex_il_obj))->label );
+      }
+      assert( p );
       assert( p->ident );
       p->ident[CBI_STAT_IDENT_LEN] = 0;
       {
-	assert( p );
 	CBI_STAT_ATTR_PTR q = p;
 	while( q ) {
 	  assert( q );
-	  fprintf( fp_out, "IL_SYM_ATTRIB(%s, ", cnv2str_cbi_stat_kind[q->kind] );
+	  fprintf( fp_out, "IL_SYMS(%s, ", cnv2str_cbi_stat_kind[q->kind] );
 	  fprintf( fp_out, "%s, ", q->ident );
 	  fprintf( fp_out, "\"%s\", ", q->ident );
 	  fprintf( fp_out, "%d)", cnt );
