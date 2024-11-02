@@ -285,23 +285,13 @@ static const CBI_STAT_LABEL cbi_stat_labeling[] = {
 #undef CBI_STAT_LABELING
 #endif
 
-#if 0
-//CBI_STAT_ATTR cbi_stat_prof[END_OF_OCs][CBI_MAX_STAT_BITS];
-CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
-#else
 CBI_LEXICA cbi_stat_syms;
-#endif
 
-#if 0
-static int frontier[END_OF_OCs];
-#else
+static CBI_STAT_ATTR_PTR cbi_stat_hash_budgets[CBI_STAT_HASH_BUDGETS_NUM];
 static struct {
   int cbi_stat[END_OF_OCs];
   int il_syms;
 } frontier;
-#endif
-
-static CBI_STAT_ATTR_PTR cbi_stat_hash_budgets[CBI_STAT_HASH_BUDGETS_NUM];
 
 static int hash_key ( const int budgets_num, const char *ident ) {
   assert( budgets_num > 0 );

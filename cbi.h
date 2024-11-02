@@ -230,7 +230,6 @@ typedef struct cbi_stat_attr {
   char name[CBI_STAT_NAME_LEN + 1];
   struct {
     CBI_STAT_GROUP raw;
-    //OC2ATS_STAT oc_from;
     OC2ATS_STAT msg_id;
     int addr;
   } group;
@@ -272,9 +271,6 @@ typedef struct cbi_code_tbl {
   CBI_STAT_ATTR_PTR pdirty_bits;
 } CBI_CODETBL, *CBI_CODETBL_PTR;
 
-#if 0
-extern CBI_CODE_TBL cbi_stat_prof[END_OF_OCs];
-#else
 #define IL_SYM_IDENTCHRS_LEN
 #define MAX_IL_SYMS 65536
 typedef struct il_sym_attrib {
@@ -288,7 +284,6 @@ typedef struct cbi_lexica {
   IL_SYM_ATTR il_sym_attrs[MAX_IL_SYMS];
 } CBI_LEXICA, *CBI_LEXICA_PTR;
 extern CBI_LEXICA cbi_stat_syms;
-#endif
 
 #define CBI_STAT_HASH_BUDGETS_NUM 256
 extern CBI_STAT_ATTR_PTR cbi_stat_regist ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre );
