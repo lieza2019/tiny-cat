@@ -5,7 +5,7 @@
 #include "misc.h"
 
 #define BLOCK_ID_DEFINITIONS
-#include "cbtc_def.h"
+#include "cbtc_dataset.h"
 #undef BLOCK_ID_DEFINITIONS
 #include "ars.h"
 
@@ -60,7 +60,7 @@ typedef struct block {
 typedef const struct block *CBTC_BLOCK_C_PTR;
 
 #define BLOCK_ATTRIB_DEFINITION
-#include "cbtc_def.h"
+#include "cbtc_dataset.h"
 #undef BLOCK_ATTRIB_DEFINITION
 
 extern void cons_lkuptbl_cbtc_block_prof ( void );

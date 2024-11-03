@@ -28,7 +28,7 @@ typedef struct track {
 typedef const struct track *TRACK_C_PTR;
 
 #define TRACK_ATTRIB_DEFINITION
-#include "interlock_def.h"
+#include "interlock_dataset.h"
 #undef TRACK_ATTRIB_DEFINITION
 
 typedef enum route_kind {
@@ -100,7 +100,7 @@ typedef struct route {
 typedef const struct route *ROUTE_C_PTR;
 
 #define ROUTE_ATTRIB_DEFINITION
-#include "interlock_def.h"
+#include "interlock_dataset.h"
 #undef ROUTE_ATTRIB_DEFINITION
 
 extern TRACK_C_PTR conslt_track_prof ( IL_SYM track_id );

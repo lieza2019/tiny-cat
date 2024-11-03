@@ -18,7 +18,7 @@ train_cmd.h : generic.h misc.h
 	$(TOUCH) $@
 sparcs.h : generic.h misc.h network.h train_cmd.h train_info.h train_ctrl.h sparcs_def.h
 	$(TOUCH) $@
-cbtc.h : generic.h misc.h ars.h cbtc_def.h
+cbtc.h : generic.h misc.h ars.h cbtc_dataset.h
 	$(TOUCH) $@
 train_ctrl.h : generic.h misc.h cbtc.h
 	$(TOUCH) $@
@@ -34,7 +34,7 @@ train_ctrl.h : generic.h misc.h cbtc.h
 	$(TOUCH) $@
 cbi.h: generic.h misc.h network.h ./cbi/cbi_stat_kind.def ./cbi/il_obj_instance_decl.h
 	$(TOUCH) $@
-interlock.h : generic.h misc.h cbi.h cbtc.h interlock_def.h
+interlock.h : generic.h misc.h cbi.h cbtc.h interlock_dataset.h
 	$(TOUCH) $@
 surveill.h : generic.h misc.h
 	$(TOUCH) $@
