@@ -17,7 +17,7 @@ typedef enum il_sym {
 #undef IL_OBJ_INSTANCE_DESC4
 #undef IL_OBJ_INSTANCE_DESC5
 #undef IL_SYMS
-  END_OF_IL_OBJ_INSTANCES
+  END_OF_IL_SYMS
 } IL_SYM;
 
 #endif // IL_OBJ_INSTANCES_DECL

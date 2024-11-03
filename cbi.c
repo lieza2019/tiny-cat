@@ -951,7 +951,7 @@ static const CBI_STAT_KIND il_sym_kind[] = {
   _CBI_SYM_KIND_NONSENS
 };
 const CBI_STAT_KIND whats_kind_of_il_sym ( IL_SYM obj ) {
-  assert( (obj >= 0) && (obj < END_OF_IL_OBJ_INSTANCES) );
+  assert( (obj >= 0) && (obj < END_OF_IL_SYMS) );
   CBI_STAT_KIND r = _CBI_SYM_KIND_NONSENS;
   r = il_sym_kind[obj];
   return r;
@@ -976,6 +976,6 @@ static const char *il_sym_namechrs [] = {
   NULL
 };
 const char *cnv2str_il_sym ( IL_SYM obj ) {
-  assert( (obj >= 0) && (obj < END_OF_IL_OBJ_INSTANCES) );
+  assert( (obj >= 0) && (obj < END_OF_IL_SYMS) );
   return il_sym_namechrs[obj];
 }

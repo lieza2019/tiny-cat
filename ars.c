@@ -356,15 +356,15 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
   ROUTE_C_PTR pR = NULL;
   pR = conslt_route_prof( pC->attr.sch_roset.route_id );
   assert( pR );
-  assert( pR->kind_cbi == _ROUTE );
+  assert( pR->kind == _ROUTE );
   assert( pR->ars_ctrl.app );
   assert( pR->ars_ctrl.trip_info.dst.pblk );
   if( pC->attr.sch_roset.is_dept_route ) {
-    assert( pR->kind_route == DEP_ROUTE );
+    assert( pR->route_kind == DEP_ROUTE );
     r = 1;
   } else {
     assert( ! pC->attr.sch_roset.is_dept_route );
-    assert( (pR->kind_route == ENT_ROUTE) || (pR->kind_route == SHUNT_ROUTE) );
+    assert( (pR->route_kind == ENT_ROUTE) || (pR->route_kind == SHUNT_ROUTE) );
     CBTC_BLOCK_C_PTR pdst_blk = pR->ars_ctrl.trip_info.dst.pblk;
     assert( pdst_blk );
     assert( pdst_blk->sp.has_sp );
@@ -446,10 +446,10 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
   ROUTE_C_PTR pR = NULL;
   pR = conslt_route_prof( pC->attr.sch_roset.route_id );
   assert( pR );
-  assert( pR->kind_cbi == _ROUTE );
+  assert( pR->kind == _ROUTE );
   assert( pR->ars_ctrl.app );
   assert( pR->ars_ctrl.trip_info.dep.pblk );
-  assert( (pR->kind_route == DEP_ROUTE) || (pR->kind_route == ENT_ROUTE) || (pR->kind_route == SHUNT_ROUTE) );
+  assert( (pR->route_kind == DEP_ROUTE) || (pR->route_kind == ENT_ROUTE) || (pR->route_kind == SHUNT_ROUTE) );
   {
     CBTC_BLOCK_C_PTR pdep_blk = pR->ars_ctrl.trip_info.dep.pblk;
     assert( pdep_blk );
@@ -558,8 +558,8 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
       ROUTE_C_PTR pR = NULL;
       pR = conslt_route_prof( pC->attr.sch_roset.route_id );
       assert( pR );
-      assert( pR->kind_cbi == _ROUTE );
-      assert( (pR->kind_route < END_OF_ROUTE_KINDS) && (pR->kind_route != EMERGE_ROUTE) );
+      assert( pR->kind == _ROUTE );
+      assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
       assert( pR->ars_ctrl.app );
       if( pR->ars_ctrl.app ){
 	int cond = -1;
@@ -690,8 +690,8 @@ SCHEDULED_COMMAND_PTR ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
 	  ROUTE_C_PTR pR = NULL;
 	  pR = conslt_route_prof( pC->attr.sch_roset.route_id );
 	  assert( pR );
-	  assert( pR->kind_cbi == _ROUTE );
-	  assert( (pR->kind_route < END_OF_ROUTE_KINDS) && (pR->kind_route != EMERGE_ROUTE) );
+	  assert( pR->kind == _ROUTE );
+	  assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
 	  assert( pR->ars_ctrl.app );
 	  {
 	    int cond = -1;
@@ -715,8 +715,8 @@ SCHEDULED_COMMAND_PTR ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
 	  ROUTE_C_PTR pR = NULL;
 	  pR = conslt_route_prof( pC->attr.sch_rorel.route_id );
 	  assert( pR );
-	  assert( pR->kind_cbi == _ROUTE );
-	  assert( (pR->kind_route < END_OF_ROUTE_KINDS) && (pR->kind_route != EMERGE_ROUTE) );
+	  assert( pR->kind == _ROUTE );
+	  assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
 	  assert( pR->ars_ctrl.app );
 	  if( pR->ars_ctrl.ctrl_tracks.pahead_trks[0] ) {
 	    TRACK_C_PTR pahead_trk = pR->ars_ctrl.ctrl_tracks.pahead_trks[0];
