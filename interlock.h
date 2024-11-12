@@ -43,7 +43,7 @@ typedef enum route_kind {
 #define MAX_ROUTE_TRACKS 21
 #define MAX_ROUTE_TRG_BLOCKS 21
 typedef struct route {
-  const IL_SYM_KIND kind;;
+  const IL_SYM_KIND kind;
   const ROUTE_KIND route_kind;
   const IL_SYM id;
   const IL_SYM id_ctrl;
@@ -99,13 +99,13 @@ typedef struct route {
 } ROUTE, *ROUTE_PTR;
 typedef const struct route *ROUTE_C_PTR;
 
-typedef struct _il_obj_container {
+typedef struct il_obj_container {
   IL_SYM_KIND kind;
   IL_SYM sym;
   union {
-    TRACK_PTR ptrack;
+    TRACK_C_PTR ptrack; // TRACK_PTR ptrack;
     ROUTE_PTR proute;
-  } link;
+  } u;
 } IL_OBJ_CONTAINER, *IL_OBJ_CONTAINER_PTR;
 
 #define ROUTE_ATTRIB_DEFINITION
