@@ -102,10 +102,10 @@ typedef const struct route *ROUTE_C_PTR;
 typedef struct il_obj_container {
   IL_SYM_KIND kind;
   IL_SYM sym;
-  union {
+  struct {
     TRACK_C_PTR ptrack; // TRACK_PTR ptrack;
     ROUTE_PTR proute;
-  } u;
+  } ln;
 } IL_OBJ_CONTAINER, *IL_OBJ_CONTAINER_PTR;
 
 #define ROUTE_ATTRIB_DEFINITION
@@ -117,7 +117,7 @@ extern ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id );
 
 extern void cons_track_attrib ( TRACK_PTR ptrack );
 extern void cons_route_attrib ( ROUTE_PTR proute );
-extern void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock );
+extern void cons_cbtc_block_attrib ( CBTC_BLOCK_PTR pblock );
 extern void cons_il_obj_tables ( void );
 
 extern int establish_OC_comm_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs );
