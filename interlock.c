@@ -230,7 +230,7 @@ ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id ) {
 #endif
 }
 
-void cons_track_state ( TRACK_PTR ptrack ) {
+void cons_track_attrib ( TRACK_PTR ptrack ) {
   assert( ptrack );
   assert( ptrack->kind == _TRACK );
   assert( ptrack->id < END_OF_IL_SYMS );
@@ -244,6 +244,7 @@ void cons_track_state ( TRACK_PTR ptrack ) {
       assert( block_state[j].block_name > 0 );
       if( block_state[j].virt_block_name == ptrack->cbtc.blocks[i] ) {
 	assert( found < 0 );
+	assert( ! ptrack->cbtc.pblocks[i] );
 	ptrack->cbtc.pblocks[i] = &block_state[j];
 	assert( ptrack->cbtc.pblocks[i] );
 	found = j;
@@ -256,10 +257,11 @@ void cons_track_state ( TRACK_PTR ptrack ) {
   }
 }
 
-void cons_route_state ( ROUTE_PTR proute ) {
+void cons_route_attrib ( ROUTE_PTR proute ) {
   assert( proute );
   
-  assert( (proute->kind == _ROUTE) && (proute->route_kind < END_OF_ROUTE_KINDS) );
+  assert( proute->kind == _ROUTE );
+  assert( (proute->kind < END_OF_CBI_STAT_KIND) && (proute->route_kind < END_OF_ROUTE_KINDS) );
   assert( proute->id < END_OF_IL_SYMS );
   {
     int i;
@@ -271,6 +273,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	assert( track_dataset_def[j].kind == _TRACK );
 	if( track_dataset_def[j].id == proute->body.tracks[i] ) {
 	  assert( found < 0 );
+	  assert( ! proute->body.ptracks[i] );
 	  proute->body.ptracks[i] = &track_dataset_def[j];
 	  assert( proute->body.ptracks[i] );
 	  found = j;
@@ -293,6 +296,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	assert( block_state[j].block_name > 0 );
 	if( block_state[j].virt_block_name == proute->ars_ctrl.trg_sect.trg_blks[i] ) {
 	  assert( found < 0 );
+	  assert( ! proute->ars_ctrl.trg_sect.ptrg_blks[i] );
 	  proute->ars_ctrl.trg_sect.ptrg_blks[i] = &block_state[j];
 	  assert( proute->ars_ctrl.trg_sect.ptrg_blks[i] );
 	  found = j;
@@ -314,6 +318,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	  assert( track_dataset_def[j].kind == _TRACK );
 	  if( track_dataset_def[j].id == proute->ars_ctrl.ctrl_tracks.chk_trks[i] ) {
 	    assert( found < 0 );
+	    assert( ! proute->ars_ctrl.ctrl_tracks.pchk_trks[i] );
 	    proute->ars_ctrl.ctrl_tracks.pchk_trks[i] = &track_dataset_def[j];
 	    assert( proute->ars_ctrl.ctrl_tracks.pchk_trks[i] );
 	    found = j;
@@ -324,14 +329,17 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	assert( found > -1 );
 	assert( proute->ars_ctrl.ctrl_tracks.pchk_trks[i] == &track_dataset_def[found] );
       }
+      assert( i == proute->ars_ctrl.ctrl_tracks.num_tracks_occ );
       
       for( i = 0; i < proute->ars_ctrl.ctrl_tracks.num_ahead_tracks; i++ ) {
 	assert( proute->ars_ctrl.ctrl_tracks.ahead_trks[i] );
 	int found = -1;
 	int j = 0;
-	while( j < MAX_ROUTE_TRACKS ) {
+	while( j < MAX_ROUTE_TRACKS ) {	  
 	  if( proute->ars_ctrl.ctrl_tracks.chk_trks[j] == proute->ars_ctrl.ctrl_tracks.ahead_trks[i] ) {
+	    assert( j < proute->ars_ctrl.ctrl_tracks.num_tracks_occ );
 	    assert( found < 0 );
+	    assert( ! proute->ars_ctrl.ctrl_tracks.pahead_trks[i] );
 	    proute->ars_ctrl.ctrl_tracks.pahead_trks[i] = proute->ars_ctrl.ctrl_tracks.pchk_trks[j];
 	    assert( proute->ars_ctrl.ctrl_tracks.pahead_trks[i] );
 	    found = j;
@@ -350,6 +358,7 @@ void cons_route_state ( ROUTE_PTR proute ) {
 	assert( block_state[i].block_name > 0 );
 	if( block_state[i].virt_block_name == proute->ars_ctrl.trip_info.dep.blk ) {
 	  assert( found < 0 );
+	  assert( ! proute->ars_ctrl.trip_info.dep.pblk );
 	  proute->ars_ctrl.trip_info.dep.pblk = &block_state[i];
 	  assert( proute->ars_ctrl.trip_info.dep.pblk );
 	  assert( (proute->ars_ctrl.trip_info.dep.sp >= 0) && (proute->ars_ctrl.trip_info.dep.sp < END_OF_SPs) );
@@ -368,6 +377,32 @@ void cons_route_state ( ROUTE_PTR proute ) {
       assert( found > -1 );
       assert( proute->ars_ctrl.trip_info.dep.pblk = &block_state[found] );
     }
+    {
+      int found = -1;
+      int i = 0;
+      while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+	assert( block_state[i].block_name > 0 );
+	if( block_state[i].virt_block_name == proute->ars_ctrl.trip_info.dst.blk ) {
+	  assert( found < 0 );
+	  assert( ! proute->ars_ctrl.trip_info.dst.pblk );
+	  proute->ars_ctrl.trip_info.dst.pblk = &block_state[i];
+	  assert( proute->ars_ctrl.trip_info.dst.pblk );
+	  assert( (proute->ars_ctrl.trip_info.dst.sp >= 0) && (proute->ars_ctrl.trip_info.dst.sp < END_OF_SPs) );
+	  if( proute->ars_ctrl.trip_info.dst.sp != SP_NONSENS ) {
+	    CBTC_BLOCK_C_PTR p = proute->ars_ctrl.trip_info.dst.pblk;
+	    assert( p );
+	    assert( p->sp.has_sp );
+	    assert( p->sp.sp_code == proute->ars_ctrl.trip_info.dst.sp );
+	    assert( p->virt_block_name == proute->ars_ctrl.trip_info.dst.blk );
+	  }
+	  found = i;
+	}
+	i++;
+      }
+      assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
+      assert( found > -1 );
+      assert( proute->ars_ctrl.trip_info.dst.pblk = &block_state[found] );
+    }
   }
 }
 
@@ -383,6 +418,7 @@ void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
     assert( track_dataset_def[i].kind == _TRACK );
     if( track_dataset_def[i].id == pblock->belonging_tr.track ) {
       assert( found < 0 );
+      assert( ! pblock->belonging_tr.ptrack );
       pblock->belonging_tr.ptrack = &track_dataset_def[i];
       assert( pblock->belonging_tr.ptrack );
       {
@@ -390,11 +426,14 @@ void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
 	int j;
 	for( j = 0; j < pblock->belonging_tr.ptrack->cbtc.num_blocks; j++ ) {
 	  assert( pblock->belonging_tr.ptrack->cbtc.pblocks[j] );
-	  if( pblock == pblock->belonging_tr.ptrack->cbtc.pblocks[j] )
+	  if( pblock == pblock->belonging_tr.ptrack->cbtc.pblocks[j] ) {
+	    assert( f < 0 );
 	    f = j;
+	  }
 	}
 	assert( j == pblock->belonging_tr.ptrack->cbtc.num_blocks );
 	assert( (f > -1) && (f < pblock->belonging_tr.ptrack->cbtc.num_blocks) );
+	assert( pblock == pblock->belonging_tr.ptrack->cbtc.pblocks[f] );
       }
       found = i;
     }
@@ -407,8 +446,7 @@ void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
   if( pblock->sp.has_sp ) {
     assert( (pblock->sp.sp_code > 0) && (pblock->sp.sp_code < END_OF_SPs) );
     assert( (pblock->sp.stop_detect_type >= 0) && (pblock->sp.stop_detect_type < END_OF_STOP_DETECTION_TYPES) );
-    pblock->sp.stop_detect_cond.ppaired_blk = NULL;
-    
+    pblock->sp.stop_detect_cond.ppaired_blk = NULL;    
     if( pblock->sp.stop_detect_cond.paired_blk != VB_NONSENS ) {
       int found = -1;
       int i = 0;
@@ -416,6 +454,7 @@ void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock ) {
 	assert( block_state[i].block_name > 0 );
 	if( block_state[i].virt_block_name == pblock->sp.stop_detect_cond.paired_blk ) {
 	  assert( found < 0 );
+	  assert( ! pblock->sp.stop_detect_cond.ppaired_blk );
 	  pblock->sp.stop_detect_cond.ppaired_blk = &block_state[i];
 	  assert( pblock->sp.stop_detect_cond.ppaired_blk );
 	  found = i;
@@ -463,7 +502,7 @@ static void chk_consistency_over_sp_links ( void ) {
 void cons_il_obj_tables ( void ) {
   int i = 0;
   while( track_dataset_def[i].kind != END_OF_CBI_STAT_KIND ) {
-    cons_track_state( &track_dataset_def[i] );
+    cons_track_attrib( &track_dataset_def[i] );
     i++;
   }
   assert( track_dataset_def[i].kind == END_OF_CBI_STAT_KIND );
@@ -486,7 +525,7 @@ void cons_il_obj_tables ( void ) {
   {
     int i = 0;
     while( route_dataset_def[i].route_kind != END_OF_ROUTE_KINDS ) {
-      cons_route_state( &route_dataset_def[i] );
+      cons_route_attrib( &route_dataset_def[i] );
       i++;
     }
     assert( route_dataset_def[i].route_kind == END_OF_ROUTE_KINDS );

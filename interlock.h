@@ -115,8 +115,8 @@ typedef struct il_obj_container {
 extern TRACK_C_PTR conslt_track_prof ( IL_SYM track_id );
 extern ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id );
 
-extern void cons_track_state ( TRACK_PTR ptrack );
-extern void cons_route_state ( ROUTE_PTR proute );
+extern void cons_track_attrib ( TRACK_PTR ptrack );
+extern void cons_route_attrib ( ROUTE_PTR proute );
 extern void cons_cbtc_block_state ( CBTC_BLOCK_PTR pblock );
 extern void cons_il_obj_tables ( void );
 
