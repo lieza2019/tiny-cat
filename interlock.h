@@ -103,8 +103,12 @@ typedef struct il_obj_container {
   IL_SYM_KIND kind;
   IL_SYM sym;
   struct {
-    TRACK_C_PTR ptrack; // TRACK_PTR ptrack;
-    ROUTE_PTR proute;
+    struct {
+      TRACK_C_PTR pprof;
+    } track;
+    struct {
+      ROUTE_PTR pprof;
+    } route;
   } ln;
 } IL_OBJ_CONTAINER, *IL_OBJ_CONTAINER_PTR;
 
