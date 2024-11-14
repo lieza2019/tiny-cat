@@ -69,42 +69,7 @@ static void cons_track_prof ( void ) {
   }
   assert( track_dataset_def[i].kind == END_OF_CBI_STAT_KIND );
 #ifdef CHK_STRICT_CONSISTENCY
-#if 0 // *****
-  {
-    int cnt = 0;
-    int j;
-    for( j = 0; j < END_OF_IL_SYMS; j++ ) {
-      if( il_obj_attrib[j].ln.track.pprof )
-	cnt++;
-    }
-    assert( cnt == i );
-    {
-      int k = 0;
-      while( track_dataset_def[k].kind != END_OF_CBI_STAT_KIND ) {
-	int found = -1;
-	int l;
-	for( l = 0; l < END_OF_IL_SYMS; l++ ) {
-	  if( il_obj_attrib[l].ln.track.pprof == &track_dataset_def[k] ) {
-	    assert( found < 0 );
-	    assert( il_obj_attrib[l].kind == track_dataset_def[k].kind );
-	    assert( il_obj_attrib[l].sym == track_dataset_def[k].id );
-	    found = l;
-	  }
-	}
-	assert( found >= 0 );
-	assert( il_obj_attrib[found].ln.track.pprof == &track_dataset_def[k] );
-	assert( il_obj_attrib[found].kind == track_dataset_def[k].kind );
-	assert( il_obj_attrib[found].sym == track_dataset_def[k].id );
-	cnt--;
-	k++;
-      }
-      assert( track_dataset_def[k].kind == END_OF_CBI_STAT_KIND );
-      assert( cnt == 0 );
-    }
-  }
-#else
   chk_consistency_track_prof( i );
-#endif
 #endif // CHK_STRICT_CONSISTENCY
 }
 
@@ -164,43 +129,7 @@ static void cons_route_prof ( void ) {
   assert( route_dataset_def[i].kind == END_OF_CBI_STAT_KIND );
   assert( route_dataset_def[i].route_kind == END_OF_ROUTE_KINDS );
 #ifdef CHK_STRICT_CONSISTENCY
-#if 0 // *****
-  {
-    int cnt = 0;
-    int j;
-    for( j = 0; j < END_OF_IL_SYMS; j++ ) {
-      if( il_obj_attrib[j].ln.route.pprof )
-	cnt++;
-    }
-    assert( cnt == i );
-    {
-      int k = 0;
-      while( route_dataset_def[k].kind != END_OF_CBI_STAT_KIND ) {
-	int found = -1;
-	int l;
-	for( l = 0; l < END_OF_IL_SYMS; l++ ) {
-	  if( il_obj_attrib[l].ln.route.pprof == &route_dataset_def[k] ) {
-	    assert( found < 0 );
-	    assert( il_obj_attrib[l].kind == route_dataset_def[k].kind );
-	    assert( il_obj_attrib[l].sym == route_dataset_def[k].id );
-	    found = l;
-	  }
-	}
-	assert( found >= 0 );
-	assert( il_obj_attrib[found].ln.route.pprof == &route_dataset_def[k] );
-	assert( il_obj_attrib[found].kind == route_dataset_def[k].kind );
-	assert( il_obj_attrib[found].sym == route_dataset_def[k].id );
-	cnt--;
-	k++;
-      }
-      assert( route_dataset_def[k].route_kind == END_OF_ROUTE_KINDS );
-      assert( route_dataset_def[k].kind == END_OF_CBI_STAT_KIND );
-      assert( cnt == 0 );
-    }
-  }
-#else
   chk_consistency_route_prof( i );
-#endif
 #endif // CHK_STRICT_CONSISTENCY
 }
 
