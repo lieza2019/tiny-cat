@@ -19,6 +19,42 @@ pthread_mutex_t cbi_ctrl_sendbuf_mutex;
 pthread_mutex_t cbi_stat_info_mutex;
 
 static IL_OBJ_CONTAINER il_obj_attrib[END_OF_IL_SYMS];
+
+static void chk_consistency_track_prof ( const int num_tracks ) {
+  assert( num_tracks > -1 );
+  int cnt = 0;
+  
+  int j;
+  for( j = 0; j < END_OF_IL_SYMS; j++ ) {
+    if( il_obj_attrib[j].ln.track.pprof )
+      cnt++;
+  }
+  assert( cnt == num_tracks );
+  {
+    int k = 0;
+    while( track_dataset_def[k].kind != END_OF_CBI_STAT_KIND ) {
+      int found = -1;
+      int l;
+      for( l = 0; l < END_OF_IL_SYMS; l++ ) {
+	if( il_obj_attrib[l].ln.track.pprof == &track_dataset_def[k] ) {
+	  assert( found < 0 );
+	  assert( il_obj_attrib[l].kind == track_dataset_def[k].kind );
+	  assert( il_obj_attrib[l].sym == track_dataset_def[k].id );
+	  found = l;
+	}
+      }
+      assert( found >= 0 );
+      assert( il_obj_attrib[found].ln.track.pprof == &track_dataset_def[k] );
+      assert( il_obj_attrib[found].kind == track_dataset_def[k].kind );
+      assert( il_obj_attrib[found].sym == track_dataset_def[k].id );
+      cnt--;
+      k++;
+    }
+    assert( track_dataset_def[k].kind == END_OF_CBI_STAT_KIND );
+    assert( cnt == 0 );
+  }
+}
+
 static void cons_track_prof ( void ) {
   int i = 0;
   while( track_dataset_def[i].kind != END_OF_CBI_STAT_KIND ) {
@@ -33,6 +69,7 @@ static void cons_track_prof ( void ) {
   }
   assert( track_dataset_def[i].kind == END_OF_CBI_STAT_KIND );
 #ifdef CHK_STRICT_CONSISTENCY
+#if 0 // *****
   {
     int cnt = 0;
     int j;
@@ -65,12 +102,51 @@ static void cons_track_prof ( void ) {
       assert( cnt == 0 );
     }
   }
+#else
+  chk_consistency_track_prof( i );
+#endif
 #endif // CHK_STRICT_CONSISTENCY
 }
 
 TRACK_C_PTR conslt_track_prof ( IL_SYM track_id ) {
   assert( (track_id >= 0) && (track_id < END_OF_IL_SYMS) );
   return il_obj_attrib[track_id].ln.track.pprof;
+}
+
+static void chk_consistency_route_prof ( const int num_routes ) {
+  assert( num_routes > -1 );
+  int cnt = 0;
+  
+  int j;
+  for( j = 0; j < END_OF_IL_SYMS; j++ ) {
+    if( il_obj_attrib[j].ln.route.pprof )
+      cnt++;
+  }
+  assert( cnt == num_routes );
+  {
+    int k = 0;
+    while( route_dataset_def[k].kind != END_OF_CBI_STAT_KIND ) {
+      int found = -1;
+      int l;
+      for( l = 0; l < END_OF_IL_SYMS; l++ ) {
+	if( il_obj_attrib[l].ln.route.pprof == &route_dataset_def[k] ) {
+	  assert( found < 0 );
+	  assert( il_obj_attrib[l].kind == route_dataset_def[k].kind );
+	  assert( il_obj_attrib[l].sym == route_dataset_def[k].id );
+	  found = l;
+	}
+      }
+      assert( found >= 0 );
+      assert( il_obj_attrib[found].ln.route.pprof == &route_dataset_def[k] );
+      assert( il_obj_attrib[found].kind == route_dataset_def[k].kind );
+      assert( il_obj_attrib[found].sym == route_dataset_def[k].id );
+      cnt--;
+      k++;
+    }
+    assert( route_dataset_def[k].route_kind == END_OF_ROUTE_KINDS );
+    assert( route_dataset_def[k].kind == END_OF_CBI_STAT_KIND );
+    assert( cnt == 0 );
+  }
 }
 
 static void cons_route_prof ( void ) {
@@ -88,6 +164,7 @@ static void cons_route_prof ( void ) {
   assert( route_dataset_def[i].kind == END_OF_CBI_STAT_KIND );
   assert( route_dataset_def[i].route_kind == END_OF_ROUTE_KINDS );
 #ifdef CHK_STRICT_CONSISTENCY
+#if 0 // *****
   {
     int cnt = 0;
     int j;
@@ -121,6 +198,9 @@ static void cons_route_prof ( void ) {
       assert( cnt == 0 );
     }
   }
+#else
+  chk_consistency_route_prof( i );
+#endif
 #endif // CHK_STRICT_CONSISTENCY
 }
 
@@ -399,13 +479,20 @@ static void chk_consistency_over_sp_links ( void ) {
 }
 
 void cons_il_obj_tables ( void ) {
-  int i = 0;
-  while( track_dataset_def[i].kind != END_OF_CBI_STAT_KIND ) {
-    cons_track_attrib( &track_dataset_def[i] );
-    i++;
+  int num_tracks = -1;
+  int num_routes = -1;
+  
+  {
+    int i = 0;
+    while( track_dataset_def[i].kind != END_OF_CBI_STAT_KIND ) {
+      cons_track_attrib( &track_dataset_def[i] );
+      i++;
+    }
+    assert( track_dataset_def[i].kind == END_OF_CBI_STAT_KIND );
+    num_tracks = i;
+    cons_track_prof();
   }
-  assert( track_dataset_def[i].kind == END_OF_CBI_STAT_KIND );  
-  cons_track_prof();
+  
   {
     int i = 0;
     while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
@@ -424,8 +511,11 @@ void cons_il_obj_tables ( void ) {
       i++;
     }
     assert( route_dataset_def[i].route_kind == END_OF_ROUTE_KINDS );
+    num_routes = i;
     cons_route_prof();
   }
+  chk_consistency_track_prof( num_tracks );
+  chk_consistency_route_prof( num_routes );
 }
 
 #if 0 // for MODULE-TEST
