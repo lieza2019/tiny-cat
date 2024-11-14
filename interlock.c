@@ -407,10 +407,99 @@ static void chk_consistency_over_sp_links ( void ) {
   assert( block_state[i].block_name == 0 );
 }
 
-void cons_il_obj_tables ( void ) {
+static int enum_succ_routes ( void ) {
+  int cnt = 0;
+  
+  int i;
+  for( i = 0; i < END_OF_IL_SYMS; i++ ) {
+    if (il_obj_attrib[i].kind == _ROUTE) {
+      assert( il_obj_attrib[i].ln.route.num_div_routes == 0 );
+      ROUTE_C_PTR pP = il_obj_attrib[i].ln.route.pprof;
+      assert( pP );
+      assert( pP->kind == _ROUTE );
+      const IL_SYM succ_org = pP->sig_pair.dst.sig;
+      assert( whats_kind_of_il_sym( succ_org ) == _SIGNAL );
+      
+      int j;
+      for( j = 0; j < END_OF_IL_SYMS ; j++ ) {
+	if( il_obj_attrib[j].kind == _ROUTE ) {
+	  ROUTE_C_PTR pp = il_obj_attrib[j].ln.route.pprof;
+	  assert( pp );
+	  assert( pp->kind == _ROUTE );
+	  assert( whats_kind_of_il_sym( pp->sig_pair.src.sig ) == _SIGNAL );
+	  if( pp->sig_pair.src.sig == succ_org ) {
+	    assert( ! il_obj_attrib[i].ln.route.psucc[il_obj_attrib[i].ln.route.num_div_routes] );
+#if 0 // *****
+	    il_obj_attrib[i].ln.route.psucc[il_obj_attrib[i].ln.route.num_div_routes] = pp;
+#else
+	    il_obj_attrib[i].ln.route.psucc[il_obj_attrib[i].ln.route.num_div_routes] = &il_obj_attrib[j];
+#endif
+	    assert( il_obj_attrib[i].ln.route.psucc[il_obj_attrib[i].ln.route.num_div_routes] );
+	    il_obj_attrib[i].ln.route.num_div_routes++;
+	  }
+	}
+      }
+      cnt++;
+    }
+  }
+  return cnt;
+}
+
+static int chase_conn ( const IL_SYM pred_dst, IL_OBJ_CONTAINER_C_PTR pattrib, int max_conn_len ) {
+  assert( whats_kind_of_il_sym( pred_dst ) == _SIGNAL );
+  assert( pattrib );  
+  assert( pattrib->kind == _ROUTE );
+  int r = 0;
+  
+  if( --max_conn_len ) {
+    int i;
+    r = max_conn_len;
+    for( i = 0; i < pattrib->ln.route.num_div_routes; i++ ) {
+      IL_OBJ_CONTAINER_C_PTR ps = pattrib->ln.route.psucc[i];
+      assert( ps );
+      assert( ps->kind == _ROUTE );
+      {
+	ROUTE_C_PTR pP = ps->ln.route.pprof;
+	assert( pP );
+	assert( pP->kind == _ROUTE );
+	assert( whats_kind_of_il_sym( pP->sig_pair.src.sig ) == _SIGNAL );
+	assert( pP->sig_pair.src.sig == pred_dst );
+	assert( whats_kind_of_il_sym( pP->sig_pair.dst.sig ) == _SIGNAL );    
+	r = chase_conn( pP->sig_pair.dst.sig, ps, max_conn_len );
+	if( r <= 0 )
+	  break;
+      }
+    }
+  }
+  return r;
+}
+#if 0
+static void chk_consistency_route_conn ( void ) {
+  int i;
+  for( i = 0; i < END_OF_IL_SYMS; i++ ) {
+    if (il_obj_attrib[i].kind == _ROUTE) {
+      ROUTE_C_PTR pP = il_obj_attrib[i].ln.route.pprof;
+      assert( pP );
+      assert( pP->kind == _ROUTE );
+      const IL_SYM succ_org = pP->sig_pair.dst.sig;
+      assert( whats_kind_of_il_sym( succ_org ) == _SIGNAL );
+      
+      int j;
+      for( j = 0; j < il_obj_attrib[i].ln.route.num_div_routes j++ ) {
+	ROUTE_C_PTR ps = il_obj_attrib[i].ln.route.psucc[j];
+	assert( ps );
+	assert( whats_kind_of_il_sym( ps->sig_pair.src.sig ) == _ROUTE );
+	assert( succ_org == ps->sig_pair.src.sig );
+	
+      }
+    }
+  }
+}
+#endif
+
+void cons_il_obj_table ( void ) {
   int num_tracks = -1;
   int num_routes = -1;
-  
   {
     int i = 0;
     while( track_dataset_def[i].kind != END_OF_CBI_STAT_KIND ) {
@@ -420,10 +509,8 @@ void cons_il_obj_tables ( void ) {
     assert( track_dataset_def[i].kind == END_OF_CBI_STAT_KIND );
     num_tracks = i;
     cons_track_prof();
-  }
-  
-  {
-    int i = 0;
+    
+    i = 0;
     while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
       cons_cbtc_block_attrib ( &block_state[i] );
       i++;
@@ -431,10 +518,8 @@ void cons_il_obj_tables ( void ) {
     assert( block_state[i].virt_block_name == END_OF_CBTC_BLOCKs );
     assert( block_state[i].block_name == 0 );
     chk_consistency_over_sp_links();
-  }
-  
-  {
-    int i = 0;
+    
+    i = 0;
     while( route_dataset_def[i].route_kind != END_OF_ROUTE_KINDS ) {
       cons_route_attrib( &route_dataset_def[i] );
       i++;
@@ -445,11 +530,19 @@ void cons_il_obj_tables ( void ) {
   }
   chk_consistency_track_prof( num_tracks );
   chk_consistency_route_prof( num_routes );
+  
+  {
+    assert( num_tracks > -1 );
+    assert( num_routes > -1 );
+    int r = -1;
+    r = enum_succ_routes();
+    assert( r == num_routes );
+  }
 }
 
 #if 0 // for MODULE-TEST
 int main ( void ) {  
-  cons_il_obj_tables();
+  cons_il_obj_table();
   return 0;
 }
 #endif

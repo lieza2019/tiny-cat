@@ -19,11 +19,11 @@ typedef struct track {
     CBTC_BLOCK_C_PTR pblocks[MAX_TRACK_BLOCKS];
   } cbtc;
   struct {
-    ROUTE_LOCK TLSR, TRSR;
-    ROUTE_LOCK sTLSR, sTRSR;
-    ROUTE_LOCK eTLSR, eTRSR;
-    ROUTE_LOCK kTLSR, kTRSR;
-  } const lock;
+    const ROUTE_LOCK TLSR, TRSR;
+    const ROUTE_LOCK sTLSR, sTRSR;
+    const ROUTE_LOCK eTLSR, eTRSR;
+    const ROUTE_LOCK kTLSR, kTRSR;
+  } lock;
 } TRACK, *TRACK_PTR;
 typedef const struct track *TRACK_C_PTR;
 
@@ -54,24 +54,24 @@ typedef struct route {
   } body;
   struct {
     struct {
-      IL_SYM sig;
-      CBTC_BLOCK_ID blk;  // data not implemented yet.
+      const IL_SYM sig;
+      const CBTC_BLOCK_ID blk;  // data not implemented yet.
       CBTC_BLOCK_C_PTR pblk; // data not implemented yet.
-      STOPPING_POINT_CODE sp; // data not implemented yet.
+      const STOPPING_POINT_CODE sp; // data not implemented yet.
     } src;
     struct {
-      IL_SYM sig;
-      CBTC_BLOCK_ID blk; // data not implemented yet.
+      const IL_SYM sig;
+      const CBTC_BLOCK_ID blk; // data not implemented yet.
       CBTC_BLOCK_C_PTR pblk; // data not implemented yet.
-      STOPPING_POINT_CODE sp; // data not implemented yet.
+      const STOPPING_POINT_CODE sp; // data not implemented yet.
     } dst;
-  } const sig_pair;
+  } sig_pair;
   struct {
     const BOOL app;
     struct {
       const int num_blocks;
       const CBTC_BLOCK_ID trg_blks[MAX_ROUTE_TRG_BLOCKS];
-      CBTC_BLOCK_PTR ptrg_blks[MAX_ROUTE_TRG_BLOCKS];
+      CBTC_BLOCK_C_PTR ptrg_blks[MAX_ROUTE_TRG_BLOCKS];
     } trg_sect;
     struct {
       const int num_tracks_lok;
@@ -84,13 +84,13 @@ typedef struct route {
     } ctrl_tracks;
     struct {
       struct {
-	CBTC_BLOCK_ID blk;
-	STOPPING_POINT_CODE sp;	
+	const CBTC_BLOCK_ID blk;
+	const STOPPING_POINT_CODE sp;	
 	CBTC_BLOCK_C_PTR pblk;
       } dep;
       struct {
-	CBTC_BLOCK_ID blk;
-	STOPPING_POINT_CODE sp;
+	const CBTC_BLOCK_ID blk;
+	const STOPPING_POINT_CODE sp;
 	CBTC_BLOCK_C_PTR pblk;
       } dst;
       time_t trip_time; // data not implemented yet.
@@ -99,6 +99,7 @@ typedef struct route {
 } ROUTE, *ROUTE_PTR;
 typedef const struct route *ROUTE_C_PTR;
 
+#define MAX_ROUTE_DIVERGENTS 16
 typedef struct il_obj_container {
   IL_SYM_KIND kind;
   IL_SYM sym;
@@ -107,10 +108,17 @@ typedef struct il_obj_container {
       TRACK_C_PTR pprof;
     } track;
     struct {
-      ROUTE_PTR pprof;
+      ROUTE_C_PTR pprof;
+      int num_div_routes;
+#if 0 // *****
+      ROUTE_C_PTR psucc[MAX_ROUTE_DIVERGENTS];
+#else
+      struct il_obj_container const *psucc[MAX_ROUTE_DIVERGENTS];
+#endif
     } route;
   } ln;
 } IL_OBJ_CONTAINER, *IL_OBJ_CONTAINER_PTR;
+typedef struct il_obj_container const *IL_OBJ_CONTAINER_C_PTR;
 
 #define ROUTE_ATTRIB_DEFINITION
 #include "interlock_dataset.h"
@@ -122,7 +130,7 @@ extern ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id );
 extern void cons_track_attrib ( TRACK_PTR ptrack );
 extern void cons_route_attrib ( ROUTE_PTR proute );
 extern void cons_cbtc_block_attrib ( CBTC_BLOCK_PTR pblock );
-extern void cons_il_obj_tables ( void );
+extern void cons_il_obj_table ( void );
 
 extern int establish_OC_comm_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs );
 extern int establish_OC_comm_ctrl ( TINY_SOCK_PTR pS, CBI_CTRL_STAT_COMM_PROF_PTR pprofs[], const int nprofs, const int ndsts );

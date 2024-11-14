@@ -329,7 +329,7 @@ int main ( void ) {
   memset( &comm_threads_prof, 0, sizeof(comm_threads_prof) );
   
   tzset();
-  cons_il_obj_tables();
+  cons_il_obj_table();
   
   establish_SC_comm( &comm_threads_prof );
   establish_OC_comm( &comm_threads_prof );
