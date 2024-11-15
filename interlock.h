@@ -99,7 +99,7 @@ typedef struct route {
 } ROUTE, *ROUTE_PTR;
 typedef const struct route *ROUTE_C_PTR;
 
-#define MAX_ROUTE_DIVERGENTS 16
+#define MAX_ROUTE_DIVERGENCE 16
 #define MAX_ROUTE_CONN_LEN 5
 typedef struct il_obj_container {
   IL_SYM_KIND kind;
@@ -111,7 +111,7 @@ typedef struct il_obj_container {
     struct {
       ROUTE_C_PTR pprof;
       int num_div_routes;
-      struct il_obj_container const *psucc[MAX_ROUTE_DIVERGENTS];
+      struct il_obj_container const *psucc[MAX_ROUTE_DIVERGENCE];
     } route;
   } ln;
 } IL_OBJ_CONTAINER, *IL_OBJ_CONTAINER_PTR;
