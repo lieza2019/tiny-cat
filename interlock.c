@@ -426,14 +426,10 @@ static int enum_succ_routes ( void ) {
 	  ROUTE_C_PTR pp = il_obj_attrib[j].ln.route.pprof;
 	  assert( pp );
 	  assert( pp->kind == _ROUTE );
-	  assert( whats_kind_of_il_sym( pp->sig_pair.src.sig ) == _SIGNAL );
-	  if( pp->sig_pair.src.sig == succ_org ) {
+	  assert( whats_kind_of_il_sym( pp->sig_pair.org.sig ) == _SIGNAL );
+	  if( pp->sig_pair.org.sig == succ_org ) {
 	    assert( ! il_obj_attrib[i].ln.route.psucc[il_obj_attrib[i].ln.route.num_div_routes] );
-#if 0 // *****
-	    il_obj_attrib[i].ln.route.psucc[il_obj_attrib[i].ln.route.num_div_routes] = pp;
-#else
 	    il_obj_attrib[i].ln.route.psucc[il_obj_attrib[i].ln.route.num_div_routes] = &il_obj_attrib[j];
-#endif
 	    assert( il_obj_attrib[i].ln.route.psucc[il_obj_attrib[i].ln.route.num_div_routes] );
 	    il_obj_attrib[i].ln.route.num_div_routes++;
 	  }
@@ -449,53 +445,56 @@ static int chase_conn ( const IL_SYM pred_dst, IL_OBJ_CONTAINER_C_PTR pattrib, i
   assert( whats_kind_of_il_sym( pred_dst ) == _SIGNAL );
   assert( pattrib );  
   assert( pattrib->kind == _ROUTE );
-  int r = 0;
+  assert( max_conn_len > 0 );
+  int r = max_conn_len;
   
-  if( --max_conn_len ) {
-    int i;
-    r = max_conn_len;
-    for( i = 0; i < pattrib->ln.route.num_div_routes; i++ ) {
-      IL_OBJ_CONTAINER_C_PTR ps = pattrib->ln.route.psucc[i];
-      assert( ps );
-      assert( ps->kind == _ROUTE );
-      {
+  if( pattrib->ln.route.num_div_routes ) {
+    r = 0;
+    if( --max_conn_len ) {
+      int i;
+      r = max_conn_len;
+      assert( pattrib->ln.route.num_div_routes > 0 );
+      for( i = 0; i < pattrib->ln.route.num_div_routes; i++ ) {
+	IL_OBJ_CONTAINER_C_PTR ps = pattrib->ln.route.psucc[i];
+	assert( ps );
+	assert( ps->kind == _ROUTE );
 	ROUTE_C_PTR pP = ps->ln.route.pprof;
 	assert( pP );
 	assert( pP->kind == _ROUTE );
-	assert( whats_kind_of_il_sym( pP->sig_pair.src.sig ) == _SIGNAL );
-	assert( pP->sig_pair.src.sig == pred_dst );
-	assert( whats_kind_of_il_sym( pP->sig_pair.dst.sig ) == _SIGNAL );    
-	r = chase_conn( pP->sig_pair.dst.sig, ps, max_conn_len );
-	if( r <= 0 )
-	  break;
+	assert( whats_kind_of_il_sym( pP->sig_pair.org.sig ) == _SIGNAL );
+	assert( pP->sig_pair.org.sig == pred_dst );
+	assert( whats_kind_of_il_sym( pP->sig_pair.dst.sig ) == _SIGNAL );
+	{
+	  int r_w = -1;
+	  assert( max_conn_len > 0 );
+	  r_w = chase_conn( pP->sig_pair.dst.sig, ps, max_conn_len );
+	  if( r <= 0 ) {
+	    r = 0;
+	    break;
+	  } else
+	    r = r > r_w ? r_w : r;
+	}
       }
     }
   }
   return r;
 }
-#if 0
-static void chk_consistency_route_conn ( void ) {
+static void chk_consistency_route_conn ( const int max_conn_len ) {
+  assert( max_conn_len > 0 );
   int i;
   for( i = 0; i < END_OF_IL_SYMS; i++ ) {
     if (il_obj_attrib[i].kind == _ROUTE) {
+      int r = -1;
       ROUTE_C_PTR pP = il_obj_attrib[i].ln.route.pprof;
       assert( pP );
       assert( pP->kind == _ROUTE );
-      const IL_SYM succ_org = pP->sig_pair.dst.sig;
-      assert( whats_kind_of_il_sym( succ_org ) == _SIGNAL );
-      
-      int j;
-      for( j = 0; j < il_obj_attrib[i].ln.route.num_div_routes j++ ) {
-	ROUTE_C_PTR ps = il_obj_attrib[i].ln.route.psucc[j];
-	assert( ps );
-	assert( whats_kind_of_il_sym( ps->sig_pair.src.sig ) == _ROUTE );
-	assert( succ_org == ps->sig_pair.src.sig );
-	
-      }
+      assert( whats_kind_of_il_sym( pP->sig_pair.org.sig ) == _SIGNAL );
+      assert( whats_kind_of_il_sym( pP->sig_pair.dst.sig ) == _SIGNAL );
+      r = chase_conn( pP->sig_pair.dst.sig, &il_obj_attrib[i], max_conn_len );
+      assert( r > 0 );
     }
   }
 }
-#endif
 
 void cons_il_obj_table ( void ) {
   int num_tracks = -1;
@@ -538,6 +537,9 @@ void cons_il_obj_table ( void ) {
     r = enum_succ_routes();
     assert( r == num_routes );
   }
+#ifdef CHK_STRICT_CONSISTENCY
+  chk_consistency_route_conn( MAX_ROUTE_CONN_LEN );
+#endif // CHK_STRICT_CONSISTENCY
 }
 
 #if 0 // for MODULE-TEST
