@@ -808,11 +808,6 @@ int revise_cbi_codetbl ( const char *errmsg_pre ) {
   while( cbi_stat_label[j].kind != _CBI_STAT_KIND_NONSENS ) {
     CBI_STAT_ATTR_PTR pS = NULL;
     pS = conslt_hash_cbistat( cbi_stat_label[j].name );
-#if 0 // ***** for debugging.
-    if( !pS ) {
-      printf( "(j, name) = (%d, %s)\n", j, cbi_stat_labeling[j].name );
-    }
-#endif
     if( pS ) {
       CBI_STAT_ATTR_PTR pE = NULL;
       pS->kind = cbi_stat_label[j].kind;
@@ -822,8 +817,12 @@ int revise_cbi_codetbl ( const char *errmsg_pre ) {
 #ifdef CHK_STRICT_CONSISTENCY
       assert( pE );
       assert( pE == pS );
-    } else
+    } else {
+#if 1 // ***** for debugging.
+      printf( "(j, name) = (%d, %s)\n", j, cbi_stat_label[j].name );
+#endif 
       assert( pS );
+    }
 #else
     }
 #endif // CHK_STRICT_CONSISTENCY

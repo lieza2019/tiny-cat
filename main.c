@@ -411,12 +411,13 @@ int main ( void ) {
 #if 0
       show_tracking_train_stat( stdout );
 #endif
-      diag_cbi_stat_attrib( stdout, "S803A_S811A" );
-#if 0
+      //diag_cbi_stat_attrib( stdout, "T801A_TLSR" );
+      diag_cbi_stat_attrib( stdout, "CY801A" );
+#if 1
       {
 	OC_ID oc_id = END_OF_OCs;
 	CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
-	const char ctl_bit_ident[] = "P_S821A_S801A";
+	const char ctl_bit_ident[] = "P_CY807A_OFF";  // e.g. const char ctl_bit_ident[] = "P_S821A_S801A";
 	engage_il_ctrl( &oc_id, &kind, ctl_bit_ident );
 	//errorF( "(oc_id): (%d)\n", OC_ID_CONV2INT(oc_id) ); // ***** for debugging.
       }

@@ -909,7 +909,6 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
 	assert( pA->attr_ctrl.cnt_2_kil == 0 );
       }
       cnt++;
-	  
     } else
       err = TRUE;
     pA->dirty = FALSE;
@@ -1072,7 +1071,7 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   *pkind = END_OF_CBI_STAT_KIND;
   pA = conslt_cbi_code_tbl( ident );
   assert( pA );
-
+  
   if( pA ) {
     assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
     oc_id = pA->oc_id;
