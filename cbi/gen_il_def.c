@@ -475,7 +475,8 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	  pE->name[CBI_STAT_NAME_LEN] = 0;
 	  strncpy( pE->name, plex->raw_name, CBI_STAT_NAME_LEN );
 	  pE->kind = plex->exp[i].il_sym_kind;
-	  pE->src.fname = pattr->src.fname;
+	  pE->src.fname[CBI_CTRLTBL_FILENAME_CHRLEN_MAX] = 0;
+	  strncpy( pE->src.fname, pattr->src.fname, CBI_CTRLTBL_FILENAME_CHRLEN_MAX );
 	  pE->src.line = pattr->src.line;
 	  assert( plex );
 	  pE->decl_gen.plex_il_obj = (void *)plex;
