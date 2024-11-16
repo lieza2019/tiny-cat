@@ -217,6 +217,7 @@ typedef enum cbi_stat_kind {
 typedef CBI_STAT_KIND IL_SYM_KIND;
 
 #define CTRL_LIT_SUSTAIN_CNT 50
+#define CBI_CTRLTBL_FILENAME_CHRLEN_MAX 512
 #define CBI_STAT_IDENT_LEN 32
 #define CBI_STAT_NAME_LEN 32
 typedef struct cbi_stat_attr {
@@ -243,7 +244,7 @@ typedef struct cbi_stat_attr {
     struct cbi_stat_attr *pNext_ctrl;
   } attr_ctrl;
   struct {
-    const char *fname;
+    char fname[CBI_CTRLTBL_FILENAME_CHRLEN_MAX + 1];
     int line;
   } src;
   BOOL dirty;

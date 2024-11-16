@@ -724,7 +724,8 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	assert( pA );		       
 	if( (err = (BOOL)ferror( fp )) )
 	  break;
-	pA->src.fname = fname;
+	pA->src.fname[CBI_CTRLTBL_FILENAME_CHRLEN_MAX] = 0;
+	strncpy( pA->src.fname, fname, CBI_CTRLTBL_FILENAME_CHRLEN_MAX );
 	pA->src.line = lines;
 	{
 	  char *p = NULL;
@@ -891,7 +892,7 @@ int main ( void ) {
     char *src_fname = NULL;
     if( il_status_geometry_resources[oc_id].csv_fname ) {
       int n = -1;
-      char buf[512];
+      char buf[CBI_CTRLTBL_FILENAME_CHRLEN_MAX];
       buf[511] = 0;
       {
 	char *p = NULL;
