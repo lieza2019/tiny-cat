@@ -33,11 +33,7 @@ typedef struct lex_il_obj {
     CBI_STAT_KIND il_sym_kind;
     char pat[CBI_LEX_PAT_MAXLEN + 1];
   } exp[CBI_EXPAND_PAT_MAXNUM];
-#if 0 // *****
-  LEX_CBI_STAT_REG_OVRIDDN cbi_stat_ovriddn;
-#else
   char src_specified[CBI_CODE_FILENAME_MAXLEN + 1];
-#endif
   char raw_name[CBI_STAT_NAME_LEN + 1];
   char label[CBI_STAT_IDENT_LEN + 1];
 } LEX_CBI_OBJ, *LEX_CBI_OBJ_PTR;
@@ -581,12 +577,8 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
       fprintf( fp, ", \"%s\"", "NO_ABBREV" );
       //fprintf( fp, " %s", pprsf->suffix.emit );
     }
-#if 0 // *****
-    fprintf( fp, ", %s", (plex->cbi_stat_ovriddn == NO_OVERRIDDEN) ? "TRUE" : "FALSE" );
-#else
     if( strnlen(plex->src_specified, CBI_CODE_FILENAME_MAXLEN) > 0 )
       fprintf( fp, ", \"%s\"", plex->src_specified );
-#endif
     fprintf( fp, " %s", pprsf->suffix.emit );
   }
   return (err ? -1 : 1);
@@ -743,11 +735,7 @@ int main ( void ) {
 	((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->label[CBI_STAT_IDENT_LEN] = 0;
 	fprintf( fp_out, "%s, ", ((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->label );
       }
-#if 0 // *****
-      fprintf( fp_out, "%s, ", (((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->cbi_stat_ovriddn == NO_OVERRIDDEN) ? "TRUE" : "FALSE" );
-#else
       fprintf( fp_out, "\"%s\", ", ((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->src_specified );
-#endif
       
       assert( p );
       assert( p->ident );

@@ -364,12 +364,6 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
   CBI_STAT_ATTR_PTR r = NULL;
   CBI_STAT_ATTR_PTR *ppB = NULL;
   
-#if 1 // *****
-  if( (!strncmp(pE->name, "[M]CY802C", CBI_STAT_NAME_LEN)) && (!strncmp(pE->src.fname, "./cbi/JASOLA_VIHAR.csv", CBI_CODE_FILENAME_MAXLEN)) ) {
-    //assert( FALSE);
-    (void)0;
-  }
-#endif
   {
     int h = -1;
     h = hash_key( budgets_num, pE->ident );
@@ -391,18 +385,6 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
       else {
 	char buf_crnt[256];
 	char buf_prev[256];
-#if 0 // *****
-	if( strnlen( pE->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
-	  char buf[CBI_CODE_FILENAME_MAXLEN + 1];
-	  buf[CBI_CODE_FILENAME_MAXLEN] = 0;
-	  basename_r( pE->src.fname, buf );
-	  if( strncmp( buf, pE->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
-	    errorF( "%s", errmsg_pre );
-	    errorF( "overridden is inhibitted of cbi condtion: %s is specified only from %s.\n", pE->ident, pE->src_specified );
-	    return r;
-	  }
-	}
-#else
 	if( strnlen( (*pp)->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
 	  char buf[CBI_CODE_FILENAME_MAXLEN + 1];
 	  buf[CBI_CODE_FILENAME_MAXLEN] = 0;
@@ -413,7 +395,6 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
 	    return r;
 	  }
 	}
-#endif
 	buf_crnt[255] = 0;
 	buf_prev[255] = 0;
 	{
@@ -726,22 +707,6 @@ void dump_cbi_stat_prof ( OC_ID oc_id ) {
   }
 }
 
-#if 0 // *****
-static BOOL cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name ) {
-  assert( cbi_stat_name );
-  BOOL r = FALSE;
-  
-  int i = 0;
-  while( cbi_stat_label[i].kind != _CBI_STAT_KIND_NONSENS ) {
-    if( !strncmp(cbi_stat_label[i].name, cbi_stat_name, CBI_STAT_NAME_LEN) ) {
-      r = cbi_stat_label[i].no_reg_ovriddn;
-      break;
-    }
-    i++;
-  }
-  return r;
-}
-#else
 static const char *cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name ) {
   assert( cbi_stat_name );
   const char *r = NULL;
@@ -756,7 +721,6 @@ static const char *cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name ) {
   }
   return r;
 }
-#endif
 
 int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   assert( fname );
@@ -797,9 +761,6 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	  assert( p && !(*p) );
 	  strncpy( p, bit_name, CBI_STAT_NAME_LEN );
 	}
-#if 0 // *****
-	pA->no_reg_ovriddn = cbi_stat_reg_no_ovriddn( pA->name );
-#else
 	{
 	  const char *s = cbi_stat_reg_no_ovriddn( pA->name );
 	  if( s )
@@ -807,7 +768,6 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	  else
 	    strncpy( pA->src_specified, "", CBI_CODE_FILENAME_MAXLEN );
 	}
-#endif
 	strncpy( pA->ident, pA->name, CBI_STAT_NAME_LEN );
 	
 	pA->oc_id = oc_id;
@@ -874,37 +834,6 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   }
 }
 
-#if 0
-int revise_cbi_codetbl ( const char *errmsg_pre ) {
-  int cnt = 0;
-  int j = 0;
-  
-  while( cbi_stat_label[j].kind != _CBI_STAT_KIND_NONSENS ) {
-    CBI_STAT_ATTR_PTR pS = NULL;
-    pS = conslt_hash_cbistat( cbi_stat_label[j].name );
-    if( pS ) {
-      CBI_STAT_ATTR_PTR pE = NULL;
-      pS->kind = cbi_stat_label[j].kind;
-      pE = re_hash_cbistat( pS->ident, cbi_stat_label[j].ident, errmsg_pre );
-      if( pE )
-	cnt++;
-#ifdef CHK_STRICT_CONSISTENCY
-      assert( pE );
-      assert( pE == pS );
-    } else {
-#if 1 // ***** for debugging.
-      printf( "(j, name) = (%d, %s)\n", j, cbi_stat_label[j].name );
-#endif 
-      assert( pS );
-    }
-#else
-    }
-#endif // CHK_STRICT_CONSISTENCY
-    j++;
-  }
-  return cnt;
-}
-#else
 int revise_cbi_codetbl ( const char *errmsg_pre ) {
   int cnt = 0;
   int j = 0;
@@ -936,7 +865,6 @@ int revise_cbi_codetbl ( const char *errmsg_pre ) {
   }
   return cnt;
 }
-#endif
 
 #if 0 // for MODULE-TEST
 #if 0

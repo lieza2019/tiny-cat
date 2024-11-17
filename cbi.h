@@ -247,11 +247,7 @@ typedef struct cbi_stat_attr {
     char fname[CBI_CODE_FILENAME_MAXLEN + 1];
     int line;
   } src;
-#if 0 // *****
-  BOOL no_reg_ovriddn;
-#else
   char src_specified[CBI_CODE_FILENAME_MAXLEN + 1];
-#endif
   BOOL dirty;
   struct cbi_stat_attr *pNext_dirt;
   struct cbi_stat_attr *pNext_hash;
@@ -307,11 +303,7 @@ typedef struct cbi_stat_label {
   CBI_STAT_KIND kind;
   char name[CBI_STAT_NAME_LEN + 1];
   char ident[CBI_STAT_IDENT_LEN + 1];
-#if 0 // *****
-  BOOL no_reg_ovriddn;
-#else
   const char src_specified[CBI_CODE_FILENAME_MAXLEN + 1];
-#endif
 } CBI_STAT_LABEL, *CBI_STAT_LABEL_PTR;
 
 #endif // CBI_H_INCLUDED
