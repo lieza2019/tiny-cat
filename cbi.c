@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 #include <assert.h>
 #include "generic.h"
 #include "misc.h"
@@ -362,7 +363,7 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
   assert( pE );
   CBI_STAT_ATTR_PTR r = NULL;
   CBI_STAT_ATTR_PTR *ppB = NULL;
-
+  
 #if 1 // *****
   if( (!strncmp(pE->name, "[M]CY807A", CBI_STAT_NAME_LEN)) && (!strncmp(pE->src.fname, "./cbi/JASOLA_VIHAR.csv", CBI_CTRLTBL_FILENAME_MAXLEN)) ) {
     //assert( FALSE);
@@ -390,6 +391,16 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
       else {
 	char buf_crnt[256];
 	char buf_prev[256];
+	if( strnlen( pE->src_specified, CBI_CTRLTBL_FILENAME_MAXLEN ) ) {
+	  char buf[CBI_CTRLTBL_FILENAME_MAXLEN + 1];
+	  buf[CBI_CTRLTBL_FILENAME_MAXLEN] = 0;
+	  basename_r( pE->src.fname, buf );
+	  if( strncmp( buf, pE->src_specified, CBI_CTRLTBL_FILENAME_MAXLEN ) ) {
+	    errorF( "%s", errmsg_pre );
+	    errorF( "overridden is inhibitted of cbi condtion: %s is specified only from %s.\n", pE->ident, pE->src_specified );
+	    return r;
+	  }
+	}
 	buf_crnt[255] = 0;
 	buf_prev[255] = 0;
 	{
