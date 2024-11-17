@@ -365,7 +365,7 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
   CBI_STAT_ATTR_PTR *ppB = NULL;
   
 #if 1 // *****
-  if( (!strncmp(pE->name, "[M]CY807A", CBI_STAT_NAME_LEN)) && (!strncmp(pE->src.fname, "./cbi/JASOLA_VIHAR.csv", CBI_CTRLTBL_FILENAME_MAXLEN)) ) {
+  if( (!strncmp(pE->name, "[M]CY802C", CBI_STAT_NAME_LEN)) && (!strncmp(pE->src.fname, "./cbi/JASOLA_VIHAR.csv", CBI_CODE_FILENAME_MAXLEN)) ) {
     //assert( FALSE);
     (void)0;
   }
@@ -391,16 +391,29 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
       else {
 	char buf_crnt[256];
 	char buf_prev[256];
-	if( strnlen( pE->src_specified, CBI_CTRLTBL_FILENAME_MAXLEN ) ) {
-	  char buf[CBI_CTRLTBL_FILENAME_MAXLEN + 1];
-	  buf[CBI_CTRLTBL_FILENAME_MAXLEN] = 0;
+#if 0 // *****
+	if( strnlen( pE->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
+	  char buf[CBI_CODE_FILENAME_MAXLEN + 1];
+	  buf[CBI_CODE_FILENAME_MAXLEN] = 0;
 	  basename_r( pE->src.fname, buf );
-	  if( strncmp( buf, pE->src_specified, CBI_CTRLTBL_FILENAME_MAXLEN ) ) {
+	  if( strncmp( buf, pE->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
 	    errorF( "%s", errmsg_pre );
 	    errorF( "overridden is inhibitted of cbi condtion: %s is specified only from %s.\n", pE->ident, pE->src_specified );
 	    return r;
 	  }
 	}
+#else
+	if( strnlen( (*pp)->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
+	  char buf[CBI_CODE_FILENAME_MAXLEN + 1];
+	  buf[CBI_CODE_FILENAME_MAXLEN] = 0;
+	  basename_r( pE->src.fname, buf );
+	  if( strncmp( buf, (*pp)->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
+	    errorF( "%s", errmsg_pre );
+	    errorF( "overridden is cancelled of cbi condtion: %s is specified only from %s.\n", (*pp)->ident,(*pp)->src_specified );
+	    return r;
+	  }
+	}
+#endif
 	buf_crnt[255] = 0;
 	buf_prev[255] = 0;
 	{
@@ -773,7 +786,7 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	assert( pA );		       
 	if( (err = (BOOL)ferror( fp )) )
 	  break;
-	strncpy( pA->src.fname, fname, CBI_CTRLTBL_FILENAME_MAXLEN );
+	strncpy( pA->src.fname, fname, CBI_CODE_FILENAME_MAXLEN );
 	pA->src.line = lines;
 	{
 	  char *p = NULL;
@@ -790,9 +803,9 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	{
 	  const char *s = cbi_stat_reg_no_ovriddn( pA->name );
 	  if( s )
-	    strncpy( pA->src_specified, s, CBI_CTRLTBL_FILENAME_MAXLEN );
+	    strncpy( pA->src_specified, s, CBI_CODE_FILENAME_MAXLEN );
 	  else
-	    strncpy( pA->src_specified, "", CBI_CTRLTBL_FILENAME_MAXLEN );
+	    strncpy( pA->src_specified, "", CBI_CODE_FILENAME_MAXLEN );
 	}
 #endif
 	strncpy( pA->ident, pA->name, CBI_STAT_NAME_LEN );
@@ -1027,12 +1040,12 @@ int main ( void ) {
 
 static const CBI_STAT_KIND il_sym_kind[] = {
 #define IL_SYMS(sym_kind, sym, str, code) sym_kind
-#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, suppres_ovriddn, exp) exp,
-#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, suppres_ovriddn, exp1) exp1,
-#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2) exp1, exp2,
-#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3) exp1, exp2, exp3,
-#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
-#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
+#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, src_specifier, exp) exp,
+#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, src_specifier, exp1) exp1,
+#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, src_specifier, exp1, exp2) exp1, exp2,
+#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3) exp1, exp2, exp3,
+#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
+#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
 #include "./cbi/il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
 #undef IL_OBJ_INSTANCE_DESC1
@@ -1052,12 +1065,12 @@ const CBI_STAT_KIND whats_kind_of_il_sym ( IL_SYM obj ) {
 
 static const char *il_sym_namechrs [] = {
 #define IL_SYMS(sym_kind, sym, str, code) str
-#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, suppres_ovriddn, exp) exp,
-#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, suppres_ovriddn, exp1) exp1,
-#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2) exp1, exp2,
-#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3) exp1, exp2, exp3,
-#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
-#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
+#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, src_specifier, exp) exp,
+#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, src_specifier, exp1) exp1,
+#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, src_specifier, exp1, exp2) exp1, exp2,
+#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3) exp1, exp2, exp3,
+#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
+#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
 #include "./cbi/il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
 #undef IL_OBJ_INSTANCE_DESC1

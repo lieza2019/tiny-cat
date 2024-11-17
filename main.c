@@ -231,7 +231,7 @@ static void load_il_status_geometry ( void ) {
     assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
     {
       int n = -1;
-      char fname[CBI_CTRLTBL_FILENAME_MAXLEN];
+      char fname[CBI_CODE_FILENAME_MAXLEN];
       fname[511] = 0;
 #ifndef IN_CBI_RESOURCEDIR
       assert( (int)sizeof(fname) > (strlen("./cbi/") + strlen(il_status_geometry_resources[oc_id].csv_fname)) );
