@@ -284,7 +284,7 @@ RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 #include "./cbi/cbi_stat_label.h"
 #ifndef CBI_STAT_LABELING
 static const CBI_STAT_LABEL cbi_stat_label[] = {
-  { _CBI_STAT_KIND_NONSENS, "", "" }
+  { _CBI_STAT_KIND_NONSENS }
 };
 #endif
 #ifdef CBI_STAT_LABELING
@@ -362,7 +362,13 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
   assert( pE );
   CBI_STAT_ATTR_PTR r = NULL;
   CBI_STAT_ATTR_PTR *ppB = NULL;
-  
+
+#if 1 // *****
+  if( (!strncmp(pE->name, "[M]CY807A", CBI_STAT_NAME_LEN)) && (!strncmp(pE->src.fname, "./cbi/JASOLA_VIHAR.csv", CBI_CTRLTBL_FILENAME_CHRLEN_MAX)) ) {
+    //assert( FALSE);
+    (void)0;
+  }
+#endif
   {
     int h = -1;
     h = hash_key( budgets_num, pE->ident );
@@ -442,8 +448,8 @@ static CBI_STAT_ATTR_PTR re_hash ( CBI_STAT_ATTR_PTR budgets[], const int budget
     assert( pp );
     if( *pp ) {
       pE = *pp;
-      *pp = pE->pNext_hash;
       assert( pE );
+      *pp = pE->pNext_hash;
       strncpy( pE->ident, ident_new, CBI_STAT_IDENT_LEN );
       pE->ident[CBI_STAT_IDENT_LEN] = 0;
       pE->pNext_hash = NULL;
@@ -696,6 +702,21 @@ void dump_cbi_stat_prof ( OC_ID oc_id ) {
   }
 }
 
+static BOOL cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name ) {
+  assert( cbi_stat_name );
+  BOOL r = FALSE;
+  
+  int i = 0;
+  while( cbi_stat_label[i].kind != _CBI_STAT_KIND_NONSENS ) {
+    if( !strncmp(cbi_stat_label[i].name, cbi_stat_name, CBI_STAT_NAME_LEN) ) {
+      r = cbi_stat_label[i].no_reg_ovriddn;
+      break;
+    }
+    i++;
+  }
+  return r;
+}
+
 int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   assert( fname );
   BOOL err = FALSE;
@@ -724,7 +745,6 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	assert( pA );		       
 	if( (err = (BOOL)ferror( fp )) )
 	  break;
-	pA->src.fname[CBI_CTRLTBL_FILENAME_CHRLEN_MAX] = 0;
 	strncpy( pA->src.fname, fname, CBI_CTRLTBL_FILENAME_CHRLEN_MAX );
 	pA->src.line = lines;
 	{
@@ -736,6 +756,7 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	  assert( p && !(*p) );
 	  strncpy( p, bit_name, CBI_STAT_NAME_LEN );
 	}
+	pA->no_reg_ovriddn = cbi_stat_reg_no_ovriddn( pA->name );
 	strncpy( pA->ident, pA->name, CBI_STAT_NAME_LEN );
 	
 	pA->oc_id = oc_id;
@@ -802,6 +823,7 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   }
 }
 
+#if 0
 int revise_cbi_codetbl ( const char *errmsg_pre ) {
   int cnt = 0;
   int j = 0;
@@ -831,6 +853,39 @@ int revise_cbi_codetbl ( const char *errmsg_pre ) {
   }
   return cnt;
 }
+#else
+int revise_cbi_codetbl ( const char *errmsg_pre ) {
+  int cnt = 0;
+  int j = 0;
+  
+  while( cbi_stat_label[j].kind != _CBI_STAT_KIND_NONSENS ) {
+    CBI_STAT_ATTR_PTR pS = NULL;
+    pS = conslt_hash_cbistat( cbi_stat_label[j].ident );
+    if( pS ) {
+      assert( !strncmp( pS->name, cbi_stat_label[j].name, CBI_STAT_NAME_LEN ) );
+    } else {
+      pS = conslt_hash_cbistat( cbi_stat_label[j].name );
+      if( pS ) {
+	CBI_STAT_ATTR_PTR pE = NULL;
+	pS->kind = cbi_stat_label[j].kind;
+	pE = re_hash_cbistat( pS->ident, cbi_stat_label[j].ident, errmsg_pre );
+	if( pE ) {
+	  assert( pE == pS );
+	  cnt++;
+	} else
+	  assert( pE );
+      } else {
+#if 1 // ***** for debugging.
+	printf( "(j, name) = (%d, %s)\n", j, cbi_stat_label[j].name );
+#endif 
+	assert( pS );
+      }
+    }
+    j++;
+  }
+  return cnt;
+}
+#endif
 
 #if 0 // for MODULE-TEST
 #if 0
@@ -934,12 +989,12 @@ int main ( void ) {
 
 static const CBI_STAT_KIND il_sym_kind[] = {
 #define IL_SYMS(sym_kind, sym, str, code) sym_kind
-#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, exp) exp,
-#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, exp1) exp1,
-#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, exp1, exp2) exp1, exp2,
-#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, exp1, exp2, exp3) exp1, exp2, exp3,
-#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
-#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
+#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, suppres_ovriddn, exp) exp,
+#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, suppres_ovriddn, exp1) exp1,
+#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2) exp1, exp2,
+#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3) exp1, exp2, exp3,
+#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
+#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
 #include "./cbi/il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
 #undef IL_OBJ_INSTANCE_DESC1
@@ -959,12 +1014,12 @@ const CBI_STAT_KIND whats_kind_of_il_sym ( IL_SYM obj ) {
 
 static const char *il_sym_namechrs [] = {
 #define IL_SYMS(sym_kind, sym, str, code) str
-#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, exp) exp,
-#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, exp1) exp1,
-#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, exp1, exp2) exp1, exp2,
-#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, exp1, exp2, exp3) exp1, exp2, exp3,
-#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
-#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
+#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, suppres_ovriddn, exp) exp,
+#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, suppres_ovriddn, exp1) exp1,
+#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2) exp1, exp2,
+#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3) exp1, exp2, exp3,
+#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
+#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, suppres_ovriddn, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
 #include "./cbi/il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
 #undef IL_OBJ_INSTANCE_DESC1

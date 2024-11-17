@@ -411,8 +411,7 @@ int main ( void ) {
 #if 0
       show_tracking_train_stat( stdout );
 #endif
-      //diag_cbi_stat_attrib( stdout, "T801A_TLSR" );
-      diag_cbi_stat_attrib( stdout, "CY801A" );
+      diag_cbi_stat_attrib( stdout, "T801A_TLSR" );
 #if 1
       {
 	OC_ID oc_id = END_OF_OCs;

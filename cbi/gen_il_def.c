@@ -21,6 +21,10 @@ typedef struct prefx_sufix {
 
 #define CBI_LEX_PAT_MAXLEN 256
 #define CBI_EXPAND_PAT_MAXNUM 3
+typedef enum lex_cbi_stat_reg_ovriddn {  
+  OVERRIDDEN,
+  NO_OVERRIDDEN
+} LEX_CBI_STAT_REG_OVRIDDN;
 typedef struct lex_il_obj {
   CBI_STAT_KIND il_stat_kind;
   char match_pat[CBI_LEX_PAT_MAXLEN + 1];
@@ -29,6 +33,7 @@ typedef struct lex_il_obj {
     CBI_STAT_KIND il_sym_kind;
     char pat[CBI_LEX_PAT_MAXLEN + 1];
   } exp[CBI_EXPAND_PAT_MAXNUM];
+  LEX_CBI_STAT_REG_OVRIDDN cbi_stat_ovriddn;
   char raw_name[CBI_STAT_NAME_LEN + 1];
   char label[CBI_STAT_IDENT_LEN + 1];
 } LEX_CBI_OBJ, *LEX_CBI_OBJ_PTR;
@@ -52,9 +57,10 @@ typedef struct cbi_lex_symtbl {
 #define IL_INSTANCES_EMIT_FNAME "./il_obj_instance_desc.h"
 
 LEX_CBI_OBJ cbi_lex_def[] = {
-  /*
-   * grammar': {cbi_stat_kind, cbi_stat_match_pattern, cbi_stat_expand_label, {{sym_kind1, sym_expand_instance1, sym_expand_str1}, ..., {sym_kind3, sym_expand_instance3, sym_expand_str3}}}
-   */
+/*
+ * grammar':
+ *   {cbi_stat_kind, cbi_stat_match_pattern, cbi_stat_expand_label, {{sym_kind1, sym_expand_instance1, sym_expand_str1}, ..., {sym_kind3, sym_expand_instance3, sym_expand_str3}}}, overridden_inhibit
+ */
 #include "cbi_pat.def"
   {END_OF_CBI_STAT_KIND, "", "", {{END_OF_CBI_STAT_KIND, ""}}}
 };
@@ -561,7 +567,7 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
 	strncpy( plex->label, emit_buf, CBI_STAT_IDENT_LEN );
 	plex->label[CBI_STAT_IDENT_LEN] = 0;
 	fprintf( fp, ", \"%s\"", plex->label );
-	fprintf( fp, " %s", pprsf->suffix.emit );
+	//fprintf( fp, " %s", pprsf->suffix.emit );
       } else
 	err = TRUE;
     } else {
@@ -569,8 +575,10 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
       fprintf( fp, "%s", kind_s );
       fprintf( fp, ", \"%s\"", plex->raw_name );
       fprintf( fp, ", \"%s\"", "NO_ABBREV" );
-      fprintf( fp, " %s", pprsf->suffix.emit );
+      //fprintf( fp, " %s", pprsf->suffix.emit );
     }
+    fprintf( fp, ", %s", (plex->cbi_stat_ovriddn == NO_OVERRIDDEN) ? "TRUE" : "FALSE" );
+    fprintf( fp, " %s", pprsf->suffix.emit );
   }
   return (err ? -1 : 1);
 }
@@ -726,6 +734,8 @@ int main ( void ) {
 	((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->label[CBI_STAT_IDENT_LEN] = 0;
 	fprintf( fp_out, "%s, ", ((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->label );
       }
+      fprintf( fp_out, "%s, ", (((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->cbi_stat_ovriddn == NO_OVERRIDDEN) ? "TRUE" : "FALSE" );
+      
       assert( p );
       assert( p->ident );
       p->ident[CBI_STAT_IDENT_LEN] = 0;
