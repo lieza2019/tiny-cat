@@ -217,7 +217,7 @@ typedef enum cbi_stat_kind {
 typedef CBI_STAT_KIND IL_SYM_KIND;
 
 #define CTRL_LIT_SUSTAIN_CNT 50
-#define CBI_CTRLTBL_FILENAME_CHRLEN_MAX 512
+#define CBI_CTRLTBL_FILENAME_MAXLEN 512
 #define CBI_STAT_IDENT_LEN 32
 #define CBI_STAT_NAME_LEN 32
 typedef struct cbi_stat_attr {
@@ -244,10 +244,14 @@ typedef struct cbi_stat_attr {
     struct cbi_stat_attr *pNext_ctrl;
   } attr_ctrl;
   struct {
-    char fname[CBI_CTRLTBL_FILENAME_CHRLEN_MAX + 1];
+    char fname[CBI_CTRLTBL_FILENAME_MAXLEN + 1];
     int line;
   } src;
+#if 0 // *****
   BOOL no_reg_ovriddn;
+#else
+  char src_specified[CBI_CTRLTBL_FILENAME_MAXLEN + 1];
+#endif
   BOOL dirty;
   struct cbi_stat_attr *pNext_dirt;
   struct cbi_stat_attr *pNext_hash;
@@ -303,7 +307,11 @@ typedef struct cbi_stat_label {
   CBI_STAT_KIND kind;
   char name[CBI_STAT_NAME_LEN + 1];
   char ident[CBI_STAT_IDENT_LEN + 1];
+#if 0 // *****
   BOOL no_reg_ovriddn;
+#else
+  const char src_specified[CBI_CTRLTBL_FILENAME_MAXLEN + 1];
+#endif
 } CBI_STAT_LABEL, *CBI_STAT_LABEL_PTR;
 
 #endif // CBI_H_INCLUDED

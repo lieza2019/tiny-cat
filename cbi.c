@@ -364,7 +364,7 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
   CBI_STAT_ATTR_PTR *ppB = NULL;
 
 #if 1 // *****
-  if( (!strncmp(pE->name, "[M]CY807A", CBI_STAT_NAME_LEN)) && (!strncmp(pE->src.fname, "./cbi/JASOLA_VIHAR.csv", CBI_CTRLTBL_FILENAME_CHRLEN_MAX)) ) {
+  if( (!strncmp(pE->name, "[M]CY807A", CBI_STAT_NAME_LEN)) && (!strncmp(pE->src.fname, "./cbi/JASOLA_VIHAR.csv", CBI_CTRLTBL_FILENAME_MAXLEN)) ) {
     //assert( FALSE);
     (void)0;
   }
@@ -702,6 +702,7 @@ void dump_cbi_stat_prof ( OC_ID oc_id ) {
   }
 }
 
+#if 0 // *****
 static BOOL cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name ) {
   assert( cbi_stat_name );
   BOOL r = FALSE;
@@ -716,6 +717,22 @@ static BOOL cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name ) {
   }
   return r;
 }
+#else
+static const char *cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name ) {
+  assert( cbi_stat_name );
+  const char *r = NULL;
+  
+  int i = 0;
+  while( cbi_stat_label[i].kind != _CBI_STAT_KIND_NONSENS ) {
+    if( !strncmp(cbi_stat_label[i].name, cbi_stat_name, CBI_STAT_NAME_LEN) ) {
+      r = cbi_stat_label[i].src_specified;
+      break;
+    }
+    i++;
+  }
+  return r;
+}
+#endif
 
 int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   assert( fname );
@@ -745,7 +762,7 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	assert( pA );		       
 	if( (err = (BOOL)ferror( fp )) )
 	  break;
-	strncpy( pA->src.fname, fname, CBI_CTRLTBL_FILENAME_CHRLEN_MAX );
+	strncpy( pA->src.fname, fname, CBI_CTRLTBL_FILENAME_MAXLEN );
 	pA->src.line = lines;
 	{
 	  char *p = NULL;
@@ -756,7 +773,17 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	  assert( p && !(*p) );
 	  strncpy( p, bit_name, CBI_STAT_NAME_LEN );
 	}
+#if 0 // *****
 	pA->no_reg_ovriddn = cbi_stat_reg_no_ovriddn( pA->name );
+#else
+	{
+	  const char *s = cbi_stat_reg_no_ovriddn( pA->name );
+	  if( s )
+	    strncpy( pA->src_specified, s, CBI_CTRLTBL_FILENAME_MAXLEN );
+	  else
+	    strncpy( pA->src_specified, "", CBI_CTRLTBL_FILENAME_MAXLEN );
+	}
+#endif
 	strncpy( pA->ident, pA->name, CBI_STAT_NAME_LEN );
 	
 	pA->oc_id = oc_id;
