@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -386,10 +387,17 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
 	char buf_crnt[256];
 	char buf_prev[256];
 	if( strnlen( (*pp)->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
+	  char const* p = NULL;
+#ifdef USE_REENTRANT_BASENAME
 	  char buf[CBI_CODE_FILENAME_MAXLEN + 1];
 	  buf[CBI_CODE_FILENAME_MAXLEN] = 0;
+	  p = &buf[0];
 	  basename_r( pE->src.fname, buf );
-	  if( strncmp( buf, (*pp)->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
+#else
+	  p = basename( pE->src.fname );
+#endif
+	  assert( p );
+	  if( strncmp( p, (*pp)->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
 	    errorF( "%s", errmsg_pre );
 	    errorF( "overridden is cancelled of cbi condtion: %s is specified only from %s.\n", (*pp)->ident,(*pp)->src_specified );
 	    return r;
