@@ -114,7 +114,7 @@ typedef enum oc2ats_stat {
 
 #define ATS2OC_MSGSIZE 286
 #define OC2ATS1_MSGSIZE 1404
-#define OC2ATS2_MSGSIZE 944
+#define OC2ATS2_MSGSIZE 966
 #define OC2ATS3_MSGSIZE 1260
 
 #define OC_OC2ATS_MSGS_NUM 3

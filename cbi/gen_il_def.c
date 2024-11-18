@@ -58,8 +58,8 @@ typedef struct cbi_lex_symtbl {
 
 LEX_CBI_OBJ cbi_lex_def[] = {
 /*
- * grammar':
- *   {cbi_stat_kind, cbi_stat_match_pattern, cbi_stat_expand_label, {{sym_kind1, sym_expand_instance1, sym_expand_str1}, ..., {sym_kind3, sym_expand_instance3, sym_expand_str3}}}, overridden_inhibit
+ * grammar:
+ *   {cbi_stat_kind, cbi_stat_match_pattern, cbi_stat_expand_label, {{sym_kind1, sym_expand_instance1, sym_expand_str1}, ..., {sym_kind3, sym_expand_instance3, sym_expand_str3}}, src_specifier},
  */
 #include "cbi_pat.def"
   {END_OF_CBI_STAT_KIND, "", "", {{END_OF_CBI_STAT_KIND, ""}}}
@@ -393,8 +393,7 @@ static int lex_exp_pattrn ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, int pa
 	  }
 	default: // includes the case of (*ppat == 0).
 	  /* lowercase of alphabet, i.e. letter, without trailing '[' for beginning index notation,
-	     should be parsed and accepted as a character consists of the bare string to be simply
-	     expanded onto the output. */
+	     should be parsed and accepted as a verbatim character there. */
 	  {
 	    char *w = pp1;
 	    pp1 = ppat;

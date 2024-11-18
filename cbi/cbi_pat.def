@@ -71,7 +71,6 @@
 {_MBL, "[SRAM]MBLxxxy", "MBLx[1]x[2]x[3]y[1]", {{_MBL, "MBLx[1]x[2]x[3]y[1]"}}},
 {_ROUTE, "[L\\o]Sxxxy_Sxxxy_R", "Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]", {{_ROUTE, "Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]"}}},
 {_ROUTE, "[L\\o]Sxxxy_VSxxxy_R", "Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]", {{_ROUTE, "Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]"}, {_SIGNAL, "VSx[4]x[5]x[6]y[2]"}}},
-//{_CYCLE, "[L\\o]L\\o_CYxxxy", "CYx[1]x[2]x[3]y[1]", {{_CYCLE, "CYx[1]x[2]x[3]y[1]"}}},
 {_CYCLE, "[M]CYxxxA", "CYx[1]x[2]x[3]A", {{_CYCLE, "CYx[1]x[2]x[3]A"}}, "BOTANICAL_GARDEN.csv"},
 {_CYCLE, "[M]CYxxxB", "CYx[1]x[2]x[3]B", {{_CYCLE, "CYx[1]x[2]x[3]B"}}, "JASOLA_VIHAR.csv"},
 {_CYCLE, "[M]CYxxxy", "CYx[1]x[2]x[3]y[1]", {{_CYCLE, "CYx[1]x[2]x[3]y[1]"}}},

@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -132,8 +131,8 @@ const static int cbi_group2addr[] = {
   340, // CBI_STAT_o6 of OC2ATS3
    76, // CBI_STAT_Lo of OC2ATS2
   272, // CBI_STAT_So of OC2ATS2
-  378, // CBI_STAT_SRAM of OC2ATS2
-  432, // CBI_STAT_M of OC2ATS2
+  400, // CBI_STAT_SRAM of OC2ATS2
+  454, // CBI_STAT_M of OC2ATS2
   364  // CBI_STAT_A of OC2ATS3
 };
 
