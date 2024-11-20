@@ -412,8 +412,9 @@ int main ( void ) {
       show_tracking_train_stat( stdout );
 #endif
       //diag_cbi_stat_attrib( stdout, "T801A_TLSR" );
-      //diag_cbi_stat_attrib( stdout, "CY801A" );
-      diag_cbi_stat_attrib( stdout, "Lo_CY801A" );
+      //diag_cbi_stat_attrib( stdout, "Lo_CY801A" );
+      //diag_cbi_stat_attrib( stdout, "ESP801A" );
+      diag_cbi_stat_attrib( stdout, "MA803A_OFF_K" );
 #if 1
       {
 	OC_ID oc_id = END_OF_OCs;
