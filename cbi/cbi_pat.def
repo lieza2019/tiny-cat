@@ -2,6 +2,7 @@
 {_CTL_ROUTE, "[P]P_Sxxxy_VSxxxy", "P_Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]", {{_CTL_ROUTE, "P_Sx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]"}}},
 {_CTL_ROUTE, "[P]P_VSxxxy_Sxxxy", "P_VSx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]", {{_CTL_ROUTE, "P_VSx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]"}}},
 {_CTL_ROUTE, "[P]P_VSxxxy_VSxxxy", "P_VSx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]", {{_CTL_ROUTE, "P_VSx[1]x[2]x[3]y[1]_VSx[4]x[5]x[6]y[2]"}}},
+{_CTL_ROUTE, "[P]P_Sxxxy_Sxxxy_CAN", "P_Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]_CAN", {{_CTL_ROUTE, "P_Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]_CAN"}}},
 {_CTL_CYCLE, "[P]P_CYxxxy_ON", "P_CYx[1]x[2]x[3]y[1]_ON", {{_CTL_CYCLE, "P_CYx[1]x[2]x[3]y[1]_ON"}}},
 {_CTL_CYCLE, "[P]P_CYxxxy_OFF", "P_CYx[1]x[2]x[3]y[1]_OFF", {{_CTL_CYCLE, "P_CYx[1]x[2]x[3]y[1]_OFF"}}},
 {_RBL, "[SRAM]RBL_Sxxxy_Sxxxy", "RBL_Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]", {{_RBL, "RBL_Sx[1]x[2]x[3]y[1]_Sx[4]x[5]x[6]y[2]"}}},
