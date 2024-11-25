@@ -1279,6 +1279,7 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
     }
   } else {
     fprintf( fp_out, "ident: %s, no such cbi status.\n", pA->ident );
+    assert( FALSE );
   }
 }
 
