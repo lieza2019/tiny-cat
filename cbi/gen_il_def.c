@@ -259,7 +259,7 @@ static char *trim_pat_ident ( char *ident, int rem_chrs ) {
       } else
 	break;
     } else {
-      if( isalnum((int)*p) || (*p == '_') ) {
+      if( isalnum((int)*p) || (*p == '_') || (*p == '@') ) {
 	if( islower((int)*p) )
 	  break;
       } else
@@ -441,7 +441,7 @@ static CBI_STAT_ATTR_PTR hash_regist ( CBI_STAT_ATTR_PTR pE, int line ) {
     n = snprintf( buf, 256, "%d: ", line );
     assert( n > 0 );
   }
-  return cbi_stat_regist( il_syms_hash.budgets, IL_OBJ_HASH_BUDGETS_NUM, pE, TRUE, buf );
+  return cbi_stat_regist( il_syms_hash.budgets, IL_OBJ_HASH_BUDGETS_NUM, pE, FALSE, buf );
 }
 
 static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
@@ -496,11 +496,10 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    if( w != pE ) {
 	      w->ident[CBI_STAT_IDENT_LEN] = 0;
 	      assert( !strncmp( w->ident, pE->ident, CBI_STAT_IDENT_LEN ) );
-	      fprintf( errfp, "%d: found redeclaration of %s, and overridden.\n", line, w->ident );
+	      fprintf( errfp, "%d: found redeclaration of %s, and omitted.\n", line, w->ident );
 	      continue;
 	    }
 	    assert( w == pE );
-	    assert( w );
 	    w->decl_gen.pNext = NULL;
 	    w->decl_gen.pFamily = NULL;
 	    if( !family.fst ) {
