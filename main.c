@@ -414,7 +414,7 @@ int main ( void ) {
       //diag_cbi_stat_attrib( stdout, "T801A_TLSR" );
       //diag_cbi_stat_attrib( stdout, "Lo_CY801A" );
       //diag_cbi_stat_attrib( stdout, "ESP801A" );
-      diag_cbi_stat_attrib( stdout, "EM877_D" );
+      diag_cbi_stat_attrib( stdout, "EM877_D@BCGN" );
 #if 1
       {
 	OC_ID oc_id = END_OF_OCs;

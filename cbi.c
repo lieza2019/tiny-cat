@@ -396,11 +396,20 @@ static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int bu
 	  p = basename( pE->src.fname );
 #endif
 	  assert( p );
+#if 0 // *****
 	  if( strncmp( p, (*pp)->src_specified, CBI_CODE_FILENAME_MAXLEN ) ) {
 	    errorF( "%s", errmsg_pre );
 	    errorF( "overridden is cancelled of cbi condtion: %s is specified only from %s.\n", (*pp)->ident,(*pp)->src_specified );
 	    return r;
 	  }
+#else
+	  if( strnlen(pE->src_specified, CBI_CODE_FILENAME_MAXLEN) <= 0 ) {
+	    errorF( "%s", errmsg_pre );
+	    errorF( "overridden is cancelled of cbi condtion: %s is specified only from %s.\n", (*pp)->ident,(*pp)->src_specified );
+	    return r;
+	  }
+	  assert( !strncmp( p, pE->src_specified, CBI_CODE_FILENAME_MAXLEN ) );
+#endif
 	}
 	buf_crnt[255] = 0;
 	buf_prev[255] = 0;
@@ -714,6 +723,7 @@ void dump_cbi_stat_prof ( OC_ID oc_id ) {
   }
 }
 
+#if 0 // *****
 static const char *cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name ) {
   assert( cbi_stat_name );
   const char *r = NULL;
@@ -728,6 +738,33 @@ static const char *cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name ) {
   }
   return r;
 }
+#else
+static const char *cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name, const char *src_fname ) {
+  assert( cbi_stat_name );
+  assert( src_fname );
+  const char *r = NULL;
+  
+  int i = 0;
+  while( cbi_stat_label[i].kind != _CBI_STAT_KIND_NONSENS ) {
+    if( !strncmp(cbi_stat_label[i].name, cbi_stat_name, CBI_STAT_NAME_LEN) ) {      
+      char const* p = NULL;
+#ifdef USE_REENTRANT_BASENAME
+      char buf[CBI_CODE_FILENAME_MAXLEN + 1];
+      buf[CBI_CODE_FILENAME_MAXLEN] = 0;
+      p = basename_r( src_fname, buf );
+#else
+      p = basename( src_fname );
+#endif
+      if( !strncmp( cbi_stat_label[i].src_specified, p, CBI_CODE_FILENAME_MAXLEN ) ) {
+	r = cbi_stat_label[i].src_specified;
+	break;
+      }
+    }
+    i++;
+  }
+  return r;
+}
+#endif
 
 int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   assert( fname );
@@ -769,7 +806,11 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	  strncpy( p, bit_name, CBI_STAT_NAME_LEN );
 	}
 	{
+#if 0 // *****
 	  const char *s = cbi_stat_reg_no_ovriddn( pA->name );
+#else
+	  const char *s = cbi_stat_reg_no_ovriddn( pA->name, fname );
+#endif
 	  if( s )
 	    strncpy( pA->src_specified, s, CBI_CODE_FILENAME_MAXLEN );
 	  else
