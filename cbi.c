@@ -753,7 +753,7 @@ static const char *cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name, const ch
       buf[CBI_CODE_FILENAME_MAXLEN] = 0;
       p = basename_r( src_fname, buf );
 #else
-      p = basename( src_fname );
+      p = basename( (char *)src_fname );
 #endif
       if( !strncmp( cbi_stat_label[i].src_specified, p, CBI_CODE_FILENAME_MAXLEN ) ) {
 	r = cbi_stat_label[i].src_specified;
@@ -763,6 +763,51 @@ static const char *cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name, const ch
     i++;
   }
   return r;
+}
+#endif
+
+
+#if 1 // *****
+static int curve_codetbl ( const char *src_fname, const char *errmsg_pre ) {
+  assert( src_fname );
+  int cnt = 0;
+  char const* fname = NULL;
+#ifdef USE_REENTRANT_BASENAME
+  char buf[CBI_CODE_FILENAME_MAXLEN + 1];
+  buf[CBI_CODE_FILENAME_MAXLEN] = 0;
+  fname = basename_r( src_fname, buf );
+#else
+  fname = basename( (char *)src_fname );
+#endif  
+  assert( fname );
+  
+  int i = 0;
+  while( cbi_stat_label[i].kind != _CBI_STAT_KIND_NONSENS ) {
+    CBI_STAT_ATTR_PTR pS = NULL;
+    if( strnlen(cbi_stat_label[i].src_specified, CBI_CODE_FILENAME_MAXLEN) > 1 )
+      if( strncmp( cbi_stat_label[i].src_specified, fname, CBI_CODE_FILENAME_MAXLEN ) ) {
+	i++;
+	continue;
+      }
+    pS = conslt_hash_cbistat( cbi_stat_label[i].ident );
+    if( pS ) {
+      assert( !strncmp( pS->name, cbi_stat_label[i].name, CBI_STAT_NAME_LEN ) );
+    } else {
+      pS = conslt_hash_cbistat( cbi_stat_label[i].name );
+      if( pS ) {
+	CBI_STAT_ATTR_PTR pE = NULL;
+	pS->kind = cbi_stat_label[i].kind;
+	pE = re_hash_cbistat( pS->ident, cbi_stat_label[i].ident, errmsg_pre );
+	if( pE ) {
+	  assert( pE == pS );
+	  cnt++;
+	} else
+	  assert( pE );
+      }
+    }
+    i++;
+  }
+  return cnt;
 }
 #endif
 
@@ -863,16 +908,19 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
     err = TRUE;
     //assert( FALSE );
   }
-  if( !err ) {
-    int i;
-    for( i = 0; i < frontier.cbi_stat[oc_id]; i++ )
-      regist_hash_cbistat( &cbi_stat_syms.cbi_stat_prof[oc_id].codes[i], TRUE, "loading: " );
-    assert( i == frontier.cbi_stat[oc_id] );
-  }
-  
   {
-    int r = frontier.cbi_stat[oc_id];
+    int r = -1;
+    int nc = -1;
+    if( !err ) {
+      int i;
+      for( i = 0; i < frontier.cbi_stat[oc_id]; i++ )
+	regist_hash_cbistat( &cbi_stat_syms.cbi_stat_prof[oc_id].codes[i], TRUE, "loading: " );
+      assert( i == frontier.cbi_stat[oc_id] );
+      nc = curve_codetbl( fname, NULL );
+    }
+    r = frontier.cbi_stat[oc_id];     
     assert( r >= 0 );
+    assert( nc <= r );
     if( err ) {
       if( r == 0 )
 	r = 1;

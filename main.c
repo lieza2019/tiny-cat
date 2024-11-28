@@ -250,13 +250,14 @@ static void load_il_status_geometry ( void ) {
     oc_id++;
   }
   printf( "read %d entries on, from raw csv files.\n", cnt );
-  
+#if 0 // *****
   {
     int m = -1;
     m = revise_cbi_codetbl( NULL );
     assert( m > -1 );
     errorF( "revised %d entries of CSV status.\n", m );
   }
+#endif
 }
 
 static void establish_OC_comm ( TINY_COMM_PROF_PTR pcomm_prof ) {
@@ -414,7 +415,8 @@ int main ( void ) {
       //diag_cbi_stat_attrib( stdout, "T801A_TLSR" );
       //diag_cbi_stat_attrib( stdout, "Lo_CY801A" );
       //diag_cbi_stat_attrib( stdout, "ESP801A" );
-      diag_cbi_stat_attrib( stdout, "EM877_D@BCGN" );
+      //diag_cbi_stat_attrib( stdout, "EM877_D@BGCN" ); //diag_cbi_stat_attrib( stdout, "EM877_D@JLA" );
+      diag_cbi_stat_attrib( stdout, "EM878_D@JLA" ); //diag_cbi_stat_attrib( stdout, "EM878_D@BGCN" )
 #if 1
       {
 	OC_ID oc_id = END_OF_OCs;
