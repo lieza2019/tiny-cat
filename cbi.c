@@ -357,6 +357,38 @@ static CBI_STAT_ATTR_PTR *walk_hash ( CBI_STAT_ATTR_PTR *ppB, const char *ident 
   return pp;
 }
 
+static CBI_STAT_ATTR_PTR kill_hash( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, const char *ident ) {
+  assert( ident );
+  CBI_STAT_ATTR_PTR r = NULL;
+  CBI_STAT_ATTR_PTR *ppB = NULL;
+  
+  {
+    int h = -1;
+    h = hash_key( budgets_num, ident );
+    assert( (h > -1) && (h < budgets_num) );
+    ppB = &budgets[h];
+  }
+  assert( ppB );
+  
+  {
+    CBI_STAT_ATTR_PTR *pp = NULL;
+    pp = walk_hash( ppB, ident );
+    assert( pp );
+    if( *pp ) {
+      assert( !strncmp((*pp)->ident, ident, CBI_STAT_IDENT_LEN) );
+      CBI_STAT_ATTR_PTR pN = NULL;
+      r = *pp;
+      pN = (*pp)->pNext_hash;
+      *pp = pN;
+    }
+  }
+  return r;
+}
+static CBI_STAT_ATTR_PTR kill_hash_cbistat ( const char *ident) {
+  assert( ident );
+  return kill_hash( cbi_stat_hash_budgets, CBI_STAT_HASH_BUDGETS_NUM, ident );
+}
+
 static CBI_STAT_ATTR_PTR regist_hash ( CBI_STAT_ATTR_PTR budgets[], const int budgets_num, CBI_STAT_ATTR_PTR pE, BOOL mode, const char *errmsg_pre ) {
   assert( budgets );
   assert( budgets_num > 0 );
@@ -462,7 +494,6 @@ static CBI_STAT_ATTR_PTR re_hash ( CBI_STAT_ATTR_PTR budgets[], const int budget
     ppB = &budgets[h];
   }
   assert( ppB );
-  
   {
     CBI_STAT_ATTR_PTR *pp = NULL;
     pp = walk_hash( ppB, ident );
@@ -771,6 +802,7 @@ static const char *cbi_stat_reg_no_ovriddn ( const char *cbi_stat_name, const ch
 static int curve_codetbl ( const char *src_fname, const char *errmsg_pre ) {
   assert( src_fname );
   int cnt = 0;
+  
   char const* fname = NULL;
 #ifdef USE_REENTRANT_BASENAME
   char buf[CBI_CODE_FILENAME_MAXLEN + 1];
@@ -778,34 +810,55 @@ static int curve_codetbl ( const char *src_fname, const char *errmsg_pre ) {
   fname = basename_r( src_fname, buf );
 #else
   fname = basename( (char *)src_fname );
-#endif  
-  assert( fname );
-  
-  int i = 0;
-  while( cbi_stat_label[i].kind != _CBI_STAT_KIND_NONSENS ) {
-    CBI_STAT_ATTR_PTR pS = NULL;
-    if( strnlen(cbi_stat_label[i].src_specified, CBI_CODE_FILENAME_MAXLEN) > 1 )
-      if( strncmp( cbi_stat_label[i].src_specified, fname, CBI_CODE_FILENAME_MAXLEN ) ) {
-	i++;
-	continue;
-      }
-    pS = conslt_hash_cbistat( cbi_stat_label[i].ident );
-    if( pS ) {
-      assert( !strncmp( pS->name, cbi_stat_label[i].name, CBI_STAT_NAME_LEN ) );
-    } else {
-      pS = conslt_hash_cbistat( cbi_stat_label[i].name );
+#endif
+  assert( fname );  
+  {
+    int i = 0;
+    while( cbi_stat_label[i].kind != _CBI_STAT_KIND_NONSENS ) {
+      CBI_STAT_ATTR_PTR pS = NULL;
+      if( strnlen(cbi_stat_label[i].src_specified, CBI_CODE_FILENAME_MAXLEN) > 1 )
+	if( strncmp( cbi_stat_label[i].src_specified, fname, CBI_CODE_FILENAME_MAXLEN ) ) {
+	  i++;
+	  continue;
+	}
+      pS = conslt_hash_cbistat( cbi_stat_label[i].ident );
       if( pS ) {
-	CBI_STAT_ATTR_PTR pE = NULL;
-	pS->kind = cbi_stat_label[i].kind;
-	pE = re_hash_cbistat( pS->ident, cbi_stat_label[i].ident, errmsg_pre );
-	if( pE ) {
-	  assert( pE == pS );
-	  cnt++;
-	} else
-	  assert( pE );
+	assert( !strncmp( pS->name, cbi_stat_label[i].name, CBI_STAT_NAME_LEN ) );
+	CBI_STAT_ATTR_PTR pSucc = NULL;
+#if 1 // *****
+	if( !strncmp(pS->ident, "[M]EM877_D", CBI_CODE_FILENAME_MAXLEN) ) {
+	  strncmp(pS->name, "[M]EM877_D", CBI_CODE_FILENAME_MAXLEN);
+	}
+#endif
+	pSucc = conslt_hash_cbistat( cbi_stat_label[i].name );
+	if( pSucc ) {
+	  assert( !strncmp( pSucc->name, cbi_stat_label[i].name, CBI_STAT_NAME_LEN ) );
+	  assert( !strncmp( pSucc->name, pSucc->ident, CBI_STAT_NAME_LEN ) );
+	  assert( pS );
+	  if( pS != pSucc ) {
+	    CBI_STAT_ATTR_PTR pSlas = NULL;
+	    pSlas = kill_hash_cbistat( cbi_stat_label[i].ident );
+	    assert( pSlas == pS );
+	    pS = pSucc;
+	    goto curve;
+	  }
+	}
+      } else {
+	pS = conslt_hash_cbistat( cbi_stat_label[i].name );
+	if( pS ) {
+	  CBI_STAT_ATTR_PTR pE = NULL;
+	curve:
+	  pS->kind = cbi_stat_label[i].kind;
+	  pE = re_hash_cbistat( pS->ident, cbi_stat_label[i].ident, errmsg_pre );
+	  if( pE ) {
+	    assert( pE == pS );
+	    cnt++;
+	  } else
+	    assert( pE );
+	}
       }
+      i++;
     }
-    i++;
   }
   return cnt;
 }

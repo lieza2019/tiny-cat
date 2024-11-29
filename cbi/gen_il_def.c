@@ -253,13 +253,13 @@ static char *trim_pat_ident ( char *ident, int rem_chrs ) {
   while( *p && (p < (ident + rem_chrs)) ) {
     assert( p < (ident + rem_chrs) );
     if( p == ident ) {
-      if( isalpha((int)*p) || (*p == '_') ) {
+      if( isalpha((int)*p) || (*p == '_') || (*p == '[') || (*p == ']') ) {
 	if( islower((int)*p) )
 	  break;
       } else
 	break;
     } else {
-      if( isalnum((int)*p) || (*p == '_') || (*p == '@') ) {
+      if( isalnum((int)*p) || (*p == '_') || (*p == '[') || (*p == ']') || (*p == '@') ) {
 	if( islower((int)*p) )
 	  break;
       } else
