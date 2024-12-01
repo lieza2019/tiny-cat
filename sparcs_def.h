@@ -87,15 +87,16 @@ typedef enum operation_mode {
 
 typedef enum vehicle_type {
   VT_RESCUE,
-  VT_6CARS
+  VT_6CARS,
+  VT_UNKNOWN
 } VEHICLE_TYPE;
 
-typedef enum train_detection_type {
+typedef enum train_detection_mode {
   TD_UNKNOWN,
   TD_TRAIN_DETECTION,
-  TD_SECTION_PROTECTION,
-  TD_COMM_DOWN
-} TRAIN_DETECTION_TYPE;
+  TD_SECTION_PROTECTION_ONLY,
+  TD_COMM_LOST
+} TRAIN_DETECTION_MODE;
 
 typedef enum initialization_status {
   INI_NOT_INITIALIZING,
@@ -114,7 +115,8 @@ typedef enum onboard_reset_result {
 typedef enum train_sleep_mode {
   SM_NOT_IN_SLEEP,
   SM_NOW_IN_TRANSITION,
-  SM_IN_SLEEP
+  SM_IN_SLEEP,
+  SM_UNKNOWN
 } TRAIN_SLEEP_MODE;
 
 typedef enum train_move_dir {
@@ -143,9 +145,9 @@ typedef enum ATO_driving_status {
 } ATO_DRIVING_STATUS;
 
 typedef enum train_doors_state {
-  DR_BOTH_SIDE_NOTALL_CLOSED,
-  DR_R_SIDE_ALL_CLOSED,
-  DR_L_SIDE_ALL_CLOSED,
+  DR_BOTH_SIDE_NOT_ALLCLOSED,
+  DR_ONLY_R_SIDE_ALL_CLOSED,
+  DR_ONLY_L_SIDE_ALL_CLOSED,
   DR_BOTH_SIDE_ALL_CLOSED
 } TRAIN_DOORS_STATE;
 
@@ -155,3 +157,46 @@ typedef enum train_perf_regime {
   PR_N_MODE,
   PR_F_MODE
 } TRAIN_PERF_REGIME;
+
+typedef enum eb_reason_vobc {
+  EB_NORMALITY = 0, // Normal
+  EB_EXCEEDING_SPEED_LIMIT = 1, // OverSpeed
+  EB_NO_USED = 2, // ORPBaliseDetected ?
+  EB_EMERGENCY_STOP_RECEPTION = 4, // EBCommandReceived
+  EB_NO_CBTC_COMMAND_RECEIVED_OR_VRS_EQUIPMENT_ERR = 8, // NoCommunication
+  EB_DETECTING_OF_TRAIN_INTEGRITY_LOST = 16, // RelayInputErrorFromRS
+  EB_ALL_DOOR_CLOSE_IS_LOST_DURING_RUNNING = 32, // DoorOpenWhieMoving
+  EB_TRACTION_EQUIPMENT_ABNORMALITY = 64, // AbnormalTractionOrBraking
+  EB_OPERATION_STEPS_ABNORMALITY = 128, // AbnormalOperationProcedure
+} EB_REASON_VOBC;
+
+typedef enum eb_reason_sc {
+  EB_REASON_NOTHING_0 = 0,
+  EB_ROUTE_NOT_SET = 1,
+  EB_TRAIN_APPROACH = 2,
+  EB_CLEARANCE_NOT_KEPT = 3,
+  EB_END_OF_TRACK = 4,
+  EB_ENTER_NON_AUTHORIZED_ZONE = 5,
+  EB_UNIDENTIFIED_TRAIN_AHEAD = 6,
+  EB_REASON_NOTHING_7 = 7,
+  EB_UNLOCKED_POINT = 8,
+  EB_NOENTRY_ZONE = 9,
+  EB_EMERGENCY_STOP_ZONE = 10,
+  EB_REASON_NOTHING_11 = 11,
+  EB_TG_ERROR = 12,
+  EB_TG_MISMATCH = 13,
+  EB_PSD_OPEN = 14,
+  EB_EB_COMMAND = 15,
+  EB_TRAIN_UNLOCATED = 16,
+  EB_TRAIN_DIRECTION_MISMATCH = 17,
+  EB_RADIO_RANGING_MISMATCH = 18, 
+  EB_SHORT_OF_WINDOW_NUMBER = 19,
+  EB_REMOTE_EB_COMMAND = 20,
+  EB_TO_EMMODE_TRANSITION_SECTION = 21,
+  EB_EMERGENCY_DOOR_OPEN = 22,
+  EB_TRAIN_HEAD_ON = 23,
+  EB_DEAD_SECTION = 24,
+  EB_TO_EMMODE_PREPARING_SECTION = 25,
+  EB_TRAININFO_PROCESS_ERROR = 99,
+  EB_UNDEFINED_REASON
+} EB_REASON_SC;

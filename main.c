@@ -49,6 +49,360 @@ static int diag_tracking_train_cmd ( FILE *fp_out ) {
 #define NOTICE_OF_TIME_VRS_TIME_UPDATE 0x01
 #define NOTICE_OF_TIME_DMI_TIME_UPDATE 0x02
 #define NOTICE_OF_TIME_TCMS_TIME_UPDATE 0x04
+
+static void print_TRAIN_OPERATION_MODE ( FILE *fp_out, const TRAIN_OPERATION_MODE mode ) {
+  assert( fp_out );
+  switch( mode ) {
+  case OM_UNKNOWN_NO_DIRECTIVE:
+    fprintf( fp_out, "OM_UNKNOWN_NO_DIRECTIVE" );
+    break;
+  case OM_UTO:
+    fprintf( fp_out, "OM_UTO" );
+    break;
+  case OM_ATO:
+    fprintf( fp_out, "OM_ATO" );
+    break;
+  case OM_ATP:
+    fprintf( fp_out, "OM_ATP" );
+    break;
+  case OM_RM:
+    fprintf( fp_out, "OM_RM" );
+    break;
+  case OM_INVALID_SPARE_5:
+    fprintf( fp_out, "OM_INVALID_SPARE_5" );
+    break;
+  case OM_INVALID_SPARE_6:
+    fprintf( fp_out, "OM_INVALID_SPARE_6" );
+    break;
+  case OM_INVALID_SPARE_7:
+    fprintf( fp_out, "OM_INVALID_SPARE_7" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_TRAIN_DETECTION_MODE ( FILE *fp_out, const TRAIN_DETECTION_MODE mode ) {
+  assert( fp_out );
+  switch( mode ) {
+  case TD_UNKNOWN:
+    fprintf( fp_out, "TD_UNKNOWN" );
+    break;
+  case TD_TRAIN_DETECTION:
+    fprintf( fp_out, "TD_TRAIN_DETECTION" );
+    break;
+  case TD_SECTION_PROTECTION_ONLY:
+    fprintf( fp_out, "TD_SECTION_PROTECTION_ONLY" );
+    break;
+  case TD_COMM_LOST:
+    fprintf( fp_out, "TD_COMM_LOST" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_TYPE_OF_VEHICLE ( FILE *fp_out, const VEHICLE_TYPE mode ) {
+  assert( fp_out );
+  switch( mode ) {
+  case VT_RESCUE:
+    fprintf( fp_out, "VT_RESCUE" );
+    break;
+  case VT_6CARS:
+    fprintf( fp_out, "VT_6CARS" );
+    break;
+  case VT_UNKNOWN:
+    /* fall thru. */
+  default:
+    fprintf( fp_out, "VT_UNKNOWN" );
+  }
+}
+static void print_INITIALIZATION_STATUS ( FILE *fp_out, const INITIALIZATION_STATUS stat ) {
+  assert( fp_out );
+  switch( stat ) {
+  case INI_NOT_INITIALIZING:
+    fprintf( fp_out, "INI_NOT_INITIALIZING" );
+    break;
+  case INI_IN_INITIALIZING:
+    fprintf( fp_out, "INI_IN_INITIALIZING" );
+    break;
+  case INI_INITIALIZING_COMPLETED:
+    fprintf( fp_out, "INI_INITIALIZING_COMPLETED" );
+    break;
+  case INI_INITIALIZING_TIMEOUT:
+    fprintf( fp_out, "INI_INITIALIZING_TIMEOUT" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_MASTER_STANDBY ( FILE *fp_out, const ONBOARD_ATC_MASTER_STANDBY mode ) {
+  assert( fp_out );
+  switch( mode ) {
+  case MS_BOTH_STANDBY:
+    fprintf( fp_out, "MS_BOTH_STANDBY" );
+    break;
+  case MS_SYS1_MASTER:
+    fprintf( fp_out, "MS_SYS1_MASTER" );
+    break;
+  case MS_SYS2_MASTER:
+    fprintf( fp_out, "MS_SYS2_MASTER" );
+    break;
+  case MS_BOTH_MASTER:
+    fprintf( fp_out, "MS_BOTH_MASTER" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_RUNNING_DIRECTION ( FILE *fp_out, const TRAIN_MOVE_DIR dir ) {
+  assert( fp_out );
+  switch( dir ) {
+  case MD_UNKNOWN:
+    fprintf( fp_out, "MD_UNKNOWN" );
+    break;
+  case MD_DOWN_DIR:
+    fprintf( fp_out, "MD_DOWN_DIR" );
+    break;
+  case MD_UP_DIR:
+    fprintf( fp_out, "MD_UP_DIR" );
+    break;
+  case MD_INVALID:
+    fprintf( fp_out, "MD_INVALID" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_SLEEP_MODE ( FILE *fp_out, const TRAIN_SLEEP_MODE mode ) {
+  assert( fp_out );
+  switch( mode ) {
+  case SM_NOT_IN_SLEEP:
+    fprintf( fp_out, "SM_NOT_IN_SLEEP" );
+    break;
+  case SM_NOW_IN_TRANSITION:
+    fprintf( fp_out, "SM_NOW_IN_TRANSITION" );
+    break;
+  case SM_IN_SLEEP:
+    fprintf( fp_out, "SM_IN_SLEEP" );
+    break;
+  case SM_UNKNOWN:
+    fprintf( fp_out, "SM_UNKNOWN" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_TRAIN_PERFORMANCE_REGIME ( FILE *fp_out, const TRAIN_PERF_REGIME perf ) {
+  assert( fp_out );
+  switch( perf ) {
+  case PR_NO_COMMAND:
+    fprintf( fp_out, "PR_NO_COMMAND" );
+    break;
+  case PR_S_MODE:
+    fprintf( fp_out, "PR_S_MODE" );
+    break;
+  case PR_N_MODE:
+    fprintf( fp_out, "PR_N_MODE" );
+    break;
+  case PR_F_MODE:
+    fprintf( fp_out, "PR_F_MODE" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_RESULT_OF_RESET_FOR_ONBOARD ( FILE *fp_out, const ONBOARD_RESET_RESULT res ) {
+  assert( fp_out );
+  switch( res ) {
+  case ORR_NOT_RESET:
+    fprintf( fp_out, "ORR_NOT_RESET" );
+    break;
+  case ORR_RESET_ONBOARD_OF_SYS1:
+    fprintf( fp_out, "ORR_RESET_ONBOARD_OF_SYS1" );
+    break;
+  case ORR_RESET_ONBOARD_OF_SYS2:
+    fprintf( fp_out, "ORR_RESET_ONBOARD_OF_SYS2" );
+    break;
+  case ORR_SINGLE_SYSTEM_OPERATION:
+    fprintf( fp_out, "ORR_SINGLE_SYSTEM_OPERATION" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_STATE_OF_TRAIN_DOOR ( FILE *fp_out, const TRAIN_DOORS_STATE stat ) {
+  assert( fp_out );
+  switch( stat ) {
+  case DR_BOTH_SIDE_NOT_ALLCLOSED:
+    fprintf( fp_out, "DR_BOTH_SIDE_NOT_ALLCLOSED" );
+    break;
+  case DR_ONLY_R_SIDE_ALL_CLOSED:
+    fprintf( fp_out, "DR_ONLY_R_SIDE_ALL_CLOSED" );
+    break;
+  case DR_ONLY_L_SIDE_ALL_CLOSED:
+    fprintf( fp_out, "DR_ONLY_L_SIDE_ALL_CLOSED" );
+    break;
+  case DR_BOTH_SIDE_ALL_CLOSED:
+    fprintf( fp_out, "DR_BOTH_SIDE_ALL_CLOSED" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_ATO_DRIVING_STATUS ( FILE *fp_out, const ATO_DRIVING_STATUS stat ) {
+  assert( fp_out );
+  switch( stat ) {
+  case DS_RUNNING:
+    fprintf( fp_out, "DS_RUNNING" );
+    break;
+  case DS_SHORTSTOP:
+    fprintf( fp_out, "DS_SHORTSTOP" );
+    break;
+  case DS_OVERRUN:
+    fprintf( fp_out, "DS_OVERRUN" );
+    break;
+  case DS_TASC_PATTERN_RUNNING:
+    fprintf( fp_out, "DS_TASC_PATTERN_RUNNING" );
+    break;
+  case DS_PO_STOPPING:
+    fprintf( fp_out, "DS_PO_STOPPING" );
+    break;
+  case DS_P0_OTHER_STOPPING:
+    fprintf( fp_out, "DS_P0_OTHER_STOPPING" );
+    break;
+  case DS_INCHING:
+    fprintf( fp_out, "DS_INCHING" );
+    break;
+  case DS_INVALID:
+    fprintf( fp_out, "DS_INVALID" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_EB_REASON ( FILE *fp_out, const EB_REASON_VOBC reason ) {
+  assert( fp_out );
+  switch( reason ) {
+  case EB_NORMALITY: // Normal
+    fprintf( fp_out, "EB_NORMALITY" );
+    break;
+  case EB_EXCEEDING_SPEED_LIMIT: // OverSpeed
+    fprintf( fp_out, "EB_EXCEEDING_SPEED_LIMIT" );
+    break;
+  case EB_NO_USED: // ORPBaliseDetected ?
+    fprintf( fp_out, "EB_NO_USED" );
+    break;
+  case EB_EMERGENCY_STOP_RECEPTION: // EBCommandReceived
+    fprintf( fp_out, "EB_EMERGENCY_STOP_RECEPTION" );
+    break;
+  case EB_NO_CBTC_COMMAND_RECEIVED_OR_VRS_EQUIPMENT_ERR: // NoCommunication
+    fprintf( fp_out, "EB_NO_CBTC_COMMAND_RECEIVED_OR_VRS_EQUIPMENT_ERR" );
+    break;
+  case EB_DETECTING_OF_TRAIN_INTEGRITY_LOST: // RelayInputErrorFromRS
+    fprintf( fp_out, "EB_DETECTING_OF_TRAIN_INTEGRITY_LOST" );
+    break;
+  case EB_ALL_DOOR_CLOSE_IS_LOST_DURING_RUNNING: // DoorOpenWhieMoving
+    fprintf( fp_out, "EB_ALL_DOOR_CLOSE_IS_LOST_DURING_RUNNING" );
+    break;
+  case EB_TRACTION_EQUIPMENT_ABNORMALITY: // AbnormalTractionOrBraking
+    fprintf( fp_out, "EB_TRACTION_EQUIPMENT_ABNORMALITY" );
+    break;
+  case EB_OPERATION_STEPS_ABNORMALITY: // AbnormalOperationProcedure
+    fprintf( fp_out, "EB_OPERATION_STEPS_ABNORMALITY" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+static void print_FACTOR_IN_EMERGENCY_STOP_SC ( FILE *fp_out, const EB_REASON_SC reason ) {
+  assert( fp_out );
+  switch( reason ) {
+  case EB_REASON_NOTHING_0:
+    fprintf( fp_out, "EB_REASON_NOTHING_0" );
+    break;
+  case EB_ROUTE_NOT_SET:
+    fprintf( fp_out, "EB_ROUTE_NOT_SET" );
+    break;
+  case EB_TRAIN_APPROACH:
+    fprintf( fp_out, "EB_TRAIN_APPROACH" );
+    break;
+  case EB_CLEARANCE_NOT_KEPT:
+    fprintf( fp_out, "EB_CLEARANCE_NOT_KEPT" );
+    break;
+  case EB_END_OF_TRACK:
+    fprintf( fp_out, "EB_END_OF_TRACK" );
+    break;
+  case EB_ENTER_NON_AUTHORIZED_ZONE:
+    fprintf( fp_out, "EB_ENTER_NON_AUTHORIZED_ZONE" );
+    break;
+  case EB_UNIDENTIFIED_TRAIN_AHEAD:
+    fprintf( fp_out, "EB_UNIDENTIFIED_TRAIN_AHEAD" );
+    break;
+  case EB_REASON_NOTHING_7:
+    fprintf( fp_out, "EB_REASON_NOTHING_7" );
+    break;
+  case EB_UNLOCKED_POINT:
+    fprintf( fp_out, "EB_UNLOCKED_POINT" );
+    break;
+  case EB_NOENTRY_ZONE:
+    fprintf( fp_out, "EB_NOENTRY_ZONE" );
+    break;
+  case EB_EMERGENCY_STOP_ZONE:
+    fprintf( fp_out, "EB_EMERGENCY_STOP_ZONE" );
+    break;
+  case EB_REASON_NOTHING_11:
+    fprintf( fp_out, "EB_REASON_NOTHING_11" );
+    break;
+  case EB_TG_ERROR:
+    fprintf( fp_out, "EB_TG_ERROR" );
+    break;
+  case EB_TG_MISMATCH:
+    fprintf( fp_out, "EB_TG_MISMATCH" );
+    break;
+  case EB_PSD_OPEN:
+    fprintf( fp_out, "EB_PSD_OPEN" );
+    break;
+  case EB_EB_COMMAND:
+    fprintf( fp_out, "EB_EB_COMMAND" );
+    break;
+  case EB_TRAIN_UNLOCATED:
+    fprintf( fp_out, "EB_TRAIN_UNLOCATED" );
+    break;
+  case EB_TRAIN_DIRECTION_MISMATCH:
+    fprintf( fp_out, "EB_TRAIN_DIRECTION_MISMATCH" );
+    break;
+  case EB_RADIO_RANGING_MISMATCH:
+    fprintf( fp_out, "EB_RADIO_RANGING_MISMATCH" );
+    break;
+  case EB_SHORT_OF_WINDOW_NUMBER:
+    fprintf( fp_out, "EB_SHORT_OF_WINDOW_NUMBER" );
+    break;
+  case EB_REMOTE_EB_COMMAND:
+    fprintf( fp_out, "EB_REMOTE_EB_COMMAND" );
+    break;
+  case EB_TO_EMMODE_TRANSITION_SECTION:
+    fprintf( fp_out, "EB_TO_EMMODE_TRANSITION_SECTION" );
+    break;
+  case EB_EMERGENCY_DOOR_OPEN:
+    fprintf( fp_out, "EB_EMERGENCY_DOOR_OPEN" );
+    break;
+  case EB_TRAIN_HEAD_ON:
+    fprintf( fp_out, "EB_TRAIN_HEAD_ON" );
+    break;
+  case EB_DEAD_SECTION:
+    fprintf( fp_out, "EB_DEAD_SECTION" );
+    break;
+  case EB_TO_EMMODE_PREPARING_SECTION:
+    fprintf( fp_out, "EB_TO_EMMODE_PREPARING_SECTION" );
+    break;
+  case EB_TRAININFO_PROCESS_ERROR:
+    fprintf( fp_out, "EB_TRAININFO_PROCESS_ERROR" );
+    break;
+  case EB_UNDEFINED_REASON:
+    /* fall thru. */
+  default:
+    fprintf( fp_out, "EB_UNDEFINED_REASON" );
+  }
+}
 static void diag_train_stat ( FILE *fp_out, const TRAIN_INFO_ENTRY_PTR pE ) {
   assert( fp_out );
   assert( pE );
@@ -112,6 +466,115 @@ static void diag_train_stat ( FILE *fp_out, const TRAIN_INFO_ENTRY_PTR pE ) {
   fprintf( fp_out, "Back train occupied position offset segment: %d\n", (int)TRAIN_INFO_BACK_TRAIN_OCCUPIED_POS_OFFSET_SEGMENT(*pE) );
   fprintf( fp_out, "Train speed: %d\n", (int)TRAIN_INFO_TRAIN_SPEED(*pE) );
   fprintf( fp_out, "Train max speed: %d\n", (int)TRAIN_INFO_TRAIN_MAXSPEED(*pE) );
+  {
+    assert( pE );
+    const TRAIN_OPERATION_MODE m = TRAIN_INFO_OPERATION_MODE( *pE );
+    fprintf( fp_out, "Operation mode: " );
+    print_TRAIN_OPERATION_MODE( fp_out, m );
+    fprintf( fp_out, "\n" );
+  }
+  fprintf( fp_out, "EB release ack: %d\n", (int)TRAIN_INFO_EB_RELEASE_ACK(*pE) );
+  fprintf( fp_out, "Remote EB release: %d\n", (int)TRAIN_INFO_REMOTE_EB_RELEASE(*pE) );
+  fprintf( fp_out, "distance to stopping point: %d\n", (int)TRAIN_INFO_DISTANCE_TO_STOPPING_POINT(*pE) );
+  {
+    assert( pE );
+    const TRAIN_DETECTION_MODE m = TRAIN_INFO_TRAIN_DETECTION_MODE( *pE );
+    fprintf( fp_out, "Train detection mode: " );
+    print_TRAIN_DETECTION_MODE( fp_out, m );
+    fprintf( fp_out, "\n" );
+  }
+  {
+    assert( pE );
+    const VEHICLE_TYPE v = TRAIN_INFO_TYPE_OF_VEHICLE( *pE );
+    fprintf( fp_out, "Type of vehicle: " );
+    print_TYPE_OF_VEHICLE( fp_out, v );
+    fprintf( fp_out, "\n" );
+  }
+  fprintf( fp_out, "P0 stopped: %d\n", (int)TRAIN_INFO_P0_STOPPED(*pE) );
+  fprintf( fp_out, "Condition of Departure deterrence: %d\n", (int)TRAIN_INFO_CONDITION_OF_DEPARTURE_DETERRENCE(*pE) );
+  fprintf( fp_out, "Train Removed: %d\n", (int)TRAIN_INFO_TRAIN_REMOVED(*pE) );
+  fprintf( fp_out, "On-board ATC error information: %d\n", (int)TRAIN_INFO_ONBOARD_ATC_ERROR_INFORMATION(*pE) );
+  fprintf( fp_out, "Wake-up Ack: %d\n", (int)TRAIN_INFO_WAKEUP_ACK(*pE) );
+  fprintf( fp_out, "Sleep Ack: %d\n", (int)TRAIN_INFO_SLEEP_ACK(*pE) );
+  {
+    assert( pE );
+    const INITIALIZATION_STATUS s = TRAIN_INFO_INITIALIZATION_STATUS(*pE);
+    fprintf( fp_out, "Initialization status: " );
+    print_INITIALIZATION_STATUS( fp_out, s );
+    fprintf( fp_out, "\n" );
+  }
+  {
+    assert( pE );
+    const ONBOARD_ATC_MASTER_STANDBY m = TRAIN_INFO_MASTER_STANDBY( *pE );
+    fprintf( fp_out, "Master/standby: " );
+    print_MASTER_STANDBY( fp_out, m );
+    fprintf( fp_out, "\n" );
+  }
+  {
+    assert( pE );
+    const TRAIN_MOVE_DIR d = TRAIN_INFO_RUNNING_DIRECTION( *pE );
+    fprintf( fp_out, "Running Direction: " );
+    print_RUNNING_DIRECTION( fp_out, d );
+    fprintf( fp_out, "\n" );
+  }
+  fprintf( fp_out, "Door failed to open_close: %d\n", (int)TRAIN_INFO_DOOR_FAILED_TO_OPEN_CLOSE(*pE) );
+  fprintf( fp_out, "Wash Mode Status: %d\n", (int)TRAIN_INFO_WASH_MODE_STATUS(*pE) );
+  {
+    assert( pE );
+    const TRAIN_SLEEP_MODE m = TRAIN_INFO_SLEEP_MODE( *pE );
+    fprintf( fp_out, "Sleep mode: " );
+    print_SLEEP_MODE( fp_out, m );
+    fprintf( fp_out, "\n" );
+  }
+  {
+    assert( pE );
+    const ONBOARD_RESET_RESULT r = TRAIN_INFO_RESULT_OF_RESET_FOR_ONBOARD( *pE );
+    fprintf( fp_out, "Result of reset for on-board: " );
+    print_RESULT_OF_RESET_FOR_ONBOARD( fp_out, r );
+    fprintf( fp_out, "\n" );
+  }
+  {
+    assert( pE );
+    const TRAIN_PERF_REGIME p = TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( *pE );
+    fprintf( fp_out, "Train performance regime: " );
+    print_TRAIN_PERFORMANCE_REGIME( fp_out, p );
+    fprintf( fp_out, "\n" );
+  }
+  {
+    assert( pE );
+    const TRAIN_DOORS_STATE s = TRAIN_INFO_STATE_OF_TRAIN_DOOR( *pE );
+    fprintf( fp_out, "State of train door: " );
+    print_STATE_OF_TRAIN_DOOR( fp_out, s );
+    fprintf( fp_out, "\n" );
+  }
+  fprintf( fp_out, "Rescue train: %d\n", (int)TRAIN_INFO_RESCUE_TRAIN(*pE) );
+  {
+    assert( pE );
+    const ATO_DRIVING_STATUS s = TRAIN_INFO_ATO_DRIVING_STATUS( *pE );
+    fprintf( fp_out, "ATO driving status: " );
+    print_ATO_DRIVING_STATUS( fp_out, s );
+    fprintf( fp_out, "\n" );
+  }
+  fprintf( fp_out, "Forward safety buffer length: %d\n", (int)TRAIN_INFO_FORWARD_SAFETYBUF_LEN(*pE) );
+  fprintf( fp_out, "Backward safety buffer length: %d\n", (int)TRAIN_INFO_BACKWARD_SAFETYBUF_LEN(*pE) );
+  {
+    assert( pE );
+    const EB_REASON_VOBC r = TRAIN_INFO_EB_REASON( *pE );
+    fprintf( fp_out, "EB reason: " );
+    print_EB_REASON( fp_out, r );
+    fprintf( fp_out, "\n" );
+  }
+#if 0 // *****
+  {
+    assert( pE );
+    const EB_REASON_SC r = TRAIN_INFO_FACTOR_IN_EMERGENCY_STOP_SC( *pE );
+    fprintf( fp_out, "Factor in emergency stop(SC): " );
+    print_FACTOR_IN_EMERGENCY_STOP_SC( fp_out, r );
+    fprintf( fp_out, "\n" );
+  }
+
+  fprintf( fp_out, "Emergency Brake Active: %d\n", (int)TRAIN_INFO_EMERGENCY_BRAKE_ACTIVE(*pE) );
+#endif
 }
 static int show_tracking_train_stat ( FILE *fp_out ) {
   assert( fp_out );
@@ -409,14 +872,16 @@ int main ( void ) {
     comm_threads_prof.cbi.ctrl.ready = TRUE;
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
-#if 0
+#if 1
       show_tracking_train_stat( stdout );
 #endif
+#if 0
       //diag_cbi_stat_attrib( stdout, "T801A_TLSR" );
       //diag_cbi_stat_attrib( stdout, "Lo_CY801A" );
       //diag_cbi_stat_attrib( stdout, "ESP801A" );
       //diag_cbi_stat_attrib( stdout, "EM877_D@BGCN" ); //diag_cbi_stat_attrib( stdout, "EM877_D@JLA" );
       diag_cbi_stat_attrib( stdout, "EM871_D@JLA" );
+#endif
 #if 1
       {
 	OC_ID oc_id = END_OF_OCs;
