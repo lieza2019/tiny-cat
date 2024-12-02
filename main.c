@@ -351,7 +351,7 @@ int main ( void ) {
       //diag_cbi_stat_attrib( stdout, "EM877_D@BGCN" ); //diag_cbi_stat_attrib( stdout, "EM877_D@JLA" );
       diag_cbi_stat_attrib( stdout, "EM871_D@JLA" );
 #endif
-#if 1
+#if 0
       {
 	OC_ID oc_id = END_OF_OCs;
 	CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
@@ -398,7 +398,7 @@ int main ( void ) {
 	}
       }
       
-#if 0
+#if 1
       {
 	int i;
 	for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ ) {

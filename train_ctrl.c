@@ -1212,10 +1212,11 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
 	      phdr = &pprof_traincmd->send.header;
 	      assert( phdr );
 	      {
+		const uint8_t msgType = 43; // #43: Train command (1-20)
 		uint32_t seq = pprof_traincmd->nx.seq;
 		seq++;
 		seq = (seq %= NX_SEQNUM_MAX_PLUS1) ? seq : 1;
-		mk_nxns_header( phdr, pprof_traincmd->nx.emission_start, 99, dst_sc_id, seq );
+		mk_nxns_header( phdr, pprof_traincmd->nx.emission_start, msgType, dst_sc_id, seq );
 		pprof_traincmd->nx.seq = seq;
 	      }
 	      {
