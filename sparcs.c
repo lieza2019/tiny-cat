@@ -508,37 +508,63 @@ static void print_ATO_DRIVING_STATUS ( FILE *fp_out, const ATO_DRIVING_STATUS st
 
 static void print_EB_REASON ( FILE *fp_out, const EB_REASON_VOBC reason ) {
   assert( fp_out );
-  switch( reason ) {
-  case EB_NORMALITY: // Normal
+  BOOL cont = FALSE;
+  
+  if( reason & (unsigned short)EB_NORMALITY ) { // Normal
     fprintf( fp_out, "EB_NORMALITY" );
-    break;
-  case EB_EXCEEDING_SPEED_LIMIT: // OverSpeed
-    fprintf( fp_out, "EB_EXCEEDING_SPEED_LIMIT" );
-    break;
-  case EB_NO_USED: // ORPBaliseDetected ?
-    fprintf( fp_out, "EB_NO_USED" );
-    break;
-  case EB_EMERGENCY_STOP_RECEPTION: // EBCommandReceived
-    fprintf( fp_out, "EB_EMERGENCY_STOP_RECEPTION" );
-    break;
-  case EB_NO_CBTC_COMMAND_RECEIVED_OR_VRS_EQUIPMENT_ERR: // NoCommunication
-    fprintf( fp_out, "EB_NO_CBTC_COMMAND_RECEIVED_OR_VRS_EQUIPMENT_ERR" );
-    break;
-  case EB_DETECTING_OF_TRAIN_INTEGRITY_LOST: // RelayInputErrorFromRS
-    fprintf( fp_out, "EB_DETECTING_OF_TRAIN_INTEGRITY_LOST" );
-    break;
-  case EB_ALL_DOOR_CLOSE_IS_LOST_DURING_RUNNING: // DoorOpenWhieMoving
-    fprintf( fp_out, "EB_ALL_DOOR_CLOSE_IS_LOST_DURING_RUNNING" );
-    break;
-  case EB_TRACTION_EQUIPMENT_ABNORMALITY: // AbnormalTractionOrBraking
-    fprintf( fp_out, "EB_TRACTION_EQUIPMENT_ABNORMALITY" );
-    break;
-  case EB_OPERATION_STEPS_ABNORMALITY: // AbnormalOperationProcedure
-    fprintf( fp_out, "EB_OPERATION_STEPS_ABNORMALITY" );
-    break;
-  default:
-    assert( FALSE );
+    cont = TRUE;
   }
+  if( reason & (unsigned short)EB_EXCEEDING_SPEED_LIMIT ) { // OverSpeed
+    if( cont )
+      fprintf( fp_out, ", " );
+    fprintf( fp_out, "EB_EXCEEDING_SPEED_LIMIT" );
+    cont = TRUE;
+  }
+  if( reason & (unsigned short)EB_NO_USED ) { // ORPBaliseDetected ?
+    if( cont )
+      fprintf( fp_out, ", " );
+    fprintf( fp_out, "EB_NO_USED" );
+    cont = TRUE;
+  }
+  if( reason & (unsigned short)EB_EMERGENCY_STOP_RECEPTION ) { // EBCommandReceived
+    if( cont )
+      fprintf( fp_out, ", " );
+    fprintf( fp_out, "EB_EMERGENCY_STOP_RECEPTION" );
+    cont = TRUE;
+  }
+  if( reason & (unsigned short)EB_NO_CBTC_COMMAND_RECEIVED_OR_VRS_EQUIPMENT_ERR ) { // NoCommunication
+    if( cont )
+      fprintf( fp_out, ", " );
+    fprintf( fp_out, "EB_NO_CBTC_COMMAND_RECEIVED_OR_VRS_EQUIPMENT_ERR" );
+    cont = TRUE;
+  }
+  if( reason & (unsigned short)EB_DETECTING_OF_TRAIN_INTEGRITY_LOST ) { // RelayInputErrorFromRS
+    if( cont )
+      fprintf( fp_out, ", " );
+    fprintf( fp_out, "EB_DETECTING_OF_TRAIN_INTEGRITY_LOST" );
+    cont = TRUE;
+  }
+  if( reason & (unsigned short)EB_ALL_DOOR_CLOSE_IS_LOST_DURING_RUNNING ) { // DoorOpenWhieMoving
+    if( cont )
+      fprintf( fp_out, ", " );
+    fprintf( fp_out, "EB_ALL_DOOR_CLOSE_IS_LOST_DURING_RUNNING" );
+    cont = TRUE;
+  }
+  if( reason & (unsigned short)EB_TRACTION_EQUIPMENT_ABNORMALITY ) { // AbnormalTractionOrBraking
+    if( cont )
+      fprintf( fp_out, ", " );
+    fprintf( fp_out, "EB_TRACTION_EQUIPMENT_ABNORMALITY" );
+    cont = TRUE;
+  }
+  if( reason & (unsigned short)EB_OPERATION_STEPS_ABNORMALITY ) { // AbnormalOperationProcedure
+    if( cont )
+      fprintf( fp_out, ", " );
+    fprintf( fp_out, "EB_OPERATION_STEPS_ABNORMALITY" );
+    cont = TRUE;
+  }
+  if( !cont )
+    fprintf( fp_out, "EB_NORMALITY" );
+  fprintf( fp_out, "\n" );
 }
 
 static void print_FACTOR_IN_EMERGENCY_STOP_SC ( FILE *fp_out, const EB_REASON_SC reason ) {
@@ -804,7 +830,5 @@ void diag_train_info ( FILE *fp_out, const TRAIN_INFO_ENTRY_PTR pE ) {
     print_FACTOR_IN_EMERGENCY_STOP_SC( fp_out, r );
     fprintf( fp_out, "\n" );
   }
-#if 0 // *****
   fprintf( fp_out, "Emergency Brake Active: %d\n", (int)TRAIN_INFO_EMERGENCY_BRAKE_ACTIVE(*pE) );
-#endif
 }

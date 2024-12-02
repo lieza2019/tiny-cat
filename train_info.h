@@ -259,5 +259,5 @@ extern EB_REASON_SC TRAIN_INFO_FACTOR_IN_EMERGENCY_STOP_SC( TRAIN_INFO_ENTRY Ie 
 #define TRAIN_INFO_TRAIN_PERFORMANCE_REGIME( Ie ) (((Ie).flgs_10 & FLG10_TRAIN_PERFORMANCE_REGIME) >> 6)
 #define TRAIN_INFO_FORWARD_SAFETYBUF_LEN( Ie ) (ntohs( (Ie).forward_safety_buffer_len ))
 #define TRAIN_INFO_BACKWARD_SAFETYBUF_LEN( Ie ) (ntohs( (Ie).backward_safety_buffer_len ))
-#define TRAIN_INFO_EB_REASON( Ie ) ((((uint16_t)((Ie).EB_reason.h)) << 8) || (uint16_t)((Ie).EB_reason.l))
+#define TRAIN_INFO_EB_REASON( Ie ) ((((uint16_t)((Ie).EB_reason.h)) << 8) + (uint16_t)((Ie).EB_reason.l))
 #define TRAIN_INFO_FACTOR_IN_EMERGENCY_STOP_SC( Ie ) ((((uint16_t)((Ie).EB_factor_of_SC.h)) << 8) + (uint16_t)((Ie).EB_factor_of_SC.l))
