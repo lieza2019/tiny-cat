@@ -400,19 +400,27 @@ int main ( void ) {
       
 #if 1
       {
+	const int target_rake = 1;
 	int i;
 	for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ ) {
 	  if( (! trains_tracking[i].omit) && (trains_tracking[i].rakeID > 0) ) {
 	    TINY_TRAIN_STATE_PTR pT = &trains_tracking[i];
 	    assert( pT );
-	    if( pT->rakeID == 1 ) {
+	    if( pT->rakeID == target_rake ) {
 	      int r_mutex = -1;
 	      r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
 	      if( r_mutex ) {
 		assert( FALSE );
 	      } else {
-		change_train_state_skip_next_stop( pT, TRUE, TRUE );
-		change_train_state_ATO_dept_cmd( pT, TRUE, TRUE );
+		//change_train_state_skip_next_stop( pT, TRUE, TRUE );
+		//change_train_state_ATO_dept_cmd( pT, TRUE, TRUE );
+		//change_train_state_ordering_emergency_stop( pT, TRUE, TRUE );
+		//change_train_state_releasing_emergency_stop( pT, TRUE, TRUE );
+		//change_train_state_perf_regime( pT, PR_F_MODE, TRUE );
+		//change_train_state_turnback_siding( pT, TRUE, TRUE );
+		//change_train_state_ATB_cmd( pT, TRUE, TRUE );
+		//change_train_state_train_remove( pT, TRUE, TRUE );
+		//change_train_state_dwell_time( pT, 1022, TRUE );		
 		r_mutex = -1;
 		r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
 		assert( !r_mutex );

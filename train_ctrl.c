@@ -110,7 +110,6 @@ BOOL change_train_state_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL ski
       assert( !mindles );
     change_val:
       pT->skip_next_stop = skip_next_stop;
-      
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -135,7 +134,6 @@ BOOL change_train_state_ATO_dept_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATO_d
       assert( !mindles );
     change_val:
       pT->ATO_dept_cmd = ATO_dept_cmd;
-      
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -185,7 +183,6 @@ TRAIN_PERF_REGIME change_train_state_perf_regime ( TINY_TRAIN_STATE_PTR pT, cons
       assert( !mindles );
     change_val:
       pT->perf_regime = perf_regime;
-      
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -210,7 +207,6 @@ BOOL change_train_state_turnback_siding ( TINY_TRAIN_STATE_PTR pT, const BOOL tu
       assert( !mindles );
     change_val:
       pT->turnback_siding = turnback_siding;
-      
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -235,7 +231,6 @@ int change_train_state_dwell_time ( TINY_TRAIN_STATE_PTR pT, const int dwell_tim
       assert( !mindles );
     change_val:
       pT->dwell_time = dwell_time;
-      
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -260,7 +255,6 @@ BOOL change_train_state_train_remove ( TINY_TRAIN_STATE_PTR pT, const BOOL train
       assert( !mindles );
     change_val:
       pT->train_remove = train_remove;
-      
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -285,7 +279,6 @@ BOOL change_train_state_releasing_emergency_stop ( TINY_TRAIN_STATE_PTR pT, cons
       assert( !mindles );
     change_val:
       pT->releasing_emergency_stop = releasing_emergency_stop;
-      
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -309,8 +302,7 @@ BOOL change_train_state_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const
     } else {
       assert( !mindles );
     change_val:
-      pT->ordering_emergency_stop = ordering_emergency_stop;
-      
+      pT->ordering_emergency_stop = ordering_emergency_stop;      
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -335,7 +327,6 @@ BOOL change_train_state_ATB_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATB_cmd, B
       assert( !mindles );
     change_val:
       pT->ATB_cmd = ATB_cmd;
-      
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;

@@ -152,10 +152,10 @@ typedef enum train_doors_state {
 } TRAIN_DOORS_STATE;
 
 typedef enum train_perf_regime {
-  PR_NO_COMMAND,
-  PR_S_MODE,
-  PR_N_MODE,
-  PR_F_MODE
+  PR_NO_COMMAND, // N/A
+  PR_S_MODE, // 9% coasting
+  PR_N_MODE, // 5% coasting
+  PR_F_MODE // maximum
 } TRAIN_PERF_REGIME;
 
 typedef enum eb_reason_vobc {

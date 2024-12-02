@@ -192,8 +192,8 @@ extern BOOL TRAIN_CMD_STATIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL static_t
   (((Ce).PA_and_turnback_or_siding = (((Ce).PA_and_turnback_or_siding & ~TURNBACK_OR_SIDING) | ((_turnback_siding & 1) << 7))), \
    (BOOL)((Ce).PA_and_turnback_or_siding & TURNBACK_OR_SIDING))
 #define TRAIN_CMD_DWELL_TIME( Ce, _dwell_time )				\
-  (((Ce).flgs4_and_dwell = (((Ce).flgs4_and_dwell & ~FLG4_DWELL_TIME) | ((htons( _dwell_time ) & 0x0300) >> 8))), \
-   ((Ce).dwell_time = (unsigned char)(htons( _dwell_time ) & 0x00FF)),	\
+  (((Ce).flgs4_and_dwell = (((Ce).flgs4_and_dwell & ~FLG4_DWELL_TIME) | ((_dwell_time) & 0x0300) >> 8)), \
+   ((Ce).dwell_time = (unsigned char)((_dwell_time) & 0x00FF)),		\
    (unsigned short)((((Ce).flgs4_and_dwell & FLG4_DWELL_TIME) << 8) + (Ce).dwell_time))
 #define TRAIN_CMD_REGURATION_SPEED( Ce, _reg_speed )			\
   (((Ce).flgs4_and_dwell = (((Ce).flgs4_and_dwell & ~FLG4_REGURATION_SPEED) | ((_reg_speed & 15) << 2))), \
