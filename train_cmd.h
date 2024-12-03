@@ -109,8 +109,8 @@ extern unsigned char TRAIN_CMD_MAXIMUM_SPEED( TRAIN_COMMAND_ENTRY Ce, unsigned c
 extern unsigned char TRAIN_CMD_PASSENGER_ADDRESSING( TRAIN_COMMAND_ENTRY Ce, unsigned char pa );
 extern BOOL TRAIN_CMD_TURNBACK_OR_SIDING( TRAIN_COMMAND_ENTRY Ce, BOOL turnback_siding );
 extern unsigned short TRAIN_CMD_DWELL_TIME( TRAIN_COMMAND_ENTRY Ce, unsigned short dwell_time );
-extern unsigned char  TRAIN_CMD_REGURATION_SPEED( TRAIN_COMMAND_ENTRY Ce, unsigned char reg_speed );
-extern unsigned char  TRAIN_CMD_DEPARTURE_DIRECTION( TRAIN_COMMAND_ENTRY Ce, unsigned char dep_dir );
+extern unsigned char TRAIN_CMD_REGURATION_SPEED( TRAIN_COMMAND_ENTRY Ce, unsigned char reg_speed );
+extern unsigned char TRAIN_CMD_DEPARTURE_DIRECTION( TRAIN_COMMAND_ENTRY Ce, unsigned char dep_dir );
 extern BOOL TRAIN_CMD_TRAIN_REMOVE( TRAIN_COMMAND_ENTRY Ce, BOOL train_remove );
 extern BOOL TRAIN_CMD_ORDERING_RELEASE_FOR_EMERGENCY_STOP( TRAIN_COMMAND_ENTRY Ce, BOOL releasing_emergency_stop );
 extern BOOL TRAIN_CMD_ORDERING_EMERGENCY_STOP( TRAIN_COMMAND_ENTRY Ce, BOOL ordering_emergency_stop );
@@ -132,10 +132,10 @@ extern BOOL TRAIN_CMD_STATIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL static_t
 
 #define TRAIN_CMD_RAKEID( Ce, _rakeID ) ((unsigned short)((Ce).rakeID = htons( _rakeID )))
 #define TRAIN_CMD_DESTINATION_BLOCKID( Ce, _dst_blockID )		\
-  ((((Ce).dst_blockID_upper = ((htons( _dst_blockID ) & 0xFF00) >> 8)), ((Ce).dst_blockID_lower = (htons( _dst_blockID ) & 0x00FF))), \
+  ((((Ce).dst_blockID_upper = (((_dst_blockID) & 0xFF00) >> 8)), ((Ce).dst_blockID_lower = ((_dst_blockID) & 0x00FF))), \
    (unsigned short)(((Ce).dst_blockID_upper << 8) + (Ce).dst_blockID_lower))
 #define TRAIN_CMD_CURRENT_BLOCKID( Ce, _crnt_blockID )			\
-  ((((Ce).crnt_blockID_upper = (htons( _crnt_blockID ) & 0xFF00)), ((Ce).crnt_blockID_lower = (htons( _crnt_blockID ) & 0x00FF))), \
+  ((((Ce).crnt_blockID_upper = (((_crnt_blockID) & 0xFF00) >> 8)), ((Ce).crnt_blockID_lower = ((_crnt_blockID) & 0x00FF))), \
    (unsigned short)(((Ce).crnt_blockID_upper << 8) + (Ce).crnt_blockID_lower))
 #define TRAIN_CMD_DESTINATION_PLATFORM_CODE( Ce, _dst_PLcode )		\
   ((Ce).flgs_1 = (((Ce).flgs_1 & ~FLG1_DESTINATION_PLATFORM_CODE) | (_dst_PLcode & 3)), \

@@ -420,7 +420,9 @@ int main ( void ) {
 		//change_train_state_turnback_siding( pT, TRUE, TRUE );
 		//change_train_state_ATB_cmd( pT, TRUE, TRUE );
 		//change_train_state_train_remove( pT, TRUE, TRUE );
-		//change_train_state_dwell_time( pT, 1022, TRUE );		
+		//change_train_state_dwell_time( pT, 1022, TRUE );
+		change_train_state_dest_blockID( pT, 1416, TRUE );
+		//change_train_state_crnt_blockID( pT, 1416, TRUE );
 		r_mutex = -1;
 		r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
 		assert( !r_mutex );

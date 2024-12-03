@@ -72,7 +72,7 @@ int change_train_state_rakeID ( TINY_TRAIN_STATE_PTR pT, const int rakeID, BOOL 
   return rakeID;
 }
 
-int change_train_state_dest_blockID( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles ) {
+int change_train_state_dest_blockID ( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles ) {
   assert( pT );
   if( mindles )
     goto change_val;
@@ -84,8 +84,7 @@ int change_train_state_dest_blockID( TINY_TRAIN_STATE_PTR pT, const int dest_blo
     } else {
       assert( !mindles );
     change_val:
-      ;
-      
+      pT->dest_blockID = dest_blockID;
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -95,6 +94,30 @@ int change_train_state_dest_blockID( TINY_TRAIN_STATE_PTR pT, const int dest_blo
     }
   }
   return dest_blockID;
+}
+
+int change_train_state_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, const int crnt_blockID, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->crnt_blockID = crnt_blockID;
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return crnt_blockID;
 }
 
 BOOL change_train_state_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL skip_next_stop, BOOL mindles ) {
@@ -746,7 +769,6 @@ static void cons_train_cmd ( TINY_TRAIN_STATE_PTR pT ) {
       TRAIN_COMMAND_ENTRY_PTR pE = pT->pTC[i];
       assert( pE );
       assert( ntohs(pE->rakeID) == pT->rakeID );
-
 #ifdef CHK_STRICT_CONSISTENCY
       {
 	assert( pE );
@@ -756,6 +778,7 @@ static void cons_train_cmd ( TINY_TRAIN_STATE_PTR pT ) {
       }
 #endif // CHK_STRICT_CONSISTENCY
       TRAIN_CMD_DESTINATION_BLOCKID( *pE, pT->dest_blockID );
+      TRAIN_CMD_CURRENT_BLOCKID( *pE, pT->crnt_blockID );
       TRAIN_CMD_SKIP_NEXT_STOP( *pE, pT->skip_next_stop );
       TRAIN_CMD_ATO_DEPARTURE_COMMAND( *pE, pT->ATO_dept_cmd );
       TRAIN_CMD_TRAIN_HOLD_COMMAND( *pE, pT->TH_cmd );

@@ -10,6 +10,7 @@ typedef struct tiny_train_state {
   int rakeID;
   TRAIN_ID train_ID;
   int dest_blockID;
+  int crnt_blockID;
   BOOL skip_next_stop;
   BOOL ATO_dept_cmd;
   BOOL TH_cmd;
@@ -52,7 +53,8 @@ extern uint8_t journeyID2_serviceID ( JOURNEY_ID journey_ID );
 
 extern uint16_t change_train_state_trainID ( TINY_TRAIN_STATE_PTR pT, const TRAIN_ID train_ID, BOOL mindles );
 extern int change_train_state_rakeID ( TINY_TRAIN_STATE_PTR pT, const int rakeID, BOOL mindles );
-extern int change_train_state_dest_blockID( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles );
+extern int change_train_state_dest_blockID ( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles );
+extern int change_train_state_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, const int crnt_blockID, BOOL mindles );
 extern BOOL change_train_state_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL skip_next_stop, BOOL mindles );
 extern BOOL change_train_state_ATO_dept_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATO_dept_cmd, BOOL mindles );
 extern BOOL change_train_state_TH_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL TH_cmd, BOOL mindles );
