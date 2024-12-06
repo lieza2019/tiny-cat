@@ -22,6 +22,32 @@ uint8_t journeyID2_serviceID ( JOURNEY_ID journey_ID ) {
   return (uint8_t)journey_ID;
 }
 
+static void change_train_state ( TINY_TRAIN_STATE_PTR pT, void (*cb)(TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg), void *pr, void const *parg, BOOL mindles ) {  
+  assert( pT );
+  assert( cb );
+  assert( pr );
+  assert( parg );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:      
+      cb( pT, pr, parg );
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+}
+
 uint16_t change_train_state_trainID ( TINY_TRAIN_STATE_PTR pT, const TRAIN_ID train_ID, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -72,6 +98,7 @@ int change_train_state_rakeID ( TINY_TRAIN_STATE_PTR pT, const int rakeID, BOOL 
   return rakeID;
 }
 
+#if 0 // *****
 int change_train_state_dest_blockID ( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -95,7 +122,27 @@ int change_train_state_dest_blockID ( TINY_TRAIN_STATE_PTR pT, const int dest_bl
   }
   return dest_blockID;
 }
+#else
+static void cb_dest_blockID ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->dest_blockID = *((int *)parg);
+  *((int *)pres) = pT->dest_blockID;
+}
+int change_train_state_dest_blockID ( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles ) {
+  assert( pT );
+  int r;
+  
+  int const *pdstblk = &dest_blockID;
+  change_train_state( pT, cb_dest_blockID, &r, pdstblk, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 int change_train_state_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, const int crnt_blockID, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -119,7 +166,27 @@ int change_train_state_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, const int crnt_bl
   }
   return crnt_blockID;
 }
+#else
+static void cb_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->crnt_blockID = *((int *)parg);
+  *((int *)pres) = pT->crnt_blockID;
+}
+int change_train_state_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, const int crnt_blockID, BOOL mindles ) {
+  assert( pT );
+  int r;
+  
+  int const *pcrntblk = &crnt_blockID;
+  change_train_state( pT, cb_crnt_blockID, &r, pcrntblk, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 BOOL change_train_state_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL skip_next_stop, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -143,7 +210,27 @@ BOOL change_train_state_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL ski
   }
   return skip_next_stop;
 }
+#else
+static void cb_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->skip_next_stop = *((BOOL *)parg);
+  *((BOOL *)pres) = pT->skip_next_stop;
+}
+BOOL change_train_state_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL skip_next_stop, BOOL mindles ) {
+  assert( pT );
+  BOOL r;
+  
+  const BOOL *pSS = &skip_next_stop;
+  change_train_state( pT, cb_skip_next_stop, &r, pSS, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 BOOL change_train_state_ATO_dept_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATO_dept_cmd, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -167,7 +254,27 @@ BOOL change_train_state_ATO_dept_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATO_d
   }
   return ATO_dept_cmd;
 }
+#else
+static void cb_ATO_dept_cmd ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->ATO_dept_cmd = *((BOOL *)parg);  
+  *((BOOL *)pres) = pT->ATO_dept_cmd;
+}
+BOOL change_train_state_ATO_dept_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATO_dept_cmd, BOOL mindles ) {
+  assert( pT );
+  BOOL r;
+  
+  const BOOL *pdep = &ATO_dept_cmd;
+  change_train_state( pT, cb_ATO_dept_cmd, &r, pdep, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 BOOL change_train_state_TH_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL TH_cmd, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -181,7 +288,6 @@ BOOL change_train_state_TH_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL TH_cmd, BOO
       assert( !mindles );
     change_val:
       pT->TH_cmd = TH_cmd;
-      
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -192,7 +298,27 @@ BOOL change_train_state_TH_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL TH_cmd, BOO
   }
   return TH_cmd;
 }
+#else
+static void cb_TH_cmd ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->TH_cmd = *((BOOL *)parg);
+  *((BOOL *)pres) = pT->TH_cmd;
+}
+BOOL change_train_state_TH_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL TH_cmd, BOOL mindles ) {
+  assert( pT );
+  BOOL r;
+  
+  const BOOL *pTH = &TH_cmd;
+  change_train_state( pT, cb_TH_cmd, &r, pTH, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 TRAIN_PERF_REGIME change_train_state_perf_regime ( TINY_TRAIN_STATE_PTR pT, const TRAIN_PERF_REGIME perf_regime, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -216,7 +342,27 @@ TRAIN_PERF_REGIME change_train_state_perf_regime ( TINY_TRAIN_STATE_PTR pT, cons
   }
   return perf_regime;
 }
+#else
+static void cb_perf_regime ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->perf_regime = *((TRAIN_PERF_REGIME *)parg);
+  *(TRAIN_PERF_REGIME *)pres = pT->perf_regime;
+}
+TRAIN_PERF_REGIME change_train_state_perf_regime ( TINY_TRAIN_STATE_PTR pT, const TRAIN_PERF_REGIME perf_regime, BOOL mindles ) {
+  assert( pT );
+  TRAIN_PERF_REGIME r;
+  
+  TRAIN_PERF_REGIME const *pperf = &perf_regime;
+  change_train_state( pT, cb_perf_regime, &r, pperf, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 BOOL change_train_state_turnback_siding ( TINY_TRAIN_STATE_PTR pT, const BOOL turnback_siding, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -240,7 +386,27 @@ BOOL change_train_state_turnback_siding ( TINY_TRAIN_STATE_PTR pT, const BOOL tu
   }
   return turnback_siding;
 }
+#else
+static void cb_turnback_siding ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->turnback_siding = *((BOOL *)parg);
+  *((BOOL *)pres) = pT->turnback_siding;
+}
+BOOL change_train_state_turnback_siding ( TINY_TRAIN_STATE_PTR pT, const BOOL turnback_siding, BOOL mindles ) {
+  assert( pT );
+  BOOL r;
+  
+  const BOOL *pT_S = &turnback_siding;
+  change_train_state( pT, cb_turnback_siding, &r, pT_S, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 int change_train_state_dwell_time ( TINY_TRAIN_STATE_PTR pT, const int dwell_time, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -264,7 +430,27 @@ int change_train_state_dwell_time ( TINY_TRAIN_STATE_PTR pT, const int dwell_tim
   }
   return dwell_time;
 }
+#else
+static void cb_dwell_time ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->dwell_time = *((int *)parg);
+  *((int *)pres) = pT->dwell_time;
+}
+int change_train_state_dwell_time ( TINY_TRAIN_STATE_PTR pT, const int dwell_time, BOOL mindles ) {
+  assert( pT );
+  int r;
+  
+  int const *pdw = &dwell_time;
+  change_train_state( pT, cb_dwell_time, &r, pdw, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 BOOL change_train_state_train_remove ( TINY_TRAIN_STATE_PTR pT, const BOOL train_remove, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -288,7 +474,27 @@ BOOL change_train_state_train_remove ( TINY_TRAIN_STATE_PTR pT, const BOOL train
   }
   return train_remove;
 }
+#else
+static void cb_train_remove ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->train_remove = *((BOOL *)parg);
+  *((BOOL *)pres) = pT->train_remove;
+}
+BOOL change_train_state_train_remove ( TINY_TRAIN_STATE_PTR pT, const BOOL train_remove, BOOL mindles ) {
+  assert( pT );
+  BOOL r;
+  
+  const BOOL *ptr = &train_remove;
+  change_train_state( pT, cb_train_remove, &r, ptr, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 BOOL change_train_state_releasing_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL releasing_emergency_stop, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -312,7 +518,27 @@ BOOL change_train_state_releasing_emergency_stop ( TINY_TRAIN_STATE_PTR pT, cons
   }
   return releasing_emergency_stop;
 }
+#else
+static void cb_releasing_emergency_stop ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->releasing_emergency_stop = *((BOOL *)parg);
+  *((BOOL *)pres) = pT->ordering_emergency_stop;
+}
+BOOL change_train_state_releasing_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL releasing_emergency_stop, BOOL mindles ) {
+  assert( pT );
+  BOOL r;
+  
+  const BOOL *prem = &releasing_emergency_stop;
+  change_train_state( pT, cb_releasing_emergency_stop, &r, prem, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 BOOL change_train_state_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL ordering_emergency_stop, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -325,7 +551,7 @@ BOOL change_train_state_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const
     } else {
       assert( !mindles );
     change_val:
-      pT->ordering_emergency_stop = ordering_emergency_stop;      
+      pT->ordering_emergency_stop = ordering_emergency_stop;
       if( !mindles ) {
 	assert( r_mutex == 0 );
 	r_mutex = -1;
@@ -336,7 +562,27 @@ BOOL change_train_state_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const
   }
   return ordering_emergency_stop;
 }
+#else
+static void cb_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->ordering_emergency_stop = *((BOOL *)parg);
+  *((BOOL *)pres) = pT->ordering_emergency_stop;
+}
+BOOL change_train_state_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL ordering_emergency_stop, BOOL mindles ) {
+  assert( pT );
+  BOOL r;
+  
+  const BOOL *poem = &ordering_emergency_stop;
+  change_train_state( pT, cb_ordering_emergency_stop, &r, poem, mindles );
+  
+  return r;
+}
+#endif
 
+#if 0 // *****
 BOOL change_train_state_ATB_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATB_cmd, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -360,6 +606,25 @@ BOOL change_train_state_ATB_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATB_cmd, B
   }
   return ATB_cmd;
 }
+#else
+static void cb_ATB_cmd ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->ATB_cmd = *((BOOL *)parg);
+  *((BOOL *)pres) = pT->ATB_cmd;
+}
+BOOL change_train_state_ATB_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATB_cmd, BOOL mindles ) {
+  assert( pT );
+  BOOL r;
+  
+  const BOOL *patb = &ATB_cmd;
+  change_train_state( pT, cb_ATB_cmd, &r, patb, mindles );
+  
+  return r;
+}
+#endif
 
 static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
   assert( pT );
