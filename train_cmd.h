@@ -8,7 +8,7 @@
 #define FLG1_OUT_OF_SERVICE 64
 #define FLG1_KEEP_DOOR_CLOSED 128
 
-#define FLG2_DIRECTION_OF_OPEANING_DOOR_AT_THE_NEXT_STATION 12
+#define FLG2_DIRECTION_OF_OPENING_DOOR_AT_THE_NEXT_STATION 12
 #define FLG2_ORGIN_STATION 16
 #define FLG2_SKIP_NEXT_STOP 32
 #define FLG2_DEPARTURE_CONDITIONS_RELEASE 64
@@ -24,7 +24,7 @@
 #define TURNBACK_OR_SIDING 128
 
 #define FLG4_DWELL_TIME 3  // ((FLG4_DWELL_TIME & FLG4) << 8) + dwell_time
-#define FLG4_REGURATION_SPEED 60
+#define FLG4_REGULATION_SPEED 60
 #define FLG4_DEPARTURE_DIRECTION 192
 
 #define FLG5_TRAIN_REMOVE 2
@@ -96,8 +96,8 @@ extern BOOL TRAIN_CMD_KEEP_DOOR_CLOSED( TRAIN_COMMAND_ENTRY Ce, BOOL kdc );
 extern unsigned char TRAIN_CMD_DESTINATION_NUMBER( TRAIN_COMMAND_ENTRY Ce, unsigned char dest_number );
 extern unsigned char TRAIN_CMD_NEXT_STATION_NUMBER( TRAIN_COMMAND_ENTRY Ce, unsigned char next_st_number );
 extern unsigned char TRAIN_CMD_CURRENT_STATION_NUMBER( TRAIN_COMMAND_ENTRY Ce, unsigned char crnt_st_number );
-extern NEXT_ST_DOOROPEN_SIDE TRAIN_CMD_DIRECTION_OF_OPEANING_DOOR_AT_THE_NEXT_STATION( TRAIN_COMMAND_ENTRY Ce, NEXT_ST_DOOROPEN_SIDE next_st_doorside );
-extern BOOL TRAIN_CMD_ORGIN_STATION( TRAIN_COMMAND_ENTRY Ce, BOOL origin_st );
+extern NEXT_ST_DOOROPEN_SIDE TRAIN_CMD_DIRECTION_OF_OPENING_DOOR_AT_THE_NEXT_STATION( TRAIN_COMMAND_ENTRY Ce, NEXT_ST_DOOROPEN_SIDE next_st_doorside );
+extern BOOL TRAIN_CMD_ORIGIN_STATION( TRAIN_COMMAND_ENTRY Ce, BOOL origin_st );
 extern BOOL TRAIN_CMD_SKIP_NEXT_STOP( TRAIN_COMMAND_ENTRY Ce, BOOL ss );
 extern BOOL TRAIN_CMD_DEPARTURE_CONDITIONS_RELEASE( TRAIN_COMMAND_ENTRY Ce, BOOL dept_cond_releasing );
 extern BOOL TRAIN_CMD_ATO_DEPARTURE_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL ATO_dept_cmd );
@@ -110,8 +110,8 @@ extern unsigned char TRAIN_CMD_MAXIMUM_SPEED( TRAIN_COMMAND_ENTRY Ce, unsigned c
 extern unsigned char TRAIN_CMD_PASSENGER_ADDRESSING( TRAIN_COMMAND_ENTRY Ce, unsigned char pa );
 extern BOOL TRAIN_CMD_TURNBACK_OR_SIDING( TRAIN_COMMAND_ENTRY Ce, BOOL turnback_siding );
 extern unsigned short TRAIN_CMD_DWELL_TIME( TRAIN_COMMAND_ENTRY Ce, unsigned short dwell_time );
-extern unsigned char TRAIN_CMD_REGURATION_SPEED( TRAIN_COMMAND_ENTRY Ce, unsigned char reg_speed );
-extern unsigned char TRAIN_CMD_DEPARTURE_DIRECTION( TRAIN_COMMAND_ENTRY Ce, unsigned char dep_dir );
+extern unsigned char TRAIN_CMD_REGULATION_SPEED( TRAIN_COMMAND_ENTRY Ce, unsigned char reg_speed );
+extern TRAIN_MOVE_DIR TRAIN_CMD_DEPARTURE_DIRECTION( TRAIN_COMMAND_ENTRY Ce, unsigned char dep_dir );
 extern BOOL TRAIN_CMD_TRAIN_REMOVE( TRAIN_COMMAND_ENTRY Ce, BOOL train_remove );
 extern BOOL TRAIN_CMD_ORDERING_RELEASE_FOR_EMERGENCY_STOP( TRAIN_COMMAND_ENTRY Ce, BOOL releasing_emergency_stop );
 extern BOOL TRAIN_CMD_ORDERING_EMERGENCY_STOP( TRAIN_COMMAND_ENTRY Ce, BOOL ordering_emergency_stop );
@@ -129,7 +129,7 @@ extern EMERGE_DOOR_RELEASING TRAIN_CMD_EMERGENCY_TRAIN_DOOR_RELEASING_COMMAND( T
 extern BOOL TRAIN_CMD_BACK_INCHING_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL back_inching_cmd );
 extern BOOL TRAIN_CMD_INCHING_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL inching_cmd );
 extern BOOL TRAIN_CMD_DYNAMIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL dynamic_test_cmd );
-extern BOOL TRAIN_CMD_STATIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL static_test_cmdv);
+extern BOOL TRAIN_CMD_STATIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL static_test_cmd);
 
 #define TRAIN_CMD_RAKEID( Ce, _rakeID ) ((unsigned short)((Ce).rakeID = htons( _rakeID )))
 #define TRAIN_CMD_DESTINATION_BLOCKID( Ce, _dst_blockID )		\
@@ -156,10 +156,10 @@ extern BOOL TRAIN_CMD_STATIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL static_t
 #define TRAIN_CMD_DESTINATION_NUMBER( Ce, _dest_number ) ((unsigned char)((Ce).destination_number = (unsigned char)_dest_number))
 #define TRAIN_CMD_NEXT_STATION_NUMBER( Ce, _next_st_number ) ((unsigned char)((Ce).next_station_number = (unsigned char)_next_st_number))
 #define TRAIN_CMD_CURRENT_STATION_NUMBER( Ce, _crnt_st_number ) ((unsigned char)((Ce).current_station_number = (unsigned char)_crnt_st_number))
-#define TRAIN_CMD_DIRECTION_OF_OPEANING_DOOR_AT_THE_NEXT_STATION( Ce, _next_st_doorside ) \
-  (((Ce).flgs_2 = (((Ce).flgs_2 & ~FLG2_DIRECTION_OF_OPEANING_DOOR_AT_THE_NEXT_STATION) | ((_next_st_doorside & 3) << 2))), \
-   (NEXT_ST_DOOROPEN_SIDE)(((Ce).flgs_2 & FLG2_DIRECTION_OF_OPEANING_DOOR_AT_THE_NEXT_STATION) >> 2))
-#define TRAIN_CMD_ORGIN_STATION( Ce, _origin_st )			\
+#define TRAIN_CMD_DIRECTION_OF_OPENING_DOOR_AT_THE_NEXT_STATION( Ce, _next_st_doorside ) \
+  (((Ce).flgs_2 = (((Ce).flgs_2 & ~FLG2_DIRECTION_OF_OPENING_DOOR_AT_THE_NEXT_STATION) | ((_next_st_doorside & 3) << 2))), \
+   (NEXT_ST_DOOROPEN_SIDE)(((Ce).flgs_2 & FLG2_DIRECTION_OF_OPENING_DOOR_AT_THE_NEXT_STATION) >> 2))
+#define TRAIN_CMD_ORIGIN_STATION( Ce, _origin_st )			\
   (((Ce).flgs_2 = (((Ce).flgs_2 & ~FLG2_ORGIN_STATION) | ((_origin_st & 1) << 4))), \
    (BOOL)((Ce).flgs_2 & FLG2_ORGIN_STATION))
 #define TRAIN_CMD_SKIP_NEXT_STOP( Ce, _ss )				\
@@ -196,12 +196,12 @@ extern BOOL TRAIN_CMD_STATIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL static_t
   (((Ce).flgs4_and_dwell = (((Ce).flgs4_and_dwell & ~FLG4_DWELL_TIME) | ((_dwell_time) & 0x0300) >> 8)), \
    ((Ce).dwell_time = (unsigned char)((_dwell_time) & 0x00FF)),		\
    (unsigned short)((((Ce).flgs4_and_dwell & FLG4_DWELL_TIME) << 8) + (Ce).dwell_time))
-#define TRAIN_CMD_REGURATION_SPEED( Ce, _reg_speed )			\
-  (((Ce).flgs4_and_dwell = (((Ce).flgs4_and_dwell & ~FLG4_REGURATION_SPEED) | ((_reg_speed & 15) << 2))), \
-   (unsigned char)(((Ce).flgs4_and_dwell & FLG4_REGURATION_SPEED) >> 2))
+#define TRAIN_CMD_REGULATION_SPEED( Ce, _reg_speed )			\
+  (((Ce).flgs4_and_dwell = (((Ce).flgs4_and_dwell & ~FLG4_REGULATION_SPEED) | ((_reg_speed & 15) << 2))), \
+   (unsigned char)(((Ce).flgs4_and_dwell & FLG4_REGULATION_SPEED) >> 2))
 #define TRAIN_CMD_DEPARTURE_DIRECTION( Ce, _dep_dir )			\
   (((Ce).flgs4_and_dwell = (((Ce).flgs4_and_dwell & ~FLG4_DEPARTURE_DIRECTION) | ((_dep_dir & 3) << 6))), \
-   (unsigned char)(((Ce).flgs4_and_dwell & FLG4_DEPARTURE_DIRECTION) >> 6))
+   (TRAIN_MOVE_DIR)(((Ce).flgs4_and_dwell & FLG4_DEPARTURE_DIRECTION) >> 6))
 #define TRAIN_CMD_TRAIN_REMOVE( Ce, _train_remove )			\
   (((Ce).flgs_5 = (((Ce).flgs_5 & ~FLG5_TRAIN_REMOVE) | ((_train_remove & 1) << 1))), \
    (BOOL)((Ce).flgs_5 & FLG5_TRAIN_REMOVE))
@@ -236,7 +236,7 @@ extern BOOL TRAIN_CMD_STATIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL static_t
   (((Ce).flgs_6 = (((Ce).flgs_6 & ~FLG6_SYSTEM_EXCHANGE_COMMAND) | ((_system_switching_cmd & 3) << 6))), \
    (SYSTEM_SWITCHING_CMD)(((Ce).flgs_6 & FLG6_SYSTEM_EXCHANGE_COMMAND) >> 6))
 #define TRAIN_CMD_VRS_F_RESET( Ce, _ordering_reset_VRS_F )		\
-  (((Ce).flgs_7 = (((Ce).flgs_7 & ~FLG7_VS_F_RESET) | (_ordering_reset_VRS_F & 1))), \
+  (((Ce).flgs_7 = (((Ce).flgs_7 & ~FLG7_VRS_F_RESET) | (_ordering_reset_VRS_F & 1))), \
    (BOOL)((Ce).flgs_7 & FLG7_VRS_F_RESET))
 #define TRAIN_CMD_VRS_B_RESET( Ce, _ordering_reset_VRS_B )		\
   (((Ce).flgs_7 = (((Ce).flgs_7 & ~FLG7_VRS_B_RESET) | ((_ordering_reset_VRS_B & 1) << 1))), \

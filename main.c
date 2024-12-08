@@ -3,8 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <assert.h>
 #include <pthread.h>
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>

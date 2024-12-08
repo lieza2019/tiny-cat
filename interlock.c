@@ -1,7 +1,7 @@
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
 #include <pthread.h>
+#include <assert.h>
 #include "generic.h"
 #include "misc.h"
 #include "network.h"

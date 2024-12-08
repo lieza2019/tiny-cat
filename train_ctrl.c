@@ -1,7 +1,7 @@
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
 #include <pthread.h>
+#include <assert.h>
 #include "generic.h"
 #include "misc.h"
 #include "network.h"
@@ -21,629 +21,6 @@ uint8_t sp2_dst_platformID ( STOPPING_POINT_CODE dest_sp ) {
 uint8_t journeyID2_serviceID ( JOURNEY_ID journey_ID ) {
   return (uint8_t)journey_ID;
 }
-
-static void change_train_state ( TINY_TRAIN_STATE_PTR pT, void (*cb)(TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg), void *pr, void const *parg, BOOL mindles ) {  
-  assert( pT );
-  assert( cb );
-  assert( pr );
-  assert( parg );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:      
-      cb( pT, pr, parg );
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-}
-
-int change_train_state_rakeID ( TINY_TRAIN_STATE_PTR pT, const int rakeID, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->rakeID = rakeID;
-      
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return rakeID;
-}
-
-#if 0 // *****
-uint16_t change_train_state_trainID ( TINY_TRAIN_STATE_PTR pT, const TRAIN_ID train_ID, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->train_ID = train_ID;
-      
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return (uint16_t)((sp2_dst_platformID(train_ID.dest) << 8) + journeyID2_serviceID(train_ID.jid));
-}
-#else
-static void cb_trainID ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  pT->train_ID = *((TRAIN_ID_C_PTR)parg);
-  *((TRAIN_ID_PTR *)pres) = &pT->train_ID;
-}
-TRAIN_ID_PTR change_train_state_trainID ( TINY_TRAIN_STATE_PTR pT, const TRAIN_ID train_ID, BOOL mindles ) {
-  assert( pT );
-  TRAIN_ID_PTR r = NULL;
-  
-  TRAIN_ID_C_PTR ptid = &train_ID;
-  change_train_state( pT, cb_trainID, &r, ptid, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-int change_train_state_dest_blockID ( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->dest_blockID = dest_blockID;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return dest_blockID;
-}
-#else
-static void cb_dest_blockID ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->dest_blockID = *((int *)parg);
-  *((int *)pres) = pT->dest_blockID;
-}
-int change_train_state_dest_blockID ( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles ) {
-  assert( pT );
-  int r;
-  
-  int const *pdstblk = &dest_blockID;
-  change_train_state( pT, cb_dest_blockID, &r, pdstblk, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-int change_train_state_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, const int crnt_blockID, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->crnt_blockID = crnt_blockID;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return crnt_blockID;
-}
-#else
-static void cb_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->crnt_blockID = *((int *)parg);
-  *((int *)pres) = pT->crnt_blockID;
-}
-int change_train_state_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, const int crnt_blockID, BOOL mindles ) {
-  assert( pT );
-  int r;
-  
-  int const *pcrntblk = &crnt_blockID;
-  change_train_state( pT, cb_crnt_blockID, &r, pcrntblk, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-BOOL change_train_state_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL skip_next_stop, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->skip_next_stop = skip_next_stop;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return skip_next_stop;
-}
-#else
-static void cb_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->skip_next_stop = *((BOOL *)parg);
-  *((BOOL *)pres) = pT->skip_next_stop;
-}
-BOOL change_train_state_skip_next_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL skip_next_stop, BOOL mindles ) {
-  assert( pT );
-  BOOL r;
-  
-  const BOOL *pSS = &skip_next_stop;
-  change_train_state( pT, cb_skip_next_stop, &r, pSS, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-BOOL change_train_state_ATO_dept_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATO_dept_cmd, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->ATO_dept_cmd = ATO_dept_cmd;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return ATO_dept_cmd;
-}
-#else
-static void cb_ATO_dept_cmd ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->ATO_dept_cmd = *((BOOL *)parg);  
-  *((BOOL *)pres) = pT->ATO_dept_cmd;
-}
-BOOL change_train_state_ATO_dept_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATO_dept_cmd, BOOL mindles ) {
-  assert( pT );
-  BOOL r;
-  
-  const BOOL *pdep = &ATO_dept_cmd;
-  change_train_state( pT, cb_ATO_dept_cmd, &r, pdep, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-BOOL change_train_state_TH_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL TH_cmd, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->TH_cmd = TH_cmd;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return TH_cmd;
-}
-#else
-static void cb_TH_cmd ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->TH_cmd = *((BOOL *)parg);
-  *((BOOL *)pres) = pT->TH_cmd;
-}
-BOOL change_train_state_TH_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL TH_cmd, BOOL mindles ) {
-  assert( pT );
-  BOOL r;
-  
-  const BOOL *pTH = &TH_cmd;
-  change_train_state( pT, cb_TH_cmd, &r, pTH, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-TRAIN_PERF_REGIME change_train_state_perf_regime ( TINY_TRAIN_STATE_PTR pT, const TRAIN_PERF_REGIME perf_regime, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->perf_regime = perf_regime;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return perf_regime;
-}
-#else
-static void cb_perf_regime ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->perf_regime = *((TRAIN_PERF_REGIME *)parg);
-  *(TRAIN_PERF_REGIME *)pres = pT->perf_regime;
-}
-TRAIN_PERF_REGIME change_train_state_perf_regime ( TINY_TRAIN_STATE_PTR pT, const TRAIN_PERF_REGIME perf_regime, BOOL mindles ) {
-  assert( pT );
-  TRAIN_PERF_REGIME r;
-  
-  TRAIN_PERF_REGIME const *pperf = &perf_regime;
-  change_train_state( pT, cb_perf_regime, &r, pperf, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-BOOL change_train_state_turnback_siding ( TINY_TRAIN_STATE_PTR pT, const BOOL turnback_siding, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->turnback_siding = turnback_siding;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return turnback_siding;
-}
-#else
-static void cb_turnback_siding ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->turnback_siding = *((BOOL *)parg);
-  *((BOOL *)pres) = pT->turnback_siding;
-}
-BOOL change_train_state_turnback_siding ( TINY_TRAIN_STATE_PTR pT, const BOOL turnback_siding, BOOL mindles ) {
-  assert( pT );
-  BOOL r;
-  
-  const BOOL *pT_S = &turnback_siding;
-  change_train_state( pT, cb_turnback_siding, &r, pT_S, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-int change_train_state_dwell_time ( TINY_TRAIN_STATE_PTR pT, const int dwell_time, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->dwell_time = dwell_time;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return dwell_time;
-}
-#else
-static void cb_dwell_time ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->dwell_time = *((int *)parg);
-  *((int *)pres) = pT->dwell_time;
-}
-int change_train_state_dwell_time ( TINY_TRAIN_STATE_PTR pT, const int dwell_time, BOOL mindles ) {
-  assert( pT );
-  int r;
-  
-  int const *pdw = &dwell_time;
-  change_train_state( pT, cb_dwell_time, &r, pdw, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-BOOL change_train_state_train_remove ( TINY_TRAIN_STATE_PTR pT, const BOOL train_remove, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->train_remove = train_remove;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return train_remove;
-}
-#else
-static void cb_train_remove ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->train_remove = *((BOOL *)parg);
-  *((BOOL *)pres) = pT->train_remove;
-}
-BOOL change_train_state_train_remove ( TINY_TRAIN_STATE_PTR pT, const BOOL train_remove, BOOL mindles ) {
-  assert( pT );
-  BOOL r;
-  
-  const BOOL *ptr = &train_remove;
-  change_train_state( pT, cb_train_remove, &r, ptr, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-BOOL change_train_state_releasing_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL releasing_emergency_stop, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->releasing_emergency_stop = releasing_emergency_stop;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return releasing_emergency_stop;
-}
-#else
-static void cb_releasing_emergency_stop ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->releasing_emergency_stop = *((BOOL *)parg);
-  *((BOOL *)pres) = pT->ordering_emergency_stop;
-}
-BOOL change_train_state_releasing_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL releasing_emergency_stop, BOOL mindles ) {
-  assert( pT );
-  BOOL r;
-  
-  const BOOL *prem = &releasing_emergency_stop;
-  change_train_state( pT, cb_releasing_emergency_stop, &r, prem, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-BOOL change_train_state_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL ordering_emergency_stop, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->ordering_emergency_stop = ordering_emergency_stop;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return ordering_emergency_stop;
-}
-#else
-static void cb_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->ordering_emergency_stop = *((BOOL *)parg);
-  *((BOOL *)pres) = pT->ordering_emergency_stop;
-}
-BOOL change_train_state_ordering_emergency_stop ( TINY_TRAIN_STATE_PTR pT, const BOOL ordering_emergency_stop, BOOL mindles ) {
-  assert( pT );
-  BOOL r;
-  
-  const BOOL *poem = &ordering_emergency_stop;
-  change_train_state( pT, cb_ordering_emergency_stop, &r, poem, mindles );
-  
-  return r;
-}
-#endif
-
-#if 0 // *****
-BOOL change_train_state_ATB_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATB_cmd, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->ATB_cmd = ATB_cmd;
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return ATB_cmd;
-}
-#else
-static void cb_ATB_cmd ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
-  assert( pT );
-  assert( pres );
-  assert( parg );
-  
-  pT->ATB_cmd = *((BOOL *)parg);
-  *((BOOL *)pres) = pT->ATB_cmd;
-}
-BOOL change_train_state_ATB_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL ATB_cmd, BOOL mindles ) {
-  assert( pT );
-  BOOL r;
-  
-  const BOOL *patb = &ATB_cmd;
-  change_train_state( pT, cb_ATB_cmd, &r, patb, mindles );
-  
-  return r;
-}
-#endif
 
 static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
   assert( pT );
@@ -917,7 +294,6 @@ static void expire_all_train_state ( void ) {
     trains_tracking[i].omit = TRUE;
 }
 
-
 static int establish_SC_comm_traininfo ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs, const int ndescs ) {
   assert( pS );
   assert( pdescs );
@@ -1062,16 +438,48 @@ static void cons_train_cmd ( TINY_TRAIN_STATE_PTR pT ) {
 #endif // CHK_STRICT_CONSISTENCY
       TRAIN_CMD_DESTINATION_BLOCKID( *pE, pT->dest_blockID );
       TRAIN_CMD_CURRENT_BLOCKID( *pE, pT->crnt_blockID );
-      TRAIN_CMD_SKIP_NEXT_STOP( *pE, pT->skip_next_stop );
+      TRAIN_CMD_KEEP_DOOR_CLOSED( *pE, pT->keep_door_closed );
+      TRAIN_CMD_OUT_OF_SERVICE( *pE, pT->out_of_service );
+      TRAIN_CMD_CURRENT_STATION_PLATFORM_CODE( *pE, pT->crnt_station_plcode );
+      TRAIN_CMD_NEXT_STATION_PLATFORM_CODE( *pE, pT->next_station_plcode );
+      TRAIN_CMD_DESTINATION_PLATFORM_CODE( *pE, pT->dst_station_plcode );
+      TRAIN_CMD_DESTINATION_NUMBER( *pE, pT->destination_number );
+      TRAIN_CMD_NEXT_STATION_NUMBER( *pE, pT->next_station_number );
+      TRAIN_CMD_CURRENT_STATION_NUMBER( *pE, pT->crnt_station_number );
       TRAIN_CMD_ATO_DEPARTURE_COMMAND( *pE, pT->ATO_dept_cmd );
-      TRAIN_CMD_TRAIN_HOLD_COMMAND( *pE, pT->TH_cmd );
+      TRAIN_CMD_DEPARTURE_CONDITIONS_RELEASE( *pE, pT->depcond_release );
+      TRAIN_CMD_SKIP_NEXT_STOP( *pE, pT->skip_next_stop );
+      TRAIN_CMD_ORIGIN_STATION( *pE, pT->origin_station );
+      TRAIN_CMD_DIRECTION_OF_OPENING_DOOR_AT_THE_NEXT_STATION( *pE, pT->next_st_dooropen_side );
+      TRAIN_CMD_INSTRUCTING_OPERATION_MODE( *pE, pT->operaton_mode );
+      TRAIN_CMD_LEAVE_NOW( *pE, pT->leave_now );
       TRAIN_CMD_TRAIN_PERFORMANCE_REGIME_COMMAND( *pE, pT->perf_regime );
+      TRAIN_CMD_COASTING_COMMAND( *pE, pT->coasting_cmd );
+      TRAIN_CMD_TRAIN_HOLD_COMMAND( *pE, pT->TH_cmd );
+      TRAIN_CMD_MAXIMUM_SPEED( *pE, pT->maximum_speed_cmd );
       TRAIN_CMD_TURNBACK_OR_SIDING( *pE, pT->turnback_siding );
+      TRAIN_CMD_PASSENGER_ADDRESSING( *pE, pT->passenger_address );
+      TRAIN_CMD_DEPARTURE_DIRECTION( *pE, pT->dep_dir );
+      TRAIN_CMD_REGULATION_SPEED( *pE, pT->regulation_speed );
       TRAIN_CMD_DWELL_TIME( *pE, pT->dwell_time );
-      TRAIN_CMD_TRAIN_REMOVE( *pE, pT->train_remove );
-      TRAIN_CMD_ORDERING_RELEASE_FOR_EMERGENCY_STOP( *pE, pT->releasing_emergency_stop );
-      TRAIN_CMD_ORDERING_EMERGENCY_STOP( *pE, pT->ordering_emergency_stop );
+      TRAIN_CMD_ORDERING_WAKEUP( *pE, pT->ordering_wakeup );
+      TRAIN_CMD_ORDERING_STANDBY( *pE, pT->ordering_standby );
       TRAIN_CMD_AUTOMATIC_TURNBACK_COMMAND( *pE, pT->ATB_cmd );
+      TRAIN_CMD_ORDERING_EMERGENCY_STOP( *pE, pT->ordering_emergency_stop );
+      TRAIN_CMD_ORDERING_RELEASE_FOR_EMERGENCY_STOP( *pE, pT->releasing_emergency_stop );
+      TRAIN_CMD_TRAIN_REMOVE( *pE, pT->train_remove );
+      TRAIN_CMD_SYSTEM_EXCHANGE_COMMAND( *pE, pT->system_switch_cmd );
+      TRAIN_CMD_ORDERING_RESET_FOR_ONBOARD( *pE, pT->ordering_reset_onboard );
+      TRAIN_CMD_ENERGY_SAVING_MODE( *pE, pT->energy_saving );
+      TRAIN_CMD_OPENING_TRAIN_DOOR_REMOTELY( *pE, pT->remote_door_opening );
+      TRAIN_CMD_CLOSING_TRAIN_DOOR_REMOTELY( *pE, pT->remote_door_closing );
+      TRAIN_CMD_STATIC_TEST_COMMAND( *pE, pT->static_test_cmd );
+      TRAIN_CMD_DYNAMIC_TEST_COMMAND( *pE, pT->dynamic_test_cmd );
+      TRAIN_CMD_INCHING_COMMAND( *pE, pT->inching_cmd );
+      TRAIN_CMD_BACK_INCHING_COMMAND( *pE, pT->back_inching_cmd );
+      TRAIN_CMD_EMERGENCY_TRAIN_DOOR_RELEASING_COMMAND( *pE, pT->em_door_release );
+      TRAIN_CMD_VRS_B_RESET( *pE, pT->back_vrs_reset );
+      TRAIN_CMD_VRS_F_RESET( *pE, pT->forward_vrs_reset );
     }
   }
 }
