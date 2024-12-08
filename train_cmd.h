@@ -78,6 +78,7 @@ typedef struct train_command_entry {
   } occ_remote_cmd;
   uint8_t spare2;
 } TRAIN_COMMAND_ENTRY, *TRAIN_COMMAND_ENTRY_PTR;
+typedef const struct train_command_entry *TRAIN_COMMAND_ENTRY_C_PTR;
 
 #define TRAIN_COMMAND_ENTRIES_NUM 20
 typedef struct train_command {

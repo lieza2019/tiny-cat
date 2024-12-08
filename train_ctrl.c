@@ -48,31 +48,6 @@ static void change_train_state ( TINY_TRAIN_STATE_PTR pT, void (*cb)(TINY_TRAIN_
   }
 }
 
-uint16_t change_train_state_trainID ( TINY_TRAIN_STATE_PTR pT, const TRAIN_ID train_ID, BOOL mindles ) {
-  assert( pT );
-  if( mindles )
-    goto change_val;
-  else {
-    int r_mutex = -1;
-    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
-    if( r_mutex ) {
-      assert( FALSE );
-    } else {
-      assert( !mindles );
-    change_val:
-      pT->train_ID = train_ID;
-      
-      if( !mindles ) {
-	assert( r_mutex == 0 );
-	r_mutex = -1;
-	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
-	assert( !r_mutex );
-      }
-    }
-  }
-  return (uint16_t)((sp2_dst_platformID(train_ID.dest) << 8) + journeyID2_serviceID(train_ID.jid));
-}
-
 int change_train_state_rakeID ( TINY_TRAIN_STATE_PTR pT, const int rakeID, BOOL mindles ) {
   assert( pT );
   if( mindles )
@@ -97,6 +72,50 @@ int change_train_state_rakeID ( TINY_TRAIN_STATE_PTR pT, const int rakeID, BOOL 
   }
   return rakeID;
 }
+
+#if 0 // *****
+uint16_t change_train_state_trainID ( TINY_TRAIN_STATE_PTR pT, const TRAIN_ID train_ID, BOOL mindles ) {
+  assert( pT );
+  if( mindles )
+    goto change_val;
+  else {
+    int r_mutex = -1;
+    r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+    if( r_mutex ) {
+      assert( FALSE );
+    } else {
+      assert( !mindles );
+    change_val:
+      pT->train_ID = train_ID;
+      
+      if( !mindles ) {
+	assert( r_mutex == 0 );
+	r_mutex = -1;
+	r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+	assert( !r_mutex );
+      }
+    }
+  }
+  return (uint16_t)((sp2_dst_platformID(train_ID.dest) << 8) + journeyID2_serviceID(train_ID.jid));
+}
+#else
+static void cb_trainID ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  pT->train_ID = *((TRAIN_ID_C_PTR)parg);
+  *((TRAIN_ID_PTR *)pres) = &pT->train_ID;
+}
+TRAIN_ID_PTR change_train_state_trainID ( TINY_TRAIN_STATE_PTR pT, const TRAIN_ID train_ID, BOOL mindles ) {
+  assert( pT );
+  TRAIN_ID_PTR r = NULL;
+  
+  TRAIN_ID_C_PTR ptid = &train_ID;
+  change_train_state( pT, cb_trainID, &r, ptid, mindles );
+  
+  return r;
+}
+#endif
 
 #if 0 // *****
 int change_train_state_dest_blockID ( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles ) {
@@ -1030,16 +1049,15 @@ static void cons_train_cmd ( TINY_TRAIN_STATE_PTR pT ) {
   int i;
   
   for( i = 0; i < 2; i++ ) {
-    if( pT->pTC[i] ) {
-      TRAIN_COMMAND_ENTRY_PTR pE = pT->pTC[i];
-      assert( pE );
+    TRAIN_COMMAND_ENTRY_PTR pE = pT->pTC[i];
+    if( pE ) {
       assert( ntohs(pE->rakeID) == pT->rakeID );
+      pT->train_ID.coden = TRAIN_CMD_TRAINID( pE, &pT->train_ID );
 #ifdef CHK_STRICT_CONSISTENCY
       {
-	assert( pE );
 	assert( pT );
 	const uint16_t train_id = (uint16_t)((sp2_dst_platformID(pT->train_ID.dest) << 8) + journeyID2_serviceID(pT->train_ID.jid));
-	assert( train_id == TRAIN_CMD_TRAINID( *pE, pT->train_ID ) );
+	assert( pT->train_ID.coden == (unsigned short)train_id );
       }
 #endif // CHK_STRICT_CONSISTENCY
       TRAIN_CMD_DESTINATION_BLOCKID( *pE, pT->dest_blockID );

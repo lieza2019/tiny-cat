@@ -5,7 +5,10 @@
 typedef struct train_ID {
   STOPPING_POINT_CODE dest;
   JOURNEY_ID jid;
-} TRAIN_ID;
+  unsigned short coden;
+} TRAIN_ID, *TRAIN_ID_PTR;
+typedef const struct train_ID *TRAIN_ID_C_PTR;
+
 typedef struct tiny_train_state {
   int rakeID;
   TRAIN_ID train_ID;
@@ -46,12 +49,12 @@ typedef struct standby_train_cmds {
 
 #define MAX_TRAIN_TRACKINGS 1024
 
-extern unsigned short TRAIN_CMD_TRAINID ( TRAIN_COMMAND_ENTRY Ce, TRAIN_ID trainID );
+extern unsigned short TRAIN_CMD_TRAINID ( TRAIN_COMMAND_ENTRY_PTR pCe, TRAIN_ID_C_PTR ptrainID );
 
 extern uint8_t sp2_dst_platformID ( STOPPING_POINT_CODE dest_sp );
 extern uint8_t journeyID2_serviceID ( JOURNEY_ID journey_ID );
 
-extern uint16_t change_train_state_trainID ( TINY_TRAIN_STATE_PTR pT, const TRAIN_ID train_ID, BOOL mindles );
+extern TRAIN_ID_PTR change_train_state_trainID ( TINY_TRAIN_STATE_PTR pT, const TRAIN_ID train_ID, BOOL mindles );
 extern int change_train_state_rakeID ( TINY_TRAIN_STATE_PTR pT, const int rakeID, BOOL mindles );
 extern int change_train_state_dest_blockID ( TINY_TRAIN_STATE_PTR pT, const int dest_blockID, BOOL mindles );
 extern int change_train_state_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, const int crnt_blockID, BOOL mindles );

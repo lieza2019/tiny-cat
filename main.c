@@ -412,6 +412,9 @@ int main ( void ) {
 	      if( r_mutex ) {
 		assert( FALSE );
 	      } else {
+		TRAIN_ID tid = {};
+		tid.jid = 37;
+		change_train_state_trainID( pT, tid, TRUE );
 		//change_train_state_skip_next_stop( pT, TRUE, TRUE );
 		//change_train_state_ATO_dept_cmd( pT, TRUE, TRUE );
 		//change_train_state_TH_cmd( pT, TRUE, TRUE );
