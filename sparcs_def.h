@@ -21,21 +21,21 @@ typedef enum dst_st_plcode {
   DPL_INVALID_TB_SECTION,
   DPL_DNLINE,
   DPL_UPLINE,
-  DPL_OTHERS
+  DPL_OTHERS // e.g. 3rd platform
 } DST_ST_PLCODE;
 
 typedef enum next_st_plcode {
   NPL_INVALID_TB_SECTION,
   NPL_DNLINE,
   NPL_UPLINE,
-  NPL_OTHERS
+  NPL_OTHERS // e.g. 3rd platform
 } NEXT_ST_PLCODE;
 
 typedef enum crnt_st_plcode {
   CPL_INVALID_TB_SECTION,
   CPL_DNLINE,
   CPL_UPLINE,
-  CPL_OTHERS
+  CPL_OTHERS // e.g. 3rd platform
 } CRNT_ST_PLCODE;
 
 typedef enum next_st_dooropen_side {
@@ -80,9 +80,9 @@ typedef enum operation_mode {
   OM_ATO,
   OM_ATP,
   OM_RM,
-  OM_INVALID_SPARE_5,
-  OM_INVALID_SPARE_6,
-  OM_INVALID_SPARE_7
+  OM_SPARE_5,
+  OM_SPARE_6,
+  OM_SPARE_7
 } TRAIN_OPERATION_MODE;
 
 typedef enum vehicle_type {

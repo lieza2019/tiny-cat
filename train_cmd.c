@@ -720,14 +720,14 @@ static void cb_remote_door_opening ( TINY_TRAIN_STATE_PTR pT, void *pres, void c
   assert( pres );
   assert( parg );
   
-  pT->remote_door_opening = *((BOOL *)parg);
-  *((BOOL *)pres) = pT->remote_door_opening;
+  pT->remote_door_opening = *((REMOTE_DOOR_OPENING *)parg);
+  *((REMOTE_DOOR_OPENING *)pres) = pT->remote_door_opening;
 }
-BOOL change_train_state_remote_door_opening ( TINY_TRAIN_STATE_PTR pT, const BOOL remote_door_opening, BOOL mindles ) {
+REMOTE_DOOR_OPENING change_train_state_remote_door_opening ( TINY_TRAIN_STATE_PTR pT, const REMOTE_DOOR_OPENING remote_door_opening, BOOL mindles ) {
   assert( pT );
-  BOOL r;
+  REMOTE_DOOR_OPENING r;
   
-  const BOOL *pdor = &remote_door_opening;
+  const REMOTE_DOOR_OPENING *pdor = &remote_door_opening;
   change_train_state( pT, cb_remote_door_opening, &r, pdor, mindles );
   
   return r;
@@ -738,14 +738,14 @@ static void cb_remote_door_closing ( TINY_TRAIN_STATE_PTR pT, void *pres, void c
   assert( pres );
   assert( parg );
   
-  pT->remote_door_closing = *((BOOL *)parg);
-  *((BOOL *)pres) = pT->remote_door_closing;
+  pT->remote_door_closing = *((REMOTE_DOOR_CLOSING *)parg);
+  *((REMOTE_DOOR_CLOSING *)pres) = pT->remote_door_closing;
 }
-BOOL change_train_state_remote_door_closing ( TINY_TRAIN_STATE_PTR pT, const BOOL remote_door_closing, BOOL mindles ) {
+REMOTE_DOOR_CLOSING change_train_state_remote_door_closing ( TINY_TRAIN_STATE_PTR pT, const REMOTE_DOOR_CLOSING remote_door_closing, BOOL mindles ) {
   assert( pT );
-  BOOL r;
+  REMOTE_DOOR_CLOSING r;
   
-  const BOOL *pdor = &remote_door_closing;
+  const REMOTE_DOOR_CLOSING *pdor = &remote_door_closing;
   change_train_state( pT, cb_remote_door_closing, &r, pdor, mindles );
   
   return r;

@@ -412,9 +412,14 @@ int main ( void ) {
 	      if( r_mutex ) {
 		assert( FALSE );
 	      } else {
-		TRAIN_ID tid = {};
-		tid.jid = 37;
-		change_train_state_trainID( pT, tid, TRUE );
+		//fst grp.
+#if 0
+		{
+		  TRAIN_ID tid = {};
+		  tid.jid = 37;
+		  /change_train_state_trainID( pT, tid, TRUE );
+		}
+#endif
 		//change_train_state_skip_next_stop( pT, TRUE, TRUE );
 		//change_train_state_ATO_dept_cmd( pT, TRUE, TRUE );
 		//change_train_state_TH_cmd( pT, TRUE, TRUE );
@@ -427,6 +432,39 @@ int main ( void ) {
 		//change_train_state_dwell_time( pT, 1025, TRUE );
 		//change_train_state_dest_blockID( pT, 1416, TRUE );
 		//change_train_state_crnt_blockID( pT, 1416, TRUE );
+		// 2nd grp.
+		//change_train_state_crnt_station_plcode( pT, CPL_INVALID_TB_SECTION, TRUE );
+		//change_train_state_next_station_plcode( pT, NPL_INVALID_TB_SECTION, TRUE );
+		//change_train_state_dst_station_plcode( pT, DPL_INVALID_TB_SECTION, TRUE );
+		//change_train_state_destination_number( pT, 54, TRUE );
+		//change_train_state_next_station_number( pT, 8, TRUE );
+		//change_train_state_crnt_station_number( pT, 11, TRUE );
+		//change_train_state_keep_door_closed( pT, TRUE, TRUE );
+		//change_train_state_out_of_service( pT, TRUE, TRUE );
+		//change_train_state_leave_now( pT, TRUE, TRUE );
+		//change_train_state_ordering_wakeup( pT, TRUE, TRUE );
+		//change_train_state_ordering_standby( pT, TRUE, TRUE );
+		//change_train_state_ordering_reset_onboard( pT, TRUE, TRUE );
+		//change_train_state_static_test_cmd( pT, TRUE, TRUE );
+		//change_train_state_depcond_release( pT, TRUE, TRUE );
+		//change_train_state_origin_station( pT, TRUE, TRUE );
+		//change_train_state_next_st_dooropen_side( pT, NDS_R_SIDE, TRUE );
+		//change_train_state_operation_mode( pT, OM_UNKNOWN_NO_DIRECTIVE, TRUE );
+		//change_train_state_coasting_cmd( pT, FALSE, TRUE );
+		//change_train_state_energy_saving( pT, TRUE, TRUE );
+		//change_train_state_system_switch_cmd( pT, SW_NO_SWITCHING, TRUE );
+		//change_train_state_remote_door_opening( pT, RDC_NO_OPENING, TRUE );
+		//change_train_state_remote_door_closing( pT, RDC_NO_CLOSING, TRUE );
+		//change_train_state_dynamic_test_cmd( pT, TRUE, TRUE );
+		//change_train_state_inching_cmd( pT, TRUE, TRUE );
+		//change_train_state_back_inching_cmd( pT, TRUE, TRUE );
+		//change_train_state_em_door_release( pT, EMD_NO_CMD, TRUE );
+		//change_train_state_back_vrs_reset( pT, TRUE, TRUE );
+		//change_train_state_forward_vrs_reset( pT, TRUE, TRUE );
+		//change_train_state_maximum_speed_cmd( pT, 61, TRUE );
+		//change_train_state_passenger_address( pT, 79, TRUE );
+		//change_train_state_dep_dir( pT, MD_UP_DIR, TRUE );
+		//change_train_state_regulation_speed( pT, 18, TRUE );
 		r_mutex = -1;
 		r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
 		assert( !r_mutex );

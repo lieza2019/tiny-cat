@@ -284,13 +284,13 @@ static void print_TRAIN_OPERATION_MODE ( FILE *fp_out, const TRAIN_OPERATION_MOD
   case OM_RM:
     fprintf( fp_out, "OM_RM" );
     break;
-  case OM_INVALID_SPARE_5:
+  case OM_SPARE_5:
     fprintf( fp_out, "OM_INVALID_SPARE_5" );
     break;
-  case OM_INVALID_SPARE_6:
+  case OM_SPARE_6:
     fprintf( fp_out, "OM_INVALID_SPARE_6" );
     break;
-  case OM_INVALID_SPARE_7:
+  case OM_SPARE_7:
     fprintf( fp_out, "OM_INVALID_SPARE_7" );
     break;
   default:

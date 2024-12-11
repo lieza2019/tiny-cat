@@ -48,7 +48,7 @@ typedef struct tiny_train_state {
   BOOL ordering_reset_onboard;
   BOOL energy_saving;
   REMOTE_DOOR_OPENING remote_door_opening;
-  REMOTE_DOOR_OPENING remote_door_closing;
+  REMOTE_DOOR_CLOSING remote_door_closing;
   BOOL static_test_cmd;
   BOOL dynamic_test_cmd;
   BOOL inching_cmd;
@@ -94,7 +94,7 @@ extern int change_train_state_crnt_blockID ( TINY_TRAIN_STATE_PTR pT, const int 
 extern BOOL change_train_state_keep_door_closed ( TINY_TRAIN_STATE_PTR pT, const BOOL keep_door_closed, BOOL mindles );
 extern BOOL change_train_state_out_of_service ( TINY_TRAIN_STATE_PTR pT, const BOOL out_of_service, BOOL mindles );
 extern CRNT_ST_PLCODE change_train_state_crnt_station_plcode ( TINY_TRAIN_STATE_PTR pT, const CRNT_ST_PLCODE plcode, BOOL mindles );
-extern NEXT_ST_PLCODE change_train_state_next_station_plcodeo ( TINY_TRAIN_STATE_PTR pT, const NEXT_ST_PLCODE plcode, BOOL mindles );
+extern NEXT_ST_PLCODE change_train_state_next_station_plcode ( TINY_TRAIN_STATE_PTR pT, const NEXT_ST_PLCODE plcode, BOOL mindles );
 extern DST_ST_PLCODE change_train_state_dst_station_plcode ( TINY_TRAIN_STATE_PTR pT, const DST_ST_PLCODE plcode, BOOL mindles );
 extern int change_train_state_destination_number ( TINY_TRAIN_STATE_PTR pT, const int destination_number, BOOL mindles );
 extern int change_train_state_next_station_number ( TINY_TRAIN_STATE_PTR pT, const int next_station_number, BOOL mindles );
@@ -124,8 +124,8 @@ extern BOOL change_train_state_train_remove ( TINY_TRAIN_STATE_PTR pT, const BOO
 extern SYSTEM_SWITCHING_CMD change_train_state_system_switch_cmd ( TINY_TRAIN_STATE_PTR pT, const SYSTEM_SWITCHING_CMD system_switch_cmd, BOOL mindles );
 extern BOOL change_train_state_ordering_reset_onboard ( TINY_TRAIN_STATE_PTR pT, const BOOL ordering_reset_onboard, BOOL mindles );
 extern BOOL change_train_state_energy_saving ( TINY_TRAIN_STATE_PTR pT, const BOOL energy_saving, BOOL mindles );
-extern BOOL change_train_state_remote_door_opening ( TINY_TRAIN_STATE_PTR pT, const BOOL remote_door_opening, BOOL mindles );
-extern BOOL change_train_state_remote_door_closing ( TINY_TRAIN_STATE_PTR pT, const BOOL remote_door_closing, BOOL mindles );
+extern REMOTE_DOOR_OPENING change_train_state_remote_door_opening ( TINY_TRAIN_STATE_PTR pT, const REMOTE_DOOR_OPENING remote_door_opening, BOOL mindles );
+extern REMOTE_DOOR_CLOSING change_train_state_remote_door_closing ( TINY_TRAIN_STATE_PTR pT, const REMOTE_DOOR_CLOSING remote_door_closing, BOOL mindles );
 extern BOOL change_train_state_static_test_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL static_test_cmd, BOOL mindles );
 extern BOOL change_train_state_dynamic_test_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL dynamic_test_cmd, BOOL mindles );
 extern BOOL change_train_state_inching_cmd ( TINY_TRAIN_STATE_PTR pT, const BOOL inching_cmd, BOOL mindles );
