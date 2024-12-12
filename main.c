@@ -16,6 +16,7 @@
 #include "sparcs.h"
 #include "cbi.h"
 #include "interlock.h"
+#include "surveill.h"
 #include "srv.h"
 
 #if 1
@@ -263,6 +264,7 @@ int main ( void ) {
   
   tzset();
   cons_il_obj_table();
+  cons_lkuptbl_cbtc_block_prof();
   
   establish_SC_comm( &comm_threads_prof );
   establish_OC_comm( &comm_threads_prof );
@@ -341,7 +343,7 @@ int main ( void ) {
     comm_threads_prof.cbi.ctrl.ready = TRUE;
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
-#if 1
+#if 0
       show_tracking_train_stat( stdout );
 #endif
 #if 0
@@ -398,7 +400,6 @@ int main ( void ) {
 	}
       }
       
-#if 1
       {
 	const int target_rake = 1;
 	int i;
@@ -407,19 +408,16 @@ int main ( void ) {
 	    TINY_TRAIN_STATE_PTR pT = &trains_tracking[i];
 	    assert( pT );
 	    if( pT->rakeID == target_rake ) {
+#if 0
 	      int r_mutex = -1;
 	      r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
 	      if( r_mutex ) {
 		assert( FALSE );
 	      } else {
 		//fst grp.
-#if 0
-		{
-		  TRAIN_ID tid = {};
-		  tid.jid = 37;
-		  /change_train_state_trainID( pT, tid, TRUE );
-		}
-#endif
+		TRAIN_ID tid = {};
+		tid.jid = 37;
+		//change_train_state_trainID( pT, tid, TRUE );
 		//change_train_state_skip_next_stop( pT, TRUE, TRUE );
 		//change_train_state_ATO_dept_cmd( pT, TRUE, TRUE );
 		//change_train_state_TH_cmd( pT, TRUE, TRUE );
@@ -470,11 +468,72 @@ int main ( void ) {
 		r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
 		assert( !r_mutex );
 	      }
+#endif
+#if 1 // *****
+	      char str[255 + 1] = "detect_train_docked @ ";
+	      STOPPING_POINT_CODE sp = END_OF_SPs;
+	      sp = detect_train_docked( DOCK_DETECT_MAJOR, pT );
+	      {
+		char buf[255 + 1];
+		buf[255] = 0;
+		switch( sp ) {
+		case SP_NONSENS:
+		  strcpy( buf, "" );
+		  break;
+		case SP_73: // JLA_PL1
+		  strcpy( buf, "JLA_PL1" );
+		  break;
+		case SP_74: // JLA_PL2
+		  strcpy( buf, "JLA_PL2" );
+		  break;
+		case SP_75: // JLA_PL3
+		  strcpy( buf, "JLA_PL3" );
+		  break;
+		case SP_D4: // JLA_TB4
+		  strcpy( buf, "JLA_TB4" );
+		  break;
+		case SP_D9: // JLA_TB3
+		  strcpy( buf, "JLA_TB3" );
+		  break;
+		case SP_76: // KIKJ_PL2
+		  strcpy( buf, "KIKJ_PL2" );
+		  break;
+		case SP_77: // KIKJ_PL1
+		  strcpy( buf, "KIKJ_PL1" );
+		  break;
+		case SP_78: // OKBS_PL2
+		  strcpy( buf, "OKBS_PL2" );
+		  break;
+		case SP_79: // OKBS_PL1
+		  strcpy( buf, "OKBS_PL1" );
+		  break;
+		case SP_80: // BTGD_PL2
+		  strcpy( buf, "BTGD_PL2" );
+		  break;
+		case SP_81: // BTGD_PL1
+		  strcpy( buf, "BTGD_PL1" );
+		  break;
+		case SP_D5: // BTGD_TB1
+		  strcpy( buf, "BTGD_TB1" );
+		  break;
+		case SP_D0: // BTGD_TB2
+		  strcpy( buf, "BTGD_TB2" );
+		  break;
+		case END_OF_SPs:
+		  assert( FALSE );
+		}
+		if( strlen( buf ) > 0 ) {
+		  str[255] = 0;
+		  strncat( str, buf, 255 );
+		  printf( "%s\n", str );
+		}
+	      }
+#endif
 	    }
 	  }
 	}
       }
-#endif
+      
       load_train_command();
 #ifdef CHK_STRICT_CONSISTENCY
       chk_solid_train_cmds();
