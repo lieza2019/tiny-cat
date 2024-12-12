@@ -480,6 +480,7 @@ static void cons_train_cmd ( TINY_TRAIN_STATE_PTR pT ) {
       TRAIN_CMD_EMERGENCY_TRAIN_DOOR_RELEASING_COMMAND( *pE, pT->em_door_release );
       TRAIN_CMD_VRS_B_RESET( *pE, pT->back_vrs_reset );
       TRAIN_CMD_VRS_F_RESET( *pE, pT->forward_vrs_reset );
+      TRAIN_CMD_PASSENGER_DISPLAY_MESSAGE( *pE, pT->passenger_display_message );
     }
   }
 }

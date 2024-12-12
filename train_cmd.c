@@ -876,3 +876,21 @@ BOOL change_train_state_forward_vrs_reset ( TINY_TRAIN_STATE_PTR pT, const BOOL 
   
   return r;
 }
+
+static void cb_passenger_display_message ( TINY_TRAIN_STATE_PTR pT, void *pres, void const *parg ) {
+  assert( pT );
+  assert( pres );
+  assert( parg );
+  
+  pT->passenger_display_message = *((int *)parg);
+  *((int *)pres) = pT->passenger_display_message;
+}
+int change_train_state_passenger_display_message ( TINY_TRAIN_STATE_PTR pT, const int passenger_display_message, BOOL mindles ) {
+  assert( pT );
+  int r;
+  
+  const int *ppm = &passenger_display_message;
+  change_train_state( pT, cb_passenger_display_message, &r, ppm, mindles );
+  
+  return r;
+}

@@ -56,6 +56,7 @@ typedef struct tiny_train_state {
   EMERGE_DOOR_RELEASING em_door_release;
   BOOL back_vrs_reset;
   BOOL forward_vrs_reset;
+  int passenger_display_message;
   
   STOPPING_POINT_CODE stop_detected;
   struct {
@@ -133,6 +134,7 @@ extern BOOL change_train_state_back_inching_cmd ( TINY_TRAIN_STATE_PTR pT, const
 extern EMERGE_DOOR_RELEASING change_train_state_em_door_release ( TINY_TRAIN_STATE_PTR pT, const EMERGE_DOOR_RELEASING em_door_release, BOOL mindles );
 extern BOOL change_train_state_back_vrs_reset ( TINY_TRAIN_STATE_PTR pT, const BOOL back_vrs_reset, BOOL mindles );
 extern BOOL change_train_state_forward_vrs_reset ( TINY_TRAIN_STATE_PTR pT, const BOOL forward_vrs_reset, BOOL mindles );
+extern int change_train_state_passenger_display_message ( TINY_TRAIN_STATE_PTR pT, const int passenger_display_message, BOOL mindles );
 
 extern TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 extern int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs );

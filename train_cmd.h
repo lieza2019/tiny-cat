@@ -62,8 +62,8 @@ typedef struct train_command_entry {
   uint8_t current_station_number;
   uint8_t flgs_2;
   uint8_t flgs_3;
-  uint8_t maximum_speed;
   uint8_t PA_and_turnback_or_siding;
+  uint8_t maximum_speed;
   uint8_t flgs4_and_dwell;
   uint8_t dwell_time;
   uint8_t flgs_5;
@@ -130,6 +130,7 @@ extern BOOL TRAIN_CMD_BACK_INCHING_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL back_in
 extern BOOL TRAIN_CMD_INCHING_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL inching_cmd );
 extern BOOL TRAIN_CMD_DYNAMIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL dynamic_test_cmd );
 extern BOOL TRAIN_CMD_STATIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL static_test_cmd);
+extern unsigned short TRAIN_CMD_PASSENGER_DISPLAY_MESSAGE( TRAIN_COMMAND_ENTRY Ce, unsigned short pd );
 
 #define TRAIN_CMD_RAKEID( Ce, _rakeID ) ((unsigned short)((Ce).rakeID = htons( _rakeID )))
 #define TRAIN_CMD_DESTINATION_BLOCKID( Ce, _dst_blockID )		\
@@ -256,3 +257,6 @@ extern BOOL TRAIN_CMD_STATIC_TEST_COMMAND( TRAIN_COMMAND_ENTRY Ce, BOOL static_t
 #define TRAIN_CMD_STATIC_TEST_COMMAND( Ce, _static_test_cmd )		\
   (((Ce).flgs_7 = (((Ce).flgs_7 & ~FLG7_STATIC_TEST_COMMAND) | ((_static_test_cmd & 1) << 7))), \
    (BOOL)((Ce).flgs_7 & FLG7_STATIC_TEST_COMMAND))
+#define TRAIN_CMD_PASSENGER_DISPLAY_MESSAGE( Ce, _pd )			\
+  ((((Ce).PA_display_msg_h = (((_pd) & 0xFF00) >> 8)), ((Ce).PA_display_msg_l = ((_pd) & 0x00FF))), \
+   (unsigned short)(((Ce).PA_display_msg_h << 8) + (Ce).PA_display_msg_l))
