@@ -470,9 +470,14 @@ int main ( void ) {
 	      }
 #endif
 #if 1 // *****
-	      char str[255 + 1] = "detect_train_docked @ ";
-	      STOPPING_POINT_CODE sp = END_OF_SPs;
-	      sp = detect_train_docked( DOCK_DETECT_MAJOR, pT );
+	      char str[255 + 1] = "detect_train_docked @";
+	      static STOPPING_POINT_CODE sp = SP_NONSENS;
+	      DOCK_DETECT_DIRECTIVE m;
+	      if( sp == SP_NONSENS )
+		m = DOCK_DETECT_MAJOR;
+	      else
+		m = DOCK_DETECT_MINOR;
+	      sp = detect_train_docked( m, pT );
 	      {
 		char buf[255 + 1];
 		buf[255] = 0;
@@ -525,6 +530,14 @@ int main ( void ) {
 		if( strlen( buf ) > 0 ) {
 		  str[255] = 0;
 		  strncat( str, buf, 255 );
+		  switch( m ) {
+		  case DOCK_DETECT_MAJOR:
+		    strncat( str, " with DOCK_DETECT_MAJOR.", 255 );
+		    break;
+		  case DOCK_DETECT_MINOR:
+		    strncat( str, " with DOCK_DETECT_MINOR.", 255 );
+		    break;
+		  }
 		  printf( "%s\n", str );
 		}
 	      }
