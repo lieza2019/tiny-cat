@@ -53,39 +53,30 @@ STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TI
   
   pdetects->sp = SP_NONSENS;
   pdetects->detail = ARS_DETECTS_NONE;
-  
-  if( pT->stop_detected == SP_NONSENS ) {
+  if( pT->stop_detected != SP_NONSENS ) {
+    pdetects->sp = pT->stop_detected;
+    pdetects->detail = ARS_DOCK_DETECTED;
+    hit_sp = detect_train_docked( DOCK_DETECT_MINOR, pT );
+    if( hit_sp == SP_NONSENS ) {
+      pT->stop_detected = SP_NONSENS;
+      pdetects->detail = ARS_LEAVE_DETECTED;
+    }
+  } else {
+    assert( pT->stop_detected == SP_NONSENS );
     hit_sp = detect_train_docked( DOCK_DETECT_MAJOR, pT );
     if( hit_sp != SP_NONSENS ) {
       pT->stop_detected = hit_sp;
       pdetects->sp = hit_sp;
       pdetects->detail = ARS_DOCK_DETECTED;
+    } else {      
+      hit_sp = detect_train_skip( pT );
+      if( hit_sp != SP_NONSENS ) {
+	assert( pT->stop_detected == SP_NONSENS );
+	pdetects->sp = hit_sp;
+	pdetects->detail = ARS_SKIP_DETECTED;
+      }
     }
   }
-  hit_sp = SP_NONSENS;
-  hit_sp = detect_train_docked( DOCK_DETECT_MINOR, pT );
-  if( hit_sp != SP_NONSENS ) {
-    pT->stop_detected = hit_sp;
-    pdetects->sp = hit_sp;
-    pdetects->detail = ARS_DOCK_DETECTED;
-  }
-  
-  hit_sp = SP_NONSENS;
-  hit_sp = detect_train_skip( pT );
-  if( hit_sp != SP_NONSENS ) {
-    assert( pT->stop_detected == SP_NONSENS );
-    pdetects->sp = hit_sp;
-    pdetects->detail = ARS_SKIP_DETECTED;
-  }
-  
-  hit_sp = SP_NONSENS;
-  hit_sp = detect_train_leave( pT );
-  if( hit_sp != SP_NONSENS ) {
-    pT->stop_detected = SP_NONSENS;
-    pdetects->sp = hit_sp;
-    pdetects->detail = ARS_LEAVE_DETECTED;
-  }
-  
   return pdetects->sp;
 }
 

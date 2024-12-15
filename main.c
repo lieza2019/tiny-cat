@@ -17,6 +17,7 @@
 #include "cbi.h"
 #include "interlock.h"
 #include "surveill.h"
+#include "timetable.h"
 #include "srv.h"
 
 #if 1
@@ -471,13 +472,25 @@ int main ( void ) {
 #endif
 #if 1 // *****
 	      char str[255 + 1] = "detect_train_docked @";
-	      static STOPPING_POINT_CODE sp = SP_NONSENS;
+	      ARS_EVENT_ON_SP ev;
+	      STOPPING_POINT_CODE sp = SP_NONSENS;
+#if 0
 	      DOCK_DETECT_DIRECTIVE m;
-	      if( sp == SP_NONSENS )
+	      if( pT->stop_detected == SP_NONSENS ) {
 		m = DOCK_DETECT_MAJOR;
-	      else
+		sp = detect_train_docked( DOCK_DETECT_MAJOR, pT );
+		if( sp != SP_NONSENS )
+		  pT->stop_detected = sp;
+	      } else {
+		assert( pT->stop_detected != SP_NONSENS );
 		m = DOCK_DETECT_MINOR;
-	      sp = detect_train_docked( m, pT );
+		sp = detect_train_docked( DOCK_DETECT_MINOR, pT );
+		if( sp == SP_NONSENS )
+		  pT->stop_detected = SP_NONSENS;
+	      }
+#else
+	      sp = ars_judge_arriv_dept_skip( &ev, pT );
+#endif
 	      {
 		char buf[255 + 1];
 		buf[255] = 0;
@@ -527,6 +540,7 @@ int main ( void ) {
 		case END_OF_SPs:
 		  assert( FALSE );
 		}
+#if 0
 		if( strlen( buf ) > 0 ) {
 		  str[255] = 0;
 		  strncat( str, buf, 255 );
@@ -540,6 +554,29 @@ int main ( void ) {
 		  }
 		  printf( "%s\n", str );
 		}
+#else
+		str[255] = 0;
+		switch( ev.detail ) {
+		case ARS_DOCK_DETECTED:
+		  strncpy( str, "ARS_DOCK_DETECTED @", 255 );
+		  break;
+		case ARS_LEAVE_DETECTED:
+		  strncpy( str, "ARS_LEAVE_DETECTED @", 255 );
+		  break;
+		case ARS_SKIP_DETECTED:
+		  strncpy( str, "ARS_SKIP_DETECTED @", 255 );
+		  break;
+		case ARS_DETECTS_NONE:
+		  assert( ev.sp == SP_NONSENS );
+		  assert( strnlen( buf, 255 ) == 0 );
+		  strncpy( str, "ARS_DETECTS_NONE", 255 );
+		  break;
+		default:
+		  assert( FALSE );
+		}
+		strncat( str, buf, 255 );
+		printf( "%s.\n", str );
+#endif
 	      }
 #endif
 	    }

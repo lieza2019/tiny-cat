@@ -3,6 +3,9 @@
 #include "cbi.h"
 #include "cbtc.h"
 
+#ifndef INTERLOCK_H
+#define INTERLOCK_H
+
 typedef struct route_lock {
   BOOL app;
   IL_SYM_KIND kind;
@@ -146,3 +149,5 @@ extern void ready_on_emit_OC_ctrl ( TINY_SOCK_PTR psocks, CBI_CTRL_STAT_COMM_PRO
 extern void diag_cbi_stat_attrib ( FILE *fp_out, char *ident );
 
 extern BOOL chk_routeconf ( ROUTE_C_PTR r1, ROUTE_C_PTR r2 );
+
+#endif // INTERLOCK_H
