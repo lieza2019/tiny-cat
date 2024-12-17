@@ -275,7 +275,8 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_EVENTS_OVER_SP *pev_sp, DOCK_DETEC
   return r;
 }
 
-STOPPING_POINT_CODE detect_train_skip ( TINY_TRAIN_STATE_PTR pT ) {
+STOPPING_POINT_CODE detect_train_skip ( ARS_EVENTS_OVER_SP *pev_sp, TINY_TRAIN_STATE_PTR pT ) {
+  assert( pev_sp );
   assert( pT );
   STOPPING_POINT_CODE r = SP_NONSENS;
   
@@ -300,6 +301,7 @@ STOPPING_POINT_CODE detect_train_skip ( TINY_TRAIN_STATE_PTR pT ) {
 	CBTC_BLOCK_C_PTR pB_back_prev = lookup_cbtc_block_prof( blk_occ_back_prev );
 	if( (pB_forward_prev != NULL) && (pB_back_prev != NULL) ) {
 	  if( pB_forward_prev->sp.has_sp ) {
+	    //assert( FALSE ); // *****
 	    const STOPPING_POINT_CODE sp_prev = pB_forward_prev->sp.sp_code;
 	    const unsigned short blk_occ_forward_now = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI_now );
 	    const unsigned short blk_occ_back_now = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI_now );	
@@ -308,12 +310,19 @@ STOPPING_POINT_CODE detect_train_skip ( TINY_TRAIN_STATE_PTR pT ) {
 	    CBTC_BLOCK_C_PTR pB_forward_now = lookup_cbtc_block_prof( blk_occ_forward_now );
 	    CBTC_BLOCK_C_PTR pB_back_now = lookup_cbtc_block_prof( blk_occ_back_now );
 	    if( (pB_forward_now != NULL) && (pB_back_now != NULL) ) {
-	      if( pB_back_now->sp.has_sp && (pB_back_now->sp.sp_code == sp_prev) )
+	      //assert( FALSE ); // *****
+	      printf( "(forward, back) = (%d, %d)\n", pB_forward_now->block_name, pB_back_now->block_name ); // *****
+	      if( pB_back_now->sp.has_sp && (pB_back_now->sp.sp_code == sp_prev) ) {
+		//assert( FALSE ); // *****
 		if( !pB_forward_now->sp.has_sp ) {
+		  assert( FALSE ); // *****
 		  assert( pI_now );
-		  if ( TRAIN_INFO_SKIP_NEXT_STOP( *pI_now ) )
+		  if ( TRAIN_INFO_SKIP_NEXT_STOP( *pI_now ) ) {
 		    r = pB_back_now->sp.sp_code;
+		    *pev_sp = ARS_SKIP_DETECTED;
+		  }
 		}
+	      }
 	    } else {
 	      assert( !(pB_forward_now && pB_back_now) );
 	      if( !pB_forward_now ) {

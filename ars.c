@@ -70,11 +70,11 @@ STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TI
       pdetects->sp = hit_sp;
       pT->stop_detected = hit_sp;
     } else {
-      hit_sp = detect_train_skip( pT );
+      hit_sp = detect_train_skip( &pdetects->detail, pT );
       if( hit_sp != SP_NONSENS ) {
 	assert( pT->stop_detected == SP_NONSENS );
+	assert( pdetects->detail == ARS_SKIP_DETECTED );
 	pdetects->sp = hit_sp;
-	pdetects->detail = ARS_SKIP_DETECTED;
       }
     }
   }
