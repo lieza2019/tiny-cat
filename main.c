@@ -489,7 +489,7 @@ int main ( void ) {
 		  pT->stop_detected = SP_NONSENS;
 	      }
 #else
-	      pT->stop_detected = SP_81;
+	      pT->stop_detected = SP_81; // *****
 	      sp = ars_judge_arriv_dept_skip( &ev, pT );
 #endif
 	      {

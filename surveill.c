@@ -120,7 +120,7 @@ STOPPING_POINT_CODE detect_train_leave ( TINY_TRAIN_STATE_PTR pT ) {
 }
 #endif
 
-STOPPING_POINT_CODE detect_train_docked ( ARS_EVENT_ON_SP_PTR pev_sp, DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_STATE_PTR pT ) {
+STOPPING_POINT_CODE detect_train_docked ( ARS_EVENTS_OVER_SP *pev_sp, DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_STATE_PTR pT ) {
   assert( pev_sp );
   assert( (mode == DOCK_DETECT_MAJOR) || (mode == DOCK_DETECT_MINOR) );
   assert( pT );
@@ -212,43 +212,54 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_EVENT_ON_SP_PTR pev_sp, DOCK_DETEC
 	    /* same as the case of ATO, fall thru. */
 	  case OM_ATO:
 	    if( TRAIN_INFO_P0_STOPPED(*pI) || TRAIN_INFO_DOOR_ENABLE(*pI) ) {
-	      if( TRAIN_INFO_ATO_DRIVING_STATUS(*pI) == DS_PO_STOPPING )
+	      if( TRAIN_INFO_ATO_DRIVING_STATUS(*pI) == DS_PO_STOPPING ) {
+		*pev_sp = ARS_DOCK_DETECTED;
 		break;
+	      }
 	    }
 	    r = SP_NONSENS;
 	    break;
 	  case OM_ATP:
-	    if( !(TRAIN_INFO_P0_STOPPED(*pI) || TRAIN_INFO_DOOR_ENABLE(*pI)) )
+	    if( TRAIN_INFO_P0_STOPPED(*pI) || TRAIN_INFO_DOOR_ENABLE(*pI) )
+	      *pev_sp = ARS_DOCK_DETECTED;
+	    else
 	      r = SP_NONSENS;
 	    break;
 	  case OM_RM:
 	    /* fail thru. */
 	  default:
+	    *pev_sp = ARS_DOCK_DETECTED;
 	    break;
 	  }
 	  break;
 	case DOCK_DETECT_MINOR:
+	  if( pB_forward && pB_back ) {
+	    if( (pB_forward->sp.sp_code != pT->stop_detected) && (pB_back->sp.sp_code != pT->stop_detected) ) {
+	      r = SP_NONSENS;
+	      *pev_sp = ARS_DETECTS_NONE;
+	      break;
+	    }
+	  }
 	  switch( TRAIN_INFO_OPERATION_MODE( *pI ) ) {
 	  case OM_UTO:
 	    /* same as the case of ATO, fall thru. */
 	  case OM_ATO:
-	    if( !(TRAIN_INFO_P0_STOPPED(*pI) || TRAIN_INFO_DOOR_ENABLE(*pI) || TRAIN_INFO_STOP_DETECTION(*pI)) )
+	    if( !(TRAIN_INFO_P0_STOPPED(*pI) || TRAIN_INFO_DOOR_ENABLE(*pI) || TRAIN_INFO_STOP_DETECTION(*pI)) ) {
 	      r = SP_NONSENS;
+	      *pev_sp = ARS_LEAVE_DETECTED;
+	    }
 	    break;
 	  case OM_ATP:
 	    /* fail thru. */
 	  case OM_RM:
 	    /* fail thru. */
 	  default:
-	    if( !(TRAIN_INFO_P0_STOPPED(*pI) || TRAIN_INFO_DOOR_ENABLE(*pI) || TRAIN_INFO_STOP_DETECTION(*pI)) ) {
+	    if( !(TRAIN_INFO_P0_STOPPED(*pI) || TRAIN_INFO_DOOR_ENABLE(*pI) || TRAIN_INFO_STOP_DETECTION(*pI)) )
 	      if( pB_forward && pB_back )
-		if( !((pB_forward->sp.sp_code == pT->stop_detected) && (pB_back->sp.sp_code == pT->stop_detected)) )
+		if( !((pB_forward->sp.sp_code == pT->stop_detected) && (pB_back->sp.sp_code == pT->stop_detected)) ) {
 		  r = SP_NONSENS;
-	    } else {
-	      if( pB_forward && pB_back )
-		if( (pB_forward->sp.sp_code != pT->stop_detected) && (pB_back->sp.sp_code != pT->stop_detected) )
-		  r = SP_NONSENS;
-	    }
+		  *pev_sp = ARS_LEAVE_DETECTED;
+		}
 	    break;
 	  }
 	  break;
