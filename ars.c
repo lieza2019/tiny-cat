@@ -90,7 +90,6 @@ static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, int hour, int minu
   int r = -1;
   struct tm *pT_crnt = NULL;
   time_t crnt_time = 0;
-  
   crnt_time = time( NULL );
   pT_crnt = localtime( &crnt_time );
 #if 0 // ***** for debugging.

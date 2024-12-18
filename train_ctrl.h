@@ -71,6 +71,9 @@ typedef struct tiny_train_state {
   } occupancy;
   TRAIN_INFO_ENTRY_PTR pTI;
   TRAIN_INFO_ENTRY TI_last;
+  struct {
+    unsigned short prev_blk_forward;
+  } misc;
   BOOL updated;
   BOOL omit;
   struct tiny_train_state *pNext;

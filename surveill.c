@@ -151,6 +151,8 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_EVENTS_OVER_SP *pev_sp, DOCK_DETEC
 	  if( pB_forward->sp.has_sp || pB_back->sp.has_sp ) {
 	    if( ! pB_back->sp.has_sp ) {
 	      assert( pB_forward->sp.has_sp );
+	      assert( pT );
+	      pT->misc.prev_blk_forward = pB_forward->block_name;
 	      if( pB_forward->sp.stop_detect_cond.paired_blk == VB_NONSENS )
 		r = pB_forward->sp.sp_code;
 	    } else if( ! pB_forward->sp.has_sp ) {
@@ -161,6 +163,8 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_EVENTS_OVER_SP *pev_sp, DOCK_DETEC
 	      assert( pB_forward->sp.has_sp && pB_back->sp.has_sp );
 	      if( pB_forward == pB_back ) {
 		assert( pB_forward->sp.sp_code == pB_back->sp.sp_code );
+		assert( pT );
+		pT->misc.prev_blk_forward = pB_forward->block_name;
 		r = pB_forward->sp.sp_code;
 	      } else {
 		assert( pB_forward != pB_back );
@@ -214,21 +218,24 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_EVENTS_OVER_SP *pev_sp, DOCK_DETEC
 	    if( TRAIN_INFO_P0_STOPPED(*pI) || TRAIN_INFO_DOOR_ENABLE(*pI) ) {
 	      if( TRAIN_INFO_ATO_DRIVING_STATUS(*pI) == DS_PO_STOPPING ) {
 		*pev_sp = ARS_DOCK_DETECTED;
+		pT->misc.prev_blk_forward = 0;
 		break;
 	      }
 	    }
 	    r = SP_NONSENS;
 	    break;
 	  case OM_ATP:
-	    if( TRAIN_INFO_P0_STOPPED(*pI) || TRAIN_INFO_DOOR_ENABLE(*pI) )
+	    if( TRAIN_INFO_P0_STOPPED(*pI) || TRAIN_INFO_DOOR_ENABLE(*pI) ) {
 	      *pev_sp = ARS_DOCK_DETECTED;
-	    else
+	      pT->misc.prev_blk_forward = 0;
+	    } else
 	      r = SP_NONSENS;
 	    break;
 	  case OM_RM:
 	    /* fail thru. */
 	  default:
 	    *pev_sp = ARS_DOCK_DETECTED;
+	    pT->misc.prev_blk_forward = 0;
 	    break;
 	  }
 	  break;
@@ -237,6 +244,7 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_EVENTS_OVER_SP *pev_sp, DOCK_DETEC
 	    if( (pB_forward->sp.sp_code != pT->stop_detected) && (pB_back->sp.sp_code != pT->stop_detected) ) {
 	      r = SP_NONSENS;
 	      *pev_sp = ARS_DETECTS_NONE;
+	      pT->misc.prev_blk_forward = 0;
 	      break;
 	    }
 	  }
@@ -275,6 +283,7 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_EVENTS_OVER_SP *pev_sp, DOCK_DETEC
   return r;
 }
 
+#if 0
 STOPPING_POINT_CODE detect_train_skip ( ARS_EVENTS_OVER_SP *pev_sp, TINY_TRAIN_STATE_PTR pT ) {
   assert( pev_sp );
   assert( pT );
@@ -349,3 +358,69 @@ STOPPING_POINT_CODE detect_train_skip ( ARS_EVENTS_OVER_SP *pev_sp, TINY_TRAIN_S
   }
   return r;
 }
+#else
+STOPPING_POINT_CODE detect_train_skip ( ARS_EVENTS_OVER_SP *pev_sp, TINY_TRAIN_STATE_PTR pT ) {
+  assert( pev_sp );
+  assert( pT );
+  STOPPING_POINT_CODE r = SP_NONSENS;
+  
+  TRAIN_INFO_ENTRY_PTR pI_now = NULL;
+  
+  TRAIN_INFO_ENTRY TI_prev;
+  TRAIN_INFO_ENTRY TI_now;
+  memset( &TI_prev, 0, sizeof(TRAIN_INFO_ENTRY) );
+  memset( &TI_now, 0, sizeof(TRAIN_INFO_ENTRY) );
+  
+  pI_now = (TRAIN_INFO_ENTRY_PTR)conslt_cbtc_state( pT, CBTC_TRAIN_INFORMATION, &TI_prev, &TI_now, sizeof(TRAIN_INFO_ENTRY) );
+  if( pI_now ) {
+    assert( pI_now == &TI_now );
+    if( pT->stop_detected == SP_NONSENS ) {
+      if( pT->misc.prev_blk_forward > 0 ) {
+	CBTC_BLOCK_C_PTR pB_forward_prev = lookup_cbtc_block_prof( pT->misc.prev_blk_forward );
+	assert( pB_forward_prev->sp.has_sp );
+	if( pB_forward_prev->sp.has_sp ) {
+	  const STOPPING_POINT_CODE sp_prev = pB_forward_prev->sp.sp_code;
+	  const unsigned short blk_occ_forward_now = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI_now );
+	  const unsigned short blk_occ_back_now = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI_now );	
+	  assert( blk_occ_forward_now > 0 );
+	  assert( blk_occ_back_now > 0 );
+	  CBTC_BLOCK_C_PTR pB_forward_now = lookup_cbtc_block_prof( blk_occ_forward_now );
+	  CBTC_BLOCK_C_PTR pB_back_now = lookup_cbtc_block_prof( blk_occ_back_now );
+	  if( (pB_forward_now != NULL) && (pB_back_now != NULL) ) {
+	    if( pB_back_now->sp.has_sp && (pB_back_now->sp.sp_code == sp_prev) ) {
+	      if( (pB_forward_prev->block_name != pB_forward_now->block_name) && !(pB_forward_now->sp.has_sp) ) {
+		//printf( "(forward, back) = (%d, %d)\n", pB_forward_now->block_name, pB_back_now->block_name ); // ***** for debugging.
+		assert( pI_now );
+		if ( TRAIN_INFO_SKIP_NEXT_STOP( *pI_now ) ) {
+		  r = pB_back_now->sp.sp_code;
+		  *pev_sp = ARS_SKIP_DETECTED;
+		}
+		pT->misc.prev_blk_forward = 0;
+	      }
+	    }
+	  } else {
+	    assert( !(pB_forward_now && pB_back_now) );
+	    if( !pB_forward_now ) {
+	      if( !pB_back_now ) {
+		assert( !pB_forward_now );
+		assert( !pB_back_now );
+		errorF( "invalid occupied block (forward): %d, detected in skipping-detector.\n", blk_occ_forward_now );
+		errorF( "invalid occupied block (back): %d, detected in skipping-detector.\n", blk_occ_back_now );
+	      } else {
+		assert( !pB_forward_now );
+		assert( pB_back_now );
+		errorF( "invalid occupied block (forward): %d, detected in skipping-detector.\n", blk_occ_forward_now );
+	      }
+	    } else {
+	      assert( pB_forward_now );
+	      assert( !pB_back_now );
+	      errorF( "invalid occupied block (back): %d, detected in skipping-detector.\n", blk_occ_back_now );
+	    }
+	  }
+	}
+      }
+    }
+  }
+  return r;
+}
+#endif
