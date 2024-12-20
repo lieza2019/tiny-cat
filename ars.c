@@ -59,8 +59,16 @@ STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TI
     hit_sp = detect_train_docked( &pdetects->detail, DOCK_DETECT_MINOR, pT );
     if( hit_sp == SP_NONSENS ) {
       assert( pdetects->detail != ARS_DOCK_DETECTED );
-      pdetects->sp = hit_sp;
+      pdetects->sp = SP_NONSENS;
       pT->stop_detected = SP_NONSENS;
+    } else {
+      if( pdetects->detail == ARS_LEAVE_DETECTED ) {
+	pdetects->sp = hit_sp;
+	pT->stop_detected = SP_NONSENS;
+      } else {
+	assert( pdetects->sp == pT->stop_detected );
+	assert( pdetects->detail == ARS_DOCK_DETECTED );
+      }
     }
   } else {
     assert( pT->stop_detected == SP_NONSENS );

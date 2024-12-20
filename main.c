@@ -409,7 +409,7 @@ int main ( void ) {
 	    TINY_TRAIN_STATE_PTR pT = &trains_tracking[i];
 	    assert( pT );
 	    if( pT->rakeID == target_rake ) {
-#if 0
+#if 0 // *****
 	      int r_mutex = -1;
 	      r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
 	      if( r_mutex ) {
@@ -424,7 +424,7 @@ int main ( void ) {
 		//change_train_state_TH_cmd( pT, TRUE, TRUE );
 		//change_train_state_ordering_emergency_stop( pT, TRUE, TRUE );
 		//change_train_state_releasing_emergency_stop( pT, TRUE, TRUE );
-		//change_train_state_perf_regime( pT, PR_S_MODE, TRUE );
+		//change_train_state_perf_regime( pT, PR_NO_COMMAND, TRUE );
 		//change_train_state_turnback_siding( pT, TRUE, TRUE );
 		//change_train_state_ATB_cmd( pT, TRUE, TRUE );
 		//change_train_state_train_remove( pT, TRUE, TRUE );
@@ -433,7 +433,7 @@ int main ( void ) {
 		//change_train_state_crnt_blockID( pT, 1416, TRUE );
 		// 2nd grp.
 		//change_train_state_crnt_station_plcode( pT, CPL_INVALID_TB_SECTION, TRUE );
-		//change_train_state_next_station_plcode( pT, NPL_INVALID_TB_SECTION, TRUE );
+		//change_train_state_next_station_plcode( pT, NPL_OTHERS, TRUE );
 		//change_train_state_dst_station_plcode( pT, DPL_INVALID_TB_SECTION, TRUE );
 		//change_train_state_destination_number( pT, 54, TRUE );
 		//change_train_state_next_station_number( pT, 8, TRUE );
@@ -447,7 +447,7 @@ int main ( void ) {
 		//change_train_state_static_test_cmd( pT, TRUE, TRUE );
 		//change_train_state_depcond_release( pT, TRUE, TRUE );
 		//change_train_state_origin_station( pT, TRUE, TRUE );
-		//change_train_state_next_st_dooropen_side( pT, NDS_R_SIDE, TRUE );
+		//change_train_state_next_st_dooropen_side( pT, NDS_NOT_OPEN, TRUE );
 		//change_train_state_operation_mode( pT, OM_UNKNOWN_NO_DIRECTIVE, TRUE );
 		//change_train_state_coasting_cmd( pT, FALSE, TRUE );
 		//change_train_state_energy_saving( pT, TRUE, TRUE );
@@ -462,7 +462,7 @@ int main ( void ) {
 		//change_train_state_forward_vrs_reset( pT, TRUE, TRUE );
 		//change_train_state_maximum_speed_cmd( pT, 61, TRUE );
 		//change_train_state_passenger_address( pT, 79, TRUE );
-		//change_train_state_dep_dir( pT, MD_UP_DIR, TRUE );
+		//change_train_state_dep_dir( pT, MD_UNKNOWN, TRUE );
 		//change_train_state_regulation_speed( pT, 18, TRUE );
 		//change_train_state_passenger_display_message( pT, 65539, TRUE );
 		r_mutex = -1;
