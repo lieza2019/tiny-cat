@@ -216,10 +216,26 @@ typedef enum cbi_stat_kind {
 } CBI_STAT_KIND;
 typedef CBI_STAT_KIND IL_SYM_KIND;
 
-#define CTRL_LIT_SUSTAIN_CNT 50
+#define CBI_LEX_PAT_MAXLEN 256
+#define CBI_EXPAND_PAT_MAXNUM 3
 #define CBI_CODE_FILENAME_MAXLEN 512
 #define CBI_STAT_IDENT_LEN 32
 #define CBI_STAT_NAME_LEN 32
+typedef struct lex_il_obj {
+  CBI_STAT_KIND il_stat_kind;
+  char match_pat[CBI_LEX_PAT_MAXLEN + 1];
+  char exp_ident_pat[CBI_LEX_PAT_MAXLEN + 1];
+  struct {
+    CBI_STAT_KIND il_sym_kind;
+    char pat[CBI_LEX_PAT_MAXLEN + 1];
+  } exp[CBI_EXPAND_PAT_MAXNUM];
+  char src_specified[CBI_CODE_FILENAME_MAXLEN + 1];
+  char raw_name[CBI_STAT_NAME_LEN + 1];
+  char label[CBI_STAT_IDENT_LEN + 1];
+  struct lex_il_obj *pNext;
+} LEX_CBI_OBJ, *LEX_CBI_OBJ_PTR;
+
+#define CTRL_LIT_SUSTAIN_CNT 50
 typedef struct cbi_stat_attr {
   char ident[CBI_STAT_IDENT_LEN + 1];
   char name[CBI_STAT_NAME_LEN + 1];
@@ -252,10 +268,16 @@ typedef struct cbi_stat_attr {
   struct cbi_stat_attr *pNext_dirt;
   struct cbi_stat_attr *pNext_hash;
   struct {
-    int nentities;
-    struct cbi_stat_attr *pNext;
-    struct cbi_stat_attr *pFamily;
-    void *plex_il_obj;
+    struct {
+      int nentities;
+      struct cbi_stat_attr *pNext;
+      struct cbi_stat_attr *pFamily;
+    } il_inst;
+    struct {
+      LEX_CBI_OBJ entity;
+      struct cbi_stat_attr *pinst;
+      void *plex_il_obj;
+    } il_obj;
   } decl_gen;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 

@@ -19,12 +19,13 @@ typedef struct prefx_sufix {
   } suffix;
 } PREFX_SUFIX, *PREFX_SUFIX_PTR;
 
-#define CBI_LEX_PAT_MAXLEN 256
-#define CBI_EXPAND_PAT_MAXNUM 3
 typedef enum lex_cbi_stat_reg_ovriddn {  
   OVERRIDDEN,
   NO_OVERRIDDEN
 } LEX_CBI_STAT_REG_OVRIDDN;
+#if 0
+#define CBI_LEX_PAT_MAXLEN 256
+#define CBI_EXPAND_PAT_MAXNUM 3
 typedef struct lex_il_obj {
   CBI_STAT_KIND il_stat_kind;
   char match_pat[CBI_LEX_PAT_MAXLEN + 1];
@@ -37,6 +38,7 @@ typedef struct lex_il_obj {
   char raw_name[CBI_STAT_NAME_LEN + 1];
   char label[CBI_STAT_IDENT_LEN + 1];
 } LEX_CBI_OBJ, *LEX_CBI_OBJ_PTR;
+#endif
 
 #define CBI_IDENT_MAXLEN 256
 #define CBI_MATCHED_CHRS_MAXLEN 256
@@ -484,7 +486,13 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	  strncpy( pE->src.fname, pattr->src.fname, CBI_CODE_FILENAME_MAXLEN );
 	  pE->src.line = pattr->src.line;
 	  assert( plex );
-	  pE->decl_gen.plex_il_obj = (void *)plex;
+#if 0 // *****
+	  if( strncmp(plex->label, emit_buf, CBI_STAT_IDENT_LEN) ) {
+	    printf( "(plex->label, emit_buf) = (%s, %s)\n", plex->label, emit_buf );
+	    assert( FALSE );
+	  }
+#endif
+	  pE->decl_gen.il_obj.plex_il_obj = (void *)plex;
 #if 0
 	  printf( "HIT: (line: pat, name, ident) = (%d: %s, %s, %s)\n", line, plex->exp[i].pat, plex->raw_name, emit_buf ); // ***** for debugging.
 #endif
@@ -500,8 +508,8 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	      continue;
 	    }
 	    assert( w == pE );
-	    w->decl_gen.pNext = NULL;
-	    w->decl_gen.pFamily = NULL;
+	    w->decl_gen.il_inst.pNext = NULL;
+	    w->decl_gen.il_inst.pFamily = NULL;
 	    if( !family.fst ) {
 	      assert( !family.pp );
 	      family.fst = w;
@@ -509,7 +517,7 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	      assert( family.pp );
 	      *family.pp = w;
 	    }
-	    family.pp = &w->decl_gen.pFamily;
+	    family.pp = &w->decl_gen.il_inst.pFamily;
 	  }
 	  cnt++;
 	} else {
@@ -522,7 +530,7 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
       assert( family.fst );
       assert( family.pp );
       assert( !(*family.pp) );
-      family.fst->decl_gen.nentities = cnt;
+      family.fst->decl_gen.il_inst.nentities = cnt;
       if( ! il_syms_hash.ptop ) {
 	assert( !il_syms_hash.pplast );
 	il_syms_hash.ptop = family.fst;
@@ -530,7 +538,7 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	assert( il_syms_hash.pplast );
 	*(il_syms_hash.pplast) = family.fst;
       }
-      il_syms_hash.pplast = &family.fst->decl_gen.pNext;
+      il_syms_hash.pplast = &family.fst->decl_gen.il_inst.pNext;
     }
   }
   return ( cnt * (err ? -1 : 1) );
@@ -566,6 +574,9 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
 	plex->label[CBI_STAT_IDENT_LEN] = 0;
 	fprintf( fp, ", \"%s\"", plex->label );
 	//fprintf( fp, " %s", pprsf->suffix.emit );
+#if 1
+	printf( "HIT: (line: pat, name, ident) = (%d: %s, %s, %s)\n", line, plex->exp_ident_pat, plex->raw_name, plex->label ); // ***** for debugging.
+#endif
       } else
 	err = TRUE;
     } else {
@@ -700,7 +711,7 @@ int main ( void ) {
     p = il_syms_hash.ptop;
     while( p ) {
       assert( p );
-      switch( p->decl_gen.nentities ) {
+      switch( p->decl_gen.il_inst.nentities ) {
       case 1:
 	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC( " );
 	break;
@@ -727,13 +738,16 @@ int main ( void ) {
 	p->name[CBI_STAT_NAME_LEN] = 0;
 	fprintf( fp_out, "%s, ", p->name );
       }
+      fprintf( fp_out, "%s, ", p->ident );
+#if 0 // *****
       {
 	assert( p );
 	assert( p->decl_gen.plex_il_obj );
 	((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->label[CBI_STAT_IDENT_LEN] = 0;
 	fprintf( fp_out, "%s, ", ((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->label );
       }
-      fprintf( fp_out, "\"%s\", ", ((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->src_specified );
+#endif
+      fprintf( fp_out, "\"%s\", ", ((LEX_CBI_OBJ_PTR)(p->decl_gen.il_obj.plex_il_obj))->src_specified );
       
       assert( p );
       assert( p->ident );
@@ -747,13 +761,13 @@ int main ( void ) {
 	  fprintf( fp_out, "\"%s\", ", q->ident );
 	  fprintf( fp_out, "%d)", cnt );
 	  cnt++;
-	  q = q->decl_gen.pFamily;
+	  q = q->decl_gen.il_inst.pFamily;
 	  if( q )
 	    fprintf( fp_out, ", " );
 	}
       }
       fprintf( fp_out, " )\n" );
-      p = p->decl_gen.pNext;
+      p = p->decl_gen.il_inst.pNext;
     }
   }
   return 0;

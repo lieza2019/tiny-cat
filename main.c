@@ -409,7 +409,7 @@ int main ( void ) {
 	    TINY_TRAIN_STATE_PTR pT = &trains_tracking[i];
 	    assert( pT );
 	    if( pT->rakeID == target_rake ) {
-#if 0 // *****
+#if 0
 	      int r_mutex = -1;
 	      r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
 	      if( r_mutex ) {
@@ -470,28 +470,12 @@ int main ( void ) {
 		assert( !r_mutex );
 	      }
 #endif
-#if 1 // *****
+#if 1
 	      char str[255 + 1] = "detect_train_docked @";
 	      ARS_EVENT_ON_SP ev;
 	      STOPPING_POINT_CODE sp = SP_NONSENS;
-#if 0
-	      DOCK_DETECT_DIRECTIVE m;
-	      if( pT->stop_detected == SP_NONSENS ) {
-		m = DOCK_DETECT_MAJOR;
-		sp = detect_train_docked( DOCK_DETECT_MAJOR, pT );
-		if( sp != SP_NONSENS )
-		  pT->stop_detected = sp;
-	      } else {
-		assert( pT->stop_detected != SP_NONSENS );
-		m = DOCK_DETECT_MINOR;
-		sp = detect_train_docked( DOCK_DETECT_MINOR, pT );
-		if( sp == SP_NONSENS )
-		  pT->stop_detected = SP_NONSENS;
-	      }
-#else
 	      //pT->stop_detected = SP_81; // *****
 	      sp = ars_judge_arriv_dept_skip( &ev, pT );
-#endif
 	      {
 		char buf[255 + 1];
 		buf[255] = 0;
@@ -541,21 +525,6 @@ int main ( void ) {
 		case END_OF_SPs:
 		  assert( FALSE );
 		}
-#if 0
-		if( strlen( buf ) > 0 ) {
-		  str[255] = 0;
-		  strncat( str, buf, 255 );
-		  switch( m ) {
-		  case DOCK_DETECT_MAJOR:
-		    strncat( str, " with DOCK_DETECT_MAJOR.", 255 );
-		    break;
-		  case DOCK_DETECT_MINOR:
-		    strncat( str, " with DOCK_DETECT_MINOR.", 255 );
-		    break;
-		  }
-		  printf( "%s\n", str );
-		}
-#else
 		str[255] = 0;
 		switch( ev.detail ) {
 		case ARS_DOCK_DETECTED:
@@ -577,7 +546,6 @@ int main ( void ) {
 		}
 		strncat( str, buf, 255 );
 		printf( "%s.\n", str );
-#endif
 	      }
 #endif
 	    }
