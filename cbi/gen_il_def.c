@@ -70,10 +70,36 @@ LEX_CBI_OBJ cbi_lex_def[] = {
 #define IL_OBJ_HASH_BUDGETS_NUM 256
 struct {
   CBI_STAT_ATTR_PTR budgets[IL_OBJ_HASH_BUDGETS_NUM];
-  CBI_STAT_ATTR sea[CBI_MAX_STAT_BITS];
-  int frontier;
-  CBI_STAT_ATTR_PTR ptop;
-  CBI_STAT_ATTR_PTR *pplast;
+#if 0
+  struct {
+    LEX_CBI_OBJ entities[CBI_MAX_STAT_BITS];
+    CBI_STAT_ATTR instances[CBI_MAX_STAT_BITS];
+  } sea;
+  struct {
+    int frontier;
+  } frontier;
+#else
+  struct {
+    struct {
+      int frontier;
+      LEX_CBI_OBJ nodes[CBI_MAX_STAT_BITS];
+      struct {
+	LEX_CBI_OBJ_PTR ptop;
+	LEX_CBI_OBJ_PTR *pplast;
+      } acc;
+    } il_obj;
+    struct {
+      int frontier;
+      CBI_STAT_ATTR nodes[CBI_MAX_STAT_BITS];
+      struct {
+	CBI_STAT_ATTR_PTR ptop;
+	CBI_STAT_ATTR_PTR *pplast;
+      } acc;
+    } il_inst;
+  } sea;
+  //CBI_STAT_ATTR_PTR ptop;
+  //CBI_STAT_ATTR_PTR *pplast;
+#endif
 } il_syms_hash;
 
 static CBI_LEX_SYMBOL_PTR regist_symbol ( CBI_LEX_SYMTBL_PTR psymtbl, CBI_LEX_SYMBOL_PTR ancest, char *id, int id_len ) {
@@ -446,9 +472,10 @@ static CBI_STAT_ATTR_PTR hash_regist ( CBI_STAT_ATTR_PTR pE, int line ) {
   return cbi_stat_regist( il_syms_hash.budgets, IL_OBJ_HASH_BUDGETS_NUM, pE, FALSE, buf );
 }
 
-static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
+static int emit_il_instances ( FILE *fp, FILE *errfp, CBI_STAT_ATTR_PTR *ppinst, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
   assert( fp );
   assert( errfp );
+  assert( ppinst );
   assert( pprsf );
   assert( psymtbl );
   assert( plex );
@@ -474,8 +501,8 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	assert( (abs(n) >= 0) && (abs(n) < CBI_EXPAND_EMIT_MAXLEN) );
 	emit_buf[abs(n)] = 0;
 	if( n > 0 ) {
-	  assert( il_syms_hash.frontier < CBI_MAX_STAT_BITS );
-	  pE = &il_syms_hash.sea[il_syms_hash.frontier++];
+	  assert( il_syms_hash.sea.il_inst.frontier < CBI_MAX_STAT_BITS );
+	  pE = &il_syms_hash.sea.il_inst.nodes[il_syms_hash.sea.il_inst.frontier++];
 	  assert( pE );
 	  pE->ident[CBI_STAT_IDENT_LEN] = 0;
 	  strncpy( pE->ident, emit_buf, CBI_STAT_IDENT_LEN );
@@ -492,7 +519,8 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	    assert( FALSE );
 	  }
 #endif
-	  pE->decl_gen.il_obj.plex_il_obj = (void *)plex;
+	  //pE->decl_gen.plex_il_obj = (void *)plex; // *****
+	  pE->decl_gen.pentity = plex;
 #if 0
 	  printf( "HIT: (line: pat, name, ident) = (%d: %s, %s, %s)\n", line, plex->exp[i].pat, plex->raw_name, emit_buf ); // ***** for debugging.
 #endif
@@ -508,8 +536,8 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	      continue;
 	    }
 	    assert( w == pE );
-	    w->decl_gen.il_inst.pNext = NULL;
-	    w->decl_gen.il_inst.pFamily = NULL;
+	    w->decl_gen.pNext = NULL;
+	    w->decl_gen.pFamily = NULL;
 	    if( !family.fst ) {
 	      assert( !family.pp );
 	      family.fst = w;
@@ -517,7 +545,7 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
 	      assert( family.pp );
 	      *family.pp = w;
 	    }
-	    family.pp = &w->decl_gen.il_inst.pFamily;
+	    family.pp = &w->decl_gen.pFamily;
 	  }
 	  cnt++;
 	} else {
@@ -530,21 +558,26 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int
       assert( family.fst );
       assert( family.pp );
       assert( !(*family.pp) );
-      family.fst->decl_gen.il_inst.nentities = cnt;
-      if( ! il_syms_hash.ptop ) {
-	assert( !il_syms_hash.pplast );
-	il_syms_hash.ptop = family.fst;
+      family.fst->decl_gen.ninstances = cnt;
+      if( ! il_syms_hash.sea.il_inst.acc.ptop ) {
+	assert( !il_syms_hash.sea.il_inst.acc.pplast );
+	il_syms_hash.sea.il_inst.acc.ptop = family.fst;
       } else {
-	assert( il_syms_hash.pplast );
-	*(il_syms_hash.pplast) = family.fst;
+	assert( il_syms_hash.sea.il_inst.acc.pplast );
+	*(il_syms_hash.sea.il_inst.acc.pplast) = family.fst;
       }
-      il_syms_hash.pplast = &family.fst->decl_gen.il_inst.pNext;
+      il_syms_hash.sea.il_inst.acc.pplast = &family.fst->decl_gen.pNext;
+      *ppinst = family.fst;
+    } else {
+      assert( !family.fst );
+      assert( !family.pp );
+      *ppinst = NULL;
     }
   }
   return ( cnt * (err ? -1 : 1) );
 }
 
-static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
+static LEX_CBI_OBJ_PTR emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
   assert( fp );
   assert( errfp );
   assert( pprsf );
@@ -553,8 +586,12 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
   assert( pattr );
   BOOL err = FALSE;
   
+  assert( il_syms_hash.sea.il_obj.frontier < CBI_MAX_STAT_BITS );
+  LEX_CBI_OBJ_PTR pE = &il_syms_hash.sea.il_obj.nodes[il_syms_hash.sea.il_obj.frontier++];
+  assert( pE );
+  
   assert( plex->raw_name );
-  {
+  { 
     const char *kind_s = NULL;
     kind_s = cnv2str_cbi_stat[plex->il_stat_kind];
     assert( kind_s );
@@ -567,30 +604,62 @@ static int emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int 
       emit_buf[abs(n)] = 0;
       if( n > 0 ) {
 	assert( plex );
+	strncpy( plex->label, emit_buf, CBI_STAT_IDENT_LEN );
+	assert( pE );
+	*pE = *plex;
+	pE->label[CBI_STAT_IDENT_LEN] = 0;
 	fprintf( fp, "%s ", pprsf->prefix.emit );
 	fprintf( fp, "%s", kind_s );
+#if 0 // *****
 	fprintf( fp, ", \"%s\"", plex->raw_name );
-	strncpy( plex->label, emit_buf, CBI_STAT_IDENT_LEN );
-	plex->label[CBI_STAT_IDENT_LEN] = 0;
 	fprintf( fp, ", \"%s\"", plex->label );
-	//fprintf( fp, " %s", pprsf->suffix.emit );
-#if 1
+#else
+	fprintf( fp, ", \"%s\"", pE->raw_name );
+	fprintf( fp, ", \"%s\"", pE->label );
+#endif
+#if 0
 	printf( "HIT: (line: pat, name, ident) = (%d: %s, %s, %s)\n", line, plex->exp_ident_pat, plex->raw_name, plex->label ); // ***** for debugging.
 #endif
       } else
 	err = TRUE;
     } else {
+      assert( plex );
+      assert( pE );
+      strncpy( plex->label, "NO_ABBREV", CBI_STAT_IDENT_LEN );      
+      *pE = *plex;
+      pE->label[CBI_STAT_IDENT_LEN] = 0;
       fprintf( fp, "%s ", pprsf->prefix.emit );
       fprintf( fp, "%s", kind_s );
+#if 0 // *****
       fprintf( fp, ", \"%s\"", plex->raw_name );
       fprintf( fp, ", \"%s\"", "NO_ABBREV" );
-      //fprintf( fp, " %s", pprsf->suffix.emit );
+#else
+      fprintf( fp, ", \"%s\"", pE->raw_name );
+      fprintf( fp, ", \"%s\"", pE->label );
+#endif
     }
-    if( strnlen(plex->src_specified, CBI_CODE_FILENAME_MAXLEN) > 0 )
-      fprintf( fp, ", \"%s\"", plex->src_specified );
-    fprintf( fp, " %s", pprsf->suffix.emit );
+    if( !err ) {
+#if 0 // *****
+      if( strnlen(plex->src_specified, CBI_CODE_FILENAME_MAXLEN) > 0 )
+	fprintf( fp, ", \"%s\"", plex->src_specified );
+#else
+      if( strnlen(pE->src_specified, CBI_CODE_FILENAME_MAXLEN) > 0 )
+	fprintf( fp, ", \"%s\"", pE->src_specified );
+      if( ! il_syms_hash.sea.il_obj.acc.ptop ) {
+	assert( !il_syms_hash.sea.il_obj.acc.pplast );
+	il_syms_hash.sea.il_obj.acc.ptop = pE;
+      } else {
+	assert( il_syms_hash.sea.il_obj.acc.pplast );
+	*(il_syms_hash.sea.il_obj.acc.pplast) = pE;
+      }
+      il_syms_hash.sea.il_obj.acc.pplast = &pE->pNext;
+#endif
+      fprintf( fp, " %s", pprsf->suffix.emit );
+    }
   }
-  return (err ? -1 : 1);
+  assert( pE );
+  //return (err ? -1 : 1);
+  return (err ? NULL : pE );
 }
 
 static int transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
@@ -614,6 +683,7 @@ static int transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, C
       assert( src1 );
       if( r_lex )
 	if( src1 >= (src + strnlen(src, CBI_STAT_NAME_LEN)) ) {
+#if 0 // *****
 	  int r_emit_abb = -1;
 	  int r_emit_ins = -1;
 	  assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
@@ -624,6 +694,20 @@ static int transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, C
 	      r = r_emit_ins;
 	  if( (abs(r_emit_abb) + abs(r_emit_ins)) > 0 )
 	    fprintf( fp, "\n" );
+#else
+	  LEX_CBI_OBJ_PTR pemit_abb = NULL;
+	  int emit_ins = -1;
+	  assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
+	  strncpy( pprsf->prefix.emit, "{", CBI_LEX_EMIT_PREFX_MAXCHRS );
+	  strncpy( pprsf->suffix.emit, "}," , CBI_LEX_EMIT_PREFX_MAXCHRS );
+	  pemit_abb = emit_stat_abbrev(fp, errfp, pprsf, line, psymtbl, plex, pattr);
+	  if( pemit_abb ) {
+	    if( (emit_ins = emit_il_instances( fp, errfp, &pemit_abb->pinstances, pprsf, line, psymtbl, pemit_abb, pattr )) >= 0 )
+	      r = emit_ins;
+	  }
+	  if( pemit_abb || (abs(emit_ins) > 0) )
+	    fprintf( fp, "\n" );
+#endif
 	}
     }
   }
@@ -708,10 +792,10 @@ int main ( void ) {
   {
     int cnt = 0;
     CBI_STAT_ATTR_PTR p = NULL;
-    p = il_syms_hash.ptop;
+    p = il_syms_hash.sea.il_inst.acc.ptop;
     while( p ) {
       assert( p );
-      switch( p->decl_gen.il_inst.nentities ) {
+      switch( p->decl_gen.ninstances ) {
       case 1:
 	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC( " );
 	break;
@@ -738,7 +822,6 @@ int main ( void ) {
 	p->name[CBI_STAT_NAME_LEN] = 0;
 	fprintf( fp_out, "%s, ", p->name );
       }
-      fprintf( fp_out, "%s, ", p->ident );
 #if 0 // *****
       {
 	assert( p );
@@ -746,8 +829,19 @@ int main ( void ) {
 	((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->label[CBI_STAT_IDENT_LEN] = 0;
 	fprintf( fp_out, "%s, ", ((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->label );
       }
+      //fprintf( fp_out, "\"%s\", ", ((LEX_CBI_OBJ_PTR)(p->decl_gen.plex_il_obj))->src_specified ); // *****
+#else
+      //fprintf( fp_out, "%s, ", p->ident );
+      {
+	assert( p );
+	assert( p->decl_gen.pentity );
+	(p->decl_gen.pentity)->label[CBI_STAT_IDENT_LEN] = 0;
+	fprintf( fp_out, "%s, ", (p->decl_gen.pentity)->label );
+      }
+      (p->decl_gen.pentity)->src_specified[CBI_CODE_FILENAME_MAXLEN] = 0;
+      fprintf( fp_out, "\"%s\", ", (p->decl_gen.pentity)->src_specified );
 #endif
-      fprintf( fp_out, "\"%s\", ", ((LEX_CBI_OBJ_PTR)(p->decl_gen.il_obj.plex_il_obj))->src_specified );
+      
       
       assert( p );
       assert( p->ident );
@@ -761,13 +855,13 @@ int main ( void ) {
 	  fprintf( fp_out, "\"%s\", ", q->ident );
 	  fprintf( fp_out, "%d)", cnt );
 	  cnt++;
-	  q = q->decl_gen.il_inst.pFamily;
+	  q = q->decl_gen.pFamily;
 	  if( q )
 	    fprintf( fp_out, ", " );
 	}
       }
       fprintf( fp_out, " )\n" );
-      p = p->decl_gen.il_inst.pNext;
+      p = p->decl_gen.pNext;
     }
   }
   return 0;
