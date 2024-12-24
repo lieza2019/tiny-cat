@@ -1117,6 +1117,7 @@ int main ( void ) {
 
 static const CBI_STAT_KIND il_sym_kind[] = {
 #define IL_SYMS(sym_kind, sym, str, code) sym_kind
+#define IL_OBJ_INSTANCE_DESC0(stat_kind, raw_name, label, src_specifier)
 #define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, src_specifier, exp) exp,
 #define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, src_specifier, exp1) exp1,
 #define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, src_specifier, exp1, exp2) exp1, exp2,
@@ -1142,6 +1143,7 @@ const CBI_STAT_KIND whats_kind_of_il_sym ( IL_SYM obj ) {
 
 static const char *il_sym_namechrs [] = {
 #define IL_SYMS(sym_kind, sym, str, code) str
+#define IL_OBJ_INSTANCE_DESC0(stat_kind, raw_name, label, src_specifier)
 #define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, src_specifier, exp) exp,
 #define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, src_specifier, exp1) exp1,
 #define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, src_specifier, exp1, exp2) exp1, exp2,

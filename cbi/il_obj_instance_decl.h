@@ -3,6 +3,7 @@
 
 typedef enum il_sym {
 #define IL_SYMS(sym_kind, sym, str, code) sym=code
+#define IL_OBJ_INSTANCE_DESC0(stat_kind, raw_name, label, src_specifier)
 #define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, src_specifier, exp) exp,
 #define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, src_specifier, exp1) exp1,
 #define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, src_specifier, exp1, exp2) exp1, exp2,

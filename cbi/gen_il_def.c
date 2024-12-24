@@ -533,12 +533,7 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, CBI_STAT_ATTR_PTR *ppinst,
 	      w->ident[CBI_STAT_IDENT_LEN] = 0;
 	      assert( !strncmp( w->ident, pE->ident, CBI_STAT_IDENT_LEN ) );
 	      fprintf( errfp, "%d: found redeclaration of %s, and omitted.\n", line, w->ident );
-#if 0 // *****
 	      continue;
-#else
-	      *pE = *w;
-	      w = pE;
-#endif
 	    }
 	    assert( w == pE );
 	    w->decl_gen.pNext = NULL;
@@ -877,24 +872,31 @@ int main ( void ) {
     p = il_syms_hash.sea.il_obj.acc.ptop;
     while( p ) {
       assert( p );
-      switch( p->pinstances->decl_gen.ninstances ) {
-      case 1:
-	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC( " );
-	break;
-      case 2:
-	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC2( " );
-	break;
-      case 3:
-	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC3( " );
-	break;
-      case 4:
-	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC4( " );
-	break;
-      case 5:
-	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC5( " );
-	break;
-      default:
-	assert( FALSE );
+      BOOL has_no_ins = FALSE;
+      if( p->pinstances ) {
+	assert( p->pinstances > 0 );
+	switch( p->pinstances->decl_gen.ninstances ) {
+	case 1:
+	  fprintf( fp_out, "IL_OBJ_INSTANCE_DESC( " );
+	  break;
+	case 2:
+	  fprintf( fp_out, "IL_OBJ_INSTANCE_DESC2( " );
+	  break;
+	case 3:
+	  fprintf( fp_out, "IL_OBJ_INSTANCE_DESC3( " );
+	  break;
+	case 4:
+	  fprintf( fp_out, "IL_OBJ_INSTANCE_DESC4( " );
+	  break;
+	case 5:
+	  fprintf( fp_out, "IL_OBJ_INSTANCE_DESC5( " );
+	  break;
+	default:
+	  assert( FALSE );
+	}
+      } else {
+	has_no_ins = TRUE;
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC0( " );
       }
       fprintf( fp_out, "%s, ", cnv2str_cbi_stat[p->il_stat_kind] );
       p->raw_name[CBI_STAT_NAME_LEN] = 0;
@@ -902,13 +904,16 @@ int main ( void ) {
       p->label[CBI_STAT_IDENT_LEN] = 0;
       fprintf( fp_out, "%s, ", p->label );
       p->src_specified[CBI_CODE_FILENAME_MAXLEN] = 0;
-      fprintf( fp_out, "\"%s\", ", p->src_specified );
+      fprintf( fp_out, "\"%s\"", p->src_specified );
+      if( !has_no_ins )
+	fprintf( fp_out, ", " );
 #if 0
       assert( p );
       assert( p->ident );
       p->ident[CBI_STAT_IDENT_LEN] = 0;
 #endif
-      if( p->pinstances ) {
+      if( !has_no_ins ) {
+	assert( p->pinstances );
 	CBI_STAT_ATTR_PTR q = p->pinstances;
 	while( q ) {
 	  assert( q );
