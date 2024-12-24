@@ -533,7 +533,12 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, CBI_STAT_ATTR_PTR *ppinst,
 	      w->ident[CBI_STAT_IDENT_LEN] = 0;
 	      assert( !strncmp( w->ident, pE->ident, CBI_STAT_IDENT_LEN ) );
 	      fprintf( errfp, "%d: found redeclaration of %s, and omitted.\n", line, w->ident );
+#if 0 // *****
 	      continue;
+#else
+	      *pE = *w;
+	      w = pE;
+#endif
 	    }
 	    assert( w == pE );
 	    w->decl_gen.pNext = NULL;
@@ -643,6 +648,8 @@ static LEX_CBI_OBJ_PTR emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR
       if( strnlen(plex->src_specified, CBI_CODE_FILENAME_MAXLEN) > 0 )
 	fprintf( fp, ", \"%s\"", plex->src_specified );
 #else
+      pE->src_specified[CBI_CODE_FILENAME_MAXLEN] = 0;
+      assert( !strncmp( pE->src_specified, plex->src_specified, CBI_CODE_FILENAME_MAXLEN ) );
       if( strnlen(pE->src_specified, CBI_CODE_FILENAME_MAXLEN) > 0 )
 	fprintf( fp, ", \"%s\"", pE->src_specified );
       if( ! il_syms_hash.sea.il_obj.acc.ptop ) {
@@ -789,6 +796,7 @@ int main ( void ) {
     fprintf( fp_out, "failed to open the file: %s.\n", IL_INSTANCES_EMIT_FNAME );
     return -1;
   }
+#if 0 // *****
   {
     int cnt = 0;
     CBI_STAT_ATTR_PTR p = NULL;
@@ -841,8 +849,6 @@ int main ( void ) {
       (p->decl_gen.pentity)->src_specified[CBI_CODE_FILENAME_MAXLEN] = 0;
       fprintf( fp_out, "\"%s\", ", (p->decl_gen.pentity)->src_specified );
 #endif
-      
-      
       assert( p );
       assert( p->ident );
       p->ident[CBI_STAT_IDENT_LEN] = 0;
@@ -864,5 +870,62 @@ int main ( void ) {
       p = p->decl_gen.pNext;
     }
   }
+#else
+  {
+    int cnt = 0;
+    LEX_CBI_OBJ_PTR p = NULL;
+    p = il_syms_hash.sea.il_obj.acc.ptop;
+    while( p ) {
+      assert( p );
+      switch( p->pinstances->decl_gen.ninstances ) {
+      case 1:
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC( " );
+	break;
+      case 2:
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC2( " );
+	break;
+      case 3:
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC3( " );
+	break;
+      case 4:
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC4( " );
+	break;
+      case 5:
+	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC5( " );
+	break;
+      default:
+	assert( FALSE );
+      }
+      fprintf( fp_out, "%s, ", cnv2str_cbi_stat[p->il_stat_kind] );
+      p->raw_name[CBI_STAT_NAME_LEN] = 0;
+      fprintf( fp_out, "%s, ", p->raw_name );
+      p->label[CBI_STAT_IDENT_LEN] = 0;
+      fprintf( fp_out, "%s, ", p->label );
+      p->src_specified[CBI_CODE_FILENAME_MAXLEN] = 0;
+      fprintf( fp_out, "\"%s\", ", p->src_specified );
+#if 0
+      assert( p );
+      assert( p->ident );
+      p->ident[CBI_STAT_IDENT_LEN] = 0;
+#endif
+      if( p->pinstances ) {
+	CBI_STAT_ATTR_PTR q = p->pinstances;
+	while( q ) {
+	  assert( q );
+	  fprintf( fp_out, "IL_SYMS(%s, ", cnv2str_cbi_stat[q->kind] );
+	  fprintf( fp_out, "%s, ", q->ident );
+	  fprintf( fp_out, "\"%s\", ", q->ident );
+	  fprintf( fp_out, "%d)", cnt );
+	  cnt++;
+	  q = q->decl_gen.pFamily;
+	  if( q )
+	    fprintf( fp_out, ", " );
+	}
+      }
+      fprintf( fp_out, " )\n" );
+      p = p->pNext;
+    }
+  }
+#endif
   return 0;
 }
