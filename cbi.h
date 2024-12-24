@@ -256,7 +256,6 @@ typedef struct cbi_stat_attr {
     struct cbi_stat_attr *pNext;
     struct cbi_stat_attr *pFamily;
     struct lex_il_obj *pentity;
-    //void *plex_il_obj;
   } decl_gen;
 } CBI_STAT_ATTR, *CBI_STAT_ATTR_PTR;
 
@@ -266,13 +265,11 @@ typedef struct lex_il_obj {
   CBI_STAT_KIND il_stat_kind;
   char match_pat[CBI_LEX_PAT_MAXLEN + 1];
   char exp_ident_pat[CBI_LEX_PAT_MAXLEN + 1];
-#if 1 // *****
   struct {
     CBI_STAT_KIND il_sym_kind;
     char pat[CBI_LEX_PAT_MAXLEN + 1];
   } exp[CBI_EXPAND_PAT_MAXNUM];
   char src_specified[CBI_CODE_FILENAME_MAXLEN + 1];
-#endif
   char raw_name[CBI_STAT_NAME_LEN + 1];
   char label[CBI_STAT_IDENT_LEN + 1];
   CBI_STAT_ATTR_PTR pinstances;
