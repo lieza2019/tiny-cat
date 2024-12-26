@@ -441,8 +441,7 @@ static CBI_STAT_ATTR_PTR hash_regist ( CBI_STAT_ATTR_PTR pE, int line ) {
   return cbi_stat_regist( il_syms_hash.budgets, IL_OBJ_HASH_BUDGETS_NUM, pE, FALSE, buf );
 }
 
-static int emit_il_instances ( FILE *fp, FILE *errfp, CBI_STAT_ATTR_PTR *ppinst, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
-  assert( fp );
+static int gen_il_instances ( FILE *errfp, CBI_STAT_ATTR_PTR *ppinst, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
   assert( errfp );
   assert( ppinst );
   assert( pprsf );
@@ -536,8 +535,7 @@ static int emit_il_instances ( FILE *fp, FILE *errfp, CBI_STAT_ATTR_PTR *ppinst,
   return ( cnt * (err ? -1 : 1) );
 }
 
-static LEX_CBI_OBJ_PTR emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
-  assert( fp );
+static LEX_CBI_OBJ_PTR gen_cbistat_label ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
   assert( errfp );
   assert( pprsf );
   assert( psymtbl );
@@ -566,29 +564,17 @@ static LEX_CBI_OBJ_PTR emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR
 	strncpy( plex->label, emit_buf, CBI_STAT_IDENT_LEN );
 	assert( pE );
 	*pE = *plex;
-	pE->label[CBI_STAT_IDENT_LEN] = 0;
-	fprintf( fp, "%s ", pprsf->prefix.emit );
-	fprintf( fp, "%s", kind_s );
-	fprintf( fp, ", \"%s\"", pE->raw_name );
-	fprintf( fp, ", \"%s\"", pE->label );
       } else
 	err = TRUE;
     } else {
       assert( plex );
       assert( pE );
-      strncpy( plex->label, "NO_ABBREV", CBI_STAT_IDENT_LEN );      
+      strncpy( plex->label, "NO_LABEL", CBI_STAT_IDENT_LEN );      
       *pE = *plex;
-      pE->label[CBI_STAT_IDENT_LEN] = 0;
-      fprintf( fp, "%s ", pprsf->prefix.emit );
-      fprintf( fp, "%s", kind_s );
-      fprintf( fp, ", \"%s\"", pE->raw_name );
-      fprintf( fp, ", \"%s\"", pE->label );
     }
     if( !err ) {
       pE->src_specified[CBI_CODE_FILENAME_MAXLEN] = 0;
       assert( !strncmp( pE->src_specified, plex->src_specified, CBI_CODE_FILENAME_MAXLEN ) );
-      if( strnlen(pE->src_specified, CBI_CODE_FILENAME_MAXLEN) > 0 )
-	fprintf( fp, ", \"%s\"", pE->src_specified );
       if( ! il_syms_hash.sea.il_obj.acc.ptop ) {
 	assert( !il_syms_hash.sea.il_obj.acc.pplast );
 	il_syms_hash.sea.il_obj.acc.ptop = pE;
@@ -597,15 +583,13 @@ static LEX_CBI_OBJ_PTR emit_stat_abbrev ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR
 	*(il_syms_hash.sea.il_obj.acc.pplast) = pE;
       }
       il_syms_hash.sea.il_obj.acc.pplast = &pE->pNext;
-      fprintf( fp, " %s", pprsf->suffix.emit );
     }
   }
   assert( pE );
   return (err ? NULL : pE );
 }
 
-static int transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
-  assert( fp );
+static int transduce ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYMTBL_PTR psymtbl, LEX_CBI_OBJ_PTR plex, CBI_STAT_ATTR_PTR pattr ) {
   assert( errfp );
   assert( pprsf );
   assert( psymtbl );
@@ -628,19 +612,62 @@ static int transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, C
 	  LEX_CBI_OBJ_PTR pemit_abb = NULL;
 	  int emit_ins = -1;
 	  assert( src1 == (src + strnlen(src, CBI_STAT_NAME_LEN)) );
-	  strncpy( pprsf->prefix.emit, "{", CBI_LEX_EMIT_PREFX_MAXCHRS );
-	  strncpy( pprsf->suffix.emit, "}," , CBI_LEX_EMIT_PREFX_MAXCHRS );
-	  pemit_abb = emit_stat_abbrev(fp, errfp, pprsf, line, psymtbl, plex, pattr);
+	  pemit_abb = gen_cbistat_label( errfp, pprsf, line, psymtbl, plex, pattr );
 	  if( pemit_abb ) {
-	    if( (emit_ins = emit_il_instances( fp, errfp, &pemit_abb->pinstances, pprsf, line, psymtbl, pemit_abb, pattr )) >= 0 )
+	    if( (emit_ins = gen_il_instances( errfp, &pemit_abb->pinstances, pprsf, line, psymtbl, pemit_abb, pattr )) >= 0 )
 	      r = emit_ins;
 	  }
-	  if( pemit_abb || (abs(emit_ins) > 0) )
-	    fprintf( fp, "\n" );
 	}
     }
   }
   return r;
+}
+
+static void transduce1 ( void ) {
+  CBI_LEX_SYMTBL S;
+  
+  FILE *fp_err = NULL;
+  int oc_id = -1;
+  fp_err = stdout;
+  
+  oc_id = OC801;
+  while( oc_id < (int)END_OF_OCs ) {
+    assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
+    assert( fp_err );
+    int n = -1;
+    if( ! il_status_geometry_resources[oc_id].csv_fname ) {
+      oc_id++;
+      continue;
+    }
+    assert( il_status_geometry_resources[oc_id].csv_fname );
+    assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
+      
+    fprintf( fp_err, "reading the csv file: %s.\n", il_status_geometry_resources[oc_id].csv_fname );
+    n = load_cbi_code( il_status_geometry_resources[oc_id].oc_id, il_status_geometry_resources[oc_id].csv_fname );
+    assert( n >= 0 );
+    fprintf( fp_err, "read %d entries from the csv file: %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
+    {
+      PREFX_SUFIX prsf;
+      memset( &prsf, 0, sizeof(prsf) );
+      {
+	CBI_LEX_SYMTBL_PTR pS = &S;
+	int i = 0;
+	while( cbi_lex_def[i].il_stat_kind != END_OF_CBI_STAT_KIND ) {
+	  int j;
+	  for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_syms.cbi_stat_prof[oc_id].codes[j].name[0]; j++ ) {
+	    assert( pS );
+	    memset( pS, 0, sizeof(S) );
+	    snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%s:%d", cbi_stat_syms.cbi_stat_prof[oc_id].codes[j].src.fname, cbi_stat_syms.cbi_stat_prof[oc_id].codes[j].src.line );
+	    transduce( fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_syms.cbi_stat_prof[oc_id].codes[j] );
+	  }
+	  i++;
+	}
+	fprintf( fp_err, "\n" );
+      }
+    }
+    oc_id++;
+  }
+  fflush( fp_err );
 }
 
 static void emit_cbi_stat_labels ( FILE *out_fp ) {
@@ -677,25 +704,16 @@ static void emit_cbi_stat_labels ( FILE *out_fp ) {
 }
 
 int main ( void ) {
+#if 0 // *****
   CBI_LEX_SYMTBL S;
   FILE *fp_err = NULL;
-  FILE *fp_out = NULL;
-  
   fp_err = stdout;
-  fp_out = fopen( CBI_STAT_LABELNG_FNAME, "wb" );
-  if( !fp_out ) {
-    fprintf( fp_out, "failed to open the file: %s.\n", CBI_STAT_LABELNG_FNAME );
-    return -1;
-  }
-  
   {
-    BOOL prolog = TRUE;
     int oc_id = -1;
     oc_id = OC801;
     while( oc_id < (int)END_OF_OCs ) {
       assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
       assert( fp_err );
-      assert( fp_out );
       int n = -1;
       if( ! il_status_geometry_resources[oc_id].csv_fname ) {
 	oc_id++;
@@ -711,13 +729,6 @@ int main ( void ) {
       {
 	PREFX_SUFIX prsf;
 	memset( &prsf, 0, sizeof(prsf) );
-	if( prolog ) {
-	  fprintf( fp_out, "#ifndef CBI_STAT_LABELING\n" );
-	  fprintf( fp_out, "#define CBI_STAT_LABELING\n" );
-	  fprintf( fp_out, "#endif\n" );
-	  fprintf( fp_out, "static CBI_STAT_LABEL cbi_stat_label[] = {\n" );
-	  prolog = FALSE;
-	}
 	{
 	  CBI_LEX_SYMTBL_PTR pS = &S;
 	  int i = 0;
@@ -727,7 +738,7 @@ int main ( void ) {
 	      assert( pS );
 	      memset( pS, 0, sizeof(S) );
 	      snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%s:%d", cbi_stat_syms.cbi_stat_prof[oc_id].codes[j].src.fname, cbi_stat_syms.cbi_stat_prof[oc_id].codes[j].src.line );
-	      transduce( fp_out, fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_syms.cbi_stat_prof[oc_id].codes[j] );
+	      transduce( fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_syms.cbi_stat_prof[oc_id].codes[j] );
 	    }
 	    i++;
 	  }
@@ -736,30 +747,19 @@ int main ( void ) {
       }
       oc_id++;
     }
-    fprintf( fp_out, "{ _CBI_STAT_KIND_NONSENS }\n" );
-    fprintf( fp_out, "};\n" );
     fflush( fp_err );
-    if( fp_out ) {
-      fflush( fp_out );
-      fclose( fp_out );
-      fp_out = NULL;
-    }
   }
-
-#if 1 // *****
-#define CBI_STAT_LABELNG_FNAME1 "./cbi_stat_label1.h"
-  {
-    FILE *fp_out = NULL;
-    
-    fp_out = fopen( CBI_STAT_LABELNG_FNAME1, "wb" );
-    if( !fp_out ) {
-      fprintf( fp_out, "failed to open the file: %s.\n", CBI_STAT_LABELNG_FNAME1 );
-      return -1;
-    }
-    emit_cbi_stat_labels( fp_out );
-  }
-#undef CBI_STAT_LABELNG_FNAME1
+#else
+  transduce1();
 #endif
+  
+  FILE *fp_out = NULL;
+  fp_out = fopen( CBI_STAT_LABELNG_FNAME, "wb" );
+  if( !fp_out ) {
+    fprintf( fp_out, "failed to open the file: %s.\n", CBI_STAT_LABELNG_FNAME );
+    return -1;
+  }
+  emit_cbi_stat_labels( fp_out );
   
   fp_out = fopen( IL_INSTANCES_EMIT_FNAME, "wb" );
   if( !fp_out ) {
