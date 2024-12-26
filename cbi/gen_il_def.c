@@ -643,6 +643,39 @@ static int transduce ( FILE *fp, FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, C
   return r;
 }
 
+static void emit_cbi_stat_labels ( FILE *out_fp ) {
+  assert( out_fp );
+  PREFX_SUFIX prsf;
+  memset( &prsf, 0, sizeof(prsf) );
+  
+  fprintf( out_fp, "#ifndef CBI_STAT_LABELING\n" );
+  fprintf( out_fp, "#define CBI_STAT_LABELING\n" );
+  fprintf( out_fp, "#endif\n" );
+  fprintf( out_fp, "static CBI_STAT_LABEL cbi_stat_label[] = {\n" );
+  {
+    LEX_CBI_OBJ_PTR pobj = il_syms_hash.sea.il_obj.acc.ptop;
+    strncpy( prsf.prefix.emit, "{", CBI_LEX_EMIT_PREFX_MAXCHRS );
+    strncpy( prsf.suffix.emit, "}," , CBI_LEX_EMIT_PREFX_MAXCHRS );
+    while( pobj ) {
+      fprintf( out_fp, "%s ", prsf.prefix.emit );
+      
+      fprintf( out_fp, "%s", cnv2str_cbi_stat[pobj->il_stat_kind] );
+      fprintf( out_fp, ", \"%s\"", pobj->raw_name );
+      fprintf( out_fp, ", \"%s\"", pobj->label );
+      if( strnlen(pobj->src_specified, CBI_CODE_FILENAME_MAXLEN) > 0 )
+	fprintf( out_fp, ", \"%s\"", pobj->src_specified );
+      
+      fprintf( out_fp, " %s", prsf.suffix.emit );
+      fprintf( out_fp, "\n" );
+      assert( pobj );
+      pobj = pobj->pNext;
+    }
+  }
+  fprintf( out_fp, "{ _CBI_STAT_KIND_NONSENS }\n" );
+  fprintf( out_fp, "};\n" );
+  fclose( out_fp );
+}
+
 int main ( void ) {
   CBI_LEX_SYMTBL S;
   FILE *fp_err = NULL;
@@ -712,6 +745,21 @@ int main ( void ) {
       fp_out = NULL;
     }
   }
+
+#if 1 // *****
+#define CBI_STAT_LABELNG_FNAME1 "./cbi_stat_label1.h"
+  {
+    FILE *fp_out = NULL;
+    
+    fp_out = fopen( CBI_STAT_LABELNG_FNAME1, "wb" );
+    if( !fp_out ) {
+      fprintf( fp_out, "failed to open the file: %s.\n", CBI_STAT_LABELNG_FNAME1 );
+      return -1;
+    }
+    emit_cbi_stat_labels( fp_out );
+  }
+#undef CBI_STAT_LABELNG_FNAME1
+#endif
   
   fp_out = fopen( IL_INSTANCES_EMIT_FNAME, "wb" );
   if( !fp_out ) {
