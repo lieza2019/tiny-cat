@@ -347,12 +347,13 @@ int main ( void ) {
 #if 0
       show_tracking_train_stat( stdout );
 #endif
-#if 0
+#if 1
       //diag_cbi_stat_attrib( stdout, "T801A_TLSR" );
       //diag_cbi_stat_attrib( stdout, "Lo_CY801A" );
       //diag_cbi_stat_attrib( stdout, "ESP801A" );
-      //diag_cbi_stat_attrib( stdout, "EM877_D@BGCN" ); //diag_cbi_stat_attrib( stdout, "EM877_D@JLA" );
-      diag_cbi_stat_attrib( stdout, "EM871_D@JLA" );
+      //diag_cbi_stat_attrib( stdout, "EM877_D@JLA" ); // diag_cbi_stat_attrib( stdout, "EM877_D@BGCN" );
+      //diag_cbi_stat_attrib( stdout, "EM878_D@JLA" ); // diag_cbi_stat_attrib( stdout, "EM878_D@BGCN" ); 
+      diag_cbi_stat_attrib( stdout, "EM878_D@JLA" );
 #endif
 #if 0
       {
@@ -401,6 +402,7 @@ int main ( void ) {
 	}
       }
       
+#if 0      
       {
 	const int target_rake = 1;
 	int i;
@@ -552,6 +554,7 @@ int main ( void ) {
 	  }
 	}
       }
+#endif
       
       load_train_command();
 #ifdef CHK_STRICT_CONSISTENCY

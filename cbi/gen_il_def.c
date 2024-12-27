@@ -623,7 +623,7 @@ static int transduce ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYM
   return r;
 }
 
-static void gen_cbisym_decls ( void ) {
+static void gen_cbi_decls ( void ) {
   CBI_LEX_SYMTBL S;
   
   FILE *fp_err = NULL;
@@ -703,7 +703,7 @@ static void emit_cbi_stat_labels ( FILE *out_fp ) {
   fclose( out_fp );
 }
 
-void foo ( FILE *out_fp ) {
+static void emit_il_syms ( FILE *out_fp ) {
   assert( out_fp );
   int cnt = 0;
   LEX_CBI_OBJ_PTR p = NULL;
@@ -769,133 +769,22 @@ void foo ( FILE *out_fp ) {
 }
 
 int main ( void ) {
-#if 0 // *****
-  CBI_LEX_SYMTBL S;
-  FILE *fp_err = NULL;
-  fp_err = stdout;
+  gen_cbi_decls();
   {
-    int oc_id = -1;
-    oc_id = OC801;
-    while( oc_id < (int)END_OF_OCs ) {
-      assert( (oc_id >= OC801) && (oc_id < END_OF_OCs) );
-      assert( fp_err );
-      int n = -1;
-      if( ! il_status_geometry_resources[oc_id].csv_fname ) {
-	oc_id++;
-	continue;
-      }
-      assert( il_status_geometry_resources[oc_id].csv_fname );
-      assert( il_status_geometry_resources[oc_id].oc_id == oc_id );
-      
-      fprintf( fp_err, "reading the csv file: %s.\n", il_status_geometry_resources[oc_id].csv_fname );
-      n = load_cbi_code( il_status_geometry_resources[oc_id].oc_id, il_status_geometry_resources[oc_id].csv_fname );
-      assert( n >= 0 );
-      fprintf( fp_err, "read %d entries from the csv file: %s.\n", n, il_status_geometry_resources[oc_id].csv_fname );
-      {
-	PREFX_SUFIX prsf;
-	memset( &prsf, 0, sizeof(prsf) );
-	{
-	  CBI_LEX_SYMTBL_PTR pS = &S;
-	  int i = 0;
-	  while( cbi_lex_def[i].il_stat_kind != END_OF_CBI_STAT_KIND ) {
-	    int j;
-	    for( j = 0; (j < CBI_MAX_STAT_BITS) && cbi_stat_syms.cbi_stat_prof[oc_id].codes[j].name[0]; j++ ) {
-	      assert( pS );
-	      memset( pS, 0, sizeof(S) );
-	      snprintf( prsf.prefix.err, CBI_LEX_ERR_PREFX_MAXCHRS, "%s:%d", cbi_stat_syms.cbi_stat_prof[oc_id].codes[j].src.fname, cbi_stat_syms.cbi_stat_prof[oc_id].codes[j].src.line );
-	      transduce( fp_err, &prsf, (i + 1), pS, &cbi_lex_def[i], &cbi_stat_syms.cbi_stat_prof[oc_id].codes[j] );
-	    }
-	    i++;
-	  }
-	  fprintf( fp_err, "\n" );
-	}
-      }
-      oc_id++;
+    FILE *fp_out = NULL;
+    fp_out = fopen( CBI_STAT_LABELNG_FNAME, "wb" );
+    if( !fp_out ) {
+      fprintf( fp_out, "failed to open the file: %s.\n", CBI_STAT_LABELNG_FNAME );
+      return -1;
     }
-    fflush( fp_err );
-  }
-#else
-  gen_cbisym_decls();
-#endif
+    emit_cbi_stat_labels( fp_out );
   
-  FILE *fp_out = NULL;
-  fp_out = fopen( CBI_STAT_LABELNG_FNAME, "wb" );
-  if( !fp_out ) {
-    fprintf( fp_out, "failed to open the file: %s.\n", CBI_STAT_LABELNG_FNAME );
-    return -1;
-  }
-  emit_cbi_stat_labels( fp_out );
-  
-  fp_out = fopen( IL_INSTANCES_EMIT_FNAME, "wb" );
-  if( !fp_out ) {
-    fprintf( fp_out, "failed to open the file: %s.\n", IL_INSTANCES_EMIT_FNAME );
-    return -1;
-  }
-#if 0 // *****
-  {
-    int cnt = 0;
-    LEX_CBI_OBJ_PTR p = NULL;
-    p = il_syms_hash.sea.il_obj.acc.ptop;
-    while( p ) {
-      assert( p );
-      BOOL has_no_ins = FALSE;
-      if( p->pinstances ) {
-	assert( p->pinstances > 0 );
-	switch( p->pinstances->decl_gen.ninstances ) {
-	case 1:
-	  fprintf( fp_out, "IL_OBJ_INSTANCE_DESC( " );
-	  break;
-	case 2:
-	  fprintf( fp_out, "IL_OBJ_INSTANCE_DESC2( " );
-	  break;
-	case 3:
-	  fprintf( fp_out, "IL_OBJ_INSTANCE_DESC3( " );
-	  break;
-	case 4:
-	  fprintf( fp_out, "IL_OBJ_INSTANCE_DESC4( " );
-	  break;
-	case 5:
-	  fprintf( fp_out, "IL_OBJ_INSTANCE_DESC5( " );
-	  break;
-	default:
-	  assert( FALSE );
-	}
-      } else {
-	has_no_ins = TRUE;
-	fprintf( fp_out, "IL_OBJ_INSTANCE_DESC0( " );
-      }
-      
-      fprintf( fp_out, "%s, ", cnv2str_cbi_stat[p->il_stat_kind] );
-      p->raw_name[CBI_STAT_NAME_LEN] = 0;
-      fprintf( fp_out, "%s, ", p->raw_name );
-      p->label[CBI_STAT_IDENT_LEN] = 0;
-      fprintf( fp_out, "%s, ", p->label );
-      p->src_specified[CBI_CODE_FILENAME_MAXLEN] = 0;
-      fprintf( fp_out, "\"%s\"", p->src_specified );
-      if( !has_no_ins )
-	fprintf( fp_out, ", " );
-      
-      if( !has_no_ins ) {
-	assert( p->pinstances );
-	CBI_STAT_ATTR_PTR q = p->pinstances;
-	while( q ) {
-	  assert( q );
-	  fprintf( fp_out, "IL_SYMS(%s, ", cnv2str_cbi_stat[q->kind] );
-	  fprintf( fp_out, "%s, ", q->ident );
-	  fprintf( fp_out, "\"%s\", ", q->ident );
-	  fprintf( fp_out, "%d)", cnt );
-	  cnt++;
-	  q = q->decl_gen.pFamily;
-	  if( q )
-	    fprintf( fp_out, ", " );
-	}
-      }
-      fprintf( fp_out, " )\n" );
-      p = p->pNext;
+    fp_out = fopen( IL_INSTANCES_EMIT_FNAME, "wb" );
+    if( !fp_out ) {
+      fprintf( fp_out, "failed to open the file: %s.\n", IL_INSTANCES_EMIT_FNAME );
+      return -1;
     }
+    emit_il_syms( fp_out );
   }
-#else
-  foo( fp_out );
-#endif
   return 0;
 }
