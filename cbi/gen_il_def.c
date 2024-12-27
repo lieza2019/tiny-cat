@@ -623,7 +623,7 @@ static int transduce ( FILE *errfp, PREFX_SUFIX_PTR pprsf, int line, CBI_LEX_SYM
   return r;
 }
 
-static void transduce1 ( void ) {
+static void gen_cbisym_decls ( void ) {
   CBI_LEX_SYMTBL S;
   
   FILE *fp_err = NULL;
@@ -703,6 +703,71 @@ static void emit_cbi_stat_labels ( FILE *out_fp ) {
   fclose( out_fp );
 }
 
+void foo ( FILE *out_fp ) {
+  assert( out_fp );
+  int cnt = 0;
+  LEX_CBI_OBJ_PTR p = NULL;
+  
+  p = il_syms_hash.sea.il_obj.acc.ptop;
+  while( p ) {
+    assert( p );
+    BOOL has_no_ins = FALSE;
+    if( p->pinstances ) {
+      assert( p->pinstances > 0 );
+      switch( p->pinstances->decl_gen.ninstances ) {
+      case 1:
+	fprintf( out_fp, "IL_OBJ_INSTANCE_DESC( " );
+	break;
+      case 2:
+	fprintf( out_fp, "IL_OBJ_INSTANCE_DESC2( " );
+	break;
+      case 3:
+	fprintf( out_fp, "IL_OBJ_INSTANCE_DESC3( " );
+	break;
+      case 4:
+	fprintf( out_fp, "IL_OBJ_INSTANCE_DESC4( " );
+	break;
+      case 5:
+	fprintf( out_fp, "IL_OBJ_INSTANCE_DESC5( " );
+	break;
+      default:
+	assert( FALSE );
+      }
+    } else {
+      has_no_ins = TRUE;
+      fprintf( out_fp, "IL_OBJ_INSTANCE_DESC0( " );
+    }
+    
+    fprintf( out_fp, "%s, ", cnv2str_cbi_stat[p->il_stat_kind] );
+    p->raw_name[CBI_STAT_NAME_LEN] = 0;
+    fprintf( out_fp, "%s, ", p->raw_name );
+    p->label[CBI_STAT_IDENT_LEN] = 0;
+    fprintf( out_fp, "%s, ", p->label );
+    p->src_specified[CBI_CODE_FILENAME_MAXLEN] = 0;
+    fprintf( out_fp, "\"%s\"", p->src_specified );
+    if( !has_no_ins )
+      fprintf( out_fp, ", " );
+      
+    if( !has_no_ins ) {
+      assert( p->pinstances );
+      CBI_STAT_ATTR_PTR q = p->pinstances;
+      while( q ) {
+	assert( q );
+	fprintf( out_fp, "IL_SYMS(%s, ", cnv2str_cbi_stat[q->kind] );
+	fprintf( out_fp, "%s, ", q->ident );
+	fprintf( out_fp, "\"%s\", ", q->ident );
+	fprintf( out_fp, "%d)", cnt );
+	cnt++;
+	q = q->decl_gen.pFamily;
+	if( q )
+	  fprintf( out_fp, ", " );
+      }
+    }
+    fprintf( out_fp, " )\n" );
+    p = p->pNext;
+  }
+}
+
 int main ( void ) {
 #if 0 // *****
   CBI_LEX_SYMTBL S;
@@ -750,7 +815,7 @@ int main ( void ) {
     fflush( fp_err );
   }
 #else
-  transduce1();
+  gen_cbisym_decls();
 #endif
   
   FILE *fp_out = NULL;
@@ -766,6 +831,7 @@ int main ( void ) {
     fprintf( fp_out, "failed to open the file: %s.\n", IL_INSTANCES_EMIT_FNAME );
     return -1;
   }
+#if 0 // *****
   {
     int cnt = 0;
     LEX_CBI_OBJ_PTR p = NULL;
@@ -828,5 +894,8 @@ int main ( void ) {
       p = p->pNext;
     }
   }
+#else
+  foo( fp_out );
+#endif
   return 0;
 }
