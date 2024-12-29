@@ -78,6 +78,7 @@ typedef struct tiny_train_state {
   BOOL omit;
   struct tiny_train_state *pNext;
 } TINY_TRAIN_STATE, *TINY_TRAIN_STATE_PTR;
+typedef struct tiny_train_state const *TINY_TRAIN_STATE_C_PTR;
 
 typedef struct standby_train_cmds {
   TINY_TRAIN_STATE_PTR phd;

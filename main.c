@@ -47,6 +47,59 @@ static int diag_tracking_train_cmd ( FILE *fp_out ) {
   return r;
 }
 
+static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PTR pT ) {
+  assert( fp_out );
+  assert( pT );
+  CBTC_BLOCK_C_PTR pblk_forw = pT->occupancy.pblk_forward;
+  CBTC_BLOCK_C_PTR pblk_back = pT->occupancy.pblk_back;
+  
+  if( pblk_forw ) {
+    TINY_TRAIN_STATE_C_PTR p = read_residents_CBTC_BLOCK( pblk_forw );
+    if( pblk_back ) {
+      const TINY_TRAIN_STATE_PTR e = read_edge_of_residents_CBTC_BLOCK( pblk_forw );
+      if( pblk_forw != pblk_back ) {
+	assert( pT->occupancy.pblk_forward != pT->occupancy.pblk_back );
+	assert( e );
+      } else {
+	assert( pT->occupancy.pblk_forward == pT->occupancy.pblk_back );
+	assert( p );
+      }
+      if( e ) {
+	assert( pT->occupancy.pblk_forward != pT->occupancy.pblk_back );
+	assert( pblk_forw != pblk_back );
+	while( p ) {
+	  if( p == pT )
+	    break;
+	  else
+	    p = p->occupancy.pNext;
+	}
+	assert( !p );
+	p = e;
+      } else {
+	assert( pT->occupancy.pblk_forward == pT->occupancy.pblk_back );
+	assert( pblk_forw == pblk_back );
+      lk4_forward:
+	assert( p );
+	do {
+	  if( p == pT )
+	    break;
+	  else
+	    p = p->occupancy.pNext;
+	} while( p );
+	assert( p );
+      }
+      assert( p == pT );
+      fprintf( fp_out, "***** Occupied Block (forward): %d\n", p->occupancy.pblk_forward->block_name );
+      if( pblk_back )
+	fprintf( fp_out, "***** Occupied Block (back): %d\n", p->occupancy.pblk_back->block_name );
+    } else
+      goto lk4_forward;;
+  } else {
+    assert( !pblk_forw );
+    assert( !pblk_back );
+  }
+}
+
 static int show_tracking_train_stat ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
@@ -294,7 +347,7 @@ int main ( void ) {
   }
   exit( 0 );
 #endif
-
+  
   TINY_SOCK_CREAT( socks_srvstat );
   if( ! launch_msg_srv_stat( &socks_srvstat, &sd_send_srvbeat, &sd_send_srvstat ) ) {
     errorF( "%s", "failed to create the socket to send msgServerStatus.\n" );
@@ -341,13 +394,13 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
     
     creat_comm_threads( &comm_threads_prof );
-    comm_threads_prof.cbi.ctrl.ready = TRUE;
+    //comm_threads_prof.cbi.ctrl.ready = TRUE;
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
 #if 0
       show_tracking_train_stat( stdout );
 #endif
-#if 1
+#if 0
       //diag_cbi_stat_attrib( stdout, "T801A_TLSR" );
       //diag_cbi_stat_attrib( stdout, "Lo_CY801A" );
       //diag_cbi_stat_attrib( stdout, "ESP801A" );
@@ -402,7 +455,7 @@ int main ( void ) {
 	}
       }
       
-#if 0      
+#if 1
       {
 	const int target_rake = 1;
 	int i;
@@ -411,6 +464,9 @@ int main ( void ) {
 	    TINY_TRAIN_STATE_PTR pT = &trains_tracking[i];
 	    assert( pT );
 	    if( pT->rakeID == target_rake ) {
+#if 1
+	      show_train_residents_consistency( stdout, pT );
+#endif
 #if 0
 	      int r_mutex = -1;
 	      r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
@@ -472,7 +528,7 @@ int main ( void ) {
 		assert( !r_mutex );
 	      }
 #endif
-#if 1
+#if 0
 	      char str[255 + 1] = "detect_train_docked @";
 	      ARS_EVENT_ON_SP ev;
 	      STOPPING_POINT_CODE sp = SP_NONSENS;

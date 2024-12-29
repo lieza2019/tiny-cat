@@ -9,16 +9,6 @@
 
 #include "sparcs.h"
 
-TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
-  assert( pB );
-  return (TINY_TRAIN_STATE_PTR)pB->residents.edge;
-}
-
-TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
-  assert( pB );
-  pB->residents.edge = (void *)pT;
-  return read_edge_of_residents_CBTC_BLOCK( pB );
-}
 
 TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
   assert( pB );
@@ -36,12 +26,44 @@ TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
   return (TINY_TRAIN_STATE_PTR *)&(pB->residents.ptrains);
 }
 
+TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
+  assert( pB );
+  return (TINY_TRAIN_STATE_PTR)pB->residents.edge;
+}
+
+TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
+  assert( pB );
+  pB->residents.edge = (void *)pT;
+  if( pT ) {
+    assert( pT->occupancy.pblk_forward == pB );
+    BOOL elided = FALSE;
+    TINY_TRAIN_STATE_PTR *pp = NULL;
+    pp = addr_residents_CBTC_BLOCK( pT->occupancy.pblk_forward );
+    assert( pp );
+    while( *pp ) {
+      assert( *pp );
+      assert( pT );
+      if( *pp == pT ) {
+	assert( !elided );
+	*pp = pT->occupancy.pNext;
+	pT->occupancy.pNext = NULL;
+	elided = TRUE;
+	continue;
+      }
+      pp = &(*pp)->occupancy.pNext;
+      assert( pp );
+      assert( pT->occupancy.pblk_forward == pB );
+    }
+  }
+  return read_edge_of_residents_CBTC_BLOCK( pB );
+}
+
 static CBTC_BLOCK_PTR blkname2_cbtc_block_prof[65536];
 static CBTC_BLOCK_PTR virtblk2_cbtc_block_prof[65536];
 
 void cons_lkuptbl_cbtc_block_prof ( void ) {
   const CBTC_BLOCK_PTR plim_sup = (CBTC_BLOCK_PTR)((unsigned char *)block_state + (int)sizeof(block_state));
-  
+ 
   // for the lookup-table of blkname2_cbtc_block_prof: block_name -> block_prof
   {
     int i = 0;
