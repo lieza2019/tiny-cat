@@ -15,6 +15,9 @@ typedef enum stop_detection_cond {
   END_OF_STOP_DETECTION_TYPES
 } STOP_DETECTION_TYPE;
 
+#define MAX_BLOCK_MORPHS 2
+#define MAX_POINTS_ON_MORPHING 1
+#define MAX_ADJACENT_BLKS 3
 typedef struct block {
   const unsigned short block_name;
   const CBTC_BLOCK_ID virt_block_name;
@@ -33,6 +36,7 @@ typedef struct block {
       struct block *ppaired_blk;
     } stop_detect_cond;
   } sp;
+  
   /* the link to the train which FRONT_BLOCK-ID/REAR_BLOCK_ID bite this block, should be accessed with the type of TINY_TRAIN_STATE_PTR,
      via the designated access-methods of,
        TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );
@@ -47,17 +51,30 @@ typedef struct block {
     void *ptrains_from_L, *ptrains_from_R;
     void *edge_L, *edge_R;
 #else
-#if 0 // *****
-    void *edges;
-#else
-    struct {
-      unsigned short adjacnt_blk;
-      void *ptrain;
-    } edges;
-#endif
     void *ptrains;
+    void *edges;
 #endif
   } residents;
+  
+#if 1 // *****
+  struct {
+    int num_morphs;
+    struct {
+      struct {
+	const unsigned short adjacnt_blk;
+	const int edge_pos;
+      } linkages[MAX_ADJACENT_BLKS];
+      const int len;
+      struct {
+	IL_SYM sw;
+	struct {
+	  BOOL N;
+	  BOOL R;
+	} stat;
+      } points[MAX_POINTS_ON_MORPHING];
+    } morphs[MAX_BLOCK_MORPHS];
+  } metrix;
+#endif
   struct {
     BOOL msc_flg1;
     BOOL msc_flg2;
