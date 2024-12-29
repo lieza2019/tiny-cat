@@ -9,7 +9,6 @@
 
 #include "sparcs.h"
 
-
 TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
   assert( pB );
   return (TINY_TRAIN_STATE_PTR)pB->residents.ptrains;
@@ -28,12 +27,12 @@ TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
 
 TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
   assert( pB );
-  return (TINY_TRAIN_STATE_PTR)pB->residents.edge;
+  return (TINY_TRAIN_STATE_PTR)pB->residents.edges.ptrain;
 }
 
 TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
   assert( pB );
-  pB->residents.edge = (void *)pT;
+  pB->residents.edges.ptrain = (void *)pT;
   if( pT ) {
     assert( pT->misc.occupancy.pblk_forward == pB );
     BOOL elided = FALSE;
@@ -182,8 +181,8 @@ void purge_block_restrains ( void ) {
       }
       assert( pB );
       if( read_edge_of_residents_CBTC_BLOCK(pB) ) {
-	if( creteria_2_elide( pB, pB->residents.edge ) )
-	  pB->residents.edge = NULL;
+	if( creteria_2_elide( pB, pB->residents.edges.ptrain ) )
+	  pB->residents.edges.ptrain = NULL;
       }
       i++;
     }

@@ -42,13 +42,20 @@ typedef struct block {
      declared in train_ctrl.h
   */
   struct {
-#if 0
     void *overlayed;
+#if 0
     void *ptrains_from_L, *ptrains_from_R;
     void *edge_L, *edge_R;
 #else
+#if 0 // *****
+    void *edges;
+#else
+    struct {
+      unsigned short adjacnt_blk;
+      void *ptrain;
+    } edges;
+#endif
     void *ptrains;
-    void *edge;
 #endif
   } residents;
   struct {

@@ -200,8 +200,7 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 	  break;
 	}
 	p = p->misc.occupancy.pNext;
-      }
-      
+      }      
       if( !stil_there ) {
 	assert( pT );
 	if( pT->misc.occupancy.pblk_forward ) {
