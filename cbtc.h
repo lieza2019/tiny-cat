@@ -22,7 +22,21 @@ typedef struct block {
   const unsigned short block_name;
   const CBTC_BLOCK_ID virt_block_name;
   const char *virt_blkname_str;
+#if 0 // *****
   const int len;
+#else
+  struct {
+    int num_morphs;
+    struct {
+      struct {
+	const unsigned short adjacnt_blk;
+	const int edge_pos;
+      } linkages[MAX_ADJACENT_BLKS];
+      const int len;
+      IL_SYM points[MAX_POINTS_ON_MORPHING];
+    } morphs[MAX_BLOCK_MORPHS];
+  } gimik;
+#endif
   struct {
     const IL_SYM track;
     const struct track *ptrack;
@@ -56,25 +70,6 @@ typedef struct block {
 #endif
   } residents;
   
-#if 1 // *****
-  struct {
-    int num_morphs;
-    struct {
-      struct {
-	const unsigned short adjacnt_blk;
-	const int edge_pos;
-      } linkages[MAX_ADJACENT_BLKS];
-      const int len;
-      struct {
-	IL_SYM sw;
-	struct {
-	  BOOL N;
-	  BOOL R;
-	} stat;
-      } points[MAX_POINTS_ON_MORPHING];
-    } morphs[MAX_BLOCK_MORPHS];
-  } metrix;
-#endif
   struct {
     BOOL msc_flg1;
     BOOL msc_flg2;
