@@ -35,24 +35,24 @@ TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN
   assert( pB );
   pB->residents.edge = (void *)pT;
   if( pT ) {
-    assert( pT->occupancy.pblk_forward == pB );
+    assert( pT->misc.occupancy.pblk_forward == pB );
     BOOL elided = FALSE;
     TINY_TRAIN_STATE_PTR *pp = NULL;
-    pp = addr_residents_CBTC_BLOCK( pT->occupancy.pblk_forward );
+    pp = addr_residents_CBTC_BLOCK( pT->misc.occupancy.pblk_forward );
     assert( pp );
     while( *pp ) {
       assert( *pp );
       assert( pT );
       if( *pp == pT ) {
 	assert( !elided );
-	*pp = pT->occupancy.pNext;
-	pT->occupancy.pNext = NULL;
+	*pp = pT->misc.occupancy.pNext;
+	pT->misc.occupancy.pNext = NULL;
 	elided = TRUE;
 	continue;
       }
-      pp = &(*pp)->occupancy.pNext;
+      pp = &(*pp)->misc.occupancy.pNext;
       assert( pp );
-      assert( pT->occupancy.pblk_forward == pB );
+      assert( pT->misc.occupancy.pblk_forward == pB );
     }
   }
   return read_edge_of_residents_CBTC_BLOCK( pB );
@@ -171,13 +171,13 @@ void purge_block_restrains ( void ) {
 	  TINY_TRAIN_STATE_PTR w = NULL;
 	  w = *pp;
 	  assert( w );
-	  *pp = w->occupancy.pNext;
-	  w->occupancy.pNext = NULL;
-	  w->occupancy.pblk_forward = NULL;
-	  w->occupancy.pblk_back = NULL;
+	  *pp = w->misc.occupancy.pNext;
+	  w->misc.occupancy.pNext = NULL;
+	  w->misc.occupancy.pblk_forward = NULL;
+	  w->misc.occupancy.pblk_back = NULL;
 	  continue;
 	}
-	pp = &(*pp)->occupancy.pNext;
+	pp = &(*pp)->misc.occupancy.pNext;
 	assert( pp );
       }
       assert( pB );

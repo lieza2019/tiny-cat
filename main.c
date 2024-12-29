@@ -50,33 +50,33 @@ static int diag_tracking_train_cmd ( FILE *fp_out ) {
 static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PTR pT ) {
   assert( fp_out );
   assert( pT );
-  CBTC_BLOCK_C_PTR pblk_forw = pT->occupancy.pblk_forward;
-  CBTC_BLOCK_C_PTR pblk_back = pT->occupancy.pblk_back;
+  CBTC_BLOCK_C_PTR pblk_forw = pT->misc.occupancy.pblk_forward;
+  CBTC_BLOCK_C_PTR pblk_back = pT->misc.occupancy.pblk_back;
   
   if( pblk_forw ) {
     TINY_TRAIN_STATE_C_PTR p = read_residents_CBTC_BLOCK( pblk_forw );
     if( pblk_back ) {
       const TINY_TRAIN_STATE_PTR e = read_edge_of_residents_CBTC_BLOCK( pblk_forw );
       if( pblk_forw != pblk_back ) {
-	assert( pT->occupancy.pblk_forward != pT->occupancy.pblk_back );
+	assert( pT->misc.occupancy.pblk_forward != pT->misc.occupancy.pblk_back );
 	assert( e );
       } else {
-	assert( pT->occupancy.pblk_forward == pT->occupancy.pblk_back );
+	assert( pT->misc.occupancy.pblk_forward == pT->misc.occupancy.pblk_back );
 	assert( p );
       }
       if( e ) {
-	assert( pT->occupancy.pblk_forward != pT->occupancy.pblk_back );
+	assert( pT->misc.occupancy.pblk_forward != pT->misc.occupancy.pblk_back );
 	assert( pblk_forw != pblk_back );
 	while( p ) {
 	  if( p == pT )
 	    break;
 	  else
-	    p = p->occupancy.pNext;
+	    p = p->misc.occupancy.pNext;
 	}
 	assert( !p );
 	p = e;
       } else {
-	assert( pT->occupancy.pblk_forward == pT->occupancy.pblk_back );
+	assert( pT->misc.occupancy.pblk_forward == pT->misc.occupancy.pblk_back );
 	assert( pblk_forw == pblk_back );
       lk4_forward:
 	assert( p );
@@ -84,14 +84,14 @@ static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PT
 	  if( p == pT )
 	    break;
 	  else
-	    p = p->occupancy.pNext;
+	    p = p->misc.occupancy.pNext;
 	} while( p );
 	assert( p );
       }
       assert( p == pT );
-      fprintf( fp_out, "***** Occupied Block (forward): %d\n", p->occupancy.pblk_forward->block_name );
+      fprintf( fp_out, "***** Occupied Block (forward): %d\n", p->misc.occupancy.pblk_forward->block_name );
       if( pblk_back )
-	fprintf( fp_out, "***** Occupied Block (back): %d\n", p->occupancy.pblk_back->block_name );
+	fprintf( fp_out, "***** Occupied Block (back): %d\n", p->misc.occupancy.pblk_back->block_name );
     } else
       goto lk4_forward;;
   } else {

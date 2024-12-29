@@ -333,13 +333,13 @@ static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptr
     while( pT ) {
       if( pT == ptrain_ctrl ) {
 	r = 1;
-	if( !(pT->occupancy.pNext || read_edge_of_residents_CBTC_BLOCK( proute->ars_ctrl.trg_sect.ptrg_blks[i] )) ) {
+	if( !(pT->misc.occupancy.pNext || read_edge_of_residents_CBTC_BLOCK( proute->ars_ctrl.trg_sect.ptrg_blks[i] )) ) {
 	  if( no_trains_ahead( proute, (i + 1) ) )
 	    r = 2;
 	}
 	break;
       }
-      pT = pT->occupancy.pNext;
+      pT = pT->misc.occupancy.pNext;
     }
   }
   return r;
