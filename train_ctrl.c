@@ -360,14 +360,20 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 	}
 	pT->misc.occupancy.pblk_back = pblk_forward;
       } else {
-	//assert( blk_name_forward != blk_name_back );
 	pblk_back = lookup_cbtc_block_prof( blk_name_back );	
 	if( pblk_back ) {
 	  assert( pT->misc.occupancy.pblk_back == pblk_back );
 	  int edge_pos_forw = -1;
 	  int edge_pos_back = -1;
 	  edge_pos_forw = enter_leave_edge( pblk_forward, blk_name_back );
+#if 0 // *****
 	  assert( edge_pos_forw > -1 );
+#else
+	  if( edge_pos_forw < 0 ) {
+	    printf( "(forward_blk, back_blk) = (%d, %d)\n", pblk_forward->block_name, blk_name_back );
+	    assert( FALSE );
+	  }
+#endif
 	  if( edge_pos_forw > -1 )
 	    border_residents_CBTC_BLOCK( pblk_forward, edge_pos_forw, pT );
 	  edge_pos_back = enter_leave_edge( pblk_back, blk_name_forward );

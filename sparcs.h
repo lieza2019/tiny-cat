@@ -36,6 +36,7 @@ typedef enum SC_ID {
 
 #include "train_ctrl.h"
 
+#if 0 // *****
 #define UDP_BCAST_RECV_PORT_SC801_Train_command 55143
 #define UDP_BCAST_RECV_PORT_SC802_Train_command 55243
 #define UDP_BCAST_RECV_PORT_SC803_Train_command 55343
@@ -57,6 +58,29 @@ typedef enum SC_ID {
 #define UDP_BCAST_RECV_PORT_SC819_Train_command 56943
 #define UDP_BCAST_RECV_PORT_SC820_Train_command 57043
 #define UDP_BCAST_RECV_PORT_SC821_Train_command 57143
+#else
+#define UDP_BCAST_RECV_PORT_SC801_Train_command 35143
+#define UDP_BCAST_RECV_PORT_SC802_Train_command 35243
+#define UDP_BCAST_RECV_PORT_SC803_Train_command 35343
+#define UDP_BCAST_RECV_PORT_SC804_Train_command 35443
+#define UDP_BCAST_RECV_PORT_SC805_Train_command 35543
+#define UDP_BCAST_RECV_PORT_SC806_Train_command 35643
+#define UDP_BCAST_RECV_PORT_SC807_Train_command 35743
+#define UDP_BCAST_RECV_PORT_SC808_Train_command 35843
+#define UDP_BCAST_RECV_PORT_SC809_Train_command 35943
+#define UDP_BCAST_RECV_PORT_SC810_Train_command 36043
+#define UDP_BCAST_RECV_PORT_SC811_Train_command 36143
+#define UDP_BCAST_RECV_PORT_SC812_Train_command 36243
+#define UDP_BCAST_RECV_PORT_SC813_Train_command 36343
+#define UDP_BCAST_RECV_PORT_SC814_Train_command 36443
+#define UDP_BCAST_RECV_PORT_SC815_Train_command 36543
+#define UDP_BCAST_RECV_PORT_SC816_Train_command 36643
+#define UDP_BCAST_RECV_PORT_SC817_Train_command 36743
+#define UDP_BCAST_RECV_PORT_SC818_Train_command 36843
+#define UDP_BCAST_RECV_PORT_SC819_Train_command 36943
+#define UDP_BCAST_RECV_PORT_SC820_Train_command 37043
+#define UDP_BCAST_RECV_PORT_SC821_Train_command 37143
+#endif
 
 struct send_buf_traincmd {
   NXNS_HEADER header;
