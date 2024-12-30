@@ -29,13 +29,13 @@ typedef struct block {
     int num_morphs;
     struct {
       struct {
-	const unsigned short adjacnt_blk;
+	const unsigned short ln_blk;
 	const int edge_pos;
       } linkages[MAX_ADJACENT_BLKS];
       const int len;
       IL_SYM points[MAX_POINTS_ON_MORPHING];
     } morphs[MAX_BLOCK_MORPHS];
-  } gimik;
+  } shape;
 #endif
   struct {
     const IL_SYM track;
@@ -66,7 +66,7 @@ typedef struct block {
     void *edge_L, *edge_R;
 #else
     void *ptrains;
-    void *edges;
+    void *edges[MAX_ADJACENT_BLKS];
 #endif
   } residents;
   

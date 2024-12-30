@@ -25,11 +25,19 @@ TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
   return (TINY_TRAIN_STATE_PTR *)&(pB->residents.ptrains);
 }
 
+#if 1 // ***** for ONLY the service for ars.c
 TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
   assert( pB );
   return (TINY_TRAIN_STATE_PTR)pB->residents.edges;
 }
+#endif
+TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK1 ( CBTC_BLOCK_C_PTR pB, const int which ) {
+  assert( pB );
+  assert( (-1 < which) && (which < MAX_ADJACENT_BLKS) );
+  return (TINY_TRAIN_STATE_PTR)pB->residents.edges[which];
+}
 
+#if 0 // *****
 TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
   assert( pB );
   pB->residents.edges = (void *)pT;
@@ -56,6 +64,38 @@ TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN
   }
   return read_edge_of_residents_CBTC_BLOCK( pB );
 }
+#else
+TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, const int which, TINY_TRAIN_STATE_PTR pT ) {
+  assert( pB );
+  assert( (-1 < which) && (which < MAX_ADJACENT_BLKS) );
+  pB->residents.edges[which] = (void *)pT;
+  if( pT ) {
+    BOOL elided = FALSE;
+    TINY_TRAIN_STATE_PTR *pp = NULL;
+    if( pB == pT->misc.occupancy.pblk_forward )
+      pp = addr_residents_CBTC_BLOCK( pT->misc.occupancy.pblk_forward );
+    else {
+      assert( pB == pT->misc.occupancy.pblk_back );
+      pp = addr_residents_CBTC_BLOCK( pT->misc.occupancy.pblk_back );
+    }
+    assert( pp );
+    while( *pp ) {
+      assert( *pp );
+      assert( pT );
+      if( *pp == pT ) {
+	assert( !elided );
+	*pp = pT->misc.occupancy.pNext;
+	pT->misc.occupancy.pNext = NULL;
+	elided = TRUE;
+	continue;
+      }
+      pp = &(*pp)->misc.occupancy.pNext;
+      assert( pp );
+    }
+  }
+  return read_edge_of_residents_CBTC_BLOCK1( pB, which );
+}
+#endif
 
 static CBTC_BLOCK_PTR blkname2_cbtc_block_prof[65536];
 static CBTC_BLOCK_PTR virtblk2_cbtc_block_prof[65536];
@@ -179,10 +219,16 @@ void purge_block_restrains ( void ) {
 	pp = &(*pp)->misc.occupancy.pNext;
 	assert( pp );
       }
-      assert( pB );
-      if( read_edge_of_residents_CBTC_BLOCK(pB) ) {
-	if( creteria_2_elide( pB, pB->residents.edges ) )
-	  pB->residents.edges = NULL;
+      {
+	assert( pB );
+	int i;
+	for( i = 0; i < MAX_ADJACENT_BLKS; i++ ) {
+	  TINY_TRAIN_STATE_PTR p = read_edge_of_residents_CBTC_BLOCK1( pB, i );
+	  if( p ) {
+	    if( creteria_2_elide( pB, p ) )
+	      border_residents_CBTC_BLOCK( pB, i, NULL );
+	  }
+	}
       }
       i++;
     }

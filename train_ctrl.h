@@ -151,7 +151,9 @@ extern void *pth_emit_cbtc_ctrl_cmds ( void *arg );
 extern void *pth_reveal_cbtc_status ( void *arg );
 
 extern TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB );
-extern TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );
+extern TINY_TRAIN_STATE_PTR read_edge_of_residents_CBTC_BLOCK1 ( CBTC_BLOCK_C_PTR pB, const int which );
+extern TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, const int which, TINY_TRAIN_STATE_PTR pT );
+extern TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK1 ( CBTC_BLOCK_PTR pB, const int which, TINY_TRAIN_STATE_PTR pT );
 extern TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB );
 extern TINY_TRAIN_STATE_PTR write_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );
 extern TINY_TRAIN_STATE_PTR *addr_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB );

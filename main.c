@@ -47,6 +47,7 @@ static int diag_tracking_train_cmd ( FILE *fp_out ) {
   return r;
 }
 
+#if 0
 static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PTR pT ) {
   assert( fp_out );
   assert( pT );
@@ -99,6 +100,105 @@ static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PT
     assert( !pblk_back );
   }
 }
+#else
+static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PTR pT ) {
+  assert( fp_out );
+  assert( pT );
+  CBTC_BLOCK_C_PTR pblk_forw = pT->misc.occupancy.pblk_forward;
+  CBTC_BLOCK_C_PTR pblk_back = pT->misc.occupancy.pblk_back;
+  
+  if( pblk_forw ) {
+    TINY_TRAIN_STATE_C_PTR p = NULL;
+    p = read_residents_CBTC_BLOCK( pblk_forw );
+    if( pblk_back ) {
+      TINY_TRAIN_STATE_C_PTR e = NULL;
+      if( pblk_forw != pblk_back ) {
+	assert( pT->misc.occupancy.pblk_forward != pT->misc.occupancy.pblk_back );
+	int found = -1;
+	int i;
+	for( i = 0; i < MAX_ADJACENT_BLKS; i++ ) {
+	  TINY_TRAIN_STATE_C_PTR q = NULL;
+	  q = read_edge_of_residents_CBTC_BLOCK1( pblk_forw, i );
+	  if( q == pT ) {
+	    assert( found < 0 );
+	    found = i;
+	  }
+	}
+	assert( found > -1 );
+	e = read_edge_of_residents_CBTC_BLOCK1( pblk_forw, found );
+	assert( e == pT );
+	{
+	  int j;
+	  found = -1;
+	  for( j = 0; j < MAX_ADJACENT_BLKS; j++ ) {
+	    TINY_TRAIN_STATE_C_PTR r = NULL;
+	    r = read_edge_of_residents_CBTC_BLOCK1( pblk_back, j );
+	    if( r == pT ) {
+	      assert( found < 0 );
+	      found = j;
+	    }
+	  }
+	  assert( found > -1 );
+	}
+      } else {
+	assert( pT->misc.occupancy.pblk_forward == pT->misc.occupancy.pblk_back );
+	assert( p );
+	{
+	  int i;
+	  for( i = 0; i < MAX_ADJACENT_BLKS; i++ ) {
+	    TINY_TRAIN_STATE_C_PTR q = NULL;
+	    q = read_edge_of_residents_CBTC_BLOCK1( pblk_forw, i );
+	    assert( q != pT );
+	  }
+	}
+      }
+      if( e ) {
+	assert( pT->misc.occupancy.pblk_forward != pT->misc.occupancy.pblk_back );
+	assert( pblk_forw != pblk_back );
+	while( p ) {
+	  if( p == pT )
+	    break;
+	  else
+	    p = p->misc.occupancy.pNext;
+	}
+	assert( !p );
+	p = e;
+	{
+	  TINY_TRAIN_STATE_C_PTR q = NULL;
+	  q = read_residents_CBTC_BLOCK( pblk_back );
+	  while( q ) {
+	    if( q == pT )
+	      break;
+	    else
+	      q = q->misc.occupancy.pNext;
+	  }
+	  assert( !q );
+	}
+      } else {
+	assert( pT->misc.occupancy.pblk_forward == pT->misc.occupancy.pblk_back );
+	assert( pblk_forw == pblk_back );
+      lk4_forward:
+	assert( p );
+	do {
+	  if( p == pT )
+	    break;
+	  else
+	    p = p->misc.occupancy.pNext;
+	} while( p );
+	assert( p );
+      }
+      assert( p == pT );
+      fprintf( fp_out, "***** Occupied Block (forward): %d\n", p->misc.occupancy.pblk_forward->block_name );
+      if( pblk_back )
+	fprintf( fp_out, "***** Occupied Block (back): %d\n", p->misc.occupancy.pblk_back->block_name );
+    } else
+      goto lk4_forward;;
+  } else {
+    assert( !pblk_forw );
+    assert( !pblk_back );
+  }
+}
+#endif
 
 static int show_tracking_train_stat ( FILE *fp_out ) {
   assert( fp_out );
