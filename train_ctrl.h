@@ -9,6 +9,7 @@ typedef struct train_ID {
 } TRAIN_ID, *TRAIN_ID_PTR;
 typedef const struct train_ID *TRAIN_ID_C_PTR;
 
+#define MAX_OPAQUE_BLKS 4
 typedef struct tiny_train_state {
   int rakeID;
   TRAIN_ID train_ID;
@@ -71,6 +72,7 @@ typedef struct tiny_train_state {
     struct {
       CBTC_BLOCK_PTR pblk_forward;
       CBTC_BLOCK_PTR pblk_back;
+      CBTC_BLOCK_PTR opaque_blks[MAX_OPAQUE_BLKS + 1];
       struct tiny_train_state *pNext;
     } occupancy;
   } misc;

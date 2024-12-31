@@ -22,248 +22,49 @@ uint8_t journeyID2_serviceID ( JOURNEY_ID journey_ID ) {
   return (uint8_t)journey_ID;
 }
 
-#if 0 // *****
-static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
+static int trim_opaque_blks ( TINY_TRAIN_STATE_PTR pT ) {
   assert( pT );
-  CBTC_BLOCK_PTR crnt_forward_blk = NULL;
-  
-  if( pT->pTI ) {
-    assert( pT->rakeID == TRAIN_INFO_RAKEID(*pT->pTI) );
-    const unsigned short blk_name_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pT->pTI );
-    const unsigned short blk_name_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pT->pTI );
-    CBTC_BLOCK_PTR pblk_forward = NULL;
-    CBTC_BLOCK_PTR pblk_back = NULL;
-    pblk_forward = lookup_cbtc_block_prof( blk_name_forward );
-    if( pblk_forward ) {
-      //BOOL updated_pblk_back = FALSE;
-      BOOL stil_there = FALSE;
-      TINY_TRAIN_STATE_PTR p = NULL;
-      p = read_residents_CBTC_BLOCK( pblk_forward );
-      while( p ) {
-	assert( pT );
-	if( p == pT ) {
-	  assert( pT->misc.occupancy.pblk_forward == pblk_forward );
-	  stil_there = TRUE;
-	  crnt_forward_blk = pblk_forward;
-	  break;
+  assert( pT->misc.occupancy.pblk_back );
+  BOOL found = FALSE;
+  int i;
+  for( i = 0; i < MAX_OPAQUE_BLKS; i++ ) {
+    assert( ! found );
+    if( ! pT->misc.occupancy.opaque_blks[i] )
+      break;
+    else
+      if( pT->misc.occupancy.opaque_blks[i] == pT->misc.occupancy.pblk_back ) {
+	int j;
+	for( j = i + 1; j < MAX_OPAQUE_BLKS; j++ ) {
+	  pT->misc.occupancy.opaque_blks[j] = NULL;
 	}
-	p = p->misc.occupancy.pNext;
+	found = TRUE;
+	break;
       }
-      
-      if( !stil_there ) {
-	assert( pT );
-#if 0 // *****
-	if( pT->misc.occupancy.pblk_forward ) {
-	  pblk_back = lookup_cbtc_block_prof( blk_name_back );
-	  if( pblk_back ) {
-	    if( pblk_back == pT->misc.occupancy.pblk_forward ) {
-	      TINY_TRAIN_STATE_PTR r = NULL;
-	      pT->misc.occupancy.pblk_back = pT->misc.occupancy.pblk_forward;
-	      updated_pblk_back = TRUE;
- 	      r = border_residents_CBTC_BLOCK( pblk_back, pT );
-	      if( r != pT )
-		goto no_elide;
-	    }
-	  } else {
-	    errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
-	    pT->misc.occupancy.pblk_back = NULL;
-	    updated_pblk_back = TRUE;
-	  }
-	  {
-	    BOOL elided = FALSE;
-	    TINY_TRAIN_STATE_PTR *pp = NULL;
-	    pp = addr_residents_CBTC_BLOCK( pT->misc.occupancy.pblk_forward );
-	    assert( pp );
-	    while( *pp ) {
-	      assert( *pp );
-	      assert( pT );
-	      if( *pp == pT ) {
-		assert( !elided );
-		*pp = pT->misc.occupancy.pNext;
-		pT->misc.occupancy.pNext = NULL;
-		elided = TRUE;
-		continue;
-	      }
-	      pp = &(*pp)->misc.occupancy.pNext;
-	      assert( pp );
-	    }
-	  }
-	no_elide:
-	  pT->misc.occupancy.pblk_forward = NULL;
-	}
-#else
-	if( pT->misc.occupancy.pblk_forward ) {
-	  pblk_back = lookup_cbtc_block_prof( blk_name_back );
-	  if( pblk_back ) {
-	    if( pT->misc.occupancy.pblk_forward != pblk_forward ) {
-	      BOOL elided = FALSE;
-	      TINY_TRAIN_STATE_PTR *pp = NULL;
-	      pp = addr_residents_CBTC_BLOCK( pT->misc.occupancy.pblk_forward );
-	      assert( pp );
-	      while( *pp ) {
-		assert( *pp );
-		assert( pT );
-		if( *pp == pT ) {
-		  assert( !elided );
-		  *pp = pT->misc.occupancy.pNext;
-		  pT->misc.occupancy.pNext = NULL;
-		  elided = TRUE;
-		  continue;
-		}
-		pp = &(*pp)->misc.occupancy.pNext;
-		assert( pp );
-	      }
-	      pT->misc.occupancy.pblk_forward = NULL;
-	    }
-	  } else {
-	    errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
-	    pT->misc.occupancy.pblk_back = NULL;
-	  }
-	}
-#endif
-	assert( pblk_forward );
-	assert( pT );
-	pT->misc.occupancy.pNext = read_residents_CBTC_BLOCK( pblk_forward );
-	write_residents_CBTC_BLOCK( pblk_forward, pT );
-	pT->misc.occupancy.pblk_forward = pblk_forward;
-	crnt_forward_blk = pblk_forward;
-      }
-      
-      assert( pT );
-      assert( pblk_forward );
-      assert( pT->misc.occupancy.pblk_forward == pblk_forward );
-#if 0 // *****
-      if( !updated_pblk_back ) {
-	if( blk_name_forward == blk_name_back )
-	  pT->misc.occupancy.pblk_back = NULL;
-	else {
-	  assert( blk_name_forward != blk_name_back );
-	  pblk_back = lookup_cbtc_block_prof( blk_name_back );
-	  if( pblk_back ) {
-	    TINY_TRAIN_STATE_PTR r = NULL;
-	    pT->misc.occupancy.pblk_back = pblk_back;
-	    r = border_residents_CBTC_BLOCK( pblk_back, pT );
-	    if( r != pT )
-	      ;
-	  } else {
-	    errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
-	    pT->misc.occupancy.pblk_back = NULL;
-	  }
-	}
-      }
-#else
-      if( blk_name_forward == blk_name_back ) {
-	pT->misc.occupancy.pblk_back = pblk_forward;
-	border_residents_CBTC_BLOCK( pblk_forward, NULL );
-      } else {
-	assert( blk_name_forward != blk_name_back );
-	pblk_back = lookup_cbtc_block_prof( blk_name_back );
-	if( pblk_back ) {
-	  pT->misc.occupancy.pblk_back = pblk_back;
-	  border_residents_CBTC_BLOCK( pblk_forward, pT );
-	} else {
-	  errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
-	  pT->misc.occupancy.pblk_back = NULL;
-	}
-      }
-#endif
-    } else {
-      errorF( "%d: unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
-      pT->misc.occupancy.pblk_forward = NULL;
-      pT->misc.occupancy.pblk_back = NULL;
-    }
   }
-  return crnt_forward_blk;
+  if( !found ) {
+    assert( (i >= 0) && (i < MAX_OPAQUE_BLKS) );
+    pT->misc.occupancy.opaque_blks[i] = pT->misc.occupancy.pblk_back;
+  }
+  return i;
 }
-static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
+static void acc_opaque_blks ( TINY_TRAIN_STATE_PTR pT, CBTC_BLOCK_PTR prev_forward_blk ) {
   assert( pT );
-  CBTC_BLOCK_PTR crnt_forward_blk = NULL;
-  
-  if( pT->pTI ) {
-    assert( pT->rakeID == TRAIN_INFO_RAKEID(*pT->pTI) );
-    const unsigned short blk_name_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pT->pTI );
-    const unsigned short blk_name_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pT->pTI );
-    CBTC_BLOCK_PTR pblk_forward = NULL;
-    CBTC_BLOCK_PTR pblk_back = NULL;
-    pblk_forward = lookup_cbtc_block_prof( blk_name_forward );
-    if( pblk_forward ) {
-      BOOL stil_there = FALSE;
-      TINY_TRAIN_STATE_PTR p = NULL;
-      p = read_residents_CBTC_BLOCK( pblk_forward );
-      while( p ) {
-	assert( pT );
-	if( p == pT ) {
-	  assert( pT->misc.occupancy.pblk_forward == pblk_forward );
-	  stil_there = TRUE;
-	  crnt_forward_blk = pblk_forward;
-	  break;
-	}
-	p = p->misc.occupancy.pNext;
-      }      
-      if( !stil_there ) {
-	assert( pT );
-	if( pT->misc.occupancy.pblk_forward ) {
-	  pblk_back = lookup_cbtc_block_prof( blk_name_back );
-	  if( pblk_back ) {
-	    if( pT->misc.occupancy.pblk_forward != pblk_forward ) {
-	      BOOL elided = FALSE;
-	      TINY_TRAIN_STATE_PTR *pp = NULL;
-	      pp = addr_residents_CBTC_BLOCK( pT->misc.occupancy.pblk_forward );
-	      assert( pp );
-	      while( *pp ) {
-		assert( *pp );
-		assert( pT );
-		if( *pp == pT ) {
-		  assert( !elided );
-		  *pp = pT->misc.occupancy.pNext;
-		  pT->misc.occupancy.pNext = NULL;
-		  elided = TRUE;
-		  continue;
-		}
-		pp = &(*pp)->misc.occupancy.pNext;
-		assert( pp );
-	      }
-	      pT->misc.occupancy.pblk_forward = NULL;
-	    }
-	  } else {
-	    errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
-	    pT->misc.occupancy.pblk_back = NULL;
-	  }
-	}
-	assert( pblk_forward );
-	assert( pT );
-	pT->misc.occupancy.pNext = read_residents_CBTC_BLOCK( pblk_forward );
-	write_residents_CBTC_BLOCK( pblk_forward, pT );
-	pT->misc.occupancy.pblk_forward = pblk_forward;
-	crnt_forward_blk = pblk_forward;
-      }
-      
-      assert( pT );
-      assert( pblk_forward );
-      assert( pT->misc.occupancy.pblk_forward == pblk_forward );
-      if( blk_name_forward == blk_name_back ) {
-	pT->misc.occupancy.pblk_back = pblk_forward;
-	border_residents_CBTC_BLOCK( pblk_forward, NULL );
-      } else {
-	assert( blk_name_forward != blk_name_back );
-	pblk_back = lookup_cbtc_block_prof( blk_name_back );
-	if( pblk_back ) {
-	  pT->misc.occupancy.pblk_back = pblk_back;
-	  border_residents_CBTC_BLOCK( pblk_forward, pT );
-	} else {
-	  errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
-	  pT->misc.occupancy.pblk_back = NULL;
-	}
-      }
-    } else {
-      errorF( "%d: unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
-      pT->misc.occupancy.pblk_forward = NULL;
-      pT->misc.occupancy.pblk_back = NULL;
-    }
+  assert( prev_forward_blk );
+  if( pT->misc.occupancy.pblk_forward != prev_forward_blk ) {
+    assert( ! pT->misc.occupancy.opaque_blks[MAX_OPAQUE_BLKS - 1] );
+    int i;
+    for( i = MAX_OPAQUE_BLKS - 1; i > 0; i-- )
+      pT->misc.occupancy.opaque_blks[i] = pT->misc.occupancy.opaque_blks[i - 1];
+    pT->misc.occupancy.opaque_blks[0] = prev_forward_blk;
   }
-  return crnt_forward_blk;
 }
-#else
+static void purge_opaque_blks ( TINY_TRAIN_STATE_PTR pT ) {
+  assert( pT );
+  int i;
+  for( i = 0; i < MAX_OPAQUE_BLKS; i++ )
+    pT->misc.occupancy.opaque_blks[i] = NULL;
+}
+
 static int enter_leave_edge ( CBTC_BLOCK_PTR pB, unsigned short ent_leav_blk ) {
   assert( pB );
   assert( ent_leav_blk > 0 );
@@ -305,7 +106,7 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 	  break;
 	}
 	p = p->misc.occupancy.pNext;
-      }      
+      }
       if( !stil_there ) {
 	assert( pT );
 	if( pT->misc.occupancy.pblk_forward ) {
@@ -329,19 +130,24 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 		pp = &(*pp)->misc.occupancy.pNext;
 		assert( pp );
 	      }
-	      pT->misc.occupancy.pblk_forward = NULL;
 	    }
 	  } else {
 	    errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
 	    pT->misc.occupancy.pblk_back = NULL;
+	    purge_opaque_blks( pT );
 	  }
 	}
 	assert( pblk_forward );
 	assert( pT );
 	pT->misc.occupancy.pNext = read_residents_CBTC_BLOCK( pblk_forward );
 	write_residents_CBTC_BLOCK( pblk_forward, pT );
-	pT->misc.occupancy.pblk_forward = pblk_forward;
-	crnt_forward_blk = pblk_forward;
+	{
+	  CBTC_BLOCK_PTR prev = pT->misc.occupancy.pblk_forward;
+	  pT->misc.occupancy.pblk_forward = pblk_forward;
+	  if( prev )
+	    acc_opaque_blks( pT, prev );
+	}
+	crnt_forward_blk = pT->misc.occupancy.pblk_forward;
       }
       
       assert( pT );
@@ -358,42 +164,72 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 	    elided = i;
 	  }
 	}
+	purge_opaque_blks( pT );
 	pT->misc.occupancy.pblk_back = pblk_forward;
       } else {
-	pblk_back = lookup_cbtc_block_prof( blk_name_back );	
+	pblk_back = lookup_cbtc_block_prof( blk_name_back );
 	if( pblk_back ) {
-	  assert( pT->misc.occupancy.pblk_back == pblk_back );
-	  int edge_pos_forw = -1;
-	  int edge_pos_back = -1;
-	  edge_pos_forw = enter_leave_edge( pblk_forward, blk_name_back );
-#if 0 // *****
-	  assert( edge_pos_forw > -1 );
-#else
-	  if( edge_pos_forw < 0 ) {
-	    printf( "(forward_blk, back_blk) = (%d, %d)\n", pblk_forward->block_name, blk_name_back );
-	    assert( FALSE );
+	  unsigned short blk_succ_forw;
+	  unsigned short blk_pred_back;
+	  int idx_back;
+	  pT->misc.occupancy.pblk_back = pblk_back;
+	  idx_back = trim_opaque_blks( pT );
+	  assert( (idx_back >= 0) && (idx_back < MAX_OPAQUE_BLKS) );
+	  if( idx_back > 0 ) {
+	    {
+	      int i;
+	      for( i = idx_back + 1; i < MAX_OPAQUE_BLKS; i++ )
+		assert( ! pT->misc.occupancy.opaque_blks[i] );
+	    }
+	    blk_succ_forw = (pT->misc.occupancy.opaque_blks[0])->block_name;
+	    blk_pred_back = (pT->misc.occupancy.opaque_blks[idx_back - 1])->block_name;
+	  } else {
+	    assert( idx_back == 0 );
+	    assert( pT->misc.occupancy.opaque_blks[idx_back] == pblk_back );
+	    {
+	      int i;
+	      for( i = 1; i < MAX_OPAQUE_BLKS; i++ )
+		assert( ! pT->misc.occupancy.opaque_blks[i] );
+	    }
+	    blk_succ_forw = blk_name_back;
+	    blk_pred_back = blk_name_forward;
 	  }
-#endif
-	  if( edge_pos_forw > -1 )
-	    border_residents_CBTC_BLOCK( pblk_forward, edge_pos_forw, pT );
-	  edge_pos_back = enter_leave_edge( pblk_back, blk_name_forward );
-	  assert( edge_pos_back > -1 );
-	  if( edge_pos_back > -1 )
-	    border_residents_CBTC_BLOCK( pblk_back, edge_pos_back, pT );
+	  {
+	    int edge_pos_forw = -1;
+	    int edge_pos_back = -1;
+	    edge_pos_forw = enter_leave_edge( pblk_forward, blk_succ_forw );
+	    assert( edge_pos_forw > -1 );
+	    if( edge_pos_forw > -1 )
+	      border_residents_CBTC_BLOCK( pblk_forward, edge_pos_forw, pT );
+	    edge_pos_back = enter_leave_edge( pblk_back, blk_pred_back );
+	    assert( edge_pos_back > -1 );
+	    if( edge_pos_back > -1 )
+	      border_residents_CBTC_BLOCK( pblk_back, edge_pos_back, pT );
+	  }
 	} else {
 	  errorF( "%d: unknown cbtc block detected as back, of train %3d.\n", blk_name_back, pT->rakeID );
 	  pT->misc.occupancy.pblk_back = NULL;
+	  purge_opaque_blks( pT );
 	}
       }
     } else {
       errorF( "%d: unknown cbtc block detected as forward, of train %3d.\n", blk_name_forward, pT->rakeID );
       pT->misc.occupancy.pblk_forward = NULL;
       pT->misc.occupancy.pblk_back = NULL;
+      purge_opaque_blks( pT );
+    }
+    {
+      assert( pT );
+      int i;
+      for( i = 0; i < MAX_OPAQUE_BLKS; i++ ) {
+	CBTC_BLOCK_PTR pB = pT->misc.occupancy.opaque_blks[i];
+	if( pB && (pB != pT->misc.occupancy.pblk_back) )
+	  pB->residents.overwhelmed = pT;
+      }
     }
   }
   return crnt_forward_blk;
 }
-#endif
 
 static TINY_TRAIN_STATE_PTR enum_orphant_trains ( void ) {
   TINY_TRAIN_STATE_PTR r = NULL;

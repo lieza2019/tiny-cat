@@ -212,8 +212,6 @@ void purge_block_restrains ( void ) {
 	  assert( w );
 	  *pp = w->misc.occupancy.pNext;
 	  w->misc.occupancy.pNext = NULL;
-	  w->misc.occupancy.pblk_forward = NULL;
-	  w->misc.occupancy.pblk_back = NULL;
 	  continue;
 	}
 	pp = &(*pp)->misc.occupancy.pNext;
@@ -229,6 +227,18 @@ void purge_block_restrains ( void ) {
 	      border_residents_CBTC_BLOCK( pB, i, NULL );
 	  }
 	}
+      }
+      if( pB->residents.overwhelmed ) {
+	TINY_TRAIN_STATE_PTR p = (TINY_TRAIN_STATE_PTR)(pB->residents.overwhelmed);
+	BOOL found = FALSE;
+	int i;
+	for( i = 0; i < MAX_OPAQUE_BLKS; i++ )
+	  if( p->misc.occupancy.opaque_blks[i] == pB ) {
+	    found = TRUE;
+	    break;
+	  }
+	if( !found )
+	  pB->residents.overwhelmed = NULL;
       }
       i++;
     }

@@ -22,9 +22,6 @@ typedef struct block {
   const unsigned short block_name;
   const CBTC_BLOCK_ID virt_block_name;
   const char *virt_blkname_str;
-#if 0 // *****
-  const int len;
-#else
   struct {
     int num_morphs;
     struct {
@@ -36,7 +33,6 @@ typedef struct block {
       IL_SYM points[MAX_POINTS_ON_MORPHING];
     } morphs[MAX_BLOCK_MORPHS];
   } shape;
-#endif
   struct {
     const IL_SYM track;
     const struct track *ptrack;
@@ -60,14 +56,9 @@ typedef struct block {
      declared in train_ctrl.h
   */
   struct {
-    void *overlayed;
-#if 0
-    void *ptrains_from_L, *ptrains_from_R;
-    void *edge_L, *edge_R;
-#else
+    void *overwhelmed;
     void *ptrains;
     void *edges[MAX_ADJACENT_BLKS];
-#endif
   } residents;
   
   struct {
