@@ -85,8 +85,8 @@ static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {
   int r = -1;
   
   //zones[0] = SC817; zones[1] = SC818;
-  zones[0] = SC801;
-  zones[1] = SC801;
+  zones[0] = SC802;
+  zones[1] = SC802;
   r = 1;
   return r;
 }

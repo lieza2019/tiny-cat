@@ -49,6 +49,7 @@ typedef struct ars_event_on_sp {
 typedef enum offset_time_to_fire {
   OFFSET_TO_ROUTESET,
   OFFSET_TO_DEPARTURE,
+  OFFSET_NOTHING,
   END_OF_OFFSET_TIMES
 } OFFSET_TIME_TO_FIRE;
 

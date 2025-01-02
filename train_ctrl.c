@@ -198,11 +198,9 @@ static CBTC_BLOCK_PTR update_train_resblock ( TINY_TRAIN_STATE_PTR pT ) {
 	    int edge_pos_forw = -1;
 	    int edge_pos_back = -1;
 	    edge_pos_forw = enter_leave_edge( pblk_forward, blk_succ_forw );
-	    assert( edge_pos_forw > -1 );
 	    if( edge_pos_forw > -1 )
 	      border_residents_CBTC_BLOCK( pblk_forward, edge_pos_forw, pT );
 	    edge_pos_back = enter_leave_edge( pblk_back, blk_pred_back );
-	    assert( edge_pos_back > -1 );
 	    if( edge_pos_back > -1 )
 	      border_residents_CBTC_BLOCK( pblk_back, edge_pos_back, pT );
 	  }

@@ -55,157 +55,6 @@ static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PT
   CBTC_BLOCK_C_PTR pblk_back = pT->misc.occupancy.pblk_back;
   
   if( pblk_forw ) {
-    TINY_TRAIN_STATE_C_PTR p = read_residents_CBTC_BLOCK( pblk_forw );
-    if( pblk_back ) {
-      const TINY_TRAIN_STATE_PTR e = read_edge_of_residents_CBTC_BLOCK( pblk_forw );
-      if( pblk_forw != pblk_back ) {
-	assert( pT->misc.occupancy.pblk_forward != pT->misc.occupancy.pblk_back );
-	assert( e );
-      } else {
-	assert( pT->misc.occupancy.pblk_forward == pT->misc.occupancy.pblk_back );
-	assert( p );
-      }
-      if( e ) {
-	assert( pT->misc.occupancy.pblk_forward != pT->misc.occupancy.pblk_back );
-	assert( pblk_forw != pblk_back );
-	while( p ) {
-	  if( p == pT )
-	    break;
-	  else
-	    p = p->misc.occupancy.pNext;
-	}
-	assert( !p );
-	p = e;
-      } else {
-	assert( pT->misc.occupancy.pblk_forward == pT->misc.occupancy.pblk_back );
-	assert( pblk_forw == pblk_back );
-      lk4_forward:
-	assert( p );
-	do {
-	  if( p == pT )
-	    break;
-	  else
-	    p = p->misc.occupancy.pNext;
-	} while( p );
-	assert( p );
-      }
-      assert( p == pT );
-      fprintf( fp_out, "***** Occupied Block (forward): %d\n", p->misc.occupancy.pblk_forward->block_name );
-      if( pblk_back )
-	fprintf( fp_out, "***** Occupied Block (back): %d\n", p->misc.occupancy.pblk_back->block_name );
-    } else
-      goto lk4_forward;;
-  } else {
-    assert( !pblk_forw );
-    assert( !pblk_back );
-  }
-}
-
-static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PTR pT ) {
-  assert( fp_out );
-  assert( pT );
-  CBTC_BLOCK_C_PTR pblk_forw = pT->misc.occupancy.pblk_forward;
-  CBTC_BLOCK_C_PTR pblk_back = pT->misc.occupancy.pblk_back;
-  
-  if( pblk_forw ) {
-    TINY_TRAIN_STATE_C_PTR p = NULL;
-    p = read_residents_CBTC_BLOCK( pblk_forw );
-    if( pblk_back ) {
-      TINY_TRAIN_STATE_C_PTR e = NULL;
-      if( pblk_forw != pblk_back ) {
-	assert( pT->misc.occupancy.pblk_forward != pT->misc.occupancy.pblk_back );
-	int found = -1;
-	int i;
-	for( i = 0; i < MAX_ADJACENT_BLKS; i++ ) {
-	  TINY_TRAIN_STATE_C_PTR q = NULL;
-	  q = read_edge_of_residents_CBTC_BLOCK1( pblk_forw, i );
-	  if( q == pT ) {
-	    assert( found < 0 );
-	    found = i;
-	  }
-	}
-	assert( found > -1 );
-	e = read_edge_of_residents_CBTC_BLOCK1( pblk_forw, found );
-	assert( e == pT );
-	{
-	  int j;
-	  found = -1;
-	  for( j = 0; j < MAX_ADJACENT_BLKS; j++ ) {
-	    TINY_TRAIN_STATE_C_PTR r = NULL;
-	    r = read_edge_of_residents_CBTC_BLOCK1( pblk_back, j );
-	    if( r == pT ) {
-	      assert( found < 0 );
-	      found = j;
-	    }
-	  }
-	  assert( found > -1 );
-	}
-      } else {
-	assert( pT->misc.occupancy.pblk_forward == pT->misc.occupancy.pblk_back );
-	assert( p );
-	{
-	  int i;
-	  for( i = 0; i < MAX_ADJACENT_BLKS; i++ ) {
-	    TINY_TRAIN_STATE_C_PTR q = NULL;
-	    q = read_edge_of_residents_CBTC_BLOCK1( pblk_forw, i );
-	    assert( q != pT );
-	  }
-	}
-      }
-      if( e ) {
-	assert( pT->misc.occupancy.pblk_forward != pT->misc.occupancy.pblk_back );
-	assert( pblk_forw != pblk_back );
-	while( p ) {
-	  if( p == pT )
-	    break;
-	  else
-	    p = p->misc.occupancy.pNext;
-	}
-	assert( !p );
-	p = e;
-	{
-	  TINY_TRAIN_STATE_C_PTR q = NULL;
-	  q = read_residents_CBTC_BLOCK( pblk_back );
-	  while( q ) {
-	    if( q == pT )
-	      break;
-	    else
-	      q = q->misc.occupancy.pNext;
-	  }
-	  assert( !q );
-	}
-      } else {
-	assert( pT->misc.occupancy.pblk_forward == pT->misc.occupancy.pblk_back );
-	assert( pblk_forw == pblk_back );
-      lk4_forward:
-	assert( p );
-	do {
-	  if( p == pT )
-	    break;
-	  else
-	    p = p->misc.occupancy.pNext;
-	} while( p );
-	assert( p );
-      }
-      assert( p == pT );
-      fprintf( fp_out, "***** Occupied Block (forward): %d\n", p->misc.occupancy.pblk_forward->block_name );
-      if( pblk_back )
-	fprintf( fp_out, "***** Occupied Block (back): %d\n", p->misc.occupancy.pblk_back->block_name );
-    } else
-      goto lk4_forward;;
-  } else {
-    assert( !pblk_forw );
-    assert( !pblk_back );
-  }
-}
-#else
-static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PTR pT ) {
-  assert( fp_out );
-  assert( pT );
-  CBTC_BLOCK_C_PTR pblk_forw = pT->misc.occupancy.pblk_forward;
-  CBTC_BLOCK_C_PTR pblk_back = pT->misc.occupancy.pblk_back;
-  
-  if( pblk_forw ) {
     TINY_TRAIN_STATE_C_PTR p = NULL;
     p = read_residents_CBTC_BLOCK( pblk_forw );
     if( pblk_back ) {
@@ -292,6 +141,16 @@ static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PT
     assert( !pblk_forw );
     assert( !pblk_back );
   }
+}
+#else
+static void show_train_residents_consistency ( FILE *fp_out, TINY_TRAIN_STATE_PTR pT ) {
+  assert( fp_out );
+  assert( pT );
+
+  if( pT->misc.occupancy.pblk_forward )
+    fprintf( fp_out, "***** Occupied Block (forward): %d\n", pT->misc.occupancy.pblk_forward->block_name );
+  if( pT->misc.occupancy.pblk_back )
+    fprintf( fp_out, "***** Occupied Block (back): %d\n", pT->misc.occupancy.pblk_back->block_name );
 }
 #endif
 
@@ -605,6 +464,48 @@ int main ( void ) {
 #endif
 #if 0
       {
+	extern int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, double *pdif, int hour, int minute, int second );
+	ars_chk_trgtime( OFFSET_NOTHING, NULL, 11, 19, 0 );
+      }
+      {
+	OC_ID oc_id;
+	CBI_STAT_KIND kind;
+	int tr_stat = -1;
+	const IL_SYM tr = T802A_TR;
+	tr_stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym( tr ) );
+	printf( "%s : %d\n", cnv2str_il_sym( tr ), tr_stat );
+	assert( TRUE );
+      }
+      {
+	extern int ars_chk_cond_trackcirc ( ROUTE_C_PTR proute );
+	const IL_SYM rid = S807B_S831B;
+	ROUTE_C_PTR pR = conslt_route_prof( rid );
+	int r_ctrl= -1;
+	r_ctrl  = ars_chk_cond_trackcirc( pR );
+	printf( "%s : %d\n", cnv2str_il_sym( rid ), r_ctrl );
+	assert( TRUE );
+      }
+      {
+	OC_ID oc_id;
+	CBI_STAT_KIND kind;
+	int sr_stat = -1;
+	const IL_SYM sr = T827B_eTRSR;
+	sr_stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym( sr ) );
+	printf( "%s : %d\n", cnv2str_il_sym( sr ), sr_stat );
+	assert( TRUE );
+      }
+      {
+	extern int ars_chk_cond_routelok ( ROUTE_C_PTR proute );
+	const IL_SYM rid = S803A_S811A;
+	ROUTE_C_PTR pR = conslt_route_prof( rid );
+	int r_ctrl= -1;
+	r_ctrl  = ars_chk_cond_routelok( pR );
+	printf( "%s : %d\n", cnv2str_il_sym( rid ), r_ctrl );
+	assert( TRUE );
+      }      
+#endif
+#if 0
+      {
 	OC_ID oc_id = END_OF_OCs;
 	CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
 	const char ctl_bit_ident[] = "P_S801A_S803A_CAN";
@@ -649,7 +550,7 @@ int main ( void ) {
 	  assert( n == sizeof(MSG_TINY_SERVER_STATUS) );
 	}
       }
-      
+      ;
 #if 1
       {
 	const int target_rake = 1;
@@ -659,8 +560,18 @@ int main ( void ) {
 	    TINY_TRAIN_STATE_PTR pT = &trains_tracking[i];
 	    assert( pT );
 	    if( pT->rakeID == target_rake ) {
-#if 1
+#if 0
 	      show_train_residents_consistency( stdout, pT );
+	      {
+		extern CBTC_BLOCK_C_PTR ars_chk_hit_trgsection1 ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptrain_ctrl, int blk_specified );
+		const IL_SYM rid = S807B_S831B;
+		ROUTE_C_PTR pR = conslt_route_prof( rid );
+		CBTC_BLOCK_C_PTR pB = ars_chk_hit_trgsection1( pR, pT, -1 );
+		if( pB )
+		  printf( "%s : %d\n", cnv2str_il_sym( rid ), pB->block_name );
+	      }
+#else
+	      ;
 #endif
 #if 0
 	      int r_mutex = -1;
