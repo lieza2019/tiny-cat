@@ -325,7 +325,7 @@ static SCHEDULED_COMMAND_PTR fetch_routeset_cmd1 ( JOURNEY_PTR pJ ) {
   return r;
 }
 
-#if 1 // now obsolete
+#if 0 // now obsolete
 static BOOL no_trains_ahead ( ROUTE_C_PTR proute, int ahead_blk ) {
   assert( proute );
   assert( (ahead_blk > 0) && (ahead_blk <= proute->ars_ctrl.trg_sect.num_blocks) );
@@ -366,8 +366,7 @@ static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptr
   }
   return r;
 }
-#endif
-
+#else
 static CBTC_BLOCK_C_PTR any_trains_ahead ( ROUTE_C_PTR proute, int ahead_blk, TINY_TRAIN_STATE_PTR ptrain_ctl ) {
   assert( proute );
   assert( (ahead_blk > 0) && (ahead_blk <= proute->ars_ctrl.trg_sect.num_blocks) );
@@ -430,13 +429,16 @@ static TINY_TRAIN_STATE_PTR on_the_edge ( CBTC_BLOCK_C_PTR pB, TINY_TRAIN_STATE_
   return r;
 }
 
-static CBTC_BLOCK_C_PTR ars_chk_hit_trgsection1 ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptrain_ctrl, int blk_specified ) { // well tested, 2025/01/02
+static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, CBTC_BLOCK_C_PTR *ppblk_hit, TINY_TRAIN_STATE_PTR ptrain_ctl, int blk_specified ) { // well tested, 2025/01/02
   assert( proute );
+  assert( ppblk_hit );
   assert( proute->ars_ctrl.app );
-  assert( ptrain_ctrl );
-  CBTC_BLOCK_C_PTR r = NULL;
+  assert( ptrain_ctl );
+  int r = -1;
   
   int i;
+  r = 0;
+  *ppblk_hit = NULL;
   for( i = 0; i < proute->ars_ctrl.trg_sect.num_blocks; i++ ) {    
     CBTC_BLOCK_C_PTR pB = proute->ars_ctrl.trg_sect.ptrg_blks[i];
     assert( pB );
@@ -446,32 +448,35 @@ static CBTC_BLOCK_C_PTR ars_chk_hit_trgsection1 ( ROUTE_C_PTR proute, TINY_TRAIN
 	continue;
     pT = read_residents_CBTC_BLOCK( pB );
     while( pT ) {
-      if( pT == ptrain_ctrl ) {
-	r = pB;
+      if( pT == ptrain_ctl ) {
+	*ppblk_hit = pB;
 	break;
       } else {
-	assert( !r );
+	assert( !(*ppblk_hit) );
 	pT = pT->misc.occupancy.pNext;
       }
     }
-    if( !r ) {
-      pT = on_the_edge( pB, ptrain_ctrl );
-      if( pT == ptrain_ctrl ) {	
-	r = pB;
+    if( !(*ppblk_hit) ) {
+      pT = on_the_edge( pB, ptrain_ctl );
+      if( pT == ptrain_ctl ) {	
+	*ppblk_hit = pB;
 	break;
       }
     } else
       break;
   }
-  if( r )
+  if( *ppblk_hit ) {
+    r = 1;
     if( ++i < proute->ars_ctrl.trg_sect.num_blocks ) {
       CBTC_BLOCK_C_PTR pB_pred = NULL;
-      pB_pred = any_trains_ahead( proute, i, ptrain_ctrl );
-      if( pB_pred )
-	r = NULL;
+      pB_pred = any_trains_ahead( proute, i, ptrain_ctl );
+      if( !pB_pred )
+	r = 2;
     }
+  }
   return r;
 }
+#endif
 
 static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
   assert( sch_dst );
@@ -689,8 +694,10 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
       assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
       assert( pR->ars_ctrl.app );
       if( pR->ars_ctrl.app ){
+	CBTC_BLOCK_C_PTR pB = NULL;
 	int cond = -1;
-	cond = ars_chk_hit_trgsection( pR, pJ->ptrain_ctrl );
+	//cond = ars_chk_hit_trgsection( pR, pJ->ptrain_ctrl );
+	cond = ars_chk_hit_trgsection( pR, &pB, pJ->ptrain_ctrl, -1 );
 	if( cond <= 0 ) {
 	  if( cond < 0 )
 	    r = ARS_MUTEX_BLOCKED;
@@ -821,8 +828,9 @@ SCHEDULED_COMMAND_PTR ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
 	  assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
 	  assert( pR->ars_ctrl.app );
 	  {
+	    CBTC_BLOCK_C_PTR pB = NULL;
 	    int cond = -1;
-	    cond = ars_chk_hit_trgsection( pR, pJ->ptrain_ctrl );
+	    cond = ars_chk_hit_trgsection( pR, &pB, pJ->ptrain_ctrl, -1 );
 	    if( cond >= 2 ) {
 	      OC_ID oc_id;
 	      CBI_STAT_KIND kind;
