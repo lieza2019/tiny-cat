@@ -550,7 +550,6 @@ int main ( void ) {
 	  assert( n == sizeof(MSG_TINY_SERVER_STATUS) );
 	}
       }
-      ;
 #if 1
       {
 	const int target_rake = 1;
@@ -560,9 +559,10 @@ int main ( void ) {
 	    TINY_TRAIN_STATE_PTR pT = &trains_tracking[i];
 	    assert( pT );
 	    if( pT->rakeID == target_rake ) {
-#if 0
 	      show_train_residents_consistency( stdout, pT );
+#if 0
 	      {
+		assert( pT );
 		extern CBTC_BLOCK_C_PTR ars_chk_hit_trgsection1 ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptrain_ctrl, int blk_specified );
 		const IL_SYM rid = S807B_S831B;
 		ROUTE_C_PTR pR = conslt_route_prof( rid );
@@ -570,9 +570,32 @@ int main ( void ) {
 		if( pB )
 		  printf( "%s : %d\n", cnv2str_il_sym( rid ), pB->block_name );
 	      }
-#else
-	      ;
+	      {
+		assert( pT );
+		extern CBTC_BLOCK_C_PTR any_trains_ahead ( ROUTE_C_PTR proute, int ahead_blk, TINY_TRAIN_STATE_PTR ptrain_ctl );
+		const IL_SYM rid = S831B_S821A;
+		ROUTE_C_PTR pR = conslt_route_prof( rid );
+		if( pT->misc.occupancy.pblk_forward ) {
+		  const unsigned short blk_res = (pT->misc.occupancy.pblk_forward)->block_name;
+		  int i;
+		  for( i = 0; i < pR->ars_ctrl.trg_sect.num_blocks; i++ ) {
+		    CBTC_BLOCK_PTR pprof = conslt_cbtc_block_prof( pR->ars_ctrl.trg_sect.trg_blks[i] );
+		    assert( pprof );		    
+		    if( pprof->block_name == blk_res ) {		      
+		      break;
+		    }
+		  }
+		  if( ++i < pR->ars_ctrl.trg_sect.num_blocks ) {
+		    CBTC_BLOCK_C_PTR pB = NULL;
+		    pB = any_trains_ahead( pR, i, pT );
+		    if( pB )
+		      printf( "%s : ahead train detected on %d\n", cnv2str_il_sym( rid ), pB->block_name );
+		  }
+		}
+		assert( TRUE );
+	      }
 #endif
+	      ;
 #if 0
 	      int r_mutex = -1;
 	      r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );

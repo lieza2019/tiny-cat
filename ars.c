@@ -325,6 +325,7 @@ static SCHEDULED_COMMAND_PTR fetch_routeset_cmd1 ( JOURNEY_PTR pJ ) {
   return r;
 }
 
+#if 1 // now obsolete
 static BOOL no_trains_ahead ( ROUTE_C_PTR proute, int ahead_blk ) {
   assert( proute );
   assert( (ahead_blk > 0) && (ahead_blk <= proute->ars_ctrl.trg_sect.num_blocks) );
@@ -340,8 +341,6 @@ static BOOL no_trains_ahead ( ROUTE_C_PTR proute, int ahead_blk ) {
   }
   return r;
 }
-
-#if 1 // now obsolete
 static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptrain_ctrl) {
   assert( proute );
   assert( proute->ars_ctrl.app );
@@ -369,6 +368,52 @@ static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptr
 }
 #endif
 
+static CBTC_BLOCK_C_PTR any_trains_ahead ( ROUTE_C_PTR proute, int ahead_blk, TINY_TRAIN_STATE_PTR ptrain_ctl ) {
+  assert( proute );
+  assert( (ahead_blk > 0) && (ahead_blk <= proute->ars_ctrl.trg_sect.num_blocks) );
+  assert( ptrain_ctl );
+  CBTC_BLOCK_C_PTR r = NULL;
+  BOOL found = FALSE;
+  
+  int i;
+  for( i = ahead_blk; i < proute->ars_ctrl.trg_sect.num_blocks; i++ ) {
+    CBTC_BLOCK_C_PTR pB = proute->ars_ctrl.trg_sect.ptrg_blks[i];
+    assert( pB );
+    TINY_TRAIN_STATE_PTR pT = NULL;
+    pT = read_residents_CBTC_BLOCK( proute->ars_ctrl.trg_sect.ptrg_blks[i] );
+    if( pT ) {
+      TINY_TRAIN_STATE_PTR p = pT;
+      while( p ) {
+	assert( p != ptrain_ctl );
+	p = p->misc.occupancy.pNext;
+      }
+      found = TRUE;
+      goto exam_border_consistency;
+    } else {
+      assert( !pT );
+      int i;
+    exam_border_consistency:      
+      for( i = 0; i < MAX_ADJACENT_BLKS; i++ ) {
+	TINY_TRAIN_STATE_PTR p = read_edge_of_residents_CBTC_BLOCK1( pB, i );
+	if( p ) {
+	  assert( p != ptrain_ctl );
+	  if( !found ) {
+	    pT = p;
+	    found = TRUE;
+	  }
+	}
+      }
+    }
+    assert( pB );
+    if( found ) {
+      assert( pT );
+      r = pB;
+      break;
+    }
+  }
+  return r;
+}
+
 static TINY_TRAIN_STATE_PTR on_the_edge ( CBTC_BLOCK_C_PTR pB, TINY_TRAIN_STATE_PTR pT ) {
   assert( pB );
   assert( pT );
@@ -384,6 +429,7 @@ static TINY_TRAIN_STATE_PTR on_the_edge ( CBTC_BLOCK_C_PTR pB, TINY_TRAIN_STATE_
   }
   return r;
 }
+
 static CBTC_BLOCK_C_PTR ars_chk_hit_trgsection1 ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptrain_ctrl, int blk_specified ) { // well tested, 2025/01/02
   assert( proute );
   assert( proute->ars_ctrl.app );
@@ -391,10 +437,10 @@ static CBTC_BLOCK_C_PTR ars_chk_hit_trgsection1 ( ROUTE_C_PTR proute, TINY_TRAIN
   CBTC_BLOCK_C_PTR r = NULL;
   
   int i;
-  for( i = 0; i < proute->ars_ctrl.trg_sect.num_blocks; i++ ) {
-    TINY_TRAIN_STATE_PTR pT = NULL;
+  for( i = 0; i < proute->ars_ctrl.trg_sect.num_blocks; i++ ) {    
     CBTC_BLOCK_C_PTR pB = proute->ars_ctrl.trg_sect.ptrg_blks[i];
     assert( pB );
+    TINY_TRAIN_STATE_PTR pT = NULL;
     if( blk_specified >= 0 )
       if( pB->block_name != blk_specified )
 	continue;
@@ -417,6 +463,13 @@ static CBTC_BLOCK_C_PTR ars_chk_hit_trgsection1 ( ROUTE_C_PTR proute, TINY_TRAIN
     } else
       break;
   }
+  if( r )
+    if( ++i < proute->ars_ctrl.trg_sect.num_blocks ) {
+      CBTC_BLOCK_C_PTR pB_pred = NULL;
+      pB_pred = any_trains_ahead( proute, i, ptrain_ctrl );
+      if( pB_pred )
+	r = NULL;
+    }
   return r;
 }
 
