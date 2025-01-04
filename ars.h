@@ -8,7 +8,7 @@
 
 typedef int TIME_DIFF;
 typedef int JOURNEY_ID;
-typedef int DWELL_ID;
+typedef int DWELL_ID, *DWELL_ID_PTR;
 
 #define DEFALUT_ROUTESET_OFFSET 30
 #define DEFAULT_DEPARTURE_OFFSET 7
@@ -29,10 +29,10 @@ typedef struct ars_assoc_time {
 typedef enum ars_scheduled_cmd {
   ARS_SCHEDULED_ROUTESET,
   ARS_SCHEDULED_ROUTEREL,
-  ARS_SCHEDULED_ARRIVAL,
-  ARS_SCHEDULED_DEPT,
-  ARS_SCHEDULED_SKIP,
-  END_OF_SCHEDULED_CMDS
+    ARS_SCHEDULED_ARRIVAL,
+    ARS_SCHEDULED_DEPT,
+    ARS_SCHEDULED_SKIP,
+    END_OF_SCHEDULED_CMDS
 } ARS_SCHEDULED_CMD;
 
 typedef enum ars_events_over_sp {

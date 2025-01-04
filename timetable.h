@@ -12,6 +12,7 @@
 #define SCHEDULED_COMMANDS_NODEBUF_SIZE 65536
 
 typedef struct scheduled_command {
+  JOURNEY_ID jid;
   ARS_SCHEDULED_CMD cmd;
   union {
     struct { // for ARS_SCHEDULED_ROUTESET
@@ -53,8 +54,7 @@ typedef struct scheduled_command {
       CREW_ID crew_id;
     } sch_skip;
   } attr;
-  JOURNEY_ID jid;
-  BOOL check;
+  BOOL checked;
   struct {
     struct {
       struct scheduled_command *pNext;
@@ -71,14 +71,14 @@ typedef const struct scheduled_command *SCHEDULED_COMMAND_C_PTR;
 typedef int JOURNEY_ID;
 typedef struct journey {
   BOOL valid;
-  time_t start_time;
-  time_t finish_time;
-  JOURNEY_ID jid;
-  SCHEDULED_COMMAND_PTR past_commands;
+  JOURNEY_ID jid;  
+  ARS_ASSOC_TIME start_time;
   struct {
     SCHEDULED_COMMAND_PTR pcmds;
     SCHEDULED_COMMAND_PTR pNext;
   } scheduled_commands;
+  ARS_ASSOC_TIME finish_time;
+  SCHEDULED_COMMAND_PTR past_commands;
   TINY_TRAIN_STATE_PTR ptrain_ctrl;
 } JOURNEY, *JOURNEY_PTR;
 typedef const struct journey *JOURNEY_C_PTR;
@@ -92,17 +92,20 @@ struct journeys {
   int rake_id;
 };
 typedef struct timetable {
-  struct journeys journeys[MAX_JOURNEYS_IN_TIMETABLE];  
   int num_journeys;
+  struct journeys journeys[MAX_JOURNEYS_IN_TIMETABLE];
   struct journeys *lkup[MAX_JOURNEYS_IN_TIMETABLE + 1]; // 1 origin, for jid > 0.
   SCHEDULE_AT_SP sp_schedule[END_OF_SPs];
 } TIMETABLE, *TIMETABLE_PTR;
 
-//#include "timetable_def.h"
+#include "timetable_def.h"
+
+extern TIMETABLE online_timetable;
 
 extern void cons_sp_schedule ( void );
+extern void makeup_online_timetable ( void );
 
-extern SCHEDULED_COMMAND_PTR sch_cmd_newnode( void );
+extern SCHEDULED_COMMAND_PTR sch_cmd_newnode ( void );
 extern STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TINY_TRAIN_STATE_PTR pT );
 extern ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ );
 extern SCHEDULED_COMMAND_PTR ars_sch_cmd_ack ( JOURNEY_PTR pJ );

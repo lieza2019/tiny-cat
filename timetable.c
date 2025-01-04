@@ -13,7 +13,7 @@ TIMETABLE online_timetable;
 static SCHEDULED_COMMAND_PTR events_at_sp[END_OF_SPs];
 static SCHEDULED_COMMAND_PTR sortbuf_at_sp[SCHEDULED_COMMANDS_NODEBUF_SIZE];
 
-static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) {
+static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) { // well tested, 2025/01/04
   assert( pJ );
   SCHEDULED_COMMAND_PTR pcmd = pJ->scheduled_commands.pcmds;
   while( pcmd ) {
@@ -40,9 +40,9 @@ static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) {
     case ARS_SCHEDULED_ROUTESET:
       /* fall thru. */
     case ARS_SCHEDULED_ROUTEREL:
-      break;
-    case END_OF_SCHEDULED_CMDS:
       /* fall thru. */
+    case END_OF_SCHEDULED_CMDS:
+      break;
     default:
       assert( FALSE );
       break;
@@ -66,24 +66,26 @@ static time_t mktime_of_cmd ( struct tm *pT, ARS_ASSOC_TIME_PTR ptime_cmd ) {
   return r;
 }
 
-static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID *pdw_seq2, SCHEDULED_COMMAND_PTR pC2 ) {
+static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID_PTR pdw_seq2, SCHEDULED_COMMAND_PTR pC2 ) {
   assert( pC2 );
-  assert( pdw_seq2 );
   int r = 0;
   struct tm T2 = {};
   time_t time_c2 = 0;
   
   switch( pC2->cmd ) {
   case ARS_SCHEDULED_ARRIVAL:
-    *pdw_seq2 = pC2->attr.sch_arriv.dw_seq;
+    if( pdw_seq2 )
+      *pdw_seq2 = pC2->attr.sch_arriv.dw_seq;
     time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_arriv.arr_time );
     break;
   case ARS_SCHEDULED_DEPT:
-    *pdw_seq2 = pC2->attr.sch_dept.dw_seq;
+    if( pdw_seq2 )
+      *pdw_seq2 = pC2->attr.sch_dept.dw_seq;
     time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_dept.dept_time );
     break;
   case ARS_SCHEDULED_SKIP:
-    *pdw_seq2 = pC2->attr.sch_skip.dw_seq;
+    if( pdw_seq2 )
+      *pdw_seq2 = pC2->attr.sch_skip.dw_seq;
     time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_skip.pass_time );
     break;
   case ARS_SCHEDULED_ROUTESET:
@@ -95,10 +97,8 @@ static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID *pdw_seq2, SCHEDULED_COMMAND
   default:
     assert( FALSE );
   }
-  assert( pdw_seq2 );
-  assert( *pdw_seq2 > -1 );
-  
-  {
+  if( pdw_seq2 ) {
+    assert( *pdw_seq2 > -1 );
     double d;      
     d = difftime( time_c1, time_c2 );
     if( d < 0 )
@@ -106,7 +106,6 @@ static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID *pdw_seq2, SCHEDULED_COMMAND
     else if( d > 0 )
       r = 1;
     else {
-      assert( d == 0 );
       r = 0;
     }
   }
@@ -115,60 +114,70 @@ static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID *pdw_seq2, SCHEDULED_COMMAND
 static int cmp_over_sp_cmds ( const void *pC1, const void *pC2 ) {
   assert( pC1 );
   assert( pC2 );
-  int r = 0;
+  int r = 0;  
   DWELL_ID dw_seq1 = -1;
   DWELL_ID dw_seq2 = -1;
-  
+  DWELL_ID_PTR pdw_seq2 = &dw_seq2;
+			 
   struct tm T1 = {};
   time_t t1 = 0;
   
-  switch( ((SCHEDULED_COMMAND_PTR)pC1)->cmd ) {
+  switch( (*(SCHEDULED_COMMAND_PTR *)pC1)->cmd ) {
   case ARS_SCHEDULED_ARRIVAL:
-    dw_seq1 = ((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_arriv.dw_seq;
-    t1 = mktime_of_cmd( &T1, &((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_arriv.arr_time );   
+    dw_seq1 = (*(SCHEDULED_COMMAND_PTR *)pC1)->attr.sch_arriv.dw_seq;
+    t1 = mktime_of_cmd( &T1, &(*(SCHEDULED_COMMAND_PTR *)pC1)->attr.sch_arriv.arr_time );
     break;
   case ARS_SCHEDULED_DEPT:
-    dw_seq1 = ((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_dept.dw_seq;
-    t1 = mktime_of_cmd( &T1, &((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_dept.dept_time );
+    dw_seq1 = (*(SCHEDULED_COMMAND_PTR *)pC1)->attr.sch_dept.dw_seq;
+    t1 = mktime_of_cmd( &T1, &(*(SCHEDULED_COMMAND_PTR *)pC1)->attr.sch_dept.dept_time );
     break;
   case ARS_SCHEDULED_SKIP:
-    dw_seq1 = ((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_skip.dw_seq;
-    t1 = mktime_of_cmd( &T1, &((SCHEDULED_COMMAND_PTR)pC1)->attr.sch_skip.pass_time );
+    dw_seq1 = (*(SCHEDULED_COMMAND_PTR *)pC1)->attr.sch_skip.dw_seq;
+    t1 = mktime_of_cmd( &T1, &(*(SCHEDULED_COMMAND_PTR *)pC1)->attr.sch_skip.pass_time );
+    break;
+  case END_OF_SCHEDULED_CMDS:
+    assert( pdw_seq2 );
+    r = ((*(SCHEDULED_COMMAND_PTR *)pC2)->cmd == END_OF_SCHEDULED_CMDS) ? 0 : -1;
+    pdw_seq2 = NULL;
     break;
   case ARS_SCHEDULED_ROUTESET:
+    assert( FALSE );
     /* fall thru. */
   case ARS_SCHEDULED_ROUTEREL:
-    /* fall thru. */
-  case END_OF_SCHEDULED_CMDS:
+    assert( FALSE );
     /* fall thru. */
   default:
     assert( FALSE );
   }
-  assert( dw_seq1 > -1 );
   
-  r = cmp_with_cmd2( t1, &dw_seq2, (SCHEDULED_COMMAND_PTR)pC2 );
-  assert( dw_seq2 > -1 );
-  if( r == 0 ) {
-    JOURNEY_ID jid1 = ((SCHEDULED_COMMAND_PTR)pC1)->jid;
-    JOURNEY_ID jid2 = ((SCHEDULED_COMMAND_PTR)pC2)->jid;
-    if( jid1 < jid2 )
-      r = -1;
-    else if( jid1 > jid2 )
-      r = 1;
-    else {
-      assert( jid1 == jid2 );
-      if( dw_seq1 < dw_seq2 )
+  r = cmp_with_cmd2( t1, pdw_seq2, *(SCHEDULED_COMMAND_PTR *)pC2 );
+  if( pdw_seq2 ) {
+    assert( dw_seq2 > -1 );
+    if( r == 0 ) {
+      JOURNEY_ID jid1 = (*(SCHEDULED_COMMAND_PTR *)pC1)->jid;
+      JOURNEY_ID jid2 = (*(SCHEDULED_COMMAND_PTR *)pC2)->jid;
+      if( jid1 < jid2 )
 	r = -1;
-      else if( dw_seq1 > dw_seq2 )
+      else if( jid1 > jid2 )
 	r = 1;
       else {
-	assert( dw_seq1 == dw_seq2 );
-	r = 0;
-#ifdef CHK_STRICT_CONSISTENCY
-	assert( FALSE );
-#endif // CHK_STRICT_CONSISTENCY
+	assert( jid1 == jid2 );
+	if( dw_seq1 < dw_seq2 )
+	  r = -1;
+	else if( dw_seq1 > dw_seq2 )
+	  r = 1;
+	else {
+	  assert( dw_seq1 == dw_seq2 );
+	  r = 0;
+	}
       }
     }
+  } else {
+    assert( (*(SCHEDULED_COMMAND_PTR *)pC1)->cmd == END_OF_SCHEDULED_CMDS );
+    if( (*(SCHEDULED_COMMAND_PTR *)pC2)->cmd == END_OF_SCHEDULED_CMDS )
+      assert( r == 0 );
+    else
+      assert( r < 0 );
   }
   return r;
 }
@@ -177,14 +186,21 @@ static int cmp_over_journeys ( const void *pJ1, const void *pJ2 ) {
   assert( pJ1 );
   assert( pJ2 );
   int r = 0;
-  if( ! ((JOURNEY_C_PTR)pJ1)->valid )
-    r = ((JOURNEY_C_PTR)pJ2)->valid ? -1 : 0;
-  else if( ! ((JOURNEY_C_PTR)pJ2)->valid )
-    r = 1;
+  if( ! ((JOURNEY_C_PTR)pJ1)->valid ) {
+    if( ((JOURNEY_C_PTR)pJ2)->valid )
+      r = 1;
+    else {
+      assert( !((JOURNEY_C_PTR)pJ1)->valid && !((JOURNEY_C_PTR)pJ2)->valid );
+      goto try_again;
+    }
+  } else if( ! ((JOURNEY_C_PTR)pJ2)->valid )
+    r = -1;
   else {
     assert( ((JOURNEY_C_PTR)pJ1)->valid && ((JOURNEY_C_PTR)pJ2)->valid );
+    struct tm tm = {};
     double d;
-    d = difftime( ((JOURNEY_C_PTR)pJ1)->start_time, ((JOURNEY_C_PTR)pJ2)->start_time );
+  try_again:
+    d = difftime( mktime_of_cmd(&tm, &((JOURNEY_PTR)pJ1)->start_time), mktime_of_cmd(&tm, &((JOURNEY_PTR)pJ2)->start_time) );
     if( d < 0 )
       r = -1;
     else if( d > 0 )
@@ -199,17 +215,13 @@ static int cmp_over_journeys ( const void *pJ1, const void *pJ2 ) {
       else {
 	assert( jid1 == jid2 );
 	r = 0;
-#ifdef CHK_STRICT_CONSISTENCY
-	assert( FALSE );
-#endif // CHK_STRICT_CONSISTENCY
       }
     }
   }
   return r;
 }
 
-
-BOOL is_simultaneous ( ARS_ASSOC_TIME_PTR pT1, ARS_ASSOC_TIME_PTR pT2 ) {
+static BOOL coincide ( ARS_ASSOC_TIME_PTR pT1, ARS_ASSOC_TIME_PTR pT2 ) {
   assert( pT1 );
   assert( pT2 );
   BOOL r = FALSE;
@@ -219,7 +231,7 @@ BOOL is_simultaneous ( ARS_ASSOC_TIME_PTR pT1, ARS_ASSOC_TIME_PTR pT2 ) {
   return r;
 }
 
-void cons_sp_schedule ( void ) {
+void cons_sp_schedule ( void ) { // well tested, 2025/01/04
   int i;
   
   assert( (online_timetable.num_journeys >= 0) && (online_timetable.num_journeys < MAX_JOURNEYS_IN_TIMETABLE) );
@@ -234,7 +246,7 @@ void cons_sp_schedule ( void ) {
   }
   assert( i == MAX_JOURNEYS_IN_TIMETABLE );
 #endif // CHK_STRICT_CONSISTENCY
-    
+  
   for( i = 0; i < END_OF_SPs; i++ ) {
     int cnt = 0;
     SCHEDULED_COMMAND_PTR pC_sp = events_at_sp[i];   
@@ -255,7 +267,7 @@ void cons_sp_schedule ( void ) {
     }
 #endif // CHK_STRICT_CONSISTENCY
     
-    qsort( sortbuf_at_sp, cnt, sizeof(SCHEDULED_COMMAND_PTR), cmp_over_sp_cmds );
+   qsort( sortbuf_at_sp, cnt, sizeof(SCHEDULED_COMMAND_PTR), cmp_over_sp_cmds );
 #ifdef CHK_STRICT_CONSISTENCY
     { 
       int k = 0;
@@ -297,11 +309,16 @@ void cons_sp_schedule ( void ) {
 	    assert( FALSE );
 	  }
 	  if( pjunior_fellow_t ) {
-	    if( is_simultaneous(psenior_fellow_t, pjunior_fellow_t) )
+	    if( coincide(psenior_fellow_t, pjunior_fellow_t) ) {
 	      pC_sp->ln.sp_sch.pFellow = sortbuf_at_sp[k];
+	      psenior_fellow_t = pjunior_fellow_t;
+	    } else
+	      psenior_fellow_t = NULL;
+	  } else {
+	    psenior_fellow_t = pjunior_fellow_t;
+	    assert( !psenior_fellow_t );
 	  }
-	  psenior_fellow_t = pjunior_fellow_t;
-	} else
+	} else {
 	  switch( sortbuf_at_sp[k]->cmd ) {
 	  case ARS_SCHEDULED_ARRIVAL:
 	    psenior_fellow_t = &sortbuf_at_sp[k]->attr.sch_arriv.arr_time;
@@ -321,6 +338,7 @@ void cons_sp_schedule ( void ) {
 	  default:
 	    assert( FALSE );
 	  }
+	}
 	pC_sp = sortbuf_at_sp[k];
 	assert( pC_sp );
 	pC_sp->ln.sp_sch.pFellow = NULL;
@@ -331,10 +349,9 @@ void cons_sp_schedule ( void ) {
       {
 	SCHEDULED_COMMAND_PTR p = sortbuf_at_sp[0];
 	while( p ) {
-	  k--;
+	  assert( --k >= 0 );
 	  p = p->ln.sp_sch.pNext;
 	}
-	assert( k == 0 );
       }
 #endif // CHK_STRICT_CONSISTENCY
     }
@@ -347,7 +364,7 @@ void cons_sp_schedule ( void ) {
     p = online_timetable.sp_schedule[i].pFirst;
     while( p ) {
       assert( p );
-      if( ! p->check ) {
+      if( ! p->checked ) {
 	online_timetable.sp_schedule[i].pNext = p;
 	break;
       }
@@ -355,7 +372,7 @@ void cons_sp_schedule ( void ) {
     }
 #ifdef CHK_STRICT_CONSISTENCY
     while( p ) {
-      assert( ! p->check );
+      assert( ! p->checked );
       p = p->ln.sp_sch.pNext;
     }
 #endif // CHK_STRICT_CONSISTENCY
@@ -363,14 +380,14 @@ void cons_sp_schedule ( void ) {
   assert( i == END_OF_SPs );
 }
 
-void makeup_online_timetable ( void ) {
-  qsort( online_timetable.journeys, MAX_JOURNEYS_IN_TIMETABLE, sizeof(struct journeys), cmp_over_journeys );
+void makeup_online_timetable ( void ) { // well tested, 2025/01/04
+  int cnt = 0;
+  
+  qsort( online_timetable.journeys, online_timetable.num_journeys, sizeof(struct journeys), cmp_over_journeys );
   {
-    int cnt = 0;
     int i;
     for( i = 1; i <= MAX_JOURNEYS_IN_TIMETABLE; i++ )
       online_timetable.lkup[i] = NULL;
-    
     for( i = 0; i < MAX_JOURNEYS_IN_TIMETABLE; i++ ) {
       JOURNEY_ID jid = online_timetable.journeys[i].journey.jid;
       if( ! online_timetable.journeys[i].journey.valid )
@@ -389,6 +406,23 @@ void makeup_online_timetable ( void ) {
     assert( i == MAX_JOURNEYS_IN_TIMETABLE );
 #endif // CHK_STRICT_CONSISTENCY
   }
-  
+  {
+    assert( online_timetable.num_journeys == cnt );
+    int j;
+    for( j = 0; j < online_timetable.num_journeys; j++ ) {
+      SCHEDULED_COMMAND_PTR pcmd = online_timetable.journeys[j].journey.scheduled_commands.pcmds;
+      while( pcmd ) {
+	assert( pcmd );
+	pcmd->ln.journey.pNext = NULL;
+	if( pcmd->cmd == END_OF_SCHEDULED_CMDS )
+	  break;
+	else
+	  pcmd->ln.journey.pNext = (pcmd + 1);	  
+	pcmd++;
+      }
+      assert( pcmd );
+      assert( pcmd->cmd == END_OF_SCHEDULED_CMDS );
+    }
+  }
   cons_sp_schedule();
 }

@@ -37,7 +37,7 @@ SYSTEM_PARAMS tiny_system_params = {
 static SCHEDULED_COMMAND sch_cmd_nodes[SCHEDULED_COMMANDS_NODEBUF_SIZE];
 static int frontier;
 
-SCHEDULED_COMMAND_PTR sch_cmd_newnode( void ) {
+SCHEDULED_COMMAND_PTR sch_cmd_newnode ( void ) {
   SCHEDULED_COMMAND_PTR r = NULL;
   if( frontier < SCHEDULED_COMMANDS_NODEBUF_SIZE )
     r = &sch_cmd_nodes[++frontier];
@@ -164,7 +164,7 @@ static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, double *pdif, int 
   return r;
 }
 
-static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) { // well tested, 2025/01/01
+static int ars_chk_routelok ( ROUTE_C_PTR proute ) { // well tested, 2025/01/01
   assert( proute );
   assert( proute->ars_ctrl.app );
   int r = -1;
@@ -270,7 +270,7 @@ static int ars_chk_cond_routelok ( ROUTE_C_PTR proute ) { // well tested, 2025/0
   return r;
 }
 
-static int ars_chk_cond_trackcirc ( ROUTE_C_PTR proute ) { // well tested, 2025/01/01
+static int ars_chk_trackcirc ( ROUTE_C_PTR proute ) { // well tested, 2025/01/01
   assert( proute );
   int r = -1;
   
@@ -325,48 +325,6 @@ static SCHEDULED_COMMAND_PTR fetch_routeset_cmd1 ( JOURNEY_PTR pJ ) {
   return r;
 }
 
-#if 0 // now obsolete
-static BOOL no_trains_ahead ( ROUTE_C_PTR proute, int ahead_blk ) {
-  assert( proute );
-  assert( (ahead_blk > 0) && (ahead_blk <= proute->ars_ctrl.trg_sect.num_blocks) );
-  BOOL r = TRUE;
-  int i;
-  
-  for( i = ahead_blk; i < proute->ars_ctrl.trg_sect.num_blocks; i++ ) {
-    if( read_residents_CBTC_BLOCK( proute->ars_ctrl.trg_sect.ptrg_blks[i] ) ||
-	read_edge_of_residents_CBTC_BLOCK( proute->ars_ctrl.trg_sect.ptrg_blks[i] ) ) {
-      r = FALSE;
-      break;
-    }
-  }
-  return r;
-}
-static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, TINY_TRAIN_STATE_PTR ptrain_ctrl) {
-  assert( proute );
-  assert( proute->ars_ctrl.app );
-  assert( ptrain_ctrl );
-  int r = -1;
-  int i;
-  
-  r = 0;
-  for( i = 0; i < proute->ars_ctrl.trg_sect.num_blocks; i++ ) {
-    TINY_TRAIN_STATE_PTR pT = NULL;
-    pT = read_residents_CBTC_BLOCK( proute->ars_ctrl.trg_sect.ptrg_blks[i] );
-    while( pT ) {
-      if( pT == ptrain_ctrl ) {
-	r = 1;
-	if( !(pT->misc.occupancy.pNext || read_edge_of_residents_CBTC_BLOCK( proute->ars_ctrl.trg_sect.ptrg_blks[i] )) ) {
-	  if( no_trains_ahead( proute, (i + 1) ) )
-	    r = 2;
-	}
-	break;
-      }
-      pT = pT->misc.occupancy.pNext;
-    }
-  }
-  return r;
-}
-#else
 static CBTC_BLOCK_C_PTR any_trains_ahead ( ROUTE_C_PTR proute, int ahead_blk, TINY_TRAIN_STATE_PTR ptrain_ctl ) {
   assert( proute );
   assert( (ahead_blk > 0) && (ahead_blk <= proute->ars_ctrl.trg_sect.num_blocks) );
@@ -476,7 +434,6 @@ static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, CBTC_BLOCK_C_PTR *ppblk_
   }
   return r;
 }
-#endif
 
 static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
   assert( sch_dst );
@@ -604,20 +561,20 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
 #ifdef CHK_STRICT_CONSISTENCY
 	assert( pdep_next_sch->attr.sch_dept.dept_sp == pdep_blk->sp.sp_code );
 #endif // CHK_STRICT_CONSISTENCY
-	if( pdep_next_sch->jid != pC->jid ) {
+	judged = TRUE;
+	if( pdep_next_sch->jid == pC->jid )
 	  r = 1;
-	  judged = TRUE;
-	} else
+	else
 	  r = 0;
 	break;
       case ARS_SCHEDULED_SKIP:
 #ifdef CHK_STRICT_CONSISTENCY
 	assert( pdep_next_sch->attr.sch_skip.ss_sp == pdep_blk->sp.sp_code );
 #endif // CHK_STRICT_CONSISTENCY
-	if( pdep_next_sch->jid == pC->jid ) {
+	judged = TRUE;
+	if( pdep_next_sch->jid == pC->jid )
 	  r = 1;
-	  judged = TRUE;
-	} else
+	else
 	  r = 0;
 	break;
       default:
@@ -709,7 +666,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	  r = ARS_FOUND_TRAINS_AHEAD;
 	else {
 	  assert( cond >= 2 );
-	  cond = ars_chk_cond_trackcirc( pR );
+	  cond = ars_chk_trackcirc( pR );
 	  if( cond <= 0 ) {
 	    if( cond < 0 )
 	      r = ARS_MUTEX_BLOCKED;
@@ -729,7 +686,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	    if( pC->attr.sch_roset.is_dept_route )
 	      goto is_the_time_to_go;
 	    else {
-	      cond = ars_chk_cond_routelok( pR );
+	      cond = ars_chk_routelok( pR );
 	      if( cond <= 0 ) {
 		if( cond < 0 )
 		  r = ARS_MUTEX_BLOCKED;

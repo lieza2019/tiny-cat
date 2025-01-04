@@ -362,6 +362,12 @@ BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_
 }
 
 int main ( void ) {
+  {
+    online_timetable = trial_timetable;
+    makeup_online_timetable();
+    assert( FALSE );
+  }
+  
   TINY_SOCK socks_srvstat;
   TINY_SOCK_DESC sd_send_srvbeat = -1;
   TINY_SOCK_DESC sd_send_srvstat = -1;
@@ -477,11 +483,11 @@ int main ( void ) {
 	assert( TRUE );
       }
       {
-	extern int ars_chk_cond_trackcirc ( ROUTE_C_PTR proute );
+	extern int ars_chk_trackcirc ( ROUTE_C_PTR proute );
 	const IL_SYM rid = S807B_S831B;
 	ROUTE_C_PTR pR = conslt_route_prof( rid );
-	int r_ctrl= -1;
-	r_ctrl  = ars_chk_cond_trackcirc( pR );
+	int r_ctrl = -1;
+	r_ctrl  = ars_chk_trackcirc( pR );
 	printf( "%s : %d\n", cnv2str_il_sym( rid ), r_ctrl );
 	assert( TRUE );
       }
@@ -495,11 +501,11 @@ int main ( void ) {
 	assert( TRUE );
       }
       {
-	extern int ars_chk_cond_routelok ( ROUTE_C_PTR proute );
+	extern int ars_chk_routelok ( ROUTE_C_PTR proute );
 	const IL_SYM rid = S803A_S811A;
 	ROUTE_C_PTR pR = conslt_route_prof( rid );
 	int r_ctrl= -1;
-	r_ctrl  = ars_chk_cond_routelok( pR );
+	r_ctrl  = ars_chk_routelok( pR );
 	printf( "%s : %d\n", cnv2str_il_sym( rid ), r_ctrl );
 	assert( TRUE );
       }      
@@ -551,6 +557,7 @@ int main ( void ) {
 	}
       }
 #if 1
+      
       {
 	const int target_rake = 1;
 	int i;
