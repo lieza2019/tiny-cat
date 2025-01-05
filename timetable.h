@@ -71,7 +71,7 @@ typedef const struct scheduled_command *SCHEDULED_COMMAND_C_PTR;
 typedef int JOURNEY_ID;
 typedef struct journey {
   BOOL valid;
-  JOURNEY_ID jid;  
+  JOURNEY_ID jid;
   ARS_ASSOC_TIME start_time;
   struct {
     SCHEDULED_COMMAND_PTR pcmds;

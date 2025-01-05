@@ -10,8 +10,11 @@
 
 TIMETABLE online_timetable;
 
-static SCHEDULED_COMMAND_PTR events_at_sp[END_OF_SPs];
 static SCHEDULED_COMMAND_PTR sortbuf_at_sp[SCHEDULED_COMMANDS_NODEBUF_SIZE];
+static struct {
+  int num_cmds;
+  SCHEDULED_COMMAND_PTR pcmds;
+} events_at_sp[END_OF_SPs];
 
 static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) { // well tested, 2025/01/04
   assert( pJ );
@@ -22,20 +25,20 @@ static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) { // well tested, 2025/
     case ARS_SCHEDULED_ARRIVAL:
       sp = pcmd->attr.sch_arriv.arr_sp;
       assert( (sp >= 0) && (sp < END_OF_SPs) );
-      pcmd->ln.sp_sch.pNext =  events_at_sp[sp];
-      events_at_sp[sp] = pcmd;
+      pcmd->ln.sp_sch.pNext = events_at_sp[sp].pcmds;
+      events_at_sp[sp].pcmds = pcmd;
       break;
     case ARS_SCHEDULED_DEPT:
       sp = pcmd->attr.sch_dept.dept_sp;
       assert( (sp >= 0) && (sp < END_OF_SPs) );
-      pcmd->ln.sp_sch.pNext = events_at_sp[sp];
-      events_at_sp[sp] = pcmd;
+      pcmd->ln.sp_sch.pNext = events_at_sp[sp].pcmds;
+      events_at_sp[sp].pcmds = pcmd;
       break;
     case ARS_SCHEDULED_SKIP:
       sp = pcmd->attr.sch_skip.ss_sp;
       assert( (sp >= 0) && (sp < END_OF_SPs) );
-      pcmd->ln.sp_sch.pNext = events_at_sp[sp];
-      events_at_sp[sp] = pcmd;
+      pcmd->ln.sp_sch.pNext = events_at_sp[sp].pcmds;
+      events_at_sp[sp].pcmds = pcmd;
       break;
     case ARS_SCHEDULED_ROUTESET:
       /* fall thru. */
@@ -234,7 +237,7 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
   
   for( i = 0; i < END_OF_SPs; i++ ) {
     int cnt = 0;
-    SCHEDULED_COMMAND_PTR pC_sp = events_at_sp[i];   
+    SCHEDULED_COMMAND_PTR pC_sp = events_at_sp[i].pcmds;
     while( pC_sp ) {
       assert( cnt < SCHEDULED_COMMANDS_NODEBUF_SIZE );
       sortbuf_at_sp[cnt++] = pC_sp;
@@ -359,15 +362,17 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
 	  assert( --k >= 0 );
 	  p = p->ln.sp_sch.pNext;
 	}
+	assert( k == 0 );
       }
 #endif // CHK_STRICT_CONSISTENCY
     }
-    events_at_sp[i] = sortbuf_at_sp[0];
+    events_at_sp[i].pcmds = sortbuf_at_sp[0];
+    events_at_sp[i].num_cmds = cnt;
   }
   
   for( i = 0; i < END_OF_SPs; i++ ) {
     SCHEDULED_COMMAND_PTR p = NULL;
-    online_timetable.sp_schedule[i].pFirst = events_at_sp[i];
+    online_timetable.sp_schedule[i].pFirst = events_at_sp[i].pcmds;
     p = online_timetable.sp_schedule[i].pFirst;
     while( p ) {
       assert( p );
@@ -383,6 +388,7 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
       p = p->ln.sp_sch.pNext;
     }
 #endif // CHK_STRICT_CONSISTENCY
+    online_timetable.sp_schedule[i].num_events = events_at_sp[i].num_cmds;
   }
   assert( i == END_OF_SPs );
 }
@@ -415,20 +421,30 @@ void makeup_online_timetable ( void ) { // well tested, 2025/01/04
   }
   {
     assert( online_timetable.num_journeys == cnt );
-    int j;
-    for( j = 0; j < online_timetable.num_journeys; j++ ) {
-      SCHEDULED_COMMAND_PTR pcmd = online_timetable.journeys[j].journey.scheduled_commands.pcmds;
+    int i;
+    for( i = 0; i < online_timetable.num_journeys; i++ ) {
+      SCHEDULED_COMMAND_PTR pcmd = online_timetable.journeys[i].journey.scheduled_commands.pcmds;
       while( pcmd ) {
-	assert( pcmd );
-	pcmd->ln.journey.pNext = NULL;
-	if( pcmd->cmd == END_OF_SCHEDULED_CMDS )
+	assert( pcmd );	
+	if( pcmd->cmd == END_OF_SCHEDULED_CMDS ) {
+	  pcmd->ln.journey.pNext = NULL;
 	  break;
-	else
-	  pcmd->ln.journey.pNext = (pcmd + 1);	  
+	} else
+	  pcmd->ln.journey.pNext = (pcmd + 1);
 	pcmd++;
       }
       assert( pcmd );
       assert( pcmd->cmd == END_OF_SCHEDULED_CMDS );
+      
+      pcmd = online_timetable.journeys[i].journey.scheduled_commands.pcmds;
+      while( pcmd ) {
+	assert( pcmd );
+	if( ! pcmd->checked ) {
+	  online_timetable.journeys[i].journey.scheduled_commands.pNext = pcmd;
+	  break;
+	}
+	pcmd = pcmd->ln.journey.pNext;
+      }
     }
   }
   cons_sp_schedule();

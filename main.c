@@ -363,8 +363,23 @@ BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_
 
 int main ( void ) {
   {
+    extern int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC );
+    const DWELL_ID did = 4;
+    const JOURNEY_ID jid = 1;
+    int r = -1;
+    SCHEDULED_COMMAND_PTR pC = NULL;    
     online_timetable = trial_timetable;
     makeup_online_timetable();
+    pC = online_timetable.lkup[jid]->journey.scheduled_commands.pNext;
+    {
+      while( pC ) {
+	assert( pC );
+	if( (pC->cmd == ARS_SCHEDULED_DEPT) && (pC->attr.sch_dept.dw_seq == did) )
+	  break;
+	pC = pC->ln.journey.pNext;
+      }
+    }
+    r = ars_chk_depschedule( online_timetable.sp_schedule, pC );
     assert( FALSE );
   }
   

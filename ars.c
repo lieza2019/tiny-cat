@@ -621,32 +621,39 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
   return r;
 }
 #else
-static SCHEDULED_COMMAND_C_PTR is_fellow ( SCHEDULED_COMMAND_C_PTR pcmd, SCHEDULED_COMMAND_C_PTR pC ) {
+static SCHEDULED_COMMAND_C_PTR is_fellow ( SCHEDULED_COMMAND_C_PTR pcmd, SCHEDULED_COMMAND_C_PTR pC, const int sentinel ) {
   assert( pcmd );
   assert( pC );
+  assert( sentinel > -1 );
   SCHEDULED_COMMAND_C_PTR r = NULL;
-
+  
   SCHEDULED_COMMAND_C_PTR p = pC->ln.sp_sch.pFellow;
+  int i = 0;
   while( p ) {
     assert( !r );
-    if( p == pC )
+    if( i >= sentinel ) {
+      assert( FALSE );
       break;
-    else
+    } else if( p == pC ) {
+      break;
+    } else
       if( p == pcmd ) {
 	r = p;
 	break;
-      } else
-	p = p->ln.sp_sch.pFellow;
+      }
+    p = p->ln.sp_sch.pFellow;
+    i++;
   }
   return r;
 }
-static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
+static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) { // well tested, 2025/01/05
   assert( sch_dep );
   assert( pC );
   assert( pC->cmd == ARS_SCHEDULED_DEPT );
   int r = -1;
   
   assert( (pC->attr.sch_dept.dept_sp > 0) && (pC->attr.sch_dept.dept_sp < END_OF_SPs) );
+  const int num_cmds = sch_dep[pC->attr.sch_dept.dept_sp].num_events;
   SCHEDULED_COMMAND_C_PTR pcmd_next = sch_dep[pC->attr.sch_dept.dept_sp].pNext;
   
   struct tm T = {};
@@ -657,7 +664,10 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
     assert( (pcmd_next->cmd == ARS_SCHEDULED_ARRIVAL) || (pcmd_next->cmd == ARS_SCHEDULED_DEPT) || (pcmd_next->cmd == ARS_SCHEDULED_SKIP) );
     if( pcmd_next == pC )
       break;
-    else if( is_fellow( pcmd_next, pC ) ) {
+    else if( pcmd_next->checked )
+      goto omit_cmd;
+    else if( is_fellow( pcmd_next, pC, num_cmds ) ) {
+    omit_cmd:
       pcmd_next = pcmd_next->ln.sp_sch.pNext;
       continue;
     } else {
@@ -694,8 +704,9 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
       assert( difftime( time_cmd, time_dep ) < 0 );
 #endif // CHK_STRICT_CONSISTENCY
     }
-    if( r )
-      pcmd_next = pcmd_next->ln.sp_sch.pNext;
+    if( !r )
+      break;
+    pcmd_next = pcmd_next->ln.sp_sch.pNext;
   }
   return ((r < 0) ? (r * -1) : r);
 }
