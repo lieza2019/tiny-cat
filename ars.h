@@ -16,8 +16,8 @@ typedef struct system_params {
   int routeset_offset;
   int departure_offset; 
 } SYSTEM_PARAMS, *SYSTEM_PARAMS_PTR;
-
 typedef struct ars_assoc_time {
+
   int hour;
   int minute;
   int second;
@@ -25,6 +25,7 @@ typedef struct ars_assoc_time {
   int month;
   int day;
 } ARS_ASSOC_TIME, *ARS_ASSOC_TIME_PTR;
+typedef struct ars_assoc_time const *ARS_ASSOC_TIME_C_PTR;
 
 typedef enum ars_scheduled_cmd {
   ARS_SCHEDULED_ROUTESET,
@@ -32,7 +33,7 @@ typedef enum ars_scheduled_cmd {
     ARS_SCHEDULED_ARRIVAL,
     ARS_SCHEDULED_DEPT,
     ARS_SCHEDULED_SKIP,
-    END_OF_SCHEDULED_CMDS
+  END_OF_SCHEDULED_CMDS
 } ARS_SCHEDULED_CMD;
 
 typedef enum ars_events_over_sp {

@@ -51,21 +51,6 @@ static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) { // well tested, 2025/
   }
 }
 
-static time_t mktime_of_cmd ( struct tm *pT, ARS_ASSOC_TIME_PTR ptime_cmd ) {
-  assert( pT );
-  assert( ptime_cmd );
-  time_t r;
-  
-  pT->tm_hour = ptime_cmd->hour;
-  pT->tm_min = ptime_cmd->minute;
-  pT->tm_sec = ptime_cmd->second;
-  pT->tm_year = ptime_cmd->year;
-  pT->tm_mon = ptime_cmd->month;
-  pT->tm_mday = ptime_cmd->day;
-  r = mktime( pT );
-  return r;
-}
-
 static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID_PTR pdw_seq2, SCHEDULED_COMMAND_PTR pC2 ) {
   assert( pC2 );
   int r = 0;
@@ -99,7 +84,7 @@ static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID_PTR pdw_seq2, SCHEDULED_COMM
   }
   if( pdw_seq2 ) {
     assert( *pdw_seq2 > -1 );
-    double d;      
+    double d;
     d = difftime( time_c1, time_c2 );
     if( d < 0 )
       r = -1;
@@ -267,7 +252,7 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
     }
 #endif // CHK_STRICT_CONSISTENCY
     
-   qsort( sortbuf_at_sp, cnt, sizeof(SCHEDULED_COMMAND_PTR), cmp_over_sp_cmds );
+    qsort( sortbuf_at_sp, cnt, sizeof(SCHEDULED_COMMAND_PTR), cmp_over_sp_cmds );
 #ifdef CHK_STRICT_CONSISTENCY
     { 
       int k = 0;
@@ -282,22 +267,27 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
       }
     }
 #endif // CHK_STRICT_CONSISTENCY
+    
     {
+      SCHEDULED_COMMAND_PTR psenior_fellow = NULL;      
       ARS_ASSOC_TIME_PTR psenior_fellow_t = NULL;
       int k;
       for( pC_sp = NULL, k = 0; k < cnt; k++ ) {
-	if( psenior_fellow_t ) {
-	  assert( pC_sp );
+	if( psenior_fellow ) {
+	  assert( psenior_fellow_t );
 	  ARS_ASSOC_TIME_PTR pjunior_fellow_t = NULL;
+	  SCHEDULED_COMMAND_PTR pjunior_fellow = sortbuf_at_sp[k];
+	  assert( pjunior_fellow );
+	  assert( pC_sp );
 	  switch( sortbuf_at_sp[k]->cmd ) {
 	  case ARS_SCHEDULED_ARRIVAL:
-	    pjunior_fellow_t = &sortbuf_at_sp[k]->attr.sch_arriv.arr_time;
+	    pjunior_fellow_t = &pjunior_fellow->attr.sch_arriv.arr_time;
 	    break;
 	  case ARS_SCHEDULED_DEPT:
-	    pjunior_fellow_t = &sortbuf_at_sp[k]->attr.sch_dept.dept_time;
+	    pjunior_fellow_t = &pjunior_fellow->attr.sch_dept.dept_time;
 	    break;
 	  case ARS_SCHEDULED_SKIP:
-	    pjunior_fellow_t = &sortbuf_at_sp[k]->attr.sch_skip.pass_time;
+	    pjunior_fellow_t = &pjunior_fellow->attr.sch_skip.pass_time;
 	    break;
 	  case ARS_SCHEDULED_ROUTESET:
 	    /* fall thru. */
@@ -308,26 +298,32 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
 	  default:
 	    assert( FALSE );
 	  }
-	  if( pjunior_fellow_t ) {
-	    if( coincide(psenior_fellow_t, pjunior_fellow_t) ) {
-	      pC_sp->ln.sp_sch.pFellow = sortbuf_at_sp[k];
-	      psenior_fellow_t = pjunior_fellow_t;
-	    } else
-	      psenior_fellow_t = NULL;
+	  assert( pjunior_fellow );
+	  assert( pjunior_fellow_t );
+	  if( coincide( psenior_fellow_t, pjunior_fellow_t ) ) {
+	    pC_sp->ln.sp_sch.pFellow = pjunior_fellow;
 	  } else {
+	    if( pC_sp != psenior_fellow )
+	      pC_sp->ln.sp_sch.pFellow = psenior_fellow;
+	    else
+	      assert( ! pC_sp->ln.sp_sch.pFellow );
+	    psenior_fellow = pjunior_fellow;
 	    psenior_fellow_t = pjunior_fellow_t;
-	    assert( !psenior_fellow_t );
 	  }
 	} else {
-	  switch( sortbuf_at_sp[k]->cmd ) {
-	  case ARS_SCHEDULED_ARRIVAL:
-	    psenior_fellow_t = &sortbuf_at_sp[k]->attr.sch_arriv.arr_time;
+	  assert( k == 0 );
+	  assert( !pC_sp );
+	  assert( !psenior_fellow_t );
+	  psenior_fellow = sortbuf_at_sp[k];	  
+	  switch( psenior_fellow->cmd ) {
+	  case ARS_SCHEDULED_ARRIVAL:	    
+	    psenior_fellow_t = &psenior_fellow->attr.sch_arriv.arr_time;
 	    break;
 	  case ARS_SCHEDULED_DEPT:
-	    psenior_fellow_t = &sortbuf_at_sp[k]->attr.sch_dept.dept_time;
+	    psenior_fellow_t = &psenior_fellow->attr.sch_dept.dept_time;
 	    break;
 	  case ARS_SCHEDULED_SKIP:
-	    psenior_fellow_t = &sortbuf_at_sp[k]->attr.sch_skip.pass_time;
+	    psenior_fellow_t = &psenior_fellow->attr.sch_skip.pass_time;
 	    break;
 	  case ARS_SCHEDULED_ROUTESET:
 	    /* fall thru. */
@@ -338,6 +334,8 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
 	  default:
 	    assert( FALSE );
 	  }
+	  assert( psenior_fellow );
+	  assert( psenior_fellow_t );
 	}
 	pC_sp = sortbuf_at_sp[k];
 	assert( pC_sp );
@@ -345,6 +343,15 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
 	pC_sp->ln.sp_sch.pNext = (k + 1) < cnt ? sortbuf_at_sp[k + 1] : NULL;
       }
       assert( k == cnt );
+      if( cnt > 0 ) {	
+	assert( pC_sp == sortbuf_at_sp[cnt - 1] );
+	assert( psenior_fellow );
+	assert( psenior_fellow_t );
+	if( pC_sp != psenior_fellow )
+	  pC_sp->ln.sp_sch.pFellow = psenior_fellow;
+	else
+	  assert( ! pC_sp->ln.sp_sch.pFellow );
+      }
 #ifdef CHK_STRICT_CONSISTENCY
       {
 	SCHEDULED_COMMAND_PTR p = sortbuf_at_sp[0];
