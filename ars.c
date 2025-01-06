@@ -450,6 +450,7 @@ static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, CBTC_BLOCK_C_PTR *ppblk_
   return r;
 }
 
+#if 1
 static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
   assert( sch_dst );
   assert( pC );
@@ -538,6 +539,182 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
     }
   }
   return r;
+}
+#endif
+
+static int num_sp_cmds;
+static struct {
+  SCHEDULED_COMMAND_PTR pcmd;
+  BOOL sunk;
+} book[SCHEDULED_COMMANDS_NODEBUF_SIZE];
+static void blank ( SCHEDULED_COMMAND_PTR pcmds ) {
+  int i;
+  for( i = 0; pcmds && (i < SCHEDULED_COMMANDS_NODEBUF_SIZE); i++ ) {
+    assert( pcmds );
+    book[i].pcmd = pcmds;
+    book[i].sunk = FALSE;
+    pcmds = pcmds->ln.sp_sch.pNext;
+  }
+  num_sp_cmds = i;
+}
+
+static int lkup ( SCHEDULED_COMMAND_C_PTR pC ) {
+  assert( pC );
+  int r = -1;
+  
+  int i;
+  for( i = 0; i < SCHEDULED_COMMANDS_NODEBUF_SIZE; i++ ) {
+    if( book[i].pcmd == pC ) {
+      r = i;
+      break;
+    }
+  }
+  assert( (i < SCHEDULED_COMMANDS_NODEBUF_SIZE) ? (r > -1) : (r == -1) );
+  return r;
+}
+
+static int touch ( SCHEDULED_COMMAND_C_PTR pC ) {
+  assert( pC );
+  int i;
+
+  i = lkup( pC );
+  assert( (i > -1) && (i < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
+  book[i].sunk = TRUE;
+  return i;
+}
+
+static int the_fellow ( ARS_SCHEDULED_CMD cmd, SCHEDULED_COMMAND_C_PTR pC, const int sentinel ) {
+  assert( pC );
+  assert( sentinel > -1 );
+  int r = -1;
+
+  if( pC->cmd == cmd ) {
+    int i = -1;
+    i = lkup( pC );
+    assert( (i > -1) && (i < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
+    if( ! book[i].sunk )
+      r = i;
+    else
+      goto goes_on;
+  } else {
+    int i = 0;
+    SCHEDULED_COMMAND_C_PTR p = NULL;
+  goes_on:
+    p = p->ln.sp_sch.pFellow;
+    while( p ) {
+      assert( p );
+      if( i >= sentinel ) {
+	assert( FALSE );
+	break;
+      } else if( p == pC ) {
+	break;
+      } else
+	if( p->cmd == cmd ) {
+	  int j = -1;
+	  j = lkup( p );
+	  assert( (j > -1) && (j < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
+	  if( ! book[j].sunk ) {
+	    r = j;
+	    break;
+	  }
+	}
+      p = p->ln.sp_sch.pFellow;
+      i++;
+    }
+  }
+  return r;
+}
+
+static SCHEDULED_COMMAND_C_PTR next_cmd ( SCHEDULED_COMMAND_C_PTR pC ) {
+  assert( pC );
+  SCHEDULED_COMMAND_C_PTR r = NULL;
+  
+  while( pC ) {
+    assert( pC );
+    int i = -1;
+    i = lkup( pC );
+    assert( (i > -1) && (i < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
+    if( ! book[i].sunk ) {
+      r = pC;
+      break;
+    }
+    pC = pC->ln.sp_sch.pNext;
+  }
+  assert( pC ? (r == pC) : !r );
+  return r;
+}
+
+static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) {
+  assert( sch_dst );
+  assert( pC );
+  assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+  int r = -1;
+  
+  ROUTE_C_PTR pR = NULL;
+  pR = conslt_route_prof( pC->attr.sch_roset.route_id );
+  assert( pR );
+  assert( pR->kind == _ROUTE );
+  assert( pR->ars_ctrl.app );
+  assert( pR->ars_ctrl.trip_info.dst.pblk );
+  if( pC->attr.sch_roset.is_dept_route ) {
+    assert( pR->route_kind == DEP_ROUTE );
+    r = 1;
+  } else {
+    assert( (pR->route_kind == ENT_ROUTE) || (pR->route_kind == SHUNT_ROUTE) );
+    CBTC_BLOCK_C_PTR pdst_blk = pR->ars_ctrl.trip_info.dst.pblk;
+    assert( pdst_blk );
+    assert( pdst_blk->sp.has_sp );
+    const STOPPING_POINT_CODE dst_sp = pdst_blk->sp.sp_code;
+    assert( (dst_sp > 0) && (dst_sp < END_OF_SPs) );
+    SCHEDULED_COMMAND_C_PTR pcmd_next = sch_dst[dst_sp].pNext;
+    BOOL next_arrival = FALSE;
+    BOOL judged = FALSE;
+    blank( sch_dst[dst_sp].pFirst );
+    while( pcmd_next ) {
+      assert( pcmd_next );
+      assert( (pcmd_next->cmd == ARS_SCHEDULED_ARRIVAL) || (pcmd_next->cmd == ARS_SCHEDULED_DEPT) || (pcmd_next->cmd == ARS_SCHEDULED_SKIP) );
+      SCHEDULED_COMMAND_C_PTR pF = NULL;
+      if( pcmd_next->checked ) {
+	goto omit;
+      } else if( TRUE ) {
+      omit:
+	pcmd_next = pcmd_next->ln.sp_sch.pNext;
+	continue;
+      } else {
+	switch( pcmd_next->cmd ) {
+	case ARS_SCHEDULED_ARRIVAL:
+	  if( pcmd_next->jid == pC->jid ) {
+	    next_arrival = TRUE;
+	    r = 1;
+	  } else
+	    r = 0;
+	  break;
+	case ARS_SCHEDULED_DEPT:
+	  if( next_arrival ) {
+	    assert( r );
+	    r = (pcmd_next->jid == pC->jid);
+	    judged = TRUE;
+	  } else
+	    r = 0;
+	  break;
+	case ARS_SCHEDULED_SKIP:
+	  r = (pcmd_next->jid == pC->jid);
+	  judged = TRUE;
+	  break;
+	default:
+	  assert( FALSE );
+	}
+	assert( r > -1 );
+      }
+      if( (r == 0) || judged )
+	break;
+      else {
+	touch( pcmd_next );
+	pcmd_next = next_cmd( pcmd_next );
+      }
+    }
+  }
+  return ((r < 0) ? (r * -1) : r);
 }
 
 #if 0
@@ -661,13 +838,14 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
   time_dep = mktime_of_cmd( &T, &pC->attr.sch_dept.dept_time );
   
   while( pcmd_next ) {
+    assert( pcmd_next );
     assert( (pcmd_next->cmd == ARS_SCHEDULED_ARRIVAL) || (pcmd_next->cmd == ARS_SCHEDULED_DEPT) || (pcmd_next->cmd == ARS_SCHEDULED_SKIP) );
     if( pcmd_next == pC )
       break;
     else if( pcmd_next->checked )
-      goto omit_cmd;
+      goto omit;
     else if( is_fellow( pcmd_next, pC, num_cmds ) ) {
-    omit_cmd:
+    omit:
       pcmd_next = pcmd_next->ln.sp_sch.pNext;
       continue;
     } else {
