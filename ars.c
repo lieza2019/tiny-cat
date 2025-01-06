@@ -542,6 +542,7 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
 }
 #endif
 
+#if 0
 static int num_sp_cmds;
 static struct {
   SCHEDULED_COMMAND_PTR pcmd;
@@ -556,6 +557,13 @@ static void blank ( SCHEDULED_COMMAND_PTR pcmds ) {
     pcmds = pcmds->ln.sp_sch.pNext;
   }
   num_sp_cmds = i;
+  while( i < SCHEDULED_COMMANDS_NODEBUF_SIZE ) {
+    assert( pcmds );
+    book[i].pcmd = NULL;
+    book[i].sunk = FALSE;
+    i++;
+  }
+  assert( i == SCHEDULED_COMMANDS_NODEBUF_SIZE );
 }
 
 static int lkup ( SCHEDULED_COMMAND_C_PTR pC ) {
@@ -563,13 +571,13 @@ static int lkup ( SCHEDULED_COMMAND_C_PTR pC ) {
   int r = -1;
   
   int i;
-  for( i = 0; i < SCHEDULED_COMMANDS_NODEBUF_SIZE; i++ ) {
+  for( i = 0; i < num_sp_cmds; i++ ) {
     if( book[i].pcmd == pC ) {
       r = i;
       break;
     }
   }
-  assert( (i < SCHEDULED_COMMANDS_NODEBUF_SIZE) ? (r > -1) : (r == -1) );
+  assert( (i < num_sp_cmds) ? (r > -1) : (r == -1) );
   return r;
 }
 
@@ -578,7 +586,7 @@ static int touch ( SCHEDULED_COMMAND_C_PTR pC ) {
   int i;
 
   i = lkup( pC );
-  assert( (i > -1) && (i < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
+  assert( (i > -1) && (i < num_sp_cmds) );
   book[i].sunk = TRUE;
   return i;
 }
@@ -587,11 +595,11 @@ static int the_fellow ( ARS_SCHEDULED_CMD cmd, SCHEDULED_COMMAND_C_PTR pC, const
   assert( pC );
   assert( sentinel > -1 );
   int r = -1;
-
+  
   if( pC->cmd == cmd ) {
     int i = -1;
     i = lkup( pC );
-    assert( (i > -1) && (i < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
+    assert( (i > -1) && (i < num_sp_cmds) );
     if( ! book[i].sunk )
       r = i;
     else
@@ -600,7 +608,7 @@ static int the_fellow ( ARS_SCHEDULED_CMD cmd, SCHEDULED_COMMAND_C_PTR pC, const
     int i = 0;
     SCHEDULED_COMMAND_C_PTR p = NULL;
   goes_on:
-    p = p->ln.sp_sch.pFellow;
+    p = pC->ln.sp_sch.pFellow;
     while( p ) {
       assert( p );
       if( i >= sentinel ) {
@@ -609,10 +617,10 @@ static int the_fellow ( ARS_SCHEDULED_CMD cmd, SCHEDULED_COMMAND_C_PTR pC, const
       } else if( p == pC ) {
 	break;
       } else
-	if( p->cmd == cmd ) {
+	if( (p->cmd == ARS_SCHEDULED_ARRIVAL) || (p->cmd == ARS_SCHEDULED_SKIP) ) {
 	  int j = -1;
 	  j = lkup( p );
-	  assert( (j > -1) && (j < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
+	  assert( (j > -1) && (j < num_sp_cmds) );
 	  if( ! book[j].sunk ) {
 	    r = j;
 	    break;
@@ -633,7 +641,7 @@ static SCHEDULED_COMMAND_C_PTR next_cmd ( SCHEDULED_COMMAND_C_PTR pC ) {
     assert( pC );
     int i = -1;
     i = lkup( pC );
-    assert( (i > -1) && (i < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
+    assert( (i > -1) && (i < num_sp_cmds) );
     if( ! book[i].sunk ) {
       r = pC;
       break;
@@ -641,6 +649,33 @@ static SCHEDULED_COMMAND_C_PTR next_cmd ( SCHEDULED_COMMAND_C_PTR pC ) {
     pC = pC->ln.sp_sch.pNext;
   }
   assert( pC ? (r == pC) : !r );
+  return r;
+}
+#endif
+
+static SCHEDULED_COMMAND_C_PTR the_fellow ( SCHEDULED_COMMAND_C_PTR pC, const int sentinel ) {
+  assert( pC );
+  assert( sentinel > -1 );
+  SCHEDULED_COMMAND_C_PTR r = NULL;
+  
+  SCHEDULED_COMMAND_C_PTR p = pC;
+  int i = 0;
+  while( p ) {
+    assert( p );
+    if( i >= sentinel ) {
+      assert( FALSE );
+      break;
+    } else if ( p == pC ) {
+      assert( !r );
+      break;
+    } else if( (p->cmd == ARS_SCHEDULED_ARRIVAL) || (p->cmd == ARS_SCHEDULED_SKIP) ) {
+      r = p;
+      break;
+    } else {
+      p = p->ln.sp_sch.pFellow;
+      i++;
+    }
+  }
   return r;
 }
 
