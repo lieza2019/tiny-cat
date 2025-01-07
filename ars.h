@@ -32,7 +32,8 @@ typedef enum ars_scheduled_cmd {
     ARS_SCHEDULED_ARRIVAL,
     ARS_SCHEDULED_DEPT,
     ARS_SCHEDULED_SKIP,
-  END_OF_SCHEDULED_CMDS
+    END_OF_SCHEDULED_CMDS,
+    ARS_DONT_CURE
 } ARS_SCHEDULED_CMD;
 
 typedef enum ars_events_over_sp {

@@ -651,7 +651,6 @@ static SCHEDULED_COMMAND_C_PTR next_cmd ( SCHEDULED_COMMAND_C_PTR pC ) {
   assert( pC ? (r == pC) : !r );
   return r;
 }
-#endif
 
 static SCHEDULED_COMMAND_C_PTR the_fellow ( ARS_SCHEDULED_CMD desired, SCHEDULED_COMMAND_C_PTR pC, const int sentinel ) {
   assert( pC );
@@ -678,14 +677,18 @@ static SCHEDULED_COMMAND_C_PTR the_fellow ( ARS_SCHEDULED_CMD desired, SCHEDULED
   }
   return r;
 }
+#endif
+
 static SCHEDULED_COMMAND_C_PTR is_fellow ( SCHEDULED_COMMAND_C_PTR pcmd, SCHEDULED_COMMAND_C_PTR pC, const int sentinel ) {
   assert( pcmd );
   assert( pC );
   assert( sentinel > -1 );
   SCHEDULED_COMMAND_C_PTR r = NULL;
 
+  assert( ! pcmd->checked );
   assert( ! pC->checked );
   SCHEDULED_COMMAND_C_PTR p = pC->ln.sp_sch.pFellow;
+  
   int i = 0;
   while( p ) {
     assert( !r );
@@ -715,7 +718,7 @@ static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_
   assert( pC_lok ? ((pC_lok->cmd == ARS_SCHEDULED_DEPT) && (pC_dst->cmd == ARS_SCHEDULED_ARRIVAL)) : (pC_dst->cmd == ARS_SCHEDULED_SKIP) );
   int r = -1;
   
-  const STOPPING_POINT_CODE dst_sp = SP_NONSENS;
+  STOPPING_POINT_CODE dst_sp = SP_NONSENS;
   switch( pC_dst->cmd ) {
   case ARS_SCHEDULED_ARRIVAL:
     dst_sp = pC_dst->attr.sch_arriv.arr_sp;
@@ -728,7 +731,7 @@ static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_
   }
   assert( dst_sp != SP_NONSENS );
   {
-    const int num_cmds = sch_dep[dst_sp].num_events;
+    const int num_cmds = sch_dst[dst_sp].num_events;
     SCHEDULED_COMMAND_C_PTR pcmd_next = sch_dst[dst_sp].pNext;
     BOOL next_arrival = FALSE;
     BOOL judged = FALSE;
@@ -746,6 +749,8 @@ static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_
 	switch( pC_dst->cmd ) {
 	case ARS_SCHEDULED_ARRIVAL:
 	  goto chk_arrival_cond;
+	case ARS_SCHEDULED_DEPT:
+	  goto chk_dept_cond;
 	case ARS_SCHEDULED_SKIP:
 	  goto chk_skip_cond;
 	default:
@@ -759,8 +764,10 @@ static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_
 	    p = is_fellow( pcmd_next, pC_lok, num_cmds );
 	    if( p )
 	      pcmd_next = pC_lok;
-	    else
+	    else {
 	      pcmd_next = pcmd_next->ln.sp_sch.pNext;
+	      ;
+	    }
 	  } else {
 	    p = is_fellow( pcmd_next, pC_dst, num_cmds );
 	    if( p )
@@ -777,7 +784,7 @@ static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_
 	    r = 0;
 	  break;
 	case ARS_SCHEDULED_DEPT:
-	  assert( pC_dst->cmd == ARS_SCHEDULED_ARRIVAL );
+	chk_dept_cond:
 	  if( next_arrival ) {
 	    assert( r );
 	    r = (pcmd_next->jid == pC_lok->jid);
@@ -787,12 +794,11 @@ static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_
 	  break;
 	case ARS_SCHEDULED_SKIP:	  
 	chk_skip_cond:
-	  assert( !pC_lok );
 	  r = (pcmd_next->jid == pC_dst->jid);
 	  judged = TRUE;
 	  break;
 #if 1 // *****
-	case DC:
+	case ARS_DONT_CURE:
 	  pcmd_next = pcmd_next->ln.sp_sch.pNext;
 	  continue;
 #endif
@@ -907,21 +913,15 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
   while( pcmd_next ) {
     assert( pcmd_next );
     assert( (pcmd_next->cmd == ARS_SCHEDULED_ARRIVAL) || (pcmd_next->cmd == ARS_SCHEDULED_DEPT) || (pcmd_next->cmd == ARS_SCHEDULED_SKIP) );
-    if( pcmd_next->checked ) {
+    if( pcmd_next == pC ) {
+      assert( ! pC->checked );
+      break;
+    } else if( pcmd_next->checked ) {
       assert( pcmd_next != pC );
       pcmd_next = pcmd_next->ln.sp_sch.pNext;
       continue;
-    } else if( pcmd_next == pC ) {
-      assert( ! pC->checked );
-      break;
     } else if( is_fellow( pcmd_next, pC, num_cmds ) ) {
-#if 0 // *****
-    omit:
-      pcmd_next = pcmd_next->ln.sp_sch.pNext;
-      continue;
-#else
       break;
-#endif
     } else {
       time_t time_cmd = 0;
       switch( pcmd_next->cmd ) {
