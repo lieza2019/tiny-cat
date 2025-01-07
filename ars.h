@@ -17,7 +17,6 @@ typedef struct system_params {
   int departure_offset; 
 } SYSTEM_PARAMS, *SYSTEM_PARAMS_PTR;
 typedef struct ars_assoc_time {
-
   int hour;
   int minute;
   int second;
