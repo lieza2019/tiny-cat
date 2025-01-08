@@ -777,11 +777,13 @@ static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_
 	switch( pcmd_next->cmd ) {
 	case ARS_SCHEDULED_ARRIVAL:
 	chk_arrival_cond:
-	  if( pcmd_next->jid == pC_dst->jid ) {
-	    next_arrival = TRUE;
-	    r = 1;
-	  } else
-	    r = 0;
+	  if( ! next_arrival ) {
+	    if( pcmd_next->jid == pC_dst->jid ) {
+	      next_arrival = TRUE;
+	      r = 1;
+	    }
+	  }
+	  r = 0;
 	  break;
 	case ARS_SCHEDULED_DEPT:
 	chk_dept_cond:
@@ -794,8 +796,11 @@ static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_
 	  break;
 	case ARS_SCHEDULED_SKIP:	  
 	chk_skip_cond:
-	  r = (pcmd_next->jid == pC_dst->jid);
-	  judged = TRUE;
+	  if( ! next_arrival ) {
+	    r = (pcmd_next->jid == pC_dst->jid);
+	    judged = TRUE;
+	  } else
+	    r = 0;
 	  break;
 #if 1 // *****
 	case ARS_DONT_CURE:
