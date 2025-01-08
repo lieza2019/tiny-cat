@@ -738,83 +738,67 @@ static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_
     while( pcmd_next ) {
       assert( pcmd_next );
       assert( (pcmd_next->cmd == ARS_SCHEDULED_ARRIVAL) || (pcmd_next->cmd == ARS_SCHEDULED_DEPT) || (pcmd_next->cmd == ARS_SCHEDULED_SKIP) );
-      
       if( pcmd_next->checked ) {
 	assert( pcmd_next != pC_dst );
 	pcmd_next = pcmd_next->ln.sp_sch.pNext;
 	continue;
-      } else if( (! next_arrival) && (pcmd_next == pC_dst) ) {
-      found_in_fellows:
-	assert( ! pcmd_next->checked );
-	switch( pC_dst->cmd ) {
-	case ARS_SCHEDULED_ARRIVAL:
-	  goto chk_arrival_cond;
-	case ARS_SCHEDULED_DEPT:
-	  goto chk_dept_cond;
-	case ARS_SCHEDULED_SKIP:
-	  goto chk_skip_cond;
-	default:
-	  assert( FALSE );
-	}
-      } else {
-	{
-	  SCHEDULED_COMMAND_C_PTR p = NULL;
-	  if( next_arrival ) {
-	    assert( pC_dst->cmd == ARS_SCHEDULED_ARRIVAL );
-	    p = is_fellow( pcmd_next, pC_lok, num_cmds );
-	    if( p )
-	      pcmd_next = pC_lok;
-	    else {
-	      pcmd_next = pcmd_next->ln.sp_sch.pNext;
-	      ;
-	    }
-	  } else {
-	    p = is_fellow( pcmd_next, pC_dst, num_cmds );
-	    if( p )
-	      goto found_in_fellows;
-	  }
-	}
-	switch( pcmd_next->cmd ) {
-	case ARS_SCHEDULED_ARRIVAL:
-	chk_arrival_cond:
-	  if( ! next_arrival ) {
-	    if( pcmd_next->jid == pC_dst->jid ) {
-	      next_arrival = TRUE;
-	      r = 1;
-	    }
-	  }
-	  r = 0;
-	  break;
-	case ARS_SCHEDULED_DEPT:
-	chk_dept_cond:
-	  if( next_arrival ) {
-	    assert( r );
-	    r = (pcmd_next->jid == pC_lok->jid);
-	    judged = TRUE;
-	  } else
-	    r = 0;
-	  break;
-	case ARS_SCHEDULED_SKIP:	  
-	chk_skip_cond:
-	  if( ! next_arrival ) {
-	    r = (pcmd_next->jid == pC_dst->jid);
-	    judged = TRUE;
-	  } else
-	    r = 0;
-	  break;
-#if 1 // *****
-	case ARS_DONT_CURE:
-	  pcmd_next = pcmd_next->ln.sp_sch.pNext;
-	  continue;
-#endif
-	default:
-	  assert( FALSE );
-	}
-	assert( r > -1 );
       }
+      if( next_arrival || (pcmd_next != pC_dst) ) {
+	SCHEDULED_COMMAND_C_PTR p = NULL;
+	if( next_arrival ) {
+	  if( pcmd_next != pC_lok ) {
+	    p = is_fellow( pcmd_next, pC_lok, num_cmds );
+	    if( p ) {
+	      assert( pC_lok->cmd == ARS_SCHEDULED_DEPT );
+	      pcmd_next = pC_lok;
+	    } else {
+	      pcmd_next = pcmd_next->ln.sp_sch.pNext;
+	      if( pcmd_next->checked )
+		continue;
+	    }
+	  }
+	} else {
+	  p = is_fellow( pcmd_next, pC_dst, num_cmds );
+	  if( p )
+	    pcmd_next = pC_dst;
+	}
+      }
+      switch( pcmd_next->cmd ) {
+      case ARS_SCHEDULED_ARRIVAL:
+	if( ! next_arrival ) {
+	  if( pcmd_next->jid == pC_dst->jid ) {
+	    next_arrival = TRUE;
+	    r = 1;
+	  }
+	}
+	r = 0;
+	break;
+      case ARS_SCHEDULED_DEPT:
+	if( next_arrival ) {
+	  assert( r );
+	  r = (pcmd_next->jid == pC_lok->jid);
+	  judged = TRUE;
+	} else
+	  r = 0;
+	break;
+      case ARS_SCHEDULED_SKIP:
+	if( ! next_arrival ) {
+	  r = (pcmd_next->jid == pC_dst->jid);
+	  judged = TRUE;
+	} else
+	  r = 0;
+	break;
+#if 1 // *****
+      case ARS_DONT_CURE:
+	pcmd_next = pcmd_next->ln.sp_sch.pNext;
+	continue;
+#endif
+      default:
+	assert( FALSE );
+      }
+      assert( r > -1 );
       if( (r == 0) || judged )
 	break;
-      
     }
   }
   return ((r < 0) ? (r * -1) : r);
