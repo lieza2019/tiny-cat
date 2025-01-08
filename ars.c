@@ -789,7 +789,7 @@ static int _ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_
 	  r = 0;
 	break;
 #if 1 // *****
-      case ARS_DONT_CURE:
+      case ARS_CMD_DONT_CURE:
 	pcmd_next = pcmd_next->ln.sp_sch.pNext;
 	continue;
 #endif
