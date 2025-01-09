@@ -365,8 +365,9 @@ int main ( void ) {
 #if 1
   {
     extern int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC );
-    const DWELL_ID did = 4;
-    const JOURNEY_ID jid = 1;
+    extern int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC_dst, SCHEDULED_COMMAND_C_PTR pC_lok );
+    const DWELL_ID did = 9;
+    const JOURNEY_ID jid = 2;
     int r = -1;
     SCHEDULED_COMMAND_PTR pC = NULL;    
     online_timetable = trial_timetable;

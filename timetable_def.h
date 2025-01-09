@@ -12,7 +12,7 @@ SCHEDULED_COMMAND trial_scheduled_commands_1[] = {
 };
 SCHEDULED_COMMAND trial_scheduled_commands_2[] = {
   {1, ARS_SCHEDULED_ARRIVAL, { .sch_arriv = {7, SP_74, {05, 00, 00, 2025, 01, 04}} }},
-  {2, ARS_SCHEDULED_DEPT, { .sch_dept = {8, 30, SP_74, {05, 03, 00, 2025, 01, 04}, TRUE, PERFREG_NORMAL, CREW_NO_ID, {FALSE, TRUE}} }},
+  {2, ARS_SCHEDULED_DEPT, { .sch_dept = {8, 30, SP_74, {05, 00, 00, 2025, 01, 04}, TRUE, PERFREG_NORMAL, CREW_NO_ID, {FALSE, TRUE}} }},
   {2, ARS_SCHEDULED_DEPT, { .sch_dept = {9, 30, SP_74, {05, 03, 00, 2025, 01, 04}, TRUE, PERFREG_NORMAL, CREW_NO_ID, {FALSE, TRUE}} }},
   {2, END_OF_SCHEDULED_CMDS}
 };
