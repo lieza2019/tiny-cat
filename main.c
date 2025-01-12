@@ -366,8 +366,8 @@ int main ( void ) {
   {
     extern int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC );
     extern int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC_dst, SCHEDULED_COMMAND_C_PTR pC_lok );
-    const DWELL_ID did = 9;
-    const JOURNEY_ID jid = 2;
+    const DWELL_ID did = 1;
+    const JOURNEY_ID jid = 1;
     int r = -1;
     SCHEDULED_COMMAND_PTR pC = NULL;    
     online_timetable = trial_timetable;
@@ -376,12 +376,23 @@ int main ( void ) {
     {
       while( pC ) {
 	assert( pC );
-	if( (pC->cmd == ARS_SCHEDULED_DEPT) && (pC->attr.sch_dept.dw_seq == did) )
+	//if( (pC->cmd == ARS_SCHEDULED_ARRIVAL) && (pC->attr.sch_dept.dw_seq == did) )
+	if( pC->cmd == ARS_SCHEDULED_SKIP )
 	  break;
 	pC = pC->ln.journey.pNext;
       }
+    }    
+    //r = ars_chk_depschedule( online_timetable.sp_schedule, pC );
+    SCHEDULED_COMMAND_PTR pC_dst = pC;
+    SCHEDULED_COMMAND_PTR pC_lok = NULL;
+    {
+      while( pC_lok ) {
+	if( pC_lok->cmd == ARS_SCHEDULED_DEPT )
+	  break;
+	pC_lok = pC_lok->ln.journey.pNext;
+      }
     }
-    r = ars_chk_depschedule( online_timetable.sp_schedule, pC );
+    r = ars_chk_dstschedule( online_timetable.sp_schedule, pC_dst, pC_lok );
     assert( FALSE );
   }
 #endif

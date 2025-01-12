@@ -482,7 +482,8 @@ static SCHEDULED_COMMAND_C_PTR is_fellow ( SCHEDULED_COMMAND_C_PTR pcmd, SCHEDUL
   return r;
 }
 
-static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) { // well tested, 2025/01/05
+//static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) { // well tested, 2025/01/05
+int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) { // well tested, 2025/01/05
   assert( sch_dep );
   assert( pC );
   assert( pC->cmd == ARS_SCHEDULED_DEPT );
@@ -602,30 +603,49 @@ int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_
 	    pcmd_next = pC_dst;
 	}
       }
+      assert( pcmd_next );
+      assert( pC_dst );
       switch( pcmd_next->cmd ) {
       case ARS_SCHEDULED_ARRIVAL:
 	if( ! next_arrival ) {
-	  if( pcmd_next->jid == pC_dst->jid ) {
+	  assert( r <= 0 );
+	  r = 0;
+	  if( (pC_dst->cmd == ARS_SCHEDULED_ARRIVAL) && (pcmd_next->jid == pC_dst->jid ) ) {
 	    next_arrival = TRUE;
 	    r = 1;
+	    break;
 	  }
+	} else {
+	  assert( r );
+	  r = 0;
 	}
-	r = 0;
 	break;
       case ARS_SCHEDULED_DEPT:
 	if( next_arrival ) {
+	  assert( pC_dst->cmd == ARS_SCHEDULED_ARRIVAL );
 	  assert( r );
-	  r = (pcmd_next->jid == pC_lok->jid);
+	  assert( pC_lok );
+	  if( pC_lok->cmd == ARS_SCHEDULED_DEPT )
+	    r = (pcmd_next->jid == pC_lok->jid);
+	  else
+	    r = 0;
 	  judged = TRUE;
-	} else
+	} else {
+	  assert( r <= 0 );
 	  r = 0;
+	}
 	break;
       case ARS_SCHEDULED_SKIP:
 	if( ! next_arrival ) {
-	  r = (pcmd_next->jid == pC_dst->jid);
-	  judged = TRUE;
-	} else
+	  assert( r <= 0 );
 	  r = 0;
+	  if( pC_dst->cmd == ARS_SCHEDULED_SKIP )
+	    r = (pcmd_next->jid == pC_dst->jid);
+	  judged = TRUE;
+	} else {
+	  assert( r );
+	  r = 0;
+	}
 	break;
 #if 1 // *****
       case ARS_CMD_DONT_CURE:
