@@ -314,14 +314,14 @@ static int ars_chk_trackcirc ( ROUTE_C_PTR proute ) { // well tested, 2025/01/01
   return r;
 }
 
-static SCHEDULED_COMMAND_PTR fetch_routeset_cmd1 ( JOURNEY_PTR pJ ) {
+static SCHEDULED_COMMAND_PTR fetch_routeset_cmd ( JOURNEY_PTR pJ ) {
   assert( pJ );
   SCHEDULED_COMMAND_PTR r = NULL;
   
   SCHEDULED_COMMAND_PTR *ppC = NULL;
   ppC = &pJ->scheduled_commands.pNext;
-  assert( ppC );
-  while( *ppC ) {
+  assert( ppC );  
+  while( *ppC ) {    
     assert( ppC );
     assert( *ppC );
     if( (*ppC)->cmd == ARS_SCHEDULED_ROUTESET ) {
@@ -439,12 +439,12 @@ static int ars_chk_hit_trgsection ( ROUTE_C_PTR proute, CBTC_BLOCK_C_PTR *ppblk_
       break;
   }
   if( *ppblk_hit ) {
-    r = 1;
+    r = 2;
     if( ++i < proute->ars_ctrl.trg_sect.num_blocks ) {
       CBTC_BLOCK_C_PTR pB_pred = NULL;
       pB_pred = any_trains_ahead( proute, i, ptrain_ctl );
-      if( !pB_pred )
-	r = 2;
+      if( pB_pred )
+	r = 1;
     }
   }
   return r;
@@ -482,8 +482,7 @@ static SCHEDULED_COMMAND_C_PTR is_fellow ( SCHEDULED_COMMAND_C_PTR pcmd, SCHEDUL
   return r;
 }
 
-//static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) { // well tested, 2025/01/05
-int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) { // well tested, 2025/01/05
+static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) { // well tested, 2025/01/05
   assert( sch_dep );
   assert( pC );
   assert( pC->cmd == ARS_SCHEDULED_DEPT );
@@ -550,8 +549,7 @@ int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_
   return ((r < 0) ? (r * -1) : r);
 }
 
-//static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC_dst, SCHEDULED_COMMAND_C_PTR pC_lok ) {
-int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC_dst, SCHEDULED_COMMAND_C_PTR pC_lok ) {
+static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC_dst, SCHEDULED_COMMAND_C_PTR pC_lok ) { // well tested, 2025/01/12
   assert( sch_dst );
   assert( pC_dst );
   assert( (pC_dst->cmd == ARS_SCHEDULED_ARRIVAL) || (pC_dst->cmd == ARS_SCHEDULED_SKIP) );
@@ -685,6 +683,56 @@ static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PT
   return ( pJ->scheduled_commands.pNext );
 }
 
+static char *mangling2_P_Sxxxy_Sxxxy ( char *praw ) {
+  assert( praw );
+  char *r = NULL;
+  int i = 0;
+  while( praw[i] ) {
+    if( i >= CBI_STAT_IDENT_LEN )
+      break;
+    i++;
+  }
+  if( i < CBI_STAT_IDENT_LEN ) {
+    assert( praw[i] == 0 );
+    if( (i + 2) < CBI_STAT_IDENT_LEN ) {
+      int j = i;
+      while( j > -1 ) {
+	praw[j + 2] = praw[j];
+	j--;
+      }
+      assert( j == -1 );
+      praw[0] = 'P';
+      praw[1] = '_';
+    }
+    assert( strlen( praw ) == (i + 2) );
+    r = praw;
+  }
+  return r;
+}
+
+static char *mangling2_Sxxxy_Sxxxy_R ( char *praw ) {
+  assert( praw );
+  char *r = NULL;
+  int i = 0;
+  while( praw[i] ) {
+    if( i >= CBI_STAT_IDENT_LEN ) {
+      praw[i] = 0;
+      break;
+    }
+    i++;
+  }
+  if( i < CBI_STAT_IDENT_LEN ) {
+    if( (i + 2) < CBI_STAT_IDENT_LEN ) {
+      praw[i++] = '_';
+      praw[i++] = 'R';
+      praw[i] = 0;
+      r = praw;
+    }
+    assert( i <= CBI_STAT_IDENT_LEN );
+  }
+  return r;
+}
+
 static ARS_ASSOC_TIME_PTR timestamp ( ARS_ASSOC_TIME_PTR pstamp ) {
   assert( pstamp );
   ARS_ASSOC_TIME_PTR r = NULL;
@@ -712,7 +760,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   ARS_REASONS r = END_OF_ARS_REASONS;
   
   SCHEDULED_COMMAND_PTR pC = NULL;
-  pC = fetch_routeset_cmd1( pJ );
+  pC = fetch_routeset_cmd( pJ );
   if( pC ) {
     assert( pC );
     assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
@@ -726,9 +774,8 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
       assert( pR->ars_ctrl.app );
       if( pR->ars_ctrl.app ){
 	CBTC_BLOCK_C_PTR pB = NULL;
-	int cond = -1;
-	//cond = ars_chk_hit_trgsection( pR, pJ->ptrain_ctrl );
-	cond = ars_chk_hit_trgsection( pR, &pB, pJ->ptrain_ctrl, -1 );
+	int cond = -1;	
+	cond = ars_chk_hit_trgsection( pR, &pB, pJ->ptrain_ctrl, -1 ); //cond = ars_chk_hit_trgsection( pR, pJ->ptrain_ctrl );
 	if( cond <= 0 ) {
 	  if( cond < 0 )
 	    r = ARS_MUTEX_BLOCKED;
@@ -736,9 +783,9 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	    assert( cond == 0 );
 	    r = ARS_NO_TRIGGERED;
 	  }
-	} else if( cond == 1 )
+	} else if( cond == 1 ) {
 	  r = ARS_FOUND_TRAINS_AHEAD;
-	else {
+	} else {
 	  assert( cond >= 2 );
 	  cond = ars_chk_trackcirc( pR );
 	  if( cond <= 0 ) {
@@ -757,9 +804,9 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	    assert( (hour_to_set >= 0) && (hour_to_set < 24) );
 	    assert( (minute_to_set >= 0) && (minute_to_set < 60) );
 	    assert( (second_to_set >= 0) && (second_to_set < 60) );
-	    if( pC->attr.sch_roset.is_dept_route )
+	    if( pC->attr.sch_roset.is_dept_route ) {
 	      goto is_the_time_to_go;
-	    else {
+	    } else {
 	      cond = ars_chk_routelok( pR );
 	      if( cond <= 0 ) {
 		if( cond < 0 )
@@ -783,44 +830,77 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 		  assert( cond > 0 );
 		  assert( pTT );
 		  assert( pC );
-		  cond = ars_chk_depschedule( pTT->sp_schedule, pC );
-		  if( cond <= 0 ) {
-		    if( cond < 0 )
-		      r = ARS_MUTEX_BLOCKED;
-		    else {
-		      assert( cond == 0 );
-		      r = ARS_PRED_DEPTRAINS_FOUND;
-		    }
-		  } else {
-		    assert( cond > 0 );
-		    cond = ars_chk_dstschedule( pTT->sp_schedule, pC, pC ); // ***** !!!!!
-		    if( cond <= 0 ) {
-		      if( cond < 0 )
-			r = ARS_MUTEX_BLOCKED;
-		      else {
-			assert( cond == 0 );
-			r = ARS_WAITING_PRED_DEPTRAINS_AT_DST;
-		      }
-		    } else {
-		      assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
-		      assert( pR->ars_ctrl.trip_info.dst.pblk );
-		      CBTC_BLOCK_C_PTR pdst = pR->ars_ctrl.trip_info.dst.pblk;
-		      if( pdst ) {
-			TINY_TRAIN_STATE_PTR pT = pJ->ptrain_ctrl;
-			assert( pT );
-			pT->dest_blockID = pdst->block_name;
-		      }
-#if 0 // NOW, UNDER CONSTRUCTION
-		      {
-			OC_ID oc_id;
-			CBI_STAT_KIND kind;
-			conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pC->attr.sch_roset.route_id) );
-		      }
+		  if( pC->cmd == ARS_SCHEDULED_ROUTESET ) {
+		    SCHEDULED_COMMAND_PTR pC_dep = pC->ln.journey.pNext;
+		    if( pC_dep && (pC_dep->cmd == ARS_SCHEDULED_DEPT) && (pC_dep->attr.sch_dept.dept_sp == pR->ars_ctrl.trip_info.dep.sp) ) {
+		      cond = ars_chk_depschedule( pTT->sp_schedule, pC_dep );
+		      if( cond <= 0 ) {
+			if( cond < 0 )
+			  r = ARS_MUTEX_BLOCKED;
+			else {
+			  assert( cond == 0 );
+			  r = ARS_PRED_DEPTRAINS_FOUND;
+			}
+		      } else {
+			assert( cond > 0 );
+			assert( pTT );
+			assert( pC_dep );
+			if( pC->attr.sch_roset.is_dept_route ) {
+			  goto ready_on_fire;
+			} else {
+			  SCHEDULED_COMMAND_PTR pC_dst = pC->ln.journey.pNext;
+			  SCHEDULED_COMMAND_PTR pC_lok = NULL;
+			  cond = ars_chk_dstschedule( pTT->sp_schedule, pC, pC ); // ***** !!!!!
+			  if( cond <= 0 ) {
+			    if( cond < 0 )
+			      r = ARS_MUTEX_BLOCKED;
+			    else {
+			      assert( cond == 0 );
+			      r = ARS_WAITING_PRED_DEPTRAINS_AT_DST;
+			    }
+			  } else {
+			  ready_on_fire:
+			    assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
+			    assert( pR->ars_ctrl.trip_info.dst.pblk );
+			    CBTC_BLOCK_C_PTR pdst = pR->ars_ctrl.trip_info.dst.pblk;
+			    if( pdst ) {
+			      TINY_TRAIN_STATE_PTR pT = pJ->ptrain_ctrl;
+			      assert( pT );
+			      pT->dest_blockID = pdst->block_name;
+			    }
+#if 1 // NOW, UNDER CONSTRUCTION
+			    {
+			      assert( pC );
+			      assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+			      char *route_R = NULL;
+			      char raw[CBI_STAT_IDENT_LEN + 1];
+			      OC_ID oc_id;
+			      CBI_STAT_KIND kind;
+			      int stat = -1;
+			      strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
+			      route_R = mangling2_Sxxxy_Sxxxy_R( raw );
+			      assert( route_R );
+			      stat = conslt_il_state( &oc_id, &kind, route_R );
+			      if( stat == 0 ) {
+				char *P_route = NULL;
+				strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
+				P_route = mangling2_P_Sxxxy_Sxxxy( raw );
+				assert( P_route );
+				engage_il_ctrl( &oc_id, &kind, P_route );
+				printf( "stat. of conslt_il_state on %s: %d\n", P_route, -1 ); // *****
+				//assert( FALSE ); // *****
+				while( TRUE )
+				  ;
+				r = ARS_ROUTE_CONTROLLED_NORMALLY;
+				make_it_past( pJ, pC );
+			      } else {
+				assert( FALSE ); // *****
+			      }
+			    }
 #endif
-		      assert( pC );
-		      assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
-		      make_it_past( pJ, pC );
-		      r = ARS_ROUTE_CONTROLLED_NORMALLY;
+			  }
+			}
+		      }
 		    }
 		  }
 		}

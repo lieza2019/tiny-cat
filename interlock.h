@@ -88,7 +88,7 @@ typedef struct route {
     struct {
       struct {
 	const CBTC_BLOCK_ID blk;
-	const STOPPING_POINT_CODE sp;	
+	const STOPPING_POINT_CODE sp;
 	CBTC_BLOCK_C_PTR pblk;
       } dep;
       struct {

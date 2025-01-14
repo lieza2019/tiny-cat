@@ -362,12 +362,12 @@ BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_
 }
 
 int main ( void ) {
-#if 1
+#if 0
   {
     extern int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC );
     extern int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC_dst, SCHEDULED_COMMAND_C_PTR pC_lok );
-    const DWELL_ID did = 1;
-    const JOURNEY_ID jid = 1;
+    const DWELL_ID did = 7;
+    const JOURNEY_ID jid = 2;
     int r = -1;
     SCHEDULED_COMMAND_PTR pC = NULL;    
     online_timetable = trial_timetable;
@@ -376,15 +376,15 @@ int main ( void ) {
     {
       while( pC ) {
 	assert( pC );
-	//if( (pC->cmd == ARS_SCHEDULED_ARRIVAL) && (pC->attr.sch_dept.dw_seq == did) )
-	if( pC->cmd == ARS_SCHEDULED_SKIP )
+	//if( pC->cmd == ARS_SCHEDULED_SKIP )
+	if( (pC->cmd == ARS_SCHEDULED_ARRIVAL) && (pC->attr.sch_dept.dw_seq == did) )
 	  break;
 	pC = pC->ln.journey.pNext;
       }
     }    
     //r = ars_chk_depschedule( online_timetable.sp_schedule, pC );
     SCHEDULED_COMMAND_PTR pC_dst = pC;
-    SCHEDULED_COMMAND_PTR pC_lok = NULL;
+    SCHEDULED_COMMAND_PTR pC_lok = pC_dst;
     {
       while( pC_lok ) {
 	if( pC_lok->cmd == ARS_SCHEDULED_DEPT )
@@ -394,6 +394,12 @@ int main ( void ) {
     }
     r = ars_chk_dstschedule( online_timetable.sp_schedule, pC_dst, pC_lok );
     assert( FALSE );
+  }
+#endif
+#if 1
+  {
+    online_timetable = trial_timetable;
+    makeup_online_timetable();
   }
 #endif
   TINY_SOCK socks_srvstat;
@@ -538,11 +544,12 @@ int main ( void ) {
 	assert( TRUE );
       }      
 #endif
-#if 0
+#if 1
       {
 	OC_ID oc_id = END_OF_OCs;
 	CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
-	const char ctl_bit_ident[] = "P_S801A_S803A_CAN";
+	//const char ctl_bit_ident[] = "P_S801A_S803A_CAN";
+	const char ctl_bit_ident[] = "P_S801A_S803A";
 	//const char ctl_bit_ident[] = "P_CY807A_OFF";  // e.g. const char ctl_bit_ident[] = "P_S821A_S801A";
 	engage_il_ctrl( &oc_id, &kind, ctl_bit_ident );
 	//errorF( "(oc_id): (%d)\n", OC_ID_CONV2INT(oc_id) ); // ***** for debugging.
@@ -584,9 +591,9 @@ int main ( void ) {
 	  assert( n == sizeof(MSG_TINY_SERVER_STATUS) );
 	}
       }
-#if 1
-      
+#if 0
       {
+	const JOURNEY_ID jid = 1;
 	const int target_rake = 1;
 	int i;
 	for( i = 0; i < MAX_TRAIN_TRACKINGS; i++ ) {
@@ -630,7 +637,15 @@ int main ( void ) {
 		  printf( "%s : %d\n", cnv2str_il_sym( rid ), pB->block_name );
 	      }
 #endif
-	      ;
+#if 1
+	      {
+		ARS_REASONS r = END_OF_ARS_REASONS;
+		JOURNEY_PTR pJ = &online_timetable.lkup[jid]->journey;
+		pJ->ptrain_ctrl = pT;
+		r = ars_ctrl_route_on_journey( &online_timetable, pJ );
+		assert( FALSE );
+	      }
+#endif
 #if 0
 	      int r_mutex = -1;
 	      r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
