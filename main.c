@@ -488,7 +488,7 @@ int main ( void ) {
     TINY_SRVSTAT_MSG_COMM_LOGGER2( msg_srv_stat, TRUE );
     
     creat_comm_threads( &comm_threads_prof );
-    //comm_threads_prof.cbi.ctrl.ready = TRUE;
+    comm_threads_prof.cbi.ctrl.ready = TRUE;
     while( TRUE ) {
       errorF( "%s", "waken up!\n" );
 #if 0
@@ -544,12 +544,13 @@ int main ( void ) {
 	assert( TRUE );
       }      
 #endif
-#if 1
+#if 0
       {
 	OC_ID oc_id = END_OF_OCs;
 	CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
-	//const char ctl_bit_ident[] = "P_S801A_S803A_CAN";
-	const char ctl_bit_ident[] = "P_S801A_S803A";
+	//const char ctl_bit_ident[] = "P_S807B_S831B";
+	//const char ctl_bit_ident[] = "P_S801A_S803A";
+	const char ctl_bit_ident[] = "P_S801A_S803A_CAN";
 	//const char ctl_bit_ident[] = "P_CY807A_OFF";  // e.g. const char ctl_bit_ident[] = "P_S821A_S801A";
 	engage_il_ctrl( &oc_id, &kind, ctl_bit_ident );
 	//errorF( "(oc_id): (%d)\n", OC_ID_CONV2INT(oc_id) ); // ***** for debugging.
@@ -591,7 +592,7 @@ int main ( void ) {
 	  assert( n == sizeof(MSG_TINY_SERVER_STATUS) );
 	}
       }
-#if 0
+#if 1
       {
 	const JOURNEY_ID jid = 1;
 	const int target_rake = 1;
@@ -643,7 +644,7 @@ int main ( void ) {
 		JOURNEY_PTR pJ = &online_timetable.lkup[jid]->journey;
 		pJ->ptrain_ctrl = pT;
 		r = ars_ctrl_route_on_journey( &online_timetable, pJ );
-		assert( FALSE );
+		//assert( FALSE );
 	      }
 #endif
 #if 0

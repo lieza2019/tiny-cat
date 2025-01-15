@@ -805,7 +805,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	    assert( (minute_to_set >= 0) && (minute_to_set < 60) );
 	    assert( (second_to_set >= 0) && (second_to_set < 60) );
 	    if( pC->attr.sch_roset.is_dept_route ) {
-	      goto is_the_time_to_go;
+	      goto is_the_time;
 	    } else {
 	      cond = ars_chk_routelok( pR );
 	      if( cond <= 0 ) {
@@ -817,7 +817,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 		}
 	      } else {
 		assert( cond > 0 );
-	      is_the_time_to_go:
+	      is_the_time:
 		cond = ars_chk_trgtime( OFFSET_TO_ROUTESET, NULL, hour_to_set, minute_to_set, second_to_set );
 		if( cond <= 0 ) {
 		  if( cond < 0 )
@@ -885,16 +885,15 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 				char *P_route = NULL;
 				strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
 				P_route = mangling2_P_Sxxxy_Sxxxy( raw );
-				assert( P_route );
+				assert( P_route );-
 				engage_il_ctrl( &oc_id, &kind, P_route );
-				printf( "stat. of conslt_il_state on %s: %d\n", P_route, -1 ); // *****
+				//printf( "stat. of conslt_il_state on %s: %d\n", P_route, -1 ); // *****
 				//assert( FALSE ); // *****
-				while( TRUE )
-				  ;
 				r = ARS_ROUTE_CONTROLLED_NORMALLY;
-				make_it_past( pJ, pC );
+				//make_it_past( pJ, pC );
 			      } else {
-				assert( FALSE ); // *****
+				if( stat > 0 )
+				  r = ARS_ROUTE_ALREADY_CONTROLLED;
 			      }
 			    }
 #endif
@@ -914,7 +913,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
       r = ARS_NO_ROUTESET_CMD;
   } else
     r = ARS_NOMORE_SCHEDULED_CMDS;
-  assert( r != END_OF_ARS_REASONS );
+  assert( r != END_OF_ARS_REASONS );  // occasionally, tiny-cat process is falling down by this assertion, need to be fixed!
   return r;
 }
 
