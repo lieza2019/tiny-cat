@@ -775,7 +775,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
       if( pR->ars_ctrl.app ){
 	CBTC_BLOCK_C_PTR pB = NULL;
 	int cond = -1;	
-	cond = ars_chk_hit_trgsection( pR, &pB, pJ->ptrain_ctrl, -1 ); //cond = ars_chk_hit_trgsection( pR, pJ->ptrain_ctrl );
+	cond = ars_chk_hit_trgsection( pR, &pB, pJ->ptrain_ctrl, -1 );
 	if( cond <= 0 ) {
 	  if( cond < 0 )
 	    r = ARS_MUTEX_BLOCKED;
@@ -805,7 +805,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	    assert( (minute_to_set >= 0) && (minute_to_set < 60) );
 	    assert( (second_to_set >= 0) && (second_to_set < 60) );
 	    if( pC->attr.sch_roset.is_dept_route ) {
-	      goto is_the_time;
+	      goto is_the_time_now;
 	    } else {
 	      cond = ars_chk_routelok( pR );
 	      if( cond <= 0 ) {
@@ -817,7 +817,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 		}
 	      } else {
 		assert( cond > 0 );
-	      is_the_time:
+	      is_the_time_now:
 		cond = ars_chk_trgtime( OFFSET_TO_ROUTESET, NULL, hour_to_set, minute_to_set, second_to_set );
 		if( cond <= 0 ) {
 		  if( cond < 0 )
@@ -862,46 +862,52 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 			  ready_on_fire:
 			    assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
 			    assert( pR->ars_ctrl.trip_info.dst.pblk );
+#if 0 // this fragment for CBTC control emission should be moved to the functions dedicated to tame CBTC command controlling.
 			    CBTC_BLOCK_C_PTR pdst = pR->ars_ctrl.trip_info.dst.pblk;
 			    if( pdst ) {
 			      TINY_TRAIN_STATE_PTR pT = pJ->ptrain_ctrl;
 			      assert( pT );
 			      pT->dest_blockID = pdst->block_name;
-			    }
-#if 1 // NOW, UNDER CONSTRUCTION
-			    {
-			      assert( pC );
-			      assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
-			      char *route_R = NULL;
-			      char raw[CBI_STAT_IDENT_LEN + 1];
-			      OC_ID oc_id;
-			      CBI_STAT_KIND kind;
-			      int stat = -1;
-			      strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
-			      route_R = mangling2_Sxxxy_Sxxxy_R( raw );
-			      assert( route_R );
-			      stat = conslt_il_state( &oc_id, &kind, route_R );
-			      if( stat == 0 ) {
+			    } else
+			      pT->dest_blockID = 0;
+#endif
+			    assert( pC );
+			    assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+			    char *route_R = NULL;
+			    char raw[CBI_STAT_IDENT_LEN + 1];
+			    OC_ID oc_id;
+			    CBI_STAT_KIND kind;
+			    int stat = -1;
+			    strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
+			    route_R = mangling2_Sxxxy_Sxxxy_R( raw );
+			    assert( route_R );
+			    stat = conslt_il_state( &oc_id, &kind, route_R );
+			    if( stat <= 0 ) {
+			      if( stat < 0 )
+				r = ARS_MUTEX_BLOCKED;
+			      else {
+				assert( stat == 0 );
 				char *P_route = NULL;
 				strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
 				P_route = mangling2_P_Sxxxy_Sxxxy( raw );
-				assert( P_route );-
+				assert( P_route );
 				engage_il_ctrl( &oc_id, &kind, P_route );
 				//printf( "stat. of conslt_il_state on %s: %d\n", P_route, -1 ); // *****
 				//assert( FALSE ); // *****
 				r = ARS_ROUTE_CONTROLLED_NORMALLY;
 				//make_it_past( pJ, pC );
-			      } else {
-				if( stat > 0 )
-				  r = ARS_ROUTE_ALREADY_CONTROLLED;
 			      }
+			    } else {
+			      assert( stat > 0 );
+			      r = ARS_ROUTE_ALREADY_CONTROLLED;
 			    }
-#endif
 			  }
 			}
 		      }
-		    }
-		  }
+		    } else
+		      r = ARS_ILLEGAL_CMD_DEPT;
+		  } else
+		    r = ARS_ILLEGAL_CMD_ROUTESET;
 		}
 	      }
 	    }
