@@ -683,7 +683,7 @@ static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PT
   return ( pJ->scheduled_commands.pNext );
 }
 
-static char *mangling2_P_Sxxxy_Sxxxy ( char *praw ) {
+static char *mangl2_P_Sxxxy_Sxxxy ( char *praw ) {
   assert( praw );
   char *r = NULL;
   int i = 0;
@@ -710,7 +710,7 @@ static char *mangling2_P_Sxxxy_Sxxxy ( char *praw ) {
   return r;
 }
 
-static char *mangling2_Sxxxy_Sxxxy_R ( char *praw ) {
+static char *mangl2_Sxxxy_Sxxxy_R ( char *praw ) {
   assert( praw );
   char *r = NULL;
   int i = 0;
@@ -750,6 +750,100 @@ static ARS_ASSOC_TIME_PTR timestamp ( ARS_ASSOC_TIME_PTR pstamp ) {
     pstamp->day = pT_crnt->tm_mday;
     r = pstamp;
   }
+  return r;
+}
+
+static BOOL arriv_shunt_routectl_consistency ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCHEDULED_COMMAND_PTR *ppC_lok, SCHEDULED_COMMAND_PTR pC_roset ) {
+  assert( pres );
+  assert( ppC_dst );
+  assert( ppC_lok );
+  assert( pC_roset );
+  assert( (pC_roset->cmd == ARS_SCHEDULED_ROUTESET) && (! pC_roset->attr.sch_roset.is_dept_route) );
+  assert( pC_roset->attr.sch_roset.proute_prof );
+  assert( pC_roset->attr.sch_roset.route_id == (pC_roset->attr.sch_roset.proute_prof)->id );
+  BOOL r = FALSE;
+  
+  SCHEDULED_COMMAND_PTR p = pC_roset;  
+  *ppC_dst = NULL;
+  *ppC_lok = NULL;
+  while( p && !r ) {
+    switch( p->cmd ) {
+    case ARS_SCHEDULED_ROUTESET:
+      p = p->ln.journey.pNext;
+      if( !p ) {
+	// pC_roset may have problematic commands, for successive commands should be ARS_SCHEDULED_DEPT or ARS_SCHEDULED_ROUTEREL (or both), are missing.
+	return FALSE;
+      } else {
+	if( !((p->cmd == ARS_SCHEDULED_DEPT) || (p->cmd == ARS_SCHEDULED_ROUTEREL)) ) {
+	  // pC_roset may have problematic commands, for successive commands of ARS_SCHEDULED_ROUTESET should be ARS_SCHEDULED_DEPT or ARS_SCHEDULED_ROUTEREL.
+	  return FALSE;
+	}
+      }
+      assert( p );
+      assert( (p->cmd == ARS_SCHEDULED_DEPT) || (p->cmd == ARS_SCHEDULED_ROUTEREL) );
+      break;
+    case ARS_SCHEDULED_ROUTEREL:
+      p = p->ln.journey.pNext;
+      break;
+    case ARS_SCHEDULED_ARRIVAL:
+      *ppC_dst = p;
+      p = p->ln.journey.pNext;
+      if( !p ) {
+	// pC_roset may have problematic commands, any journey must have END_OF_SCHEDULED_CMDS on its dead-end.
+	return FALSE;
+      } else {
+	if( p->cmd == END_OF_SCHEDULED_CMDS ) {
+	  r = TRUE;
+	} else if( p->cmd == ARS_SCHEDULED_DEPT ) {
+	  *ppC_lok = p;
+	  r = TRUE;
+	} else if( p->cmd == ARS_SCHEDULED_ROUTESET ) {
+	  continue;
+	} else {
+	  // pC_roset may have problematic commands, for successive commands of ARS_SCHEDULED_ARRIVAL cannot be the cmds excepting the ones above.
+	  return FALSE;
+	}
+      }
+      break;
+    case ARS_SCHEDULED_DEPT:
+      if( *ppC_dst ) {
+	*ppC_lok = p;
+	r = TRUE;
+      }
+      p = p->ln.journey.pNext;
+      if( !p ) {
+	// pC_roset may have problematic commands, for successive command should be ARS_SCHEDULED_ROUTEREL, is missing.
+	if( *ppC_dst ) {
+	  continue;
+	} else {
+	  return FALSE;
+	}
+      } else {
+	if( p->cmd != ARS_SCHEDULED_ROUTEREL ) {
+	  // pC_roset may have problematic commands, for successive command should be ARS_SCHEDULED_ROUTEREL.
+	  if( *ppC_dst ) {
+	    continue;
+	  } else {
+	    return FALSE;
+	  }
+	}
+      }
+      assert( p );
+      assert( p->cmd == ARS_SCHEDULED_ROUTEREL );
+      break;
+    case ARS_SCHEDULED_SKIP:
+      *ppC_dst = p;
+      r = TRUE;
+      break;
+    case END_OF_SCHEDULED_CMDS:
+      assert( ! p->ln.journey.pNext );
+      break;
+    case ARS_CMD_DONT_CURE:
+      assert( FALSE );
+    }
+  }
+  assert( p );
+  
   return r;
 }
 
@@ -848,60 +942,65 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 			if( pC->attr.sch_roset.is_dept_route ) {
 			  goto ready_on_fire;
 			} else {
-			  SCHEDULED_COMMAND_PTR pC_dst = pC->ln.journey.pNext;
+			  ARS_REASONS res_dst = END_OF_ARS_REASONS;
+			  SCHEDULED_COMMAND_PTR pC_dst = NULL;
 			  SCHEDULED_COMMAND_PTR pC_lok = NULL;
-			  cond = ars_chk_dstschedule( pTT->sp_schedule, pC, pC ); // ***** !!!!!
-			  if( cond <= 0 ) {
-			    if( cond < 0 )
-			      r = ARS_MUTEX_BLOCKED;
-			    else {
-			      assert( cond == 0 );
-			      r = ARS_WAITING_PRED_DEPTRAINS_AT_DST;
-			    }
-			  } else {
-			  ready_on_fire:
-			    assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
-			    assert( pR->ars_ctrl.trip_info.dst.pblk );
-#if 0 // this fragment for CBTC control emission should be moved to the functions dedicated to tame CBTC command controlling.
-			    CBTC_BLOCK_C_PTR pdst = pR->ars_ctrl.trip_info.dst.pblk;
-			    if( pdst ) {
-			      TINY_TRAIN_STATE_PTR pT = pJ->ptrain_ctrl;
-			      assert( pT );
-			      pT->dest_blockID = pdst->block_name;
-			    } else
-			      pT->dest_blockID = 0;
-#endif
-			    assert( pC );
-			    assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
-			    char *route_R = NULL;
-			    char raw[CBI_STAT_IDENT_LEN + 1];
-			    OC_ID oc_id;
-			    CBI_STAT_KIND kind;
-			    int stat = -1;
-			    strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
-			    route_R = mangling2_Sxxxy_Sxxxy_R( raw );
-			    assert( route_R );
-			    stat = conslt_il_state( &oc_id, &kind, route_R );
-			    if( stat <= 0 ) {
-			      if( stat < 0 )
+			  pC->attr.sch_roset.proute_prof = pR; // *****
+			  if( arriv_shunt_routectl_consistency( &res_dst, &pC_dst, &pC_lok, pC ) ) {
+			    cond = ars_chk_dstschedule( pTT->sp_schedule, pC_dst, pC_lok );
+			    //printf( "cond. of ars_chk_dstschedule: %d\n", cond ); // *****
+			    //assert( FALSE ); // *****
+			    if( cond <= 0 ) {
+			      if( cond < 0 )
 				r = ARS_MUTEX_BLOCKED;
 			      else {
-				assert( stat == 0 );
-				char *P_route = NULL;
-				strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
-				P_route = mangling2_P_Sxxxy_Sxxxy( raw );
-				assert( P_route );
-				engage_il_ctrl( &oc_id, &kind, P_route );
-				//printf( "stat. of conslt_il_state on %s: %d\n", P_route, -1 ); // *****
-				//assert( FALSE ); // *****
-				r = ARS_ROUTE_CONTROLLED_NORMALLY;
-				//make_it_past( pJ, pC );
+				assert( cond == 0 );
+				r = ARS_WAITING_PRED_DEPTRAINS_AT_DST;
 			      }
 			    } else {
-			      assert( stat > 0 );
-			      r = ARS_ROUTE_ALREADY_CONTROLLED;
+			    ready_on_fire:
+			      assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
+			      assert( pR->ars_ctrl.trip_info.dst.pblk );
+#if 0 // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
+			      CBTC_BLOCK_C_PTR pdst = pR->ars_ctrl.trip_info.dst.pblk;
+			      if( pdst ) {
+				TINY_TRAIN_STATE_PTR pT = pJ->ptrain_ctrl;
+				assert( pT );
+				pT->dest_blockID = pdst->block_name;
+			      } else
+				pT->dest_blockID = 0;
+#endif
+			      assert( pC );
+			      assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+			      char *route_R = NULL;
+			      char raw[CBI_STAT_IDENT_LEN + 1];
+			      OC_ID oc_id;
+			      CBI_STAT_KIND kind;
+			      int stat = -1;
+			      strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
+			      route_R = mangl2_Sxxxy_Sxxxy_R( raw );
+			      assert( route_R );
+			      stat = conslt_il_state( &oc_id, &kind, route_R );
+			      if( stat <= 0 ) {
+				if( stat < 0 )
+				  r = ARS_MUTEX_BLOCKED;
+				else {
+				  assert( stat == 0 );
+				  char *P_route = NULL;
+				  strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
+				  P_route = mangl2_P_Sxxxy_Sxxxy( raw );
+				  assert( P_route );
+				  engage_il_ctrl( &oc_id, &kind, P_route );
+				  r = ARS_ROUTE_CONTROLLED_NORMALLY;
+				}
+			      } else {
+				assert( stat > 0 );
+				r = ARS_ROUTE_ALREADY_CONTROLLED;
+				//make_it_past( pJ, pC );
+			      }
 			    }
-			  }
+			  } else
+			    assert( FALSE ); // *****
 			}
 		      }
 		    } else
@@ -919,7 +1018,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
       r = ARS_NO_ROUTESET_CMD;
   } else
     r = ARS_NOMORE_SCHEDULED_CMDS;
-  assert( r != END_OF_ARS_REASONS );  // occasionally, tiny-cat process is falling down by this assertion, need to be fixed!
+  assert( r != END_OF_ARS_REASONS );
   return r;
 }
 

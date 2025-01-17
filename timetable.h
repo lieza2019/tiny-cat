@@ -20,7 +20,7 @@ typedef struct scheduled_command {
       IL_SYM route_id;
       BOOL is_dept_route;
       ARS_ASSOC_TIME dept_time;
-      ROUTE_PTR *proute_prof;
+      ROUTE_PTR proute_prof;
     } sch_roset;
     struct { // for ARS_SCHEDULED_ROUTEREL
       int nth_routerel;
