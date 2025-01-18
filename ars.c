@@ -554,7 +554,6 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
   assert( sch_dst );
   assert( pC_dst );
   assert( (pC_dst->cmd == ARS_SCHEDULED_ARRIVAL) || (pC_dst->cmd == ARS_SCHEDULED_SKIP) );
-  assert( pC_lok ? ((pC_lok->cmd == ARS_SCHEDULED_DEPT) && (pC_dst->cmd == ARS_SCHEDULED_ARRIVAL)) : (pC_dst->cmd == ARS_SCHEDULED_SKIP) );
   int r = -1;
   
   STOPPING_POINT_CODE dst_sp = SP_NONSENS;
@@ -585,15 +584,21 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
       if( next_arrival || (pcmd_next != pC_dst) ) {
 	SCHEDULED_COMMAND_C_PTR p = NULL;
 	if( next_arrival ) {
-	  if( pcmd_next != pC_lok ) {
-	    p = is_fellow( pcmd_next, pC_lok, num_cmds );
-	    if( p ) {
-	      assert( pC_lok->cmd == ARS_SCHEDULED_DEPT );
-	      pcmd_next = pC_lok;
+	  if( pcmd_next != pC_lok ) { // including the case of (pC_lok == NULL).
+	    if( !pC_lok ) {
+	      assert( pC_dst->cmd == ARS_SCHEDULED_ARRIVAL );
+	      break;
 	    } else {
-	      pcmd_next = pcmd_next->ln.sp_sch.pNext;
-	      if( pcmd_next->checked )
-		continue;
+	      assert( !pC_lok->checked );
+	      assert( pC_lok->cmd == ARS_SCHEDULED_DEPT );
+	      p = is_fellow( pcmd_next, pC_lok, num_cmds );
+	      if( p )
+		pcmd_next = pC_lok;
+	      else {
+		pcmd_next = pcmd_next->ln.sp_sch.pNext;
+		if( pcmd_next->checked )
+		  continue;
+	      }
 	    }
 	  }
 	} else {
@@ -870,7 +875,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
       assert( pR->ars_ctrl.app );
       if( pR->ars_ctrl.app ){
 	CBTC_BLOCK_C_PTR pB = NULL;
-	int cond = -1;	
+	int cond = -1;
 	cond = ars_chk_hit_trgsection( pR, &pB, pJ->ptrain_ctrl, -1 );
 	if( cond <= 0 ) {
 	  if( cond < 0 )
@@ -983,26 +988,42 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 			      route_R = mangl2_Sxxxy_Sxxxy_R( raw );
 			      assert( route_R );
 			      stat = conslt_il_state( &oc_id, &kind, route_R );
-			      if( stat <= 0 ) {
-				if( stat < 0 )
-				  r = ARS_MUTEX_BLOCKED;
-				else {
-				  assert( stat == 0 );
-				  char *P_route = NULL;
-				  strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
-				  P_route = mangl2_P_Sxxxy_Sxxxy( raw );
-				  assert( P_route );
-				  engage_il_ctrl( &oc_id, &kind, P_route );
-				  r = ARS_ROUTE_CONTROLLED_NORMALLY;
+			      {
+				char *P_route = NULL;
+				strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
+				P_route = mangl2_P_Sxxxy_Sxxxy( raw );
+				if( stat <= 0 ) {
+				  if( stat < 0 )
+				    r = ARS_MUTEX_BLOCKED;
+				  else {
+				    assert( stat == 0 );
+				    assert( P_route );
+				    engage_il_ctrl( &oc_id, &kind, P_route );
+				    r = ARS_ROUTE_CONTROLLED_NORMALLY;
+				  }
+				} else {
+				  assert( stat > 0 );
+				  stat = conslt_il_state( &oc_id, &kind, route_R );
+				  if( stat <= 0 ) {
+				    if( stat < 0 )
+				      r = ARS_MUTEX_BLOCKED;
+				  } else {
+				    assert( stat > 0 );
+				    assert( P_route );
+#if 0 // *****
+				    ungage_il_ctrl( &oc_id, &kind, P_route );
+#else
+				    stat = conslt_il_state( &oc_id, &kind, P_route );
+				    assert( stat != 0 );
+#endif
+				  }
+				  r = ARS_ROUTE_ALREADY_CONTROLLED;
+				  //make_it_past( pJ, pC );
 				}
-			      } else {
-				assert( stat > 0 );
-				r = ARS_ROUTE_ALREADY_CONTROLLED;
-				//make_it_past( pJ, pC );
 			      }
 			    }
 			  } else
-			    assert( FALSE ); // *****
+			    assert( FALSE ); // *****, now UNDER CONSTRUCTION!
 			}
 		      }
 		    } else
