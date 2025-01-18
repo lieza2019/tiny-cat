@@ -321,19 +321,20 @@ static SCHEDULED_COMMAND_PTR fetch_routeset_cmd ( JOURNEY_PTR pJ ) {
   SCHEDULED_COMMAND_PTR *ppC = NULL;
   ppC = &pJ->scheduled_commands.pNext;
   assert( ppC );  
-  while( *ppC ) {    
-    assert( ppC );
+  while( *ppC ) {
     assert( *ppC );
-    if( (*ppC)->cmd == ARS_SCHEDULED_ROUTESET ) {
-      r = *ppC;
-      break;
-    }
-#if 0
-    else {
-      if( ((*ppC)->cmd == ARS_SCHEDULED_DEPT) || ((*ppC)->cmd == ARS_SCHEDULED_SKIP) )
+    if( ! (*ppC)->checked ) {
+      if( (*ppC)->cmd == ARS_SCHEDULED_ROUTESET ) {
+	r = *ppC;
 	break;
-    }
+      }
+#if 0
+      else {
+	if( ((*ppC)->cmd == ARS_SCHEDULED_DEPT) || ((*ppC)->cmd == ARS_SCHEDULED_SKIP) )
+	  break;
+      }
 #endif
+    }
     ppC = &(*ppC)->ln.journey.pNext;
   }
   assert( ppC );
@@ -858,6 +859,7 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   if( pC ) {
     assert( pC );
     assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+    assert( ! pC->checked );
     if( pC->cmd == ARS_SCHEDULED_ROUTESET ) {
       assert( whats_kind_of_il_sym( pC->attr.sch_roset.route_id ) == _ROUTE );
       ROUTE_C_PTR pR = NULL;
