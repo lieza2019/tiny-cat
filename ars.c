@@ -888,151 +888,184 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	  r = ARS_FOUND_TRAINS_AHEAD;
 	} else {
 	  assert( cond >= 2 );
-	  cond = ars_chk_trackcirc( pR );
-	  if( cond <= 0 ) {
-	    if( cond < 0 )
+	  char *route_R = NULL;
+	  char raw[CBI_STAT_IDENT_LEN + 1];
+	  OC_ID oc_id;
+	  CBI_STAT_KIND kind;
+	  int stat = -1;
+	  strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
+	  route_R = mangl2_Sxxxy_Sxxxy_R( raw );
+	  assert( route_R );
+	  stat = conslt_il_state( &oc_id, &kind, route_R );
+	  if( stat <= 0 ) {
+	    if( stat < 0 )
 	      r = ARS_MUTEX_BLOCKED;
 	    else {
-	      assert( cond == 0 );
-	      r = ARS_CTRL_TRACKS_DROP;
-	    }
-	  } else {
-	    assert( cond > 0 );
-	    assert( pC );
-	    const int hour_to_set = pC->attr.sch_roset.dept_time.hour;
-	    const int minute_to_set = pC->attr.sch_roset.dept_time.minute;
-	    const int second_to_set = pC->attr.sch_roset.dept_time.second;
-	    assert( (hour_to_set >= 0) && (hour_to_set < 24) );
-	    assert( (minute_to_set >= 0) && (minute_to_set < 60) );
-	    assert( (second_to_set >= 0) && (second_to_set < 60) );
-	    if( pC->attr.sch_roset.is_dept_route ) {
-	      goto is_the_time_now;
-	    } else {
-	      cond = ars_chk_routelok( pR );
+	      assert( stat == 0 );
+	      cond = ars_chk_trackcirc( pR );
 	      if( cond <= 0 ) {
 		if( cond < 0 )
 		  r = ARS_MUTEX_BLOCKED;
 		else {
 		  assert( cond == 0 );
-		  r = ARS_CTRL_TRACKS_ROUTELOCKED;
+		  r = ARS_CTRL_TRACKS_DROP;
 		}
 	      } else {
 		assert( cond > 0 );
-	      is_the_time_now:
-		cond = ars_chk_trgtime( OFFSET_TO_ROUTESET, NULL, hour_to_set, minute_to_set, second_to_set );
-		if( cond <= 0 ) {
-		  if( cond < 0 )
-		    r = ARS_MUTEX_BLOCKED;
-		  else {
-		    assert( cond == 0 );
-		    r = ARS_WAITING_ROUTESET_TIME;
-		  }
+		assert( pC );
+		const int hour_to_set = pC->attr.sch_roset.dept_time.hour;
+		const int minute_to_set = pC->attr.sch_roset.dept_time.minute;
+		const int second_to_set = pC->attr.sch_roset.dept_time.second;
+		assert( (hour_to_set >= 0) && (hour_to_set < 24) );
+		assert( (minute_to_set >= 0) && (minute_to_set < 60) );
+		assert( (second_to_set >= 0) && (second_to_set < 60) );
+		if( pC->attr.sch_roset.is_dept_route ) {
+		  goto is_the_time_now;
 		} else {
-		  assert( cond > 0 );
-		  assert( pTT );
-		  assert( pC );
-		  if( pC->cmd == ARS_SCHEDULED_ROUTESET ) {
-		    SCHEDULED_COMMAND_PTR pC_dep = pC->ln.journey.pNext;
-		    if( pC_dep && (pC_dep->cmd == ARS_SCHEDULED_DEPT) && (pC_dep->attr.sch_dept.dept_sp == pR->ars_ctrl.trip_info.dep.sp) ) {
-		      cond = ars_chk_depschedule( pTT->sp_schedule, pC_dep );
-		      if( cond <= 0 ) {
-			if( cond < 0 )
-			  r = ARS_MUTEX_BLOCKED;
-			else {
-			  assert( cond == 0 );
-			  r = ARS_PRED_DEPTRAINS_FOUND;
-			}
-		      } else {
-			assert( cond > 0 );
-			assert( pTT );
-			assert( pC_dep );
-			if( pC->attr.sch_roset.is_dept_route ) {
-			  goto ready_on_fire;
-			} else {
-			  ARS_REASONS res_dst = END_OF_ARS_REASONS;
-			  SCHEDULED_COMMAND_PTR pC_dst = NULL;
-			  SCHEDULED_COMMAND_PTR pC_lok = NULL;
-			  pC->attr.sch_roset.proute_prof = pR; // *****
-			  if( arriv_shunt_routectl_consistency( &res_dst, &pC_dst, &pC_lok, pC ) ) {
-			    cond = ars_chk_dstschedule( pTT->sp_schedule, pC_dst, pC_lok );
-			    //printf( "cond. of ars_chk_dstschedule: %d\n", cond ); // *****
-			    //assert( FALSE ); // *****
-			    if( cond <= 0 ) {
-			      if( cond < 0 )
-				r = ARS_MUTEX_BLOCKED;
-			      else {
-				assert( cond == 0 );
-				r = ARS_WAITING_PRED_DEPTRAINS_AT_DST;
-			      }
+		  cond = ars_chk_routelok( pR );
+		  if( cond <= 0 ) {
+		    if( cond < 0 )
+		      r = ARS_MUTEX_BLOCKED;
+		    else {
+		      assert( cond == 0 );
+		      r = ARS_CTRL_TRACKS_ROUTELOCKED;
+		    }
+		  } else {
+		    assert( cond > 0 );
+		  is_the_time_now:
+		    cond = ars_chk_trgtime( OFFSET_TO_ROUTESET, NULL, hour_to_set, minute_to_set, second_to_set );
+		    if( cond <= 0 ) {
+		      if( cond < 0 )
+			r = ARS_MUTEX_BLOCKED;
+		      else {
+			assert( cond == 0 );
+			r = ARS_WAITING_ROUTESET_TIME;
+		      }
+		    } else {
+		      assert( cond > 0 );
+		      assert( pTT );
+		      assert( pC );
+		      if( pC->cmd == ARS_SCHEDULED_ROUTESET ) {
+			SCHEDULED_COMMAND_PTR pC_dep = pC->ln.journey.pNext;
+			if( pC_dep && (pC_dep->cmd == ARS_SCHEDULED_DEPT) && (pC_dep->attr.sch_dept.dept_sp == pR->ars_ctrl.trip_info.dep.sp) ) {
+			  cond = ars_chk_depschedule( pTT->sp_schedule, pC_dep );
+			  if( cond <= 0 ) {
+			    if( cond < 0 )
+			      r = ARS_MUTEX_BLOCKED;
+			    else {
+			      assert( cond == 0 );
+			      r = ARS_PRED_DEPTRAINS_FOUND;
+			    }
+			  } else {
+			    assert( cond > 0 );
+			    assert( pTT );
+			    assert( pC_dep );
+			    if( pC->attr.sch_roset.is_dept_route ) {
+			      goto ready_on_fire;
 			    } else {
-			    ready_on_fire:
-			      assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
-			      assert( pR->ars_ctrl.trip_info.dst.pblk );
-#if 0 // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
-			      CBTC_BLOCK_C_PTR pdst = pR->ars_ctrl.trip_info.dst.pblk;
-			      if( pdst ) {
-				TINY_TRAIN_STATE_PTR pT = pJ->ptrain_ctrl;
-				assert( pT );
-				pT->dest_blockID = pdst->block_name;
-			      } else
-				pT->dest_blockID = 0;
-#endif
-			      assert( pC );
-			      assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
-			      char *route_R = NULL;
-			      char raw[CBI_STAT_IDENT_LEN + 1];
-			      OC_ID oc_id;
-			      CBI_STAT_KIND kind;
-			      int stat = -1;
-			      strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
-			      route_R = mangl2_Sxxxy_Sxxxy_R( raw );
-			      assert( route_R );
-			      stat = conslt_il_state( &oc_id, &kind, route_R );
-			      {
-				char *P_route = NULL;
-				strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
-				P_route = mangl2_P_Sxxxy_Sxxxy( raw );
-				if( stat <= 0 ) {
-				  if( stat < 0 )
+			      ARS_REASONS res_dst = END_OF_ARS_REASONS;
+			      SCHEDULED_COMMAND_PTR pC_dst = NULL;
+			      SCHEDULED_COMMAND_PTR pC_lok = NULL;
+			      pC->attr.sch_roset.proute_prof = pR; // *****
+			      if( arriv_shunt_routectl_consistency( &res_dst, &pC_dst, &pC_lok, pC ) ) {
+				cond = ars_chk_dstschedule( pTT->sp_schedule, pC_dst, pC_lok );
+				//printf( "cond. of ars_chk_dstschedule: %d\n", cond ); // *****
+				//assert( FALSE ); // *****
+				if( cond <= 0 ) {
+				  if( cond < 0 )
 				    r = ARS_MUTEX_BLOCKED;
 				  else {
-				    assert( stat == 0 );
-				    assert( P_route );
-				    engage_il_ctrl( &oc_id, &kind, P_route );
-				    r = ARS_ROUTE_CONTROLLED_NORMALLY;
+				    assert( cond == 0 );
+				    r = ARS_WAITING_PRED_DEPTRAINS_AT_DST;
 				  }
 				} else {
-				  assert( stat > 0 );
-				  stat = conslt_il_state( &oc_id, &kind, route_R );
-				  if( stat <= 0 ) {
-				    if( stat < 0 )
-				      r = ARS_MUTEX_BLOCKED;
-				  } else {
-				    assert( stat > 0 );
-				    assert( P_route );
+				ready_on_fire:
+				  assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
+				  assert( pR->ars_ctrl.trip_info.dst.pblk );
+#if 0 // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
+				  CBTC_BLOCK_C_PTR pdst = pR->ars_ctrl.trip_info.dst.pblk;
+				  if( pdst ) {
+				    TINY_TRAIN_STATE_PTR pT = pJ->ptrain_ctrl;
+				    assert( pT );
+				    pT->dest_blockID = pdst->block_name;
+				  } else
+				    pT->dest_blockID = 0;
+#endif
+				  assert( pC );
+				  assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
+				  
+				  //char *route_R = NULL;
+				  //char raw[CBI_STAT_IDENT_LEN + 1];
+				  //OC_ID oc_id;
+				  //CBI_STAT_KIND kind;
+				  //int stat = -1;
+				  //strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
+				  //route_R = mangl2_Sxxxy_Sxxxy_R( raw );
+			 	  //assert( route_R );
+				  //stat = conslt_il_state( &oc_id, &kind, route_R );
+				  {
+				    char *P_route = NULL;
+				    strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
+				    P_route = mangl2_P_Sxxxy_Sxxxy( raw );
+
 #if 0 // *****
-				    ungage_il_ctrl( &oc_id, &kind, P_route );
-#else
-				    stat = conslt_il_state( &oc_id, &kind, P_route );
-				    assert( stat != 0 );
+				    if( stat <= 0 ) {
+				      if( stat < 0 )
+					r = ARS_MUTEX_BLOCKED;
+				      else {
+					assert( stat == 0 );
+#endif
+					assert( P_route );					
+					engage_il_ctrl( &oc_id, &kind, P_route );					
+					//r = ARS_ROUTE_CONTROLLED_NORMALLY;
+					r = ARS_NOW_ROUTE_CONTROLLING;
+#if 0 // *****
+				      }
+				    } else {
+				      assert( stat > 0 );
+				      stat = conslt_il_state( &oc_id, &kind, route_R );
+				      if( stat <= 0 ) {
+					if( stat < 0 )
+					  r = ARS_MUTEX_BLOCKED;
+				      } else {
+					assert( stat > 0 );
+					assert( P_route );
+					ungage_il_ctrl( &oc_id, &kind, P_route );
+					stat = conslt_il_state( &oc_id, &kind, P_route );
+					assert( stat != 0 );
+				      }
+				      r = ARS_ROUTE_ALREADY_CONTROLLED;
+				      //make_it_past( pJ, pC );
+				    }
 #endif
 				  }
-				  r = ARS_ROUTE_ALREADY_CONTROLLED;
-				  //make_it_past( pJ, pC );
 				}
-			      }
+			      } else
+				assert( FALSE ); // *****, now UNDER CONSTRUCTION!
 			    }
-			  } else
-			    assert( FALSE ); // *****, now UNDER CONSTRUCTION!
-			}
-		      }
-		    } else
-		      r = ARS_ILLEGAL_CMD_DEPT;
-		  } else
-		    r = ARS_ILLEGAL_CMD_ROUTESET;
+			  }
+			} else
+			  r = ARS_ILLEGAL_CMD_DEPT;
+		      } else
+			r = ARS_ILLEGAL_CMD_ROUTESET;
+		    }
+		  }
 		}
 	      }
 	    }
+	  } else {
+	    assert( stat > 0 );
+	    char *P_route = NULL;
+	    strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
+	    P_route = mangl2_P_Sxxxy_Sxxxy( raw );
+#if 1 // *****
+	    ungage_il_ctrl( &oc_id, &kind, P_route );
+#else
+	    stat = conslt_il_state( &oc_id, &kind, P_route );
+	    assert( stat != 0 );
+#endif	    
+	    r = ARS_ROUTE_CONTROLLED_NORMALLY;
+	    //make_it_past( pJ, pC );
 	  }
 	}
       } else

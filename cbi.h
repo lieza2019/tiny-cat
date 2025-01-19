@@ -216,7 +216,7 @@ typedef enum cbi_stat_kind {
 } CBI_STAT_KIND;
 typedef CBI_STAT_KIND IL_SYM_KIND;
 
-#define CTRL_LIT_SUSTAIN_CNT 50
+#define CTRL_LIT_SUSTAIN_CNT 3
 #define CBI_STAT_IDENT_LEN 32
 #define CBI_STAT_NAME_LEN 32
 #define CBI_CODE_FILENAME_MAXLEN 512
