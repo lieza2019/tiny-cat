@@ -34,8 +34,9 @@ static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) { // well tested, 2025/
       pcmd->ln.sp_sch.pNext = events_at_sp[sp].pcmds;
       events_at_sp[sp].pcmds = pcmd;
       break;
+      sp = pcmd->attr.sch_skip.pass_sp;
     case ARS_SCHEDULED_SKIP:
-      sp = pcmd->attr.sch_skip.ss_sp;
+      sp = pcmd->attr.sch_skip.pass_sp;
       assert( (sp >= 0) && (sp < END_OF_SPs) );
       pcmd->ln.sp_sch.pNext = events_at_sp[sp].pcmds;
       events_at_sp[sp].pcmds = pcmd;

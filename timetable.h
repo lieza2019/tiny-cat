@@ -46,9 +46,8 @@ typedef struct scheduled_command {
     } sch_dept;
     struct { // ARS_SCHEDULED_SKIP
       DWELL_ID dw_seq;
-      STOPPING_POINT_CODE ss_sp;
-      ARS_ASSOC_TIME pass_time;
       STOPPING_POINT_CODE pass_sp;
+      ARS_ASSOC_TIME pass_time;
       BOOL is_revenue;
       PERFREG_LEVEL perf_lev;
       CREW_ID crew_id;
