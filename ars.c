@@ -493,66 +493,82 @@ static SCHEDULED_COMMAND_C_PTR is_fellow ( SCHEDULED_COMMAND_C_PTR pcmd, SCHEDUL
 static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC ) { // well tested, 2025/01/05
   assert( sch_dep );
   assert( pC );
-  assert( pC->cmd == ARS_SCHEDULED_DEPT );
+  assert( ! pC->checked );
+  assert( (pC->cmd == ARS_SCHEDULED_DEPT) || (pC->cmd == ARS_SCHEDULED_SKIP) );  
   int r = -1;
-  
-  assert( (pC->attr.sch_dept.dept_sp > 0) && (pC->attr.sch_dept.dept_sp < END_OF_SPs) );
-  const int num_cmds = sch_dep[pC->attr.sch_dept.dept_sp].num_events;
-  SCHEDULED_COMMAND_C_PTR pcmd_next = sch_dep[pC->attr.sch_dept.dept_sp].pNext;
-  
-  struct tm T = {};
-  time_t time_dep = 0;
-  time_dep = mktime_of_cmd( &T, &pC->attr.sch_dept.dept_time );
-  
-  while( pcmd_next ) {
-    assert( pcmd_next );
-    assert( (pcmd_next->cmd == ARS_SCHEDULED_ARRIVAL) || (pcmd_next->cmd == ARS_SCHEDULED_DEPT) || (pcmd_next->cmd == ARS_SCHEDULED_SKIP) );
-    if( pcmd_next == pC ) {
-      assert( ! pC->checked );
-      break;
-    } else if( pcmd_next->checked ) {
-      assert( pcmd_next != pC );
-      pcmd_next = pcmd_next->ln.sp_sch.pNext;
-      continue;
-    } else if( is_fellow( pcmd_next, pC, num_cmds ) ) {
-      break;
-    } else {
-      time_t time_cmd = 0;
-      switch( pcmd_next->cmd ) {
-      case ARS_SCHEDULED_ARRIVAL:
-	time_cmd = mktime_of_cmd( &T, &pcmd_next->attr.sch_arriv.arr_time );
-#ifdef CHK_STRICT_CONSISTENCY
-	assert( pcmd_next->attr.sch_arriv.arr_sp == pC->attr.sch_dept.dept_sp );
-#endif // CHK_STRICT_CONSISTENCY
-	r = 1;
+
+  STOPPING_POINT_CODE dep_sp = SP_NONSENS;
+  switch( pC->cmd ) {
+  case ARS_SCHEDULED_DEPT:
+    dep_sp = pC->attr.sch_dept.dept_sp;
+    break;
+  case ARS_SCHEDULED_SKIP:
+    dep_sp = pC->attr.sch_skip.pass_sp;
+    break;
+  default:
+    assert( FALSE );
+  }
+  assert( dep_sp != SP_NONSENS );  
+  {
+    const int num_cmds = sch_dep[dep_sp].num_events;
+    SCHEDULED_COMMAND_C_PTR pcmd_next = sch_dep[dep_sp].pNext;
+    while( pcmd_next ) {
+      assert( pcmd_next );
+      assert( (pcmd_next->cmd == ARS_SCHEDULED_ARRIVAL) || (pcmd_next->cmd == ARS_SCHEDULED_DEPT) || (pcmd_next->cmd == ARS_SCHEDULED_SKIP) );
+      if( pcmd_next == pC ) {
+	assert( ! pcmd_next->checked );
+	assert( pcmd_next->jid == pC->jid );
 	break;
-      case ARS_SCHEDULED_DEPT:
-	time_cmd = mktime_of_cmd( &T, &pcmd_next->attr.sch_dept.dept_time );
-#ifdef CHK_STRICT_CONSISTENCY	
-	assert( pcmd_next->attr.sch_dept.dept_sp == pC->attr.sch_dept.dept_sp );
+      } else if( pcmd_next->checked ) {
 	assert( pcmd_next != pC );
-#endif // CHK_STRICT_CONSISTENCY
-	r = 0;
+	pcmd_next = pcmd_next->ln.sp_sch.pNext;
+	continue;
+      } else if( is_fellow( pcmd_next, pC, num_cmds ) ) {
 	break;
-      case ARS_SCHEDULED_SKIP:
-	time_cmd = mktime_of_cmd( &T, &pcmd_next->attr.sch_skip.pass_time );
+      } else {
+	switch( pcmd_next->cmd ) {
+	case ARS_SCHEDULED_ARRIVAL:	  
 #ifdef CHK_STRICT_CONSISTENCY
-	assert( pcmd_next->attr.sch_skip.pass_sp == pC->attr.sch_dept.dept_sp );
+	  assert( pcmd_next->attr.sch_arriv.arr_sp == dep_sp );
 #endif // CHK_STRICT_CONSISTENCY
-	r = 0;
-	break;
-      default:
+	  r = 1;
+	  break;
+	case ARS_SCHEDULED_DEPT:
+#ifdef CHK_STRICT_CONSISTENCY	
+	  assert( pcmd_next->attr.sch_dept.dept_sp == dep_sp );
+	  assert( pcmd_next != pC );
+#endif // CHK_STRICT_CONSISTENCY
+	  if( pC->cmd == ARS_SCHEDULED_DEPT )
+	    r = (pcmd_next->jid == pC->jid);
+	  else
+	    r = 0;
+	  break;
+	case ARS_SCHEDULED_SKIP:
+#ifdef CHK_STRICT_CONSISTENCY
+	  assert( pcmd_next->attr.sch_skip.pass_sp == dep_sp );
+	  assert( pcmd_next != pC );
+#endif // CHK_STRICT_CONSISTENCY
+	  if( pC->cmd == ARS_SCHEDULED_SKIP )
+	    r = (pcmd_next->jid == pC->jid);
+	  else
+	    r = 0;
+	  break;
+	case ARS_CMD_DONT_CURE:
+#if 0 // ***** for debugging.
+	  r = 1;
+	  break;
+#else
 	assert( FALSE );
+#endif
+	default:
+	  assert( FALSE );
+	}
+	assert( r > -1 );
       }
-      assert( r > -1 );
-      assert( time_cmd );
-#ifdef CHK_STRICT_CONSISTENCY
-      assert( difftime( time_cmd, time_dep ) < 0 );
-#endif // CHK_STRICT_CONSISTENCY
+      if( !r )
+	break;
+      pcmd_next = pcmd_next->ln.sp_sch.pNext;
     }
-    if( !r )
-      break;
-    pcmd_next = pcmd_next->ln.sp_sch.pNext;
   }
   return ((r < 0) ? (r * -1) : r);
 }
@@ -560,6 +576,7 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
 static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC_dst, SCHEDULED_COMMAND_C_PTR pC_lok ) { // well tested, 2025/01/12
   assert( sch_dst );
   assert( pC_dst );
+  assert( ! pC_dst->checked );
   assert( (pC_dst->cmd == ARS_SCHEDULED_ARRIVAL) || (pC_dst->cmd == ARS_SCHEDULED_SKIP) );
   int r = -1;
   
@@ -1070,10 +1087,8 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 				  }
 				} else {
 				ready_on_fire:
-				  //printf( "cond. of ars_chk_dstschedule: %s\n", cnv2str_ars_reasons[r] ); // *****
-				  printf( "cmd of pC_dst: %d\n", pC_dst->cmd );
-				  assert( FALSE ); // *****
-				  
+				  //printf( "cmd of pC_dst: %d\n", pC_dst->cmd );
+				  //assert( FALSE ); // *****
 #if 0 // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
 				  assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
 				  assert( pR->ars_ctrl.trip_info.dst.pblk );
