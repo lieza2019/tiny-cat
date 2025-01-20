@@ -323,4 +323,7 @@ typedef struct cbi_stat_label {
   const char src_specified[CBI_CODE_FILENAME_MAXLEN + 1];
 } CBI_STAT_LABEL, *CBI_STAT_LABEL_PTR;
 
+extern char *mangl2_P_Sxxxy_Sxxxy ( char *praw );
+extern char *mangl2_Sxxxy_Sxxxy_R ( char *praw );
+
 #endif // CBI_H_INCLUDED

@@ -1164,3 +1164,53 @@ const char *cnv2str_il_sym ( IL_SYM obj ) {
   assert( (obj >= 0) && (obj < END_OF_IL_SYMS) );
   return il_sym_namechrs[obj];
 }
+
+char *mangl2_P_Sxxxy_Sxxxy ( char *praw ) {
+  assert( praw );
+  char *r = NULL;
+  int i = 0;
+  while( praw[i] ) {
+    if( i >= CBI_STAT_IDENT_LEN )
+      break;
+    i++;
+  }
+  if( i < CBI_STAT_IDENT_LEN ) {
+    assert( praw[i] == 0 );
+    if( (i + 2) < CBI_STAT_IDENT_LEN ) {
+      int j = i;
+      while( j > -1 ) {
+	praw[j + 2] = praw[j];
+	j--;
+      }
+      assert( j == -1 );
+      praw[0] = 'P';
+      praw[1] = '_';
+    }
+    assert( strlen( praw ) == (i + 2) );
+    r = praw;
+  }
+  return r;
+}
+
+char *mangl2_Sxxxy_Sxxxy_R ( char *praw ) {
+  assert( praw );
+  char *r = NULL;
+  int i = 0;
+  while( praw[i] ) {
+    if( i >= CBI_STAT_IDENT_LEN ) {
+      praw[i] = 0;
+      break;
+    }
+    i++;
+  }
+  if( i < CBI_STAT_IDENT_LEN ) {
+    if( (i + 2) < CBI_STAT_IDENT_LEN ) {
+      praw[i++] = '_';
+      praw[i++] = 'R';
+      praw[i] = 0;
+      r = praw;
+    }
+    assert( i <= CBI_STAT_IDENT_LEN );
+  }
+  return r;
+}

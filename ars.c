@@ -693,78 +693,6 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
   return ((r < 0) ? (r * -1) : r);
 }
 
-static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PTR pC ) {
-  assert( pJ );
-  assert( pC );
-  assert( pJ->scheduled_commands.pNext == pC );
-  
-  SCHEDULED_COMMAND_PTR *pp = NULL;
-  pp = &pJ->past_commands;
-  assert( pp );
-  while( *pp ) {
-    assert( *pp );
-    pp = &(*pp)->ln.journey.pNext;
-    assert( pp );
-  }
-  assert( pp );
-  assert( ! *pp );
-  *pp = pC;
-  pJ->scheduled_commands.pNext = pC->ln.journey.pNext;
-  pC->ln.journey.pNext = NULL;
-  
-  return ( pJ->scheduled_commands.pNext );
-}
-
-static char *mangl2_P_Sxxxy_Sxxxy ( char *praw ) {
-  assert( praw );
-  char *r = NULL;
-  int i = 0;
-  while( praw[i] ) {
-    if( i >= CBI_STAT_IDENT_LEN )
-      break;
-    i++;
-  }
-  if( i < CBI_STAT_IDENT_LEN ) {
-    assert( praw[i] == 0 );
-    if( (i + 2) < CBI_STAT_IDENT_LEN ) {
-      int j = i;
-      while( j > -1 ) {
-	praw[j + 2] = praw[j];
-	j--;
-      }
-      assert( j == -1 );
-      praw[0] = 'P';
-      praw[1] = '_';
-    }
-    assert( strlen( praw ) == (i + 2) );
-    r = praw;
-  }
-  return r;
-}
-
-static char *mangl2_Sxxxy_Sxxxy_R ( char *praw ) {
-  assert( praw );
-  char *r = NULL;
-  int i = 0;
-  while( praw[i] ) {
-    if( i >= CBI_STAT_IDENT_LEN ) {
-      praw[i] = 0;
-      break;
-    }
-    i++;
-  }
-  if( i < CBI_STAT_IDENT_LEN ) {
-    if( (i + 2) < CBI_STAT_IDENT_LEN ) {
-      praw[i++] = '_';
-      praw[i++] = 'R';
-      praw[i] = 0;
-      r = praw;
-    }
-    assert( i <= CBI_STAT_IDENT_LEN );
-  }
-  return r;
-}
-
 static ARS_ASSOC_TIME_PTR timestamp ( ARS_ASSOC_TIME_PTR pstamp ) {
   assert( pstamp );
   ARS_ASSOC_TIME_PTR r = NULL;
@@ -953,6 +881,29 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
   return r;
 }
 
+static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PTR pC ) { // well tested, 2025/01/20
+  assert( pJ );
+  assert( pC );
+  assert( pJ->scheduled_commands.pNext == pC );
+  assert( pC->checked );
+  SCHEDULED_COMMAND_PTR *pp = NULL;
+  
+  pp = &pJ->past_commands;
+  assert( pp );
+  while( *pp ) {
+    assert( *pp );
+    pp = &(*pp)->ln.journey.pNext;
+    assert( pp );
+  }
+  assert( pp );
+  assert( ! *pp );
+  *pp = pC;
+  pJ->scheduled_commands.pNext = pC->ln.journey.pNext;
+  pC->ln.journey.pNext = NULL;
+  
+  return ( pJ->scheduled_commands.pNext );
+}
+
 ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   assert( pTT );
   assert( pJ );
@@ -1132,11 +1083,16 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	  } else {
 	    assert( stat > 0 );
 	    char *P_route = NULL;
+	    pC->checked = TRUE;
+	    make_it_past( pJ, pC );
+	    //printf( "cmd of pC: %d\n", pC->cmd ); // *****
+	    //printf( "jid of pJ: %d\n", pJ->jid ); // *****
+	    //printf( "cmd of pJ->scheduled_commands.pNext: %d\n", pJ->scheduled_commands.pNext->cmd ); // *****
+	    //assert( FALSE ); // *****
 	    strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
 	    P_route = mangl2_P_Sxxxy_Sxxxy( raw );
 	    ungage_il_ctrl( &oc_id, &kind, P_route );
 	    r = ARS_ROUTE_CONTROLLED_NORMALLY;
-	    //make_it_past( pJ, pC );
 	  }
 	}
       } else
@@ -1149,145 +1105,155 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   return r;
 }
 
-SCHEDULED_COMMAND_PTR ars_sch_cmd_ack ( JOURNEY_PTR pJ ) {
+SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
   assert( pJ );
   SCHEDULED_COMMAND_PTR r = NULL;
   
   TINY_TRAIN_STATE_PTR pT = NULL;
-  pT = pJ->ptrain_ctrl;
+  pT = pJ->ptrain_ctrl;  
   if( pT ) {
     SCHEDULED_COMMAND_PTR pC = NULL;
     pC = pJ->scheduled_commands.pNext;
     while( pC ) {
-      switch ( pC->cmd ) {
-      case ARS_SCHEDULED_ROUTESET:
-	assert( pC );
-	{
-	  ROUTE_C_PTR pR = NULL;
-	  pR = conslt_route_prof( pC->attr.sch_roset.route_id );
-	  assert( pR );
-	  assert( pR->kind == _ROUTE );
-	  assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
-	  assert( pR->ars_ctrl.app );
+      if( ! pC->checked ) {
+	switch ( pC->cmd ) {
+	case ARS_SCHEDULED_ROUTESET:
+#if 0
+	  assert( pC );
 	  {
-	    CBTC_BLOCK_C_PTR pB = NULL;
-	    int cond = -1;
-	    cond = ars_chk_hit_trgsection( pR, &pB, pJ->ptrain_ctrl, -1 );
-	    if( cond >= 2 ) {
+	    ROUTE_C_PTR pR = NULL;
+	    pR = conslt_route_prof( pC->attr.sch_roset.route_id );
+	    assert( pR );
+	    assert( pR->kind == _ROUTE );
+	    assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
+	    assert( pR->ars_ctrl.app );
+	    {
+	      CBTC_BLOCK_C_PTR pB = NULL;
+	      int cond = -1;
+	      cond = ars_chk_hit_trgsection( pR, &pB, pJ->ptrain_ctrl, -1 );
+	      if( cond >= 2 ) {
+		OC_ID oc_id;
+		CBI_STAT_KIND kind;
+		int stat = -1;
+		stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pC->attr.sch_roset.route_id) );
+		if( stat > 0 ) {
+		  timestamp( &pC->attr.sch_roset.dept_time );
+		  make_it_past( pJ, pC );
+		}
+	      }
+	    }
+	  }
+#else
+	  r = pC;
+#endif
+	  break;
+	case ARS_SCHEDULED_ROUTEREL:
+	  assert( pC );
+	  {
+	    ROUTE_C_PTR pR = NULL;
+	    pR = conslt_route_prof( pC->attr.sch_rorel.route_id );
+	    assert( pR );
+	    assert( pR->kind == _ROUTE );
+	    assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
+	    assert( pR->ars_ctrl.app );
+	    if( pR->ars_ctrl.ctrl_tracks.pahead_trks[0] ) {
+	      TRACK_C_PTR pahead_trk = pR->ars_ctrl.ctrl_tracks.pahead_trks[0];
 	      OC_ID oc_id;
 	      CBI_STAT_KIND kind;
 	      int stat = -1;
-	      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pC->attr.sch_roset.route_id) );
-	      if( stat > 0 ) {
-		timestamp( &pC->attr.sch_roset.dept_time );
+	      assert( pahead_trk );
+	      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pahead_trk->id) );
+	      if( stat == 0 ) {
+		timestamp( &pC->attr.sch_rorel.dept_time );
 		make_it_past( pJ, pC );
 	      }
 	    }
 	  }
-	}
-	break;
-      case ARS_SCHEDULED_ROUTEREL:
-	assert( pC );
-	{
-	  ROUTE_C_PTR pR = NULL;
-	  pR = conslt_route_prof( pC->attr.sch_rorel.route_id );
-	  assert( pR );
-	  assert( pR->kind == _ROUTE );
-	  assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
-	  assert( pR->ars_ctrl.app );
-	  if( pR->ars_ctrl.ctrl_tracks.pahead_trks[0] ) {
-	    TRACK_C_PTR pahead_trk = pR->ars_ctrl.ctrl_tracks.pahead_trks[0];
-	    OC_ID oc_id;
-	    CBI_STAT_KIND kind;
-	    int stat = -1;
-	    assert( pahead_trk );
-	    stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pahead_trk->id) );
-	    if( stat == 0 ) {
-	      timestamp( &pC->attr.sch_rorel.dept_time );
-	      make_it_past( pJ, pC );
-	    }
-	  }
-	}
-	break;
-      case ARS_SCHEDULED_ARRIVAL:
-	assert( pC );
-	assert( pT );
-	{ 
-	  ARS_EVENT_ON_SP detects = { SP_NONSENS, ARS_DETECTS_NONE };
-	  ars_judge_arriv_dept_skip( &detects, pT );
-	  if( detects.sp != SP_NONSENS ) {
-	    if( detects.sp == pC->attr.sch_arriv.arr_sp ) {
-	      if( detects.detail == ARS_DOCK_DETECTED ) {
-		timestamp( &pC->attr.sch_arriv.arr_time );
-		make_it_past( pJ, pC );
-	      } else {
-		if( detects.detail == ARS_SKIP_DETECTED ) {
-		  SCHEDULED_COMMAND_PTR pC_next = NULL;
+	  break;
+	case ARS_SCHEDULED_ARRIVAL:
+	  assert( pC );
+	  assert( pT );
+	  printf( "cmd of pC: %d\n", pC->cmd ); // *****
+	  assert( FALSE ); // *****
+	  { 
+	    ARS_EVENT_ON_SP detects = { SP_NONSENS, ARS_DETECTS_NONE };
+	    ars_judge_arriv_dept_skip( &detects, pT );
+	    if( detects.sp != SP_NONSENS ) {
+	      if( detects.sp == pC->attr.sch_arriv.arr_sp ) {
+		if( detects.detail == ARS_DOCK_DETECTED ) {
 		  timestamp( &pC->attr.sch_arriv.arr_time );
 		  make_it_past( pJ, pC );
-		  pC_next = pJ->scheduled_commands.pNext;
-		  if( pC_next )
-		    if( pC_next->cmd == ARS_SCHEDULED_DEPT )
-		      if( pC_next->attr.sch_dept.dept_sp == detects.sp ) {
-			pC = pC_next;
-			goto chk_and_acc_as_dept;
-		      }
+		} else {
+		  if( detects.detail == ARS_SKIP_DETECTED ) {
+		    SCHEDULED_COMMAND_PTR pC_next = NULL;
+		    timestamp( &pC->attr.sch_arriv.arr_time );
+		    make_it_past( pJ, pC );
+		    pC_next = pJ->scheduled_commands.pNext;
+		    if( pC_next )
+		      if( pC_next->cmd == ARS_SCHEDULED_DEPT )
+			if( pC_next->attr.sch_dept.dept_sp == detects.sp ) {
+			  pC = pC_next;
+			  goto chk_and_acc_as_dept;
+			}
+		  }
 		}
 	      }
 	    }
 	  }
-	}
-	break;
-      case ARS_SCHEDULED_DEPT:
-	assert( pC );
-	assert( pT );
-	{
-	  ARS_EVENT_ON_SP detects = { SP_NONSENS, ARS_DETECTS_NONE };
-	  ars_judge_arriv_dept_skip( &detects, pT );
-	  if( detects.sp != SP_NONSENS ) {
-	    if( detects.sp == pC->attr.sch_dept.dept_sp ) {
-	      if( detects.detail == ARS_LEAVE_DETECTED )
-		goto chk_and_acc_as_dept;
-	      else {
-		if( detects.detail == ARS_SKIP_DETECTED ) {
-		chk_and_acc_as_dept:
-		  assert( pC == pJ->scheduled_commands.pNext );
-		  timestamp( &pC->attr.sch_dept.dept_time );
-		  make_it_past( pJ, pC );
+	  break;
+	case ARS_SCHEDULED_DEPT:
+	  assert( pC );
+	  assert( pT );
+	  {
+	    ARS_EVENT_ON_SP detects = { SP_NONSENS, ARS_DETECTS_NONE };
+	    ars_judge_arriv_dept_skip( &detects, pT );
+	    if( detects.sp != SP_NONSENS ) {
+	      if( detects.sp == pC->attr.sch_dept.dept_sp ) {
+		if( detects.detail == ARS_LEAVE_DETECTED )
+		  goto chk_and_acc_as_dept;
+		else {
+		  if( detects.detail == ARS_SKIP_DETECTED ) {
+		  chk_and_acc_as_dept:
+		    assert( pC == pJ->scheduled_commands.pNext );
+		    timestamp( &pC->attr.sch_dept.dept_time );
+		    make_it_past( pJ, pC );
+		  }
 		}
 	      }
 	    }
 	  }
-	}
-	break;
-      case ARS_SCHEDULED_SKIP:
-	assert( pC );
-	assert( pT );
-	{
-	  ARS_EVENT_ON_SP detects = { SP_NONSENS, ARS_DETECTS_NONE };
-	  ars_judge_arriv_dept_skip( &detects, pT );
-	  if( detects.sp != SP_NONSENS ) {
-	    if( detects.sp == pC->attr.sch_skip.pass_sp ) {
-	      if( detects.detail == ARS_SKIP_DETECTED )
-		goto chk_and_acc_as_skip;
-	      else
-		if( detects.detail == ARS_LEAVE_DETECTED ) {
-		chk_and_acc_as_skip:
-		  timestamp( &pC->attr.sch_skip.pass_time );
-		  make_it_past( pJ, pC );
-		}
+	  break;
+	case ARS_SCHEDULED_SKIP:
+	  assert( pC );
+	  assert( pT );
+	  {
+	    ARS_EVENT_ON_SP detects = { SP_NONSENS, ARS_DETECTS_NONE };
+	    ars_judge_arriv_dept_skip( &detects, pT );
+	    if( detects.sp != SP_NONSENS ) {
+	      if( detects.sp == pC->attr.sch_skip.pass_sp ) {
+		if( detects.detail == ARS_SKIP_DETECTED )
+		  goto chk_and_acc_as_skip;
+		else
+		  if( detects.detail == ARS_LEAVE_DETECTED ) {
+		  chk_and_acc_as_skip:
+		    timestamp( &pC->attr.sch_skip.pass_time );
+		    make_it_past( pJ, pC );
+		  }
+	      }
 	    }
 	  }
+	  break;
+	case END_OF_SCHEDULED_CMDS:
+	  return pC;
+	default:
+	  assert( FALSE );
 	}
-	break;
-      case END_OF_SCHEDULED_CMDS:
-	return pC;
-      default:
-	assert( FALSE );
       }
-      pC = pC->ln.journey.pNext;
+      if( r )
+	break;
+      else
+	pC = pC->ln.journey.pNext;
     }
-    r = pC;
   }
   return r;
 }
