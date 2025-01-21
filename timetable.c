@@ -51,7 +51,7 @@ static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) { // well tested, 2025/
       assert( FALSE );
       break;
     }
-    pcmd = pcmd->ln.journey.pNext;
+    pcmd = pcmd->ln.journey.planned.pNext;
   }
 }
 
@@ -428,10 +428,10 @@ void makeup_online_timetable ( void ) { // well tested, 2025/01/04
       while( pcmd ) {
 	assert( pcmd );	
 	if( pcmd->cmd == END_OF_SCHEDULED_CMDS ) {
-	  pcmd->ln.journey.pNext = NULL;
+	  pcmd->ln.journey.planned.pNext = NULL;
 	  break;
 	} else
-	  pcmd->ln.journey.pNext = (pcmd + 1);
+	  pcmd->ln.journey.planned.pNext = (pcmd + 1);
 	pcmd++;
       }
       assert( pcmd );
@@ -444,7 +444,7 @@ void makeup_online_timetable ( void ) { // well tested, 2025/01/04
 	  online_timetable.journeys[i].journey.scheduled_commands.pNext = pcmd;
 	  break;
 	}
-	pcmd = pcmd->ln.journey.pNext;
+	pcmd = pcmd->ln.journey.planned.pNext;
       }
     }
   }

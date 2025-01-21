@@ -56,7 +56,16 @@ typedef struct scheduled_command {
   BOOL checked;
   struct {
     struct {
+#if 0
       struct scheduled_command *pNext;
+#else
+      struct {
+	struct scheduled_command *pNext;
+      } planned;
+#endif
+      struct {
+	struct scheduled_command *pNext;
+      } past;
       struct scheduled_command *pSucc;
     } journey;
     struct {
@@ -110,4 +119,5 @@ extern time_t mktime_of_cmd ( struct tm *pT, ARS_ASSOC_TIME_C_PTR ptime_cmd );
 extern STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TINY_TRAIN_STATE_PTR pT );
 extern ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pT, JOURNEY_PTR pJ );
 extern SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ );
+
 #endif // TIMETABLE_H

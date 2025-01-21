@@ -644,6 +644,7 @@ int main ( void ) {
 		JOURNEY_PTR pJ = &online_timetable.lkup[jid]->journey;
 		pJ->ptrain_ctrl = pT;
 		r = ars_ctrl_route_on_journey( &online_timetable, pJ );
+		//assert( r != ARS_ROUTE_CONTROLLED_NORMALLY ); // *****
 		ars_schcmd_ack( pJ );
 		assert( FALSE ); // *****
 	      }

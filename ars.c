@@ -342,7 +342,7 @@ static SCHEDULED_COMMAND_PTR fetch_routeset_cmd ( JOURNEY_PTR pJ ) {
       }
 #endif
     }
-    ppC = &(*ppC)->ln.journey.pNext;
+    ppC = &(*ppC)->ln.journey.planned.pNext;
   }
   assert( ppC );
   return r;
@@ -720,7 +720,7 @@ static BOOL pick_depcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dep, SCH
   assert( pC_roset->cmd == ARS_SCHEDULED_ROUTESET );  
   BOOL r = FALSE;
   
-  SCHEDULED_COMMAND_PTR p = pC_roset->ln.journey.pNext;
+  SCHEDULED_COMMAND_PTR p = pC_roset->ln.journey.planned.pNext;
   if( p ) {
     switch( p->cmd ) {
     case ARS_SCHEDULED_ROUTESET:
@@ -737,7 +737,7 @@ static BOOL pick_depcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dep, SCH
     case ARS_SCHEDULED_DEPT:
       *ppC_dep = p;
       r = TRUE;
-      p = p->ln.journey.pNext;
+      p = p->ln.journey.planned.pNext;
       if( !p ) {
 	// pC_roset maybe problematic, for successive command should be ARS_SCHEDULED_ROUTEREL, is missing.
 	*pres = ARS_MISSING_ROUTEREL;
@@ -750,7 +750,7 @@ static BOOL pick_depcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dep, SCH
     case ARS_SCHEDULED_SKIP:
       *ppC_dep = p;
       r = TRUE;
-      p = p->ln.journey.pNext;
+      p = p->ln.journey.planned.pNext;
       if( !p ) {
 	// pC_roset maybe problematic, for successive command should be ARS_SCHEDULED_ROUTEREL, is missing.
 	*pres = ARS_MISSING_ROUTEREL;
@@ -789,7 +789,7 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
   while( p && !r ) {
     switch( p->cmd ) {
     case ARS_SCHEDULED_ROUTESET:
-      p = p->ln.journey.pNext;
+      p = p->ln.journey.planned.pNext;
       if( !p ) {
 	// pC_roset maybe problematic, for successive commands should be ARS_SCHEDULED_DEPT/ARS_SCHEDULED_SKIP or ARS_SCHEDULED_ROUTEREL (or both), are missing.
 	*pres = ARS_MISSING_ROUTEREL;
@@ -805,11 +805,11 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
       assert( (p->cmd == ARS_SCHEDULED_DEPT) || (p->cmd == ARS_SCHEDULED_SKIP) || (p->cmd == ARS_SCHEDULED_ROUTEREL) );
       break;
     case ARS_SCHEDULED_ROUTEREL:
-      p = p->ln.journey.pNext;
+      p = p->ln.journey.planned.pNext;
       break;
     case ARS_SCHEDULED_ARRIVAL:
       *ppC_dst = p;
-      p = p->ln.journey.pNext;
+      p = p->ln.journey.planned.pNext;
       if( !p ) {
 	// pC_roset maybe problematic, any journey must have END_OF_SCHEDULED_CMDS on its dead-end.
 	*pres = ARS_NO_DEADEND_CMD;
@@ -833,7 +833,7 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
 	*ppC_lok = p;
 	r = TRUE;
       }
-      p = p->ln.journey.pNext;
+      p = p->ln.journey.planned.pNext;
       if( !p ) {
 	// pC_roset maybe problematic, for successive command should be ARS_SCHEDULED_ROUTEREL, is missing.
 	*pres = ARS_MISSING_ROUTEREL;
@@ -849,11 +849,11 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
       }
       break;
     case ARS_SCHEDULED_SKIP:
-      if( p != pC_roset->ln.journey.pNext ) {
+      if( p != pC_roset->ln.journey.planned.pNext ) {
 	*ppC_dst = p;
 	r = TRUE;
       }
-      p = p->ln.journey.pNext;
+      p = p->ln.journey.planned.pNext;
       if( !p ) {
 	// pC_roset maybe problematic, for successive command should be ARS_SCHEDULED_ROUTEREL, is missing.
 	*pres = ARS_MISSING_ROUTEREL;
@@ -869,7 +869,7 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
       }
       break;
     case END_OF_SCHEDULED_CMDS:
-      assert( ! p->ln.journey.pNext );
+      assert( ! p->ln.journey.planned.pNext );
       assert( !r );
       break;
     case ARS_CMD_DONT_CURE:
@@ -884,7 +884,6 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
 static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PTR pC ) { // well tested, 2025/01/20
   assert( pJ );
   assert( pC );
-  assert( pJ->scheduled_commands.pNext == pC );
   assert( pC->checked );
   SCHEDULED_COMMAND_PTR *pp = NULL;
   
@@ -892,15 +891,16 @@ static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PT
   assert( pp );
   while( *pp ) {
     assert( *pp );
-    pp = &(*pp)->ln.journey.pNext;
+    pp = &(*pp)->ln.journey.past.pNext;
     assert( pp );
   }
   assert( pp );
   assert( ! *pp );
-  *pp = pC;
-  pJ->scheduled_commands.pNext = pC->ln.journey.pNext;
-  pC->ln.journey.pNext = NULL;
+  *pp = pC;  
+  pC->ln.journey.past.pNext = NULL;
   
+  if( pJ->scheduled_commands.pNext == pC )
+    pJ->scheduled_commands.pNext = pC->ln.journey.planned.pNext;  
   return ( pJ->scheduled_commands.pNext );
 }
 
@@ -1082,17 +1082,18 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 	    }
 	  } else {
 	    assert( stat > 0 );
+	    assert( ! pC->checked );
 	    char *P_route = NULL;
 	    pC->checked = TRUE;
 	    make_it_past( pJ, pC );
-	    //printf( "cmd of pC: %d\n", pC->cmd ); // *****
-	    //printf( "jid of pJ: %d\n", pJ->jid ); // *****
-	    //printf( "cmd of pJ->scheduled_commands.pNext: %d\n", pJ->scheduled_commands.pNext->cmd ); // *****
-	    //assert( FALSE ); // *****
 	    strncpy( raw, cnv2str_il_sym( pC->attr.sch_roset.route_id ), CBI_STAT_IDENT_LEN );
 	    P_route = mangl2_P_Sxxxy_Sxxxy( raw );
 	    ungage_il_ctrl( &oc_id, &kind, P_route );
 	    r = ARS_ROUTE_CONTROLLED_NORMALLY;
+	    //printf( "cmd of pC: %d\n", pC->cmd ); // *****
+	    //printf( "jid of pJ: %d\n", pJ->jid ); // *****
+	    //printf( "cmd of pJ->scheduled_commands.pNext: %d\n", pJ->scheduled_commands.pNext->cmd ); // *****
+	    //assert( FALSE ); // *****
 	  }
 	}
       } else
@@ -1114,8 +1115,10 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
   if( pT ) {
     SCHEDULED_COMMAND_PTR pC = NULL;
     pC = pJ->scheduled_commands.pNext;
-    while( pC ) {
+    while( pC ) {      
       if( ! pC->checked ) {
+	//printf( "cmd of pC: %d\n", pC->cmd ); // *****
+	//assert( FALSE ); // *****
 	switch ( pC->cmd ) {
 	case ARS_SCHEDULED_ROUTESET:
 #if 0
@@ -1138,7 +1141,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
 		stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pC->attr.sch_roset.route_id) );
 		if( stat > 0 ) {
 		  timestamp( &pC->attr.sch_roset.dept_time );
-		  make_it_past( pJ, pC );
+		  //make_it_past( pJ, pC ); // *****
 		}
 	      }
 	    }
@@ -1165,7 +1168,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
 	      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pahead_trk->id) );
 	      if( stat == 0 ) {
 		timestamp( &pC->attr.sch_rorel.dept_time );
-		make_it_past( pJ, pC );
+		//make_it_past( pJ, pC ); // *****
 	      }
 	    }
 	  }
@@ -1182,12 +1185,12 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
 	      if( detects.sp == pC->attr.sch_arriv.arr_sp ) {
 		if( detects.detail == ARS_DOCK_DETECTED ) {
 		  timestamp( &pC->attr.sch_arriv.arr_time );
-		  make_it_past( pJ, pC );
+		  // make_it_past( pJ, pC ); // *****
 		} else {
 		  if( detects.detail == ARS_SKIP_DETECTED ) {
 		    SCHEDULED_COMMAND_PTR pC_next = NULL;
 		    timestamp( &pC->attr.sch_arriv.arr_time );
-		    make_it_past( pJ, pC );
+		    //make_it_past( pJ, pC ); // *****
 		    pC_next = pJ->scheduled_commands.pNext;
 		    if( pC_next )
 		      if( pC_next->cmd == ARS_SCHEDULED_DEPT )
@@ -1216,7 +1219,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
 		  chk_and_acc_as_dept:
 		    assert( pC == pJ->scheduled_commands.pNext );
 		    timestamp( &pC->attr.sch_dept.dept_time );
-		    make_it_past( pJ, pC );
+		    //make_it_past( pJ, pC ); // *****
 		  }
 		}
 	      }
@@ -1237,7 +1240,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
 		  if( detects.detail == ARS_LEAVE_DETECTED ) {
 		  chk_and_acc_as_skip:
 		    timestamp( &pC->attr.sch_skip.pass_time );
-		    make_it_past( pJ, pC );
+		    //make_it_past( pJ, pC ); // *****
 		  }
 	      }
 	    }
@@ -1252,7 +1255,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
       if( r )
 	break;
       else
-	pC = pC->ln.journey.pNext;
+	pC = pC->ln.journey.planned.pNext;
     }
   }
   return r;
