@@ -881,7 +881,7 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
   return r;
 }
 
-static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PTR pC ) { // well tested, 2025/01/20
+static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PTR pC ) { // well tested, 2025/01/21
   assert( pJ );
   assert( pC );
   assert( pC->checked );
