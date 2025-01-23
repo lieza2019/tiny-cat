@@ -693,26 +693,6 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
   return ((r < 0) ? (r * -1) : r);
 }
 
-static ARS_ASSOC_TIME_PTR timestamp ( ARS_ASSOC_TIME_PTR pstamp ) {
-  assert( pstamp );
-  ARS_ASSOC_TIME_PTR r = NULL;
-  
-  struct tm *pT_crnt = NULL;
-  time_t crnt_time = 0;
-  crnt_time = time( NULL );
-  pT_crnt = localtime( &crnt_time );
-  if( pT_crnt ) {
-    pstamp->hour = pT_crnt->tm_hour;
-    pstamp->minute = pT_crnt->tm_min;
-    pstamp->second = pT_crnt->tm_sec;
-    pstamp->year = pT_crnt->tm_year;
-    pstamp->month = pT_crnt->tm_mon;
-    pstamp->day = pT_crnt->tm_mday;
-    r = pstamp;
-  }
-  return r;
-}
-
 static BOOL pick_depcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dep, SCHEDULED_COMMAND_PTR pC_roset ) {
   assert( pres );
   assert( ppC_dep );
@@ -1106,7 +1086,28 @@ ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   return r;
 }
 
-SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
+static ARS_ASSOC_TIME_PTR timestamp ( ARS_ASSOC_TIME_PTR pstamp ) {
+  assert( pstamp );
+  ARS_ASSOC_TIME_PTR r = NULL;
+  
+  struct tm *pT_crnt = NULL;
+  time_t crnt_time = 0;
+  crnt_time = time( NULL );
+  pT_crnt = localtime( &crnt_time );
+  if( pT_crnt ) {
+    pstamp->hour = pT_crnt->tm_hour;
+    pstamp->minute = pT_crnt->tm_min;
+    pstamp->second = pT_crnt->tm_sec;
+    pstamp->year = pT_crnt->tm_year;
+    pstamp->month = pT_crnt->tm_mon;
+    pstamp->day = pT_crnt->tm_mday;
+    r = pstamp;
+  }
+  return r;
+}
+
+SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
+  assert( pres );
   assert( pJ );
   SCHEDULED_COMMAND_PTR r = NULL;
   
@@ -1176,8 +1177,10 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
 	case ARS_SCHEDULED_ARRIVAL:
 	  assert( pC );
 	  assert( pT );
+#if 0 // *****
 	  printf( "cmd of pC: %d\n", pC->cmd ); // *****
 	  assert( FALSE ); // *****
+#else
 	  { 
 	    ARS_EVENT_ON_SP detects = { SP_NONSENS, ARS_DETECTS_NONE };
 	    ars_judge_arriv_dept_skip( &detects, pT );
@@ -1185,25 +1188,44 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( JOURNEY_PTR pJ ) {
 	      if( detects.sp == pC->attr.sch_arriv.arr_sp ) {
 		if( detects.detail == ARS_DOCK_DETECTED ) {
 		  timestamp( &pC->attr.sch_arriv.arr_time );
-		  // make_it_past( pJ, pC ); // *****
+		  pC->checked = TRUE;
+		  make_it_past( pJ, pC );
 		} else {
 		  if( detects.detail == ARS_SKIP_DETECTED ) {
 		    SCHEDULED_COMMAND_PTR pC_next = NULL;
 		    timestamp( &pC->attr.sch_arriv.arr_time );
-		    //make_it_past( pJ, pC ); // *****
-		    pC_next = pJ->scheduled_commands.pNext;
-		    if( pC_next )
-		      if( pC_next->cmd == ARS_SCHEDULED_DEPT )
-			if( pC_next->attr.sch_dept.dept_sp == detects.sp ) {
-			  pC = pC_next;
-			  goto chk_and_acc_as_dept;
+		    pC->checked = TRUE;
+		    make_it_past( pJ, pC );
+		    pC_next = pC->ln.journey.planned.pNext;
+		    if( pC_next ) {
+		      if( pC_next->cmd == ARS_SCHEDULED_ROUTESET ) {
+			if( pC_next->checked ) {
+			  pC_next = pC_next->ln.journey.planned.pNext;
+			  if( pC_next->cmd == ARS_SCHEDULED_DEPT ) {
+			    assert( detects.sp == pC->attr.sch_arriv.arr_sp );
+			    if( pC_next->attr.sch_dept.dept_sp == detects.sp ) {
+			      pC = pC_next;
+			      goto chk_and_acc_as_dept;
+			    } else
+			      *pres = ARS_ILLEGAL_CMD_DEPT;
+			  } else {
+			    if( pC_next->cmd != ARS_SCHEDULED_ROUTEREL )
+			      *pres = ARS_INCONSISTENT_ROUTESET;
+			  }
 			}
+		      } else
+			// we assume the successor cmd of ARS_SCHEDULED_ARRIVAL is only ARS_SCHEDULED_ROUTESET, lacks the consistency with pick_dstcmd().
+			if( pC_next->cmd != END_OF_SCHEDULED_CMDS )
+			  *pres = ARS_INCONSISTENT_ARRIVAL;
+		    } else
+		      *pres = ARS_NO_DEADEND_CMD;
 		  }
 		}
 	      }
 	    }
 	  }
 	  break;
+#endif
 	case ARS_SCHEDULED_DEPT:
 	  assert( pC );
 	  assert( pT );

@@ -642,10 +642,11 @@ int main ( void ) {
 	      {
 		ARS_REASONS r = END_OF_ARS_REASONS;
 		JOURNEY_PTR pJ = &online_timetable.lkup[jid]->journey;
+		ARS_REASONS res = END_OF_ARS_REASONS;
 		pJ->ptrain_ctrl = pT;
 		r = ars_ctrl_route_on_journey( &online_timetable, pJ );
 		//assert( r != ARS_ROUTE_CONTROLLED_NORMALLY ); // *****
-		ars_schcmd_ack( pJ );
+		ars_schcmd_ack( &res, pJ );
 		assert( FALSE ); // *****
 	      }
 #endif
