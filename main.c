@@ -647,7 +647,22 @@ int main ( void ) {
 		r = ars_ctrl_route_on_journey( &online_timetable, pJ );
 		//assert( r != ARS_ROUTE_CONTROLLED_NORMALLY ); // *****
 		ars_schcmd_ack( &res, pJ );
-		assert( FALSE ); // *****
+		printf( "(jid, next_cmd, past_cmds): (%d, %d, ", pJ->jid, pJ->scheduled_commands.pNext->cmd );
+		printf( "{" );
+		{
+		  BOOL first = TRUE;
+		  SCHEDULED_COMMAND_PTR p = pJ->past_commands;
+		  while( p ) {
+		    assert( p );
+		    if( !first )
+		      printf( ", " );
+		    printf( "%d", p->cmd );
+		    p = p->ln.journey.past.pNext;
+		    first = FALSE;
+		  }
+		}
+		printf( "})\n" );
+		//assert( FALSE ); // *****
 	      }
 #endif
 #if 0

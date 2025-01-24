@@ -1177,19 +1177,18 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
 	case ARS_SCHEDULED_ARRIVAL:
 	  assert( pC );
 	  assert( pT );
-#if 0 // *****
-	  printf( "cmd of pC: %d\n", pC->cmd ); // *****
-	  assert( FALSE ); // *****
-#else
+	  //printf( "cmd of pC: %d\n", pC->cmd ); // *****
 	  { 
 	    ARS_EVENT_ON_SP detects = { SP_NONSENS, ARS_DETECTS_NONE };
 	    ars_judge_arriv_dept_skip( &detects, pT );
+	    
 	    if( detects.sp != SP_NONSENS ) {
-	      if( detects.sp == pC->attr.sch_arriv.arr_sp ) {
-		if( detects.detail == ARS_DOCK_DETECTED ) {
+	      if( detects.sp == pC->attr.sch_arriv.arr_sp ) {		
+		if( detects.detail == ARS_DOCK_DETECTED ) {		  
 		  timestamp( &pC->attr.sch_arriv.arr_time );
 		  pC->checked = TRUE;
 		  make_it_past( pJ, pC );
+		  //assert( FALSE ); // *****
 		} else {
 		  if( detects.detail == ARS_SKIP_DETECTED ) {
 		    SCHEDULED_COMMAND_PTR pC_next = NULL;
@@ -1225,7 +1224,6 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
 	    }
 	  }
 	  break;
-#endif
 	case ARS_SCHEDULED_DEPT:
 	  assert( pC );
 	  assert( pT );
