@@ -924,7 +924,7 @@ static int render_il_ctrl_bits ( ATS2OC_CMD cmd_id ) {
 
 void *pth_revise_il_ctrl_bits ( void *arg ) {
   assert( arg );
-  const useconds_t interval = 1000 * 1000 * 0.01;
+  const useconds_t interval = 1000 * 1000 * 0.2;
   int oc_id = (int)END_OF_OCs;
   TINY_COMM_PROF_PTR pcomm_threads_prof = (TINY_COMM_PROF_PTR)arg;  
   assert( pcomm_threads_prof );
