@@ -558,7 +558,7 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
 	  r = 1;
 	  break;
 #else
-	assert( FALSE );
+	  assert( FALSE );
 #endif
 	default:
 	  assert( FALSE );
@@ -1126,31 +1126,8 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
 	switch ( pC->cmd ) {
 	case ARS_SCHEDULED_ROUTESET:
 	  assert( pC );
-#if 0
-	  {
-	    ROUTE_C_PTR pR = NULL;
-	    pR = conslt_route_prof( pC->attr.sch_roset.route_id );
-	    assert( pR );
-	    assert( pR->kind == _ROUTE );
-	    assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
-	    assert( pR->ars_ctrl.app );
-	    {
-	      CBTC_BLOCK_C_PTR pB = NULL;
-	      int cond = -1;
-	      cond = ars_chk_hit_trgsection( pR, &pB, pJ->ptrain_ctrl, -1 );
-	      if( cond >= 2 ) {
-		OC_ID oc_id;
-		CBI_STAT_KIND kind;
-		int stat = -1;
-		stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pC->attr.sch_roset.route_id) );
-		if( stat > 0 ) {
-		  timestamp( &pC->attr.sch_roset.dept_time );
-		  //make_it_past( pJ, pC ); // *****
-		}
-	      }
-	    }
-	  }
-#endif
+	  assert( !pC->checked );
+	  assert( pC == r );
 	  break;
 	case ARS_SCHEDULED_ROUTEREL:
 	  assert( pC );
@@ -1250,7 +1227,15 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
 	  }
 	  break;
 	case END_OF_SCHEDULED_CMDS:
+	  pJ->scheduled_commands.pNext = pC;
 	  return pC;
+	case ARS_CMD_DONT_CURE:
+#if 0 // ***** for debugging.
+	  r = pC->ln.journey.planned.pNext;
+	  break;
+#else
+	  assert( FALSE );
+#endif
 	default:
 	  assert( FALSE );
 	}
@@ -1262,7 +1247,8 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
 	break;
       pC = r;
     }
-    pC = pJ->scheduled_commands.pNext = r;
+    pJ->scheduled_commands.pNext = r;
   }
+  r = pJ->scheduled_commands.pNext;
   return r;
 }
