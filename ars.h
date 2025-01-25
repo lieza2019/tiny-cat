@@ -70,6 +70,7 @@ typedef enum _crew_id {
 } CREW_ID;
 
 typedef enum ars_reasons {
+  ARS_NO_RAKE_ASGNED,
   ARS_NO_ROUTESET_CMD,
   ARS_NO_TRIGGERED,
   ARS_FOUND_TRAINS_AHEAD,

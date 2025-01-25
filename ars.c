@@ -10,6 +10,7 @@
 #include "timetable.h"
 
 const char *cnv2str_ars_reasons[] = {
+  "ARS_NO_RAKE_ASGNED",
   "ARS_NO_ROUTESET_CMD",
   "ARS_NO_TRIGGERED",
   "ARS_FOUND_TRAINS_AHEAD",
@@ -32,7 +33,7 @@ const char *cnv2str_ars_reasons[] = {
   "ARS_INCONSISTENT_DEPT",
   "ARS_INCONSISTENT_SKIP",
   "ARS_MISSING_ROUTEREL",
-  "ARS_NO_DEADEND_CMD",
+  "ARS_NO_DEADEND_CMD", 
   NULL
 };
 
@@ -68,7 +69,7 @@ time_t mktime_of_cmd ( struct tm *pT, ARS_ASSOC_TIME_C_PTR ptime_cmd ) {
   return r;
 }
 
-STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TINY_TRAIN_STATE_PTR pT ) {
+static STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TINY_TRAIN_STATE_PTR pT ) {
   assert( pdetects );
   assert( pT );
   STOPPING_POINT_CODE hit_sp = SP_NONSENS;
@@ -183,6 +184,28 @@ static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, double *pdif, int 
       }
     }
   }
+  return r;
+}
+
+ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
+  assert( pTT );
+  assert( pJ );
+  ARS_REASONS r = END_OF_ARS_REASONS;
+  TINY_TRAIN_STATE_PTR pT = NULL;
+
+  pT = pJ->ptrain_ctrl;
+  if( pT ) {
+    ARS_EVENT_ON_SP cond = { SP_NONSENS, ARS_DETECTS_NONE };  
+    ars_judge_arriv_dept_skip( &cond, pT );
+    if( cond.sp != SP_NONSENS ) {
+      if( cond.detail == ARS_DOCK_DETECTED ) {
+	;
+      } else
+	r = ARS_NO_TRIGGERED;
+    } else
+      r = ARS_NO_TRIGGERED;
+  }
+  assert( r != END_OF_ARS_REASONS );  
   return r;
 }
 
@@ -884,7 +907,7 @@ static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PT
   return ( pJ->scheduled_commands.pNext );
 }
 
-ARS_REASONS ars_ctrl_route_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
+ARS_REASONS ars_routectl_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   assert( pTT );
   assert( pJ );
   assert( pJ->ptrain_ctrl );
@@ -1112,7 +1135,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
   SCHEDULED_COMMAND_PTR r = NULL;
   
   TINY_TRAIN_STATE_PTR pT = NULL;
-  pT = pJ->ptrain_ctrl;  
+  pT = pJ->ptrain_ctrl;
   if( pT ) {
     SCHEDULED_COMMAND_PTR pC = NULL;
     pC = pJ->scheduled_commands.pNext;
