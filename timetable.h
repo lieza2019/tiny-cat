@@ -44,6 +44,7 @@ typedef struct scheduled_command {
 	BOOL L, R;
       } dep_dir;
       IL_SYM dep_route;
+      ROUTE_PTR proute_prof;
     } sch_dept;
     struct { // ARS_SCHEDULED_SKIP
       DWELL_ID dw_seq;
@@ -117,6 +118,7 @@ extern void makeup_online_timetable ( void );
 
 extern SCHEDULED_COMMAND_PTR sch_cmd_newnode ( void );
 extern time_t mktime_of_cmd ( struct tm *pT, ARS_ASSOC_TIME_C_PTR ptime_cmd );
+extern ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ );
 extern ARS_REASONS ars_routectl_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ );
 extern SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ );
 

@@ -669,6 +669,7 @@ int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   
   *poc_id = END_OF_OCs;
   *pkind = END_OF_CBI_STAT_KIND;
+  
   pA = conslt_cbi_code_tbl( ident );
   if( pA ) {
     assert( pA );
@@ -693,7 +694,8 @@ int conslt_il_state ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
       r_mutex = pthread_mutex_unlock( &cbi_stat_info_mutex );
       assert( !r_mutex );
     }
-  }
+  } else
+    r = -2;
   return r;
 }
 
@@ -1069,9 +1071,9 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   
   *poc_id = END_OF_OCs;
   *pkind = END_OF_CBI_STAT_KIND;
+  
   pA = conslt_cbi_code_tbl( ident );
   assert( pA );
-  
   if( pA ) {
     assert( (pA->oc_id >= OC801) && (pA->oc_id < END_OF_OCs) );
     oc_id = pA->oc_id;
@@ -1133,6 +1135,8 @@ int engage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 	  assert( *poc_id == END_OF_OCs );
 	  assert( *pkind == END_OF_CBI_STAT_KIND );
 	  assert( r < 0 );
+	  if( state == -2 )
+	    errorF( "FATAL! %s, no such cbi status, in %s:%d\n", ident, __FILE__, __LINE__ );
 	}
 	r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
 	assert( !r_mutex );
@@ -1164,6 +1168,7 @@ int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
   
   *poc_id = END_OF_OCs;
   *pkind = END_OF_CBI_STAT_KIND;
+  
   pA = conslt_cbi_code_tbl( ident );
   assert( pA );
   if( pA ) {
@@ -1225,6 +1230,8 @@ int ungage_il_ctrl ( OC_ID *poc_id, CBI_STAT_KIND *pkind, const char *ident ) {
 	  assert( *poc_id == END_OF_OCs );
 	  *pkind = END_OF_CBI_STAT_KIND;
 	  assert( r < 0 );
+	  if( state == -2 )
+	    errorF( "FATAL! %s, no such cbi status, in %s:%d\n", ident, __FILE__, __LINE__ );
 	}
 	r_mutex = pthread_mutex_unlock( &cbi_ctrl_dispatch_mutex );
 	assert( !r_mutex );
@@ -1269,6 +1276,7 @@ void diag_cbi_stat_attrib ( FILE *fp_out, char *ident ) {
       OC_ID oc_id = END_OF_OCs;
       CBI_STAT_KIND kind = END_OF_CBI_STAT_KIND;
       int state = -1;
+      assert( !strncmp( pA->ident, ident, CBI_STAT_IDENT_LEN ) );
       state = conslt_il_state( &oc_id, &kind, pA->ident );
       if( state > -1 ) {
 	assert( oc_id == pA->oc_id );     
