@@ -1173,19 +1173,17 @@ char *mangl2_P_Sxxxy_Sxxxy ( char *praw ) {
     if( i >= CBI_STAT_IDENT_LEN )
       break;
     i++;
-  }
-  if( i < CBI_STAT_IDENT_LEN ) {
-    assert( praw[i] == 0 );
-    if( (i + 2) < CBI_STAT_IDENT_LEN ) {
-      int j = i;
-      while( j > -1 ) {
-	praw[j + 2] = praw[j];
-	j--;
-      }
-      assert( j == -1 );
-      praw[0] = 'P';
-      praw[1] = '_';
+  } 
+  if( (i + 2) < CBI_STAT_IDENT_LEN ) {
+    assert( praw[i] == 0 );   
+    int j = i;
+    while( j > -1 ) {
+      praw[j + 2] = praw[j];
+      j--;
     }
+    assert( j == -1 );
+    praw[0] = 'P';
+    praw[1] = '_';
     assert( strlen( praw ) == (i + 2) );
     r = praw;
   }
@@ -1197,20 +1195,53 @@ char *mangl2_Sxxxy_Sxxxy_R ( char *praw ) {
   char *r = NULL;
   int i = 0;
   while( praw[i] ) {
-    if( i >= CBI_STAT_IDENT_LEN ) {
-      praw[i] = 0;
+    if( i >= CBI_STAT_IDENT_LEN )
       break;
-    }
     i++;
   }
-  if( i < CBI_STAT_IDENT_LEN ) {
-    if( (i + 2) < CBI_STAT_IDENT_LEN ) {
-      praw[i++] = '_';
-      praw[i++] = 'R';
-      praw[i] = 0;
+  if( (i + 2) < CBI_STAT_IDENT_LEN ) {
+    assert( praw[i] == 0 );
+    praw[i] = '_';
+    praw[i + 1] = 'R';
+    praw[i + 2] = 0;
+    r = praw;
+  }
+  assert( i <= CBI_STAT_IDENT_LEN );
+  return r;
+}
+
+char *mangl2_So_Sxxxy_HyR ( char *praw ) {
+  assert( praw );
+  char *r = NULL;
+  int i = 0;
+  while( praw[i] ) {
+    if( i >= CBI_STAT_IDENT_LEN )
+      break;
+    i++;
+  }  
+  if( (i + 3) < CBI_STAT_IDENT_LEN ) {
+    assert( praw[i] == 0 );
+    int j = i;
+    while( j > -1 ) {
+      praw[j + 3] = praw[j];
+      j--;
+    }
+    assert( j == -1 );
+    praw[0] = 'S';
+    praw[1] = 'o';
+    praw[2] = '_';
+    assert( strlen( praw ) == (i + 3) );
+    
+    i = strlen( praw );
+    if( (i + 4) < CBI_STAT_IDENT_LEN ) {
+      praw[i] = '_';
+      praw[i + 1] = 'H';
+      praw[i + 2] = 'y';
+      praw[i + 3] = 'R';
+      praw[i + 4] = 0;
+      assert( strlen( praw ) == (i + 4) );
       r = praw;
     }
-    assert( i <= CBI_STAT_IDENT_LEN );
   }
   return r;
 }

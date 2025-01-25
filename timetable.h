@@ -35,14 +35,15 @@ typedef struct scheduled_command {
     struct { // for ARS_SCHEDULED_DEPT
       DWELL_ID dw_seq;
       TIME_DIFF dwell;
-      STOPPING_POINT_CODE dept_sp;
-      ARS_ASSOC_TIME dept_time;
+      STOPPING_POINT_CODE dep_sp;
+      ARS_ASSOC_TIME dep_time;
       BOOL is_revenue;
       PERFREG_LEVEL perf_lev;
       CREW_ID crew_id;
       struct {
 	BOOL L, R;
-      } dept_dir;
+      } dep_dir;
+      IL_SYM dep_route;
     } sch_dept;
     struct { // ARS_SCHEDULED_SKIP
       DWELL_ID dw_seq;

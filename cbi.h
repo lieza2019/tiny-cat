@@ -325,5 +325,6 @@ typedef struct cbi_stat_label {
 
 extern char *mangl2_P_Sxxxy_Sxxxy ( char *praw );
 extern char *mangl2_Sxxxy_Sxxxy_R ( char *praw );
+extern char *mangl2_So_Sxxxy_HyR ( char *praw );
 
 #endif // CBI_H_INCLUDED

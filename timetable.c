@@ -29,7 +29,7 @@ static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) { // well tested, 2025/
       events_at_sp[sp].pcmds = pcmd;
       break;
     case ARS_SCHEDULED_DEPT:
-      sp = pcmd->attr.sch_dept.dept_sp;
+      sp = pcmd->attr.sch_dept.dep_sp;
       assert( (sp >= 0) && (sp < END_OF_SPs) );
       pcmd->ln.sp_sch.pNext = events_at_sp[sp].pcmds;
       events_at_sp[sp].pcmds = pcmd;
@@ -70,7 +70,7 @@ static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID_PTR pdw_seq2, SCHEDULED_COMM
   case ARS_SCHEDULED_DEPT:
     if( pdw_seq2 )
       *pdw_seq2 = pC2->attr.sch_dept.dw_seq;
-    time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_dept.dept_time );
+    time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_dept.dep_time );
     break;
   case ARS_SCHEDULED_SKIP:
     if( pdw_seq2 )
@@ -118,7 +118,7 @@ static int cmp_over_sp_cmds ( const void *pC1, const void *pC2 ) {
     break;
   case ARS_SCHEDULED_DEPT:
     dw_seq1 = (*(SCHEDULED_COMMAND_PTR *)pC1)->attr.sch_dept.dw_seq;
-    t1 = mktime_of_cmd( &T1, &(*(SCHEDULED_COMMAND_PTR *)pC1)->attr.sch_dept.dept_time );
+    t1 = mktime_of_cmd( &T1, &(*(SCHEDULED_COMMAND_PTR *)pC1)->attr.sch_dept.dep_time );
     break;
   case ARS_SCHEDULED_SKIP:
     dw_seq1 = (*(SCHEDULED_COMMAND_PTR *)pC1)->attr.sch_skip.dw_seq;
@@ -288,7 +288,7 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
 	    pjunior_fellow_t = &pjunior_fellow->attr.sch_arriv.arr_time;
 	    break;
 	  case ARS_SCHEDULED_DEPT:
-	    pjunior_fellow_t = &pjunior_fellow->attr.sch_dept.dept_time;
+	    pjunior_fellow_t = &pjunior_fellow->attr.sch_dept.dep_time;
 	    break;
 	  case ARS_SCHEDULED_SKIP:
 	    pjunior_fellow_t = &pjunior_fellow->attr.sch_skip.pass_time;
@@ -324,7 +324,7 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
 	    psenior_fellow_t = &psenior_fellow->attr.sch_arriv.arr_time;
 	    break;
 	  case ARS_SCHEDULED_DEPT:
-	    psenior_fellow_t = &psenior_fellow->attr.sch_dept.dept_time;
+	    psenior_fellow_t = &psenior_fellow->attr.sch_dept.dep_time;
 	    break;
 	  case ARS_SCHEDULED_SKIP:
 	    psenior_fellow_t = &psenior_fellow->attr.sch_skip.pass_time;
