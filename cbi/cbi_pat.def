@@ -86,6 +86,8 @@
 {_SO_sTRSR, "[S\\o]S\\o_Txxxy_\\sTRSR", "So_Tx[1]x[2]x[3]y[1]_sTRSR", {{_SO_sTRSR, "So_Tx[1]x[2]x[3]y[1]_sTRSR"}}},
 {_SO_eTLSR, "[S\\o]S\\o_Txxxy_\\eTLSR", "So_Tx[1]x[2]x[3]y[1]_eTLSR", {{_SO_eTLSR, "So_Tx[1]x[2]x[3]y[1]_eTLSR"}}},
 {_SO_eTRSR, "[S\\o]S\\o_Txxxy_\\eTRSR", "So_Tx[1]x[2]x[3]y[1]_eTRSR", {{_SO_eTRSR, "So_Tx[1]x[2]x[3]y[1]_eTRSR"}}},
+{_SO_HR, "[S\\o]S\\o_Sxxxy_HR", "So_Sx[1]x[2]x[3]y[1]_HR", {{_SO_HR, "So_Sx[1]x[2]x[3]y[1]_HR"}}},
+{_SO_HyR, "[S\\o]S\\o_Sxxxy_HyR", "So_Sx[1]x[2]x[3]y[1]_HyR", {{_SO_HyR, "So_Sx[1]x[2]x[3]y[1]_HyR"}}},
 {_SIGNAL, "[\\o1]\\o_Sxxxy_VR1", "Sx[1]x[2]x[3]y[1]", {{_SIGNAL, "Sx[1]x[2]x[3]y[1]"}}},
 {_SIGNAL, "[\\o2]\\o_Sxxxy_VR1", "Sx[1]x[2]x[3]y[1]", {{_SIGNAL, "Sx[1]x[2]x[3]y[1]"}}},
 {_SIGNAL, "[\\o3]\\o_Sxxxy_VR1", "Sx[1]x[2]x[3]y[1]", {{_SIGNAL, "Sx[1]x[2]x[3]y[1]"}}},
