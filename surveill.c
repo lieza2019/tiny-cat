@@ -43,7 +43,7 @@ static STOPPING_POINT_CODE sp_with_p0 ( CBTC_BLOCK_C_PTR pblk_forward, CBTC_BLOC
   return r;
 }
 
-STOPPING_POINT_CODE detect_train_docked ( ARS_EVENTS_OVER_SP *pev_sp, DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_STATE_PTR pT ) {
+STOPPING_POINT_CODE detect_train_docked ( ARS_SP_EVENTS *pev_sp, DOCK_DETECT_DIRECTIVE mode, TINY_TRAIN_STATE_PTR pT ) {
   assert( pev_sp );
   assert( (mode == DOCK_DETECT_MAJOR) || (mode == DOCK_DETECT_MINOR) );
   assert( pT );
@@ -232,7 +232,7 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_EVENTS_OVER_SP *pev_sp, DOCK_DETEC
   return r;
 }
 
-STOPPING_POINT_CODE detect_train_skip ( ARS_EVENTS_OVER_SP *pev_sp, TINY_TRAIN_STATE_PTR pT ) {
+STOPPING_POINT_CODE detect_train_skip ( ARS_SP_EVENTS *pev_sp, TINY_TRAIN_STATE_PTR pT ) {
   assert( pev_sp );
   assert( pT );
   STOPPING_POINT_CODE r = SP_NONSENS;

@@ -643,13 +643,14 @@ int main ( void ) {
 		ARS_REASONS r = END_OF_ARS_REASONS;
 		JOURNEY_PTR pJ = &online_timetable.lkup[jid]->journey;
 		ARS_REASONS res = END_OF_ARS_REASONS;
+		ARS_EVENT_ON_SP ev;
 		pJ->ptrain_ctrl = pT;
-		r = ars_atodept_on_journey( &online_timetable, pJ );
+		ars_judge_arriv_dept_skip( &ev, pT );		
+		r = ars_atodept_on_journey( &online_timetable, pJ, &ev );
 		//assert( r != ARS_ROUTE_CONTROLLED_NORMALLY ); // *****
 		r = ars_routectl_on_journey( &online_timetable, pJ );
 		//assert( r != ARS_ROUTE_CONTROLLED_NORMALLY ); // *****
-		ars_schcmd_ack( &res, pJ );
-#if 1
+		ars_schcmd_ack( &res, pJ, &ev );
 		printf( "(jid, next_cmd, past_cmds): (%d, %d, ", pJ->jid, pJ->scheduled_commands.pNext->cmd );
 		printf( "{" );
 		{
@@ -665,7 +666,6 @@ int main ( void ) {
 		  }
 		}
 		printf( "})\n" );
-#endif
 		//assert( FALSE ); // *****
 	      }
 #endif

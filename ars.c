@@ -73,42 +73,42 @@ time_t mktime_of_cmd ( struct tm *pT, ARS_ASSOC_TIME_C_PTR ptime_cmd ) {
   return r;
 }
 
-static STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TINY_TRAIN_STATE_PTR pT ) {
+STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TINY_TRAIN_STATE_PTR pT ) {
   assert( pdetects );
   assert( pT );
   STOPPING_POINT_CODE hit_sp = SP_NONSENS;
   
   pdetects->sp = SP_NONSENS;
-  pdetects->detail = ARS_DETECTS_NONE;
+  pdetects->situation = ARS_DETECTS_NONE;
   if( pT->stop_detected != SP_NONSENS ) {
     pdetects->sp = pT->stop_detected;
-    pdetects->detail = ARS_DOCK_DETECTED;
-    hit_sp = detect_train_docked( &pdetects->detail, DOCK_DETECT_MINOR, pT );
+    pdetects->situation = ARS_DOCK_DETECTED;
+    hit_sp = detect_train_docked( &pdetects->situation, DOCK_DETECT_MINOR, pT );
     if( hit_sp == SP_NONSENS ) {
-      assert( pdetects->detail != ARS_DOCK_DETECTED );
+      assert( pdetects->situation != ARS_DOCK_DETECTED );
       pdetects->sp = SP_NONSENS;
       pT->stop_detected = SP_NONSENS;
     } else {
-      if( pdetects->detail == ARS_LEAVE_DETECTED ) {
+      if( pdetects->situation == ARS_LEAVE_DETECTED ) {
 	pdetects->sp = hit_sp;
 	pT->stop_detected = SP_NONSENS;
       } else {
 	assert( pdetects->sp == pT->stop_detected );
-	assert( pdetects->detail == ARS_DOCK_DETECTED );
+	assert( pdetects->situation == ARS_DOCK_DETECTED );
       }
     }
   } else {
     assert( pT->stop_detected == SP_NONSENS );
-    hit_sp = detect_train_docked( &pdetects->detail, DOCK_DETECT_MAJOR, pT );
+    hit_sp = detect_train_docked( &pdetects->situation, DOCK_DETECT_MAJOR, pT );
     if( hit_sp != SP_NONSENS ) {
-      assert( pdetects->detail == ARS_DOCK_DETECTED );
+      assert( pdetects->situation == ARS_DOCK_DETECTED );
       pdetects->sp = hit_sp;
       pT->stop_detected = hit_sp;
     } else {
-      hit_sp = detect_train_skip( &pdetects->detail, pT );
+      hit_sp = detect_train_skip( &pdetects->situation, pT );
       if( hit_sp != SP_NONSENS ) {
 	assert( pT->stop_detected == SP_NONSENS );
-	assert( pdetects->detail == ARS_SKIP_DETECTED );
+	assert( pdetects->situation == ARS_SKIP_DETECTED );
 	pdetects->sp = hit_sp;
       }
     }
@@ -191,22 +191,21 @@ static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, double *pdif, int 
   return r;
 }
 
-ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
+ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp ) {
   assert( pTT );
   assert( pJ );
+  assert( pev_sp );
   ARS_REASONS r = END_OF_ARS_REASONS;
   TINY_TRAIN_STATE_PTR pT = NULL;
   
   pT = pJ->ptrain_ctrl;
   if( pT ) {
-    ARS_EVENT_ON_SP cond = { SP_NONSENS, ARS_DETECTS_NONE };  
-    ars_judge_arriv_dept_skip( &cond, pT );
-    if( cond.sp != SP_NONSENS ) {
-      if( cond.detail == ARS_DOCK_DETECTED ) {
+    if( pev_sp->sp != SP_NONSENS ) {
+      if( pev_sp->situation == ARS_DOCK_DETECTED ) {
 	SCHEDULED_COMMAND_PTR pC = NULL;
 	pC = pJ->scheduled_commands.pNext;
 	if( pC->cmd == ARS_SCHEDULED_DEPT ) {
-	  if( cond.sp == pC->attr.sch_dept.dep_sp ) {
+	  if( pev_sp->sp == pC->attr.sch_dept.dep_sp ) {
 	    char *route_SoHR = NULL;
 	    char raw[CBI_STAT_IDENT_LEN + 1];
 	    ROUTE_C_PTR pR = NULL;
@@ -987,6 +986,22 @@ static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PT
   return ( pJ->scheduled_commands.pNext );
 }
 
+static SCHEDULED_COMMAND_C_PTR next_arrcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_C_PTR pC ) {
+  assert( pres );
+  assert( pC );
+  *pres = END_OF_ARS_REASONS;
+  while( pC ) {
+    if( pC->cmd == ARS_SCHEDULED_ARRIVAL )
+      break;
+    else if( pC->cmd == ARS_SCHEDULED_DEPT ) {
+      *pres = ARS_INCONSISTENT_DEPT;
+      break;
+    } else
+      pC = pC->ln.journey.planned.pNext; // includng the case of ARS_SCHEDULED_SKIP.
+  }
+  return pC;
+}
+
 ARS_REASONS ars_routectl_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   assert( pTT );
   assert( pJ );
@@ -1227,9 +1242,10 @@ static ARS_ASSOC_TIME_PTR timestamp ( ARS_ASSOC_TIME_PTR pstamp ) {
   return r;
 }
 
-SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
+SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp ) {
   assert( pres );
   assert( pJ );
+  assert( pev_sp );
   SCHEDULED_COMMAND_PTR r = NULL;
   
   TINY_TRAIN_STATE_PTR pT = NULL;
@@ -1242,7 +1258,6 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
       if( ! pC->checked ) {
 	//printf( "cmd of pC: %d\n", pC->cmd ); // *****
 	//assert( FALSE ); // *****
-	ARS_EVENT_ON_SP detects = { SP_NONSENS, ARS_DETECTS_NONE };
 	r = pC;
 	switch ( pC->cmd ) {
 	case ARS_SCHEDULED_ROUTESET:
@@ -1278,16 +1293,15 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
 	  assert( pT );
 	  //printf( "cmd of pC: %d\n", pC->cmd ); // *****
 	  //assert( FALSE ); // *****
-	  ars_judge_arriv_dept_skip( &detects, pT );
-	  if( detects.sp != SP_NONSENS ) {
-	    if( detects.sp == pC->attr.sch_arriv.arr_sp ) {		
-	      if( detects.detail == ARS_DOCK_DETECTED ) {		  
+	  if( pev_sp->sp != SP_NONSENS ) {
+	    if( pev_sp->sp == pC->attr.sch_arriv.arr_sp ) {
+	      if( pev_sp->situation == ARS_DOCK_DETECTED ) {
 		timestamp( &pC->attr.sch_arriv.arr_time );
 		pC->checked = TRUE;
 		make_it_past( pJ, pC );
 		r = pC->ln.journey.planned.pNext;
 	      } else {
-		if( detects.detail == ARS_SKIP_DETECTED ) {
+		if( pev_sp->situation == ARS_SKIP_DETECTED ) {
 		  SCHEDULED_COMMAND_PTR pC_next = NULL;
 		  timestamp( &pC->attr.sch_arriv.arr_time );
 		  pC->checked = TRUE;
@@ -1320,14 +1334,18 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
 	case ARS_SCHEDULED_DEPT:
 	  assert( pC );
 	  assert( pT );
-	  ars_judge_arriv_dept_skip( &detects, pT );
 	acc_with_dept:
-	  if( detects.sp != SP_NONSENS ) {
-	    if( detects.sp == pC->attr.sch_dept.dep_sp ) {
-	      if( (detects.detail == ARS_LEAVE_DETECTED) || (detects.detail == ARS_SKIP_DETECTED) ) {
+	  if( pev_sp->sp != SP_NONSENS ) {
+	    if( pev_sp->sp == pC->attr.sch_dept.dep_sp ) {
+	      if( (pev_sp->situation == ARS_LEAVE_DETECTED) || (pev_sp->situation == ARS_SKIP_DETECTED) ) {
 		timestamp( &pC->attr.sch_dept.dep_time );
 		pC->checked = TRUE;
 		make_it_past( pJ, pC );
+		if( pev_sp->situation == ARS_LEAVE_DETECTED ) {
+		  BOOL s = FALSE;
+		  s = change_train_state_ATO_dept_cmd( pT, FALSE, FALSE );
+		  assert( !s );
+		}
 		r = pC->ln.journey.planned.pNext;
 	      }
 	    }
@@ -1336,10 +1354,9 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ ) {
 	case ARS_SCHEDULED_SKIP:
 	  assert( pC );
 	  assert( pT );
-	  ars_judge_arriv_dept_skip( &detects, pT );
-	  if( detects.sp != SP_NONSENS ) {
-	    if( detects.sp == pC->attr.sch_skip.pass_sp ) {
-	      if( (detects.detail == ARS_SKIP_DETECTED) || (detects.detail == ARS_LEAVE_DETECTED) ) {
+	  if( pev_sp->sp != SP_NONSENS ) {
+	    if( pev_sp->sp == pC->attr.sch_skip.pass_sp ) {
+	      if( (pev_sp->situation == ARS_SKIP_DETECTED) || (pev_sp->situation == ARS_LEAVE_DETECTED) ) {
 		timestamp( &pC->attr.sch_skip.pass_time );
 		pC->checked = TRUE;
 		make_it_past( pJ, pC );
