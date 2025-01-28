@@ -413,6 +413,7 @@ int main ( void ) {
   tzset();
   cons_il_obj_table();
   cons_lkuptbl_cbtc_block_prof();
+  cons_lkuptbl_sp2_block();
   
   establish_SC_comm( &comm_threads_prof );
   establish_OC_comm( &comm_threads_prof );

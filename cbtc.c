@@ -99,7 +99,6 @@ TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, const int 
 
 static CBTC_BLOCK_PTR blkname2_cbtc_block_prof[65536];
 static CBTC_BLOCK_PTR virtblk2_cbtc_block_prof[65536];
-
 void cons_lkuptbl_cbtc_block_prof ( void ) {
   const CBTC_BLOCK_PTR plim_sup = (CBTC_BLOCK_PTR)((unsigned char *)block_state + (int)sizeof(block_state));
  
@@ -148,6 +147,42 @@ CBTC_BLOCK_PTR lookup_cbtc_block_prof ( unsigned short block_name ) {
 
 CBTC_BLOCK_PTR conslt_cbtc_block_prof ( CBTC_BLOCK_ID virt_blkname ) {
   return virtblk2_cbtc_block_prof[virt_blkname];
+}
+
+static CBTC_BLOCK_C_PTR sp2_block[END_OF_SPs];
+void cons_lkuptbl_sp2_block ( void ) {
+  int i = 0;
+  while( block_state[i].virt_block_name < END_OF_CBTC_BLOCKs ) {
+    if( block_state[i].sp.has_sp ) {
+      switch( block_state[i].sp.stop_detect_type ) {
+      case P0_COUPLING:
+	sp2_block[block_state[i].sp.sp_code] = &block_state[i];
+	assert( block_state[i].sp.stop_detect_cond.paired_blk == VB_NONSENS );
+	assert( ! block_state[i].sp.stop_detect_cond.ppaired_blk );
+	{
+	  int j = i + 1;
+	  while( block_state[j].virt_block_name < END_OF_CBTC_BLOCKs ) {
+	    if( block_state[j].sp.has_sp )
+	      assert( block_state[j].sp.sp_code != block_state[i].sp.sp_code );
+	    j++;
+	  }
+	}
+	break;
+      case VIRTUAL_P0:	
+	break;
+      case END_OF_STOP_DETECTION_TYPES:
+	/* fall thru. */
+      default:
+	assert( FALSE );
+      }
+    }
+    i++;
+  }
+}
+
+CBTC_BLOCK_C_PTR lookup_block_of_sp ( STOPPING_POINT_CODE sp ) {
+  assert( (sp >= 0) && (sp < END_OF_SPs) );
+  return sp2_block[sp];
 }
 
 static BOOL creteria_2_elide ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT ) {

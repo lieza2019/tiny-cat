@@ -191,6 +191,31 @@ static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, double *pdif, int 
   return r;
 }
 
+static SCHEDULED_COMMAND_C_PTR next_arrcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_C_PTR pC ) {
+  assert( pres );
+  assert( pC );
+  SCHEDULED_COMMAND_C_PTR p = NULL;
+  
+  *pres = END_OF_ARS_REASONS;
+  p = pC;
+  while( p ) {
+    if( p->cmd == ARS_SCHEDULED_ARRIVAL )
+      break;
+    else if( p->cmd == END_OF_SCHEDULED_CMDS )
+      break;
+    else if( p->cmd == ARS_SCHEDULED_DEPT ) {
+      *pres = ARS_INCONSISTENT_DEPT;
+      break;
+    } else
+      p = p->ln.journey.planned.pNext; // includng the case of ARS_SCHEDULED_SKIP.
+  }
+  if( !p ) {
+    *pres = ARS_NO_DEADEND_CMD;
+    p = pC;
+  }
+  return p;
+}
+
 ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp ) {
   assert( pTT );
   assert( pJ );
@@ -204,49 +229,80 @@ ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVEN
       if( pev_sp->situation == ARS_DOCK_DETECTED ) {
 	SCHEDULED_COMMAND_PTR pC = NULL;
 	pC = pJ->scheduled_commands.pNext;
-	if( pC->cmd == ARS_SCHEDULED_DEPT ) {
+	if( pC->cmd == ARS_SCHEDULED_DEPT ) {	  
 	  if( pev_sp->sp == pC->attr.sch_dept.dep_sp ) {
-	    char *route_SoHR = NULL;
-	    char raw[CBI_STAT_IDENT_LEN + 1];
 	    ROUTE_C_PTR pR = NULL;
 	    pR = conslt_route_prof( pC->attr.sch_dept.dep_route );
 	    if( pR ) {
+	      assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS ); // *****
+	      assert( pR->ars_ctrl.trip_info.dst.pblk ); // *****
 	      if( pR->ars_ctrl.app ) {
-		OC_ID oc_id;
-		CBI_STAT_KIND kind;
-		int stat = -1;
-		strncpy( raw, cnv2str_il_sym( pR->sig_pair.org.sig ), CBI_STAT_IDENT_LEN );
-		route_SoHR = mangl2_So_Sxxxy_HyR( raw );
-		stat = conslt_il_state( &oc_id, &kind, route_SoHR );
-		if( stat > 0) {
-		  BOOL s = FALSE;
-		  s = change_train_state_ATO_dept_cmd( pT, TRUE, FALSE );
-		  assert( s );
-		  r = ARS_NOW_ATODEPT_EMISSION;;
-		} else {
-		  assert( stat <= 0 );
-		  if( stat == 0 )
-		    r = ARS_NO_ROUTE_OPEN;
-		  else {
-		    assert( stat < 0 );
-		    switch( stat ) {
-		    case -1:
-		      r = ARS_MUTEX_BLOCKED;
-		      break;
-		    case -2:
-		      r = ARS_FOUND_ERROROUS_INTERLOCKDEF;
-		      break;
-		    default:
-		      assert( FALSE );
+		ARS_REASONS res_next_arr = END_OF_ARS_REASONS;
+		CBTC_BLOCK_C_PTR pdst = NULL;
+		SCHEDULED_COMMAND_C_PTR parr_next = NULL;
+		parr_next = next_arrcmd( &res_next_arr, pC ); // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
+		assert( parr_next );
+		printf( "result of next_arrcmd: %s\n", (res_next_arr != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_next_arr] : "no_claims") ); // *****
+		r = res_next_arr;
+		if( parr_next->cmd == ARS_SCHEDULED_ARRIVAL )
+		  pdst = lookup_block_of_sp( parr_next->attr.sch_arriv.arr_sp );
+		else
+		  pdst = pR->ars_ctrl.trip_info.dst.pblk;
+		if( pdst ) {
+		  pT->dest_blockID = pdst->block_name;
+		  {
+		    char *route_SoHR = NULL;
+		    char raw[CBI_STAT_IDENT_LEN + 1];
+		    int stat = -1;
+		    strncpy( raw, cnv2str_il_sym( pR->sig_pair.org.sig ), CBI_STAT_IDENT_LEN );
+		    route_SoHR = mangl2_So_Sxxxy_HyR( raw );
+		    {
+		      OC_ID oc_id;
+		      CBI_STAT_KIND kind;
+		      stat = conslt_il_state( &oc_id, &kind, route_SoHR );
+		    }
+		    if( stat > 0) {
+		      BOOL s = FALSE;
+		      if( pC->attr.sch_dept.dep_dir.L ) {
+			s = change_train_state_dep_dir( pT, MD_UP_DIR, TRUE );
+			assert( s );
+		      }
+		      if( pC->attr.sch_dept.dep_dir.R ) {
+			s = change_train_state_dep_dir( pT, MD_DOWN_DIR, TRUE );
+			assert( s );
+		      }
+		      s = change_train_state_ATO_dept_cmd( pT, TRUE, FALSE );
+		      assert( s );
+		      r = ARS_NOW_ATODEPT_EMISSION;;
+		    } else {
+		      assert( stat <= 0 );
+		      if( stat == 0 )
+			r = ARS_NO_ROUTE_OPEN;
+		      else {
+			assert( stat < 0 );
+			switch( stat ) {
+			case -1:
+			  r = ARS_MUTEX_BLOCKED;
+			  break;
+			case -2:
+			  r = ARS_FOUND_ERROROUS_INTERLOCKDEF;
+			  break;
+			default:
+			  assert( FALSE );
+			}
+		      }
 		    }
 		  }
+		} else {
+		  pT->dest_blockID = 0;
+		  r = ARS_INCONSISTENT_DEPT;
 		}
 	      } else
 		r = ARS_ILLEGAL_CMD_DEPT;
 	    } else
 	      r = ARS_WRONG_CMD_ATTRIB;
 	  } else
-	    ;
+	    r = ARS_NO_TRIGGERED;
 	} else
 	  r = ARS_NO_TRIGGERED;
       } else
@@ -986,22 +1042,6 @@ static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PT
   return ( pJ->scheduled_commands.pNext );
 }
 
-static SCHEDULED_COMMAND_C_PTR next_arrcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_C_PTR pC ) {
-  assert( pres );
-  assert( pC );
-  *pres = END_OF_ARS_REASONS;
-  while( pC ) {
-    if( pC->cmd == ARS_SCHEDULED_ARRIVAL )
-      break;
-    else if( pC->cmd == ARS_SCHEDULED_DEPT ) {
-      *pres = ARS_INCONSISTENT_DEPT;
-      break;
-    } else
-      pC = pC->ln.journey.planned.pNext; // includng the case of ARS_SCHEDULED_SKIP.
-  }
-  return pC;
-}
-
 ARS_REASONS ars_routectl_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   assert( pTT );
   assert( pJ );
@@ -1152,17 +1192,6 @@ ARS_REASONS ars_routectl_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 				    ready_on_fire:
 				      //printf( "cmd of pC_dst: %d\n", pC_dst->cmd );
 				      //assert( FALSE ); // *****
-#if 0 // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
-				      assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS );
-				      assert( pR->ars_ctrl.trip_info.dst.pblk );
-				      CBTC_BLOCK_C_PTR pdst = pR->ars_ctrl.trip_info.dst.pblk;
-				      if( pdst ) {
-					TINY_TRAIN_STATE_PTR pT = pJ->ptrain_ctrl;
-					assert( pT );
-					pT->dest_blockID = pdst->block_name;
-				      } else
-					pT->dest_blockID = 0;
-#endif
 				      assert( pC );
 				      assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
 				      char *P_route = NULL;

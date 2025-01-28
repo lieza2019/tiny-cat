@@ -76,6 +76,8 @@ typedef const struct block *CBTC_BLOCK_C_PTR;
 extern void cons_lkuptbl_cbtc_block_prof ( void );
 extern CBTC_BLOCK_PTR lookup_cbtc_block_prof ( unsigned short block_name );
 extern CBTC_BLOCK_PTR conslt_cbtc_block_prof ( CBTC_BLOCK_ID virt_blkname );
+extern void cons_lkuptbl_sp2_block ( void );
+extern CBTC_BLOCK_C_PTR lookup_block_of_sp ( STOPPING_POINT_CODE sp );
 extern void purge_block_restrains ( void );
 
 #endif // CBTC_H
