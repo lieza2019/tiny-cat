@@ -31,6 +31,7 @@ const char *cnv2str_ars_reasons[] = {
   "ARS_ILLEGAL_CMD_DEPT",
   "ARS_ILLEGAL_CMD_SKIP",
   "ARS_INCONSISTENT_ROUTESET",
+  "ARS_INCONSISTENT_ROUTEREL",
   "ARS_INCONSISTENT_ARRIVAL",
   "ARS_INCONSISTENT_DEPT",
   "ARS_INCONSISTENT_SKIP",
@@ -234,76 +235,63 @@ ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVEN
 	    ROUTE_C_PTR pR = NULL;
 	    pR = conslt_route_prof( pC->attr.sch_dept.dep_route );
 	    if( pR ) {
-	      assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS ); // *****
-	      assert( pR->ars_ctrl.trip_info.dst.pblk ); // *****
 	      if( pR->ars_ctrl.app ) {
-		//CBTC_BLOCK_C_PTR porg = NULL;
-		//porg = lookup_block_of_sp( pC->attr.sch_dept.dep_sp );
-		//if( porg ) {
-		  ARS_REASONS res_next_arr = END_OF_ARS_REASONS;
-		  CBTC_BLOCK_C_PTR pdst = NULL;
-		  SCHEDULED_COMMAND_C_PTR parr_next = NULL;
-		  //pT->crnt_blockID = porg->block_name;
-		  parr_next = next_arrcmd( &res_next_arr, pC ); // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
-		  assert( parr_next );
-		  printf( "result of next_arrcmd: %s\n", (res_next_arr != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_next_arr] : "no_claims") ); // *****
-		  r = res_next_arr;
-		  if( parr_next->cmd == ARS_SCHEDULED_ARRIVAL )
-		    pdst = lookup_block_of_sp( parr_next->attr.sch_arriv.arr_sp );
-		  else
-		    pdst = pR->ars_ctrl.trip_info.dst.pblk;
-		  if( pdst ) {
-		    pT->dest_blockID = pdst->block_name;
+		ARS_REASONS res_next_arr = END_OF_ARS_REASONS;
+		CBTC_BLOCK_C_PTR pdst = NULL;
+		SCHEDULED_COMMAND_C_PTR parr_next = NULL;
+		parr_next = next_arrcmd( &res_next_arr, pC ); // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
+		assert( parr_next );
+		//printf( "result of next_arrcmd: %s\n", (res_next_arr != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_next_arr] : "no_claims") ); // *****
+		r = res_next_arr;
+		if( parr_next->cmd == ARS_SCHEDULED_ARRIVAL )
+		  pdst = lookup_block_of_sp( parr_next->attr.sch_arriv.arr_sp );
+		else
+		  pdst = pR->ars_ctrl.trip_info.dst.pblk;
+		if( pdst ) {
+		  pT->dest_blockID = pdst->block_name;
+		  {
+		    char *route_SoHR = NULL;
+		    char raw[CBI_STAT_IDENT_LEN + 1];
+		    int stat = -1;
+		    strncpy( raw, cnv2str_il_sym( pR->sig_pair.org.sig ), CBI_STAT_IDENT_LEN );
+		    route_SoHR = mangl2_So_Sxxxy_HyR( raw );
 		    {
-		      char *route_SoHR = NULL;
-		      char raw[CBI_STAT_IDENT_LEN + 1];
-		      int stat = -1;
-		      strncpy( raw, cnv2str_il_sym( pR->sig_pair.org.sig ), CBI_STAT_IDENT_LEN );
-		      route_SoHR = mangl2_So_Sxxxy_HyR( raw );
-		      {
-			OC_ID oc_id;
-			CBI_STAT_KIND kind;
-			stat = conslt_il_state( &oc_id, &kind, route_SoHR );
-		      }
-		      if( stat > 0) {
-			if( pC->attr.sch_dept.dep_dir.L )
-			  pT->dep_dir = MD_UP_DIR;
-			else if( pC->attr.sch_dept.dep_dir.R )
-			  pT->dep_dir = MD_DOWN_DIR;
-			else
-			  pT->dep_dir = MD_UNKNOWN;
-			pT->ATO_dept_cmd = TRUE;
-			//pT->crnt_station_number = 52; // *****
-			//pT->crnt_station_plcode = 2; // *****
-			//pT->next_station_number = 53; // *****
-			//pT->next_station_plcode = 1; // *****
-			//pT->next_st_dooropen_side = NDS_L_SIDE; // *****
-			r = ARS_NOW_ATODEPT_EMISSION;;
-		      } else {
-			assert( stat <= 0 );
-			if( stat == 0 )
-			  r = ARS_NO_ROUTE_OPEN;
-			else {
-			  assert( stat < 0 );
-			  switch( stat ) {
-			  case -1:
-			    r = ARS_MUTEX_BLOCKED;
-			    break;
-			  case -2:
-			    r = ARS_FOUND_ERROROUS_INTERLOCKDEF;
-			    break;
-			  default:
-			    assert( FALSE );
-			  }
+		      OC_ID oc_id;
+		      CBI_STAT_KIND kind;
+		      stat = conslt_il_state( &oc_id, &kind, route_SoHR );
+		    }
+		    if( stat > 0) {
+		      if( pC->attr.sch_dept.dep_dir.L )
+			pT->dep_dir = MD_UP_DIR;
+		      else if( pC->attr.sch_dept.dep_dir.R )
+			pT->dep_dir = MD_DOWN_DIR;
+		      else
+			pT->dep_dir = MD_UNKNOWN;
+		      pT->ATO_dept_cmd = TRUE;
+		      r = ARS_NOW_ATODEPT_EMISSION;;
+		    } else {
+		      assert( stat <= 0 );
+		      if( stat == 0 )
+			r = ARS_NO_ROUTE_OPEN;
+		      else {
+			assert( stat < 0 );
+			switch( stat ) {
+			case -1:
+			  r = ARS_MUTEX_BLOCKED;
+			  break;
+			case -2:
+			  r = ARS_FOUND_ERROROUS_INTERLOCKDEF;
+			  break;
+			default:
+			  assert( FALSE );
 			}
 		      }
 		    }
-		  } else {
-		    pT->dest_blockID = 0;
-		    r = ARS_INCONSISTENT_DEPT;
 		  }
-	      //} else
-		  //r = ARS_WRONG_CMD_ATTRIB;
+		} else {
+		  pT->dest_blockID = 0;
+		  r = ARS_INCONSISTENT_DEPT;
+		}
 	      } else
 		r = ARS_ILLEGAL_CMD_DEPT;
 	    } else
@@ -866,6 +854,7 @@ static BOOL pick_depcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dep, SCH
   BOOL r = FALSE;
   
   SCHEDULED_COMMAND_PTR p = pC_roset->ln.journey.planned.pNext;
+ next_cmd:
   if( p ) {
     switch( p->cmd ) {
     case ARS_SCHEDULED_ROUTESET:
@@ -909,7 +898,12 @@ static BOOL pick_depcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dep, SCH
       *pres = ARS_INCONSISTENT_ROUTESET; // see the above case of ARS_SCHEDULED_ROUTESET.
       break;
     case ARS_CMD_DONT_CURE:
+#if 0 // ***** for debugging.
+      p = p->ln.journey.planned.pNext;
+      goto next_cmd;
+#else
       assert( FALSE );
+#endif
     }
   } else {
     // pC_roset maybe problematic, for successive commands should be ARS_SCHEDULED_DEPT/ARS_SCHEDULED_SKIP or ARS_SCHEDULED_ROUTEREL (or both), are missing.
@@ -1018,7 +1012,11 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
       assert( !r );
       break;
     case ARS_CMD_DONT_CURE:
+#if 0 // ***** for debugging.
+      ;
+#else
       assert( FALSE );
+#endif
     }
   }
   assert( p );
@@ -1186,7 +1184,7 @@ ARS_REASONS ars_routectl_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
 				  SCHEDULED_COMMAND_PTR pC_lok = NULL;
 				  pC->attr.sch_roset.proute_prof = pR; // *****
 				  if( pick_dstcmd( &res_dst, &pC_dst, &pC_lok, pC ) ) {
-				    printf( "result of pick_dstcmd: %s\n", (res_dst != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_dst] : "no_claims") ); // *****
+				    //printf( "result of pick_dstcmd: %s\n", (res_dst != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_dst] : "no_claims") ); // *****
 				    cond = ars_chk_dstschedule( pTT->sp_schedule, pC_dst, pC_lok );
 				    if( cond <= 0 ) {
 				      if( cond < 0 )
@@ -1302,6 +1300,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 	  assert( pC == r );
 	  break;
 	case ARS_SCHEDULED_ROUTEREL:
+	  assert( pJ );
 	  assert( pC );
 	  {
 	    ROUTE_C_PTR pR = NULL;
@@ -1310,17 +1309,44 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 	    assert( pR->kind == _ROUTE );
 	    assert( (pR->route_kind < END_OF_ROUTE_KINDS) && (pR->route_kind != EMERGE_ROUTE) );
 	    assert( pR->ars_ctrl.app );
-	    if( pR->ars_ctrl.ctrl_tracks.pahead_trks[0] ) {
+	    if( pR->ars_ctrl.ctrl_tracks.num_ahead_tracks > 0 ) {
 	      TRACK_C_PTR pahead_trk = pR->ars_ctrl.ctrl_tracks.pahead_trks[0];
+	      assert( pahead_trk );
 	      OC_ID oc_id;
 	      CBI_STAT_KIND kind;
 	      int stat = -1;
-	      assert( pahead_trk );
 	      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pahead_trk->id) );
 	      if( stat == 0 ) {
 		timestamp( &pC->attr.sch_rorel.dept_time );
-		//make_it_past( pJ, pC ); // *****
+	      acc_and_chk_rorel:
+		pC->checked = TRUE;
+		make_it_past( pJ, pC );
+		r = pC->ln.journey.planned.pNext;
 	      }
+	    } else {
+	      if( pJ->past_commands ) {
+		switch( pJ->past_commands->cmd ) {
+		case ARS_SCHEDULED_DEPT:
+		case ARS_SCHEDULED_SKIP:
+		  goto acc_and_chk_rorel;
+		case ARS_SCHEDULED_ROUTESET:
+		case ARS_SCHEDULED_ROUTEREL:
+		case ARS_SCHEDULED_ARRIVAL:
+		case END_OF_SCHEDULED_CMDS:
+		  *pres = ARS_INCONSISTENT_ROUTEREL;
+		  break;
+		case ARS_CMD_DONT_CURE:
+#if 0 // ***** for debugging.
+		  *pres = ARS_INCONSISTENT_ROUTEREL;
+		  break;
+#else
+		  // fall thru.
+#endif
+		default:
+		  assert( FALSE );
+		}
+	      } else
+		*pres = ARS_INCONSISTENT_ROUTEREL;
 	    }
 	  }
 	  break;
@@ -1377,11 +1403,8 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 		timestamp( &pC->attr.sch_dept.dep_time );
 		pC->checked = TRUE;
 		make_it_past( pJ, pC );
-		if( pev_sp->situation == ARS_LEAVE_DETECTED ) {
-		  BOOL s = FALSE;
-		  s = change_train_state_ATO_dept_cmd( pT, FALSE, FALSE );
-		  assert( !s );
-		}
+		if( pev_sp->situation == ARS_LEAVE_DETECTED )
+		  pT->ATO_dept_cmd = FALSE;
 		r = pC->ln.journey.planned.pNext;
 	      }
 	    }
@@ -1396,6 +1419,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 		timestamp( &pC->attr.sch_skip.pass_time );
 		pC->checked = TRUE;
 		make_it_past( pJ, pC );
+		r = pC->ln.journey.planned.pNext;
 	      }
 	    }
 	  }
