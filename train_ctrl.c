@@ -983,7 +983,7 @@ void *conslt_cbtc_state ( TINY_TRAIN_STATE_PTR pT, const CBTC_CMDS_INFOS kind, v
 
 void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {  
   assert( arg );
-  const useconds_t interval = 1000 * 1000 * 0.1;
+  const useconds_t interval = 1000 * 1000 * 0.5;
   TINY_COMM_PROF_PTR pcomm_threads_prof = (TINY_COMM_PROF_PTR)arg;
   assert( pcomm_threads_prof );
   TINY_SOCK_PTR psocks_cbtc_cmds = &pcomm_threads_prof->cbtc.cmd.socks;
@@ -1016,9 +1016,8 @@ void *pth_emit_cbtc_ctrl_cmds ( void *arg ) {
 	    }
 #endif // CHK_STRICT_CONSISTENCY
 	    {
-	      const uint8_t dst_sc_id = 101 + i;
-	      NXNS_HEADER_PTR phdr = NULL;
-	      assert( (OC_ID)((int)dst_sc_id - 101) == (OC_ID)i );
+	      const uint8_t dst_sc_id = (i + 1);
+	      NXNS_HEADER_PTR phdr = NULL;	      
 	      if( !pprof_traincmd->nx.emission_start )
 		pprof_traincmd->nx.emission_start = time( NULL );
 	      phdr = &pprof_traincmd->send.header;

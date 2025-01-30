@@ -22,7 +22,7 @@ typedef struct tiny_train_state {
   DST_ST_PLCODE dst_station_plcode;
   int destination_number;
   int next_station_number;
-  int crnt_station_number;  
+  int crnt_station_number;
   BOOL ATO_dept_cmd;
   BOOL depcond_release;
   BOOL skip_next_stop;

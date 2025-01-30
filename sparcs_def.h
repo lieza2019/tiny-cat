@@ -120,10 +120,10 @@ typedef enum train_sleep_mode {
 } TRAIN_SLEEP_MODE;
 
 typedef enum train_move_dir {
-  MD_UNKNOWN,
-  MD_DOWN_DIR,
-  MD_UP_DIR,
-  MD_INVALID
+  MD_UNKNOWN, // no direction
+  MD_DOWN_DIR, // =>
+  MD_UP_DIR, // <=
+  MD_INVALID // invalid
 } TRAIN_MOVE_DIR;
 
 typedef enum onboard_ATC_master_standby {

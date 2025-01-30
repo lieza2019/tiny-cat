@@ -237,66 +237,73 @@ ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVEN
 	      assert( pR->ars_ctrl.trip_info.dst.blk != VB_NONSENS ); // *****
 	      assert( pR->ars_ctrl.trip_info.dst.pblk ); // *****
 	      if( pR->ars_ctrl.app ) {
-		ARS_REASONS res_next_arr = END_OF_ARS_REASONS;
-		CBTC_BLOCK_C_PTR pdst = NULL;
-		SCHEDULED_COMMAND_C_PTR parr_next = NULL;
-		parr_next = next_arrcmd( &res_next_arr, pC ); // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
-		assert( parr_next );
-		printf( "result of next_arrcmd: %s\n", (res_next_arr != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_next_arr] : "no_claims") ); // *****
-		r = res_next_arr;
-		if( parr_next->cmd == ARS_SCHEDULED_ARRIVAL )
-		  pdst = lookup_block_of_sp( parr_next->attr.sch_arriv.arr_sp );
-		else
-		  pdst = pR->ars_ctrl.trip_info.dst.pblk;
-		if( pdst ) {
-		  pT->dest_blockID = pdst->block_name;
-		  {
-		    char *route_SoHR = NULL;
-		    char raw[CBI_STAT_IDENT_LEN + 1];
-		    int stat = -1;
-		    strncpy( raw, cnv2str_il_sym( pR->sig_pair.org.sig ), CBI_STAT_IDENT_LEN );
-		    route_SoHR = mangl2_So_Sxxxy_HyR( raw );
+		//CBTC_BLOCK_C_PTR porg = NULL;
+		//porg = lookup_block_of_sp( pC->attr.sch_dept.dep_sp );
+		//if( porg ) {
+		  ARS_REASONS res_next_arr = END_OF_ARS_REASONS;
+		  CBTC_BLOCK_C_PTR pdst = NULL;
+		  SCHEDULED_COMMAND_C_PTR parr_next = NULL;
+		  //pT->crnt_blockID = porg->block_name;
+		  parr_next = next_arrcmd( &res_next_arr, pC ); // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
+		  assert( parr_next );
+		  printf( "result of next_arrcmd: %s\n", (res_next_arr != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_next_arr] : "no_claims") ); // *****
+		  r = res_next_arr;
+		  if( parr_next->cmd == ARS_SCHEDULED_ARRIVAL )
+		    pdst = lookup_block_of_sp( parr_next->attr.sch_arriv.arr_sp );
+		  else
+		    pdst = pR->ars_ctrl.trip_info.dst.pblk;
+		  if( pdst ) {
+		    pT->dest_blockID = pdst->block_name;
 		    {
-		      OC_ID oc_id;
-		      CBI_STAT_KIND kind;
-		      stat = conslt_il_state( &oc_id, &kind, route_SoHR );
-		    }
-		    if( stat > 0) {
-		      BOOL s = FALSE;
-		      if( pC->attr.sch_dept.dep_dir.L ) {
-			s = change_train_state_dep_dir( pT, MD_UP_DIR, TRUE );
-			assert( s );
+		      char *route_SoHR = NULL;
+		      char raw[CBI_STAT_IDENT_LEN + 1];
+		      int stat = -1;
+		      strncpy( raw, cnv2str_il_sym( pR->sig_pair.org.sig ), CBI_STAT_IDENT_LEN );
+		      route_SoHR = mangl2_So_Sxxxy_HyR( raw );
+		      {
+			OC_ID oc_id;
+			CBI_STAT_KIND kind;
+			stat = conslt_il_state( &oc_id, &kind, route_SoHR );
 		      }
-		      if( pC->attr.sch_dept.dep_dir.R ) {
-			s = change_train_state_dep_dir( pT, MD_DOWN_DIR, TRUE );
-			assert( s );
-		      }
-		      s = change_train_state_ATO_dept_cmd( pT, TRUE, FALSE );
-		      assert( s );
-		      r = ARS_NOW_ATODEPT_EMISSION;;
-		    } else {
-		      assert( stat <= 0 );
-		      if( stat == 0 )
-			r = ARS_NO_ROUTE_OPEN;
-		      else {
-			assert( stat < 0 );
-			switch( stat ) {
-			case -1:
-			  r = ARS_MUTEX_BLOCKED;
-			  break;
-			case -2:
-			  r = ARS_FOUND_ERROROUS_INTERLOCKDEF;
-			  break;
-			default:
-			  assert( FALSE );
+		      if( stat > 0) {
+			if( pC->attr.sch_dept.dep_dir.L )
+			  pT->dep_dir = MD_UP_DIR;
+			else if( pC->attr.sch_dept.dep_dir.R )
+			  pT->dep_dir = MD_DOWN_DIR;
+			else
+			  pT->dep_dir = MD_UNKNOWN;
+			pT->ATO_dept_cmd = TRUE;
+			//pT->crnt_station_number = 52; // *****
+			//pT->crnt_station_plcode = 2; // *****
+			//pT->next_station_number = 53; // *****
+			//pT->next_station_plcode = 1; // *****
+			//pT->next_st_dooropen_side = NDS_L_SIDE; // *****
+			r = ARS_NOW_ATODEPT_EMISSION;;
+		      } else {
+			assert( stat <= 0 );
+			if( stat == 0 )
+			  r = ARS_NO_ROUTE_OPEN;
+			else {
+			  assert( stat < 0 );
+			  switch( stat ) {
+			  case -1:
+			    r = ARS_MUTEX_BLOCKED;
+			    break;
+			  case -2:
+			    r = ARS_FOUND_ERROROUS_INTERLOCKDEF;
+			    break;
+			  default:
+			    assert( FALSE );
+			  }
 			}
 		      }
 		    }
+		  } else {
+		    pT->dest_blockID = 0;
+		    r = ARS_INCONSISTENT_DEPT;
 		  }
-		} else {
-		  pT->dest_blockID = 0;
-		  r = ARS_INCONSISTENT_DEPT;
-		}
+	      //} else
+		  //r = ARS_WRONG_CMD_ATTRIB;
 	      } else
 		r = ARS_ILLEGAL_CMD_DEPT;
 	    } else

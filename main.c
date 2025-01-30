@@ -723,7 +723,7 @@ int main ( void ) {
 		//change_train_state_forward_vrs_reset( pT, TRUE, TRUE );
 		//change_train_state_maximum_speed_cmd( pT, 61, TRUE );
 		//change_train_state_passenger_address( pT, 79, TRUE );
-		//change_train_state_dep_dir( pT, MD_UNKNOWN, TRUE );
+		change_train_state_dep_dir( pT, MD_UNKNOWN, TRUE );
 		//change_train_state_regulation_speed( pT, 18, TRUE );
 		//change_train_state_passenger_display_message( pT, 65539, TRUE );
 		r_mutex = -1;
