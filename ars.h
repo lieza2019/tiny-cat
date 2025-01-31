@@ -44,11 +44,7 @@ typedef enum ars_events_over_sp {
 } ARS_SP_EVENTS;
 typedef struct ars_event_on_sp {
   STOPPING_POINT_CODE sp;
-#if 0
-  ARS_SP_EVENTS detail;
-#else
   ARS_SP_EVENTS situation;
-#endif
 } ARS_EVENT_ON_SP, *ARS_EVENT_ON_SP_PTR;
 
 typedef enum offset_time_to_fire {

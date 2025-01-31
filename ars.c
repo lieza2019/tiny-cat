@@ -1028,18 +1028,18 @@ static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PT
   assert( pJ );
   assert( pC );
   assert( pC->checked );
-  SCHEDULED_COMMAND_PTR *pp = NULL;
   
-  pp = &pJ->past_commands;
-  assert( pp );
-  while( *pp ) {
-    assert( *pp );
-    pp = &(*pp)->ln.journey.past.pNext;
-    assert( pp );
+  if( ! pJ->past_commands.phead ) {
+    assert( ! pJ->past_commands.plast );
+    pC->ln.journey.past.pPrev = NULL;
+    pJ->past_commands.phead = pC;
+    pJ->past_commands.plast = pJ->past_commands.phead;    
+  } else {
+    assert( pJ->past_commands.plast );
+    pC->ln.journey.past.pPrev = pJ->past_commands.plast;
+    (pJ->past_commands.plast)->ln.journey.past.pNext = pC;
+    pJ->past_commands.plast = pC;
   }
-  assert( pp );
-  assert( ! *pp );
-  *pp = pC;  
   pC->ln.journey.past.pNext = NULL;
   
   if( pJ->scheduled_commands.pNext == pC )
@@ -1324,8 +1324,12 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 		r = pC->ln.journey.planned.pNext;
 	      }
 	    } else {
-	      if( pJ->past_commands ) {
-		switch( pJ->past_commands->cmd ) {
+	      SCHEDULED_COMMAND_PTR p = pJ->past_commands.plast;
+	    try_again:
+	      if( p ) {
+		assert( pJ->past_commands.phead );
+		assert( p );
+		switch( p->cmd ) {
 		case ARS_SCHEDULED_DEPT:
 		case ARS_SCHEDULED_SKIP:
 		  goto acc_and_chk_rorel;
@@ -1337,8 +1341,9 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 		  break;
 		case ARS_CMD_DONT_CURE:
 #if 0 // ***** for debugging.
-		  *pres = ARS_INCONSISTENT_ROUTEREL;
-		  break;
+		  //*pres = ARS_INCONSISTENT_ROUTEREL;
+		  p = p->ln.journey.past.pPrev;
+		  goto try_again;
 #else
 		  // fall thru.
 #endif

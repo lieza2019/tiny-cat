@@ -656,7 +656,7 @@ int main ( void ) {
 		printf( "{" );
 		{
 		  BOOL first = TRUE;
-		  SCHEDULED_COMMAND_PTR p = pJ->past_commands;
+		  SCHEDULED_COMMAND_PTR p = pJ->past_commands.phead;
 		  while( p ) {
 		    assert( p );
 		    if( !first )

@@ -62,6 +62,7 @@ typedef struct scheduled_command {
 	struct scheduled_command *pNext;
       } planned;
       struct {
+	struct scheduled_command *pPrev;
 	struct scheduled_command *pNext;
       } past;
       struct scheduled_command *pSucc;
@@ -84,7 +85,10 @@ typedef struct journey {
     SCHEDULED_COMMAND_PTR pNext;
   } scheduled_commands;
   ARS_ASSOC_TIME finish_time;
-  SCHEDULED_COMMAND_PTR past_commands;
+  struct {
+    SCHEDULED_COMMAND_PTR phead;
+    SCHEDULED_COMMAND_PTR plast;
+  } past_commands;
   TINY_TRAIN_STATE_PTR ptrain_ctrl;
 } JOURNEY, *JOURNEY_PTR;
 typedef const struct journey *JOURNEY_C_PTR;

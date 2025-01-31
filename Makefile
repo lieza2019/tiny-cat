@@ -59,7 +59,7 @@ surveill.o : generic.h misc.h sparcs.h cbi.h interlock.h surveill.h surveill.c
 ars.o : generic.h misc.h sparcs.h cbi.h ars.h surveill.h timetable.h ars.c
 cbtc.o : generic.h misc.h cbtc.h interlock.h sparcs.h cbtc.c
 timetable.o : generic.h misc.h timetable.h timetable.c
-main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h srv.h main.c
+main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h surveill.h timetable.h srv.h main.c
 
 .PHONY : clean
 clean:
