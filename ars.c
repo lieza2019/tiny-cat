@@ -706,7 +706,7 @@ static int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_C
 	  else
 	    r = 0;
 	  break;
-	case ARS_CMD_DONT_CURE:
+	case ARS_CMD_NOP:
 #if 0 // ***** for debugging.
 	  r = 1;
 	  break;
@@ -828,7 +828,7 @@ static int ars_chk_dstschedule ( SCHEDULE_AT_SP sch_dst[END_OF_SPs], SCHEDULED_C
 	  r = 0;
 	}
 	break;
-      case ARS_CMD_DONT_CURE:
+      case ARS_CMD_NOP:
 #if 0 // ***** for debugging.
 	pcmd_next = pcmd_next->ln.sp_sch.pNext;
 	continue;
@@ -897,7 +897,7 @@ static BOOL pick_depcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dep, SCH
     case END_OF_SCHEDULED_CMDS:
       *pres = ARS_INCONSISTENT_ROUTESET; // see the above case of ARS_SCHEDULED_ROUTESET.
       break;
-    case ARS_CMD_DONT_CURE:
+    case ARS_CMD_NOP:
 #if 0 // ***** for debugging.
       p = p->ln.journey.planned.pNext;
       goto next_cmd;
@@ -1011,7 +1011,7 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
       assert( ! p->ln.journey.planned.pNext );
       assert( !r );
       break;
-    case ARS_CMD_DONT_CURE:
+    case ARS_CMD_NOP:
 #if 0 // ***** for debugging.
       ;
 #else
@@ -1339,7 +1339,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 		case END_OF_SCHEDULED_CMDS:
 		  *pres = ARS_INCONSISTENT_ROUTEREL;
 		  break;
-		case ARS_CMD_DONT_CURE:
+		case ARS_CMD_NOP:
 #if 0 // ***** for debugging.
 		  //*pres = ARS_INCONSISTENT_ROUTEREL;
 		  p = p->ln.journey.past.pPrev;
@@ -1432,7 +1432,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 	case END_OF_SCHEDULED_CMDS:
 	  pJ->scheduled_commands.pNext = pC;
 	  return pC;
-	case ARS_CMD_DONT_CURE:
+	case ARS_CMD_NOP:
 #if 0 // ***** for debugging.
 	  r = pC->ln.journey.planned.pNext;
 	  break;

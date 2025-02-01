@@ -33,7 +33,11 @@ typedef enum ars_scheduled_cmd {
   ARS_SCHEDULED_DEPT,
   ARS_SCHEDULED_SKIP,
   END_OF_SCHEDULED_CMDS,
+#if 0
   ARS_CMD_DONT_CURE
+#else
+  ARS_CMD_NOP
+#endif
 } ARS_SCHEDULED_CMD;
 
 typedef enum ars_events_over_sp {
