@@ -8,6 +8,7 @@
 #include "train_cmd.h"
 #include "train_info.h"
 
+#if 0 // *****
 typedef enum SC_ID {
   SC801,
   SC802,
@@ -33,6 +34,7 @@ typedef enum SC_ID {
   END_OF_SCs
 } SC_ID;
 #define SC_ID_CONV_2_INT( sc_id ) ((sc_id) + 801)
+#endif
 
 #include "train_ctrl.h"
 

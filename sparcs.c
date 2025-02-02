@@ -78,16 +78,42 @@ SC_STAT_INFOSET_PTR which_SC_from_train_info ( TRAIN_INFO_ENTRY_PTR pTi ) {
   return &SC_stat_infos[i];
 }
 
-static int which_SC_zones( SC_ID zones[], int front_blk, int back_blk ) {  
+static int which_SC_zones ( SC_ID zones[], int front_blk, int back_blk ) {  
   assert( zones );
   //assert( front_blk > 0 );
   //assert( back_blk > 0 );
   int r = -1;
-  
+#if 0 // *****
   //zones[0] = SC817; zones[1] = SC818;
   zones[0] = SC802;
   zones[1] = SC802;
   r = 1;
+#else
+  CBTC_BLOCK_PTR pBf = lookup_cbtc_block_prof( front_blk );
+  CBTC_BLOCK_PTR pBb = lookup_cbtc_block_prof( back_blk );
+  //assert( pBf );
+  //assert( pBb );
+  zones[0] = END_OF_SCs;
+  zones[1] = END_OF_SCs;
+  if( pBf ) {
+    if( pBb ) {
+      zones[0] = pBf->zone;
+      zones[1] = pBb->zone;
+      r = (zones[0] != zones[1]) ? 2 : 1;
+    } else {
+      zones[0] = pBf->zone;
+      r = 1;
+    }
+  } else if( pBb ) {
+    zones[0] = pBb->zone;
+    r = 1;
+  } else {
+    r = 0;
+    //zones[0] = SC802; // *****
+    //r = 1; // *****
+  }
+  printf( "(r, (pBf, pBb), (%d, %d), (zone[0], zone[1])): (%d, (%d, %d))\n", r, (pBf != NULL), (pBb != NULL), SC_ID_CONV_2_INT(zones[0]), SC_ID_CONV_2_INT(zones[1]) ); // *****
+#endif  
   return r;
 }
 

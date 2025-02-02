@@ -22,6 +22,7 @@ typedef struct block {
   const unsigned short block_name;
   const CBTC_BLOCK_ID virt_block_name;
   const char *virt_blkname_str;
+  const SC_ID zone;
   struct {
     int num_morphs;
     struct {
@@ -60,7 +61,6 @@ typedef struct block {
     void *ptrains;
     void *edges[MAX_ADJACENT_BLKS];
   } residents;
-  
   struct {
     BOOL msc_flg1;
     BOOL msc_flg2;
