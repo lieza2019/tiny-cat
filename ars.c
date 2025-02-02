@@ -192,23 +192,30 @@ static int ars_chk_trgtime ( OFFSET_TIME_TO_FIRE offset_kind, double *pdif, int 
   return r;
 }
 
-static SCHEDULED_COMMAND_C_PTR next_arrcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_C_PTR pC ) {
+static SCHEDULED_COMMAND_C_PTR next_arrcmd ( ARS_REASONS *pres, BOOL *pss, SCHEDULED_COMMAND_C_PTR pC ) {
   assert( pres );
   assert( pC );
-  SCHEDULED_COMMAND_C_PTR p = NULL;
+  assert( pC->cmd == ARS_SCHEDULED_DEPT );
+  const STOPPING_POINT_CODE org_sp = pC->attr.sch_dept.dep_sp;
   
+  SCHEDULED_COMMAND_C_PTR p = pC->ln.journey.planned.pNext;
   *pres = END_OF_ARS_REASONS;
-  p = pC;
+  *pss = FALSE;
   while( p ) {
-    if( p->cmd == ARS_SCHEDULED_ARRIVAL )
+    if( p->cmd == END_OF_SCHEDULED_CMDS )
       break;
-    else if( p->cmd == END_OF_SCHEDULED_CMDS )
+    else if( p->cmd == ARS_SCHEDULED_ARRIVAL ) {
+      if( p->attr.sch_arriv.arr_sp == org_sp )
+	*pres = ARS_INCONSISTENT_ARRIVAL;
       break;
-    else if( p->cmd == ARS_SCHEDULED_DEPT ) {
+    } else if( p->cmd == ARS_SCHEDULED_DEPT ) {
       *pres = ARS_INCONSISTENT_DEPT;
       break;
-    } else
+    } else {
+      if( p->cmd == ARS_SCHEDULED_SKIP )
+	*pss = TRUE;
       p = p->ln.journey.planned.pNext; // includng the case of ARS_SCHEDULED_SKIP.
+    }
   }
   if( !p ) {
     *pres = ARS_NO_DEADEND_CMD;
@@ -237,17 +244,20 @@ ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVEN
 	    if( pR ) {
 	      if( pR->ars_ctrl.app ) {
 		ARS_REASONS res_next_arr = END_OF_ARS_REASONS;
+		BOOL ss = FALSE;
 		CBTC_BLOCK_C_PTR pdst = NULL;
 		SCHEDULED_COMMAND_C_PTR parr_next = NULL;
-		parr_next = next_arrcmd( &res_next_arr, pC ); // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.
+		// this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.      
+		parr_next = next_arrcmd( &res_next_arr, &ss, pC );
 		assert( parr_next );
 		//printf( "result of next_arrcmd: %s\n", (res_next_arr != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_next_arr] : "no_claims") ); // *****
 		r = res_next_arr;
-		if( parr_next->cmd == ARS_SCHEDULED_ARRIVAL )
+		if( (parr_next->cmd == ARS_SCHEDULED_ARRIVAL) && (res_next_arr == END_OF_ARS_REASONS) )
 		  pdst = lookup_block_of_sp( parr_next->attr.sch_arriv.arr_sp );
 		else
 		  pdst = pR->ars_ctrl.trip_info.dst.pblk;
 		if( pdst ) {
+		  pT->skip_next_stop = ss;
 		  pT->dest_blockID = pdst->block_name;
 		  {
 		    char *route_SoHR = NULL;
