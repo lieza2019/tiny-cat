@@ -65,6 +65,7 @@ SC_CTRL_CMDSET_PTR which_SC_from_train_cmd ( TRAIN_COMMAND_ENTRY_PTR pTc ) {
   return &SC_ctrl_cmds[i];
 }
 
+#if 0 // *****
 SC_STAT_INFOSET_PTR which_SC_from_train_info ( TRAIN_INFO_ENTRY_PTR pTi ) {
   assert( pTi );
   int i;
@@ -77,6 +78,24 @@ SC_STAT_INFOSET_PTR which_SC_from_train_info ( TRAIN_INFO_ENTRY_PTR pTi ) {
   assert( i < END_OF_SCs );
   return &SC_stat_infos[i];
 }
+#else
+int which_SC_from_train_info ( SC_STAT_INFOSET_PTR pstats[], TRAIN_INFO_ENTRY_PTR pTi ) {
+  assert( pstats );
+  assert( pTi );
+  int r = 0;
+  
+  int i;
+  for( i = 0; i < END_OF_SCs; i++ ) {
+    const void *lim_inf = (void *)&SC_stat_infos[i];
+    const void *lim_sup = lim_inf + sizeof(SC_STAT_INFOSET);
+    if( ((void *)pTi > lim_inf) && ((void *)pTi < lim_sup) ) {
+      pstats[i] = &SC_stat_infos[i];
+      r++;
+    }
+  }
+  return r;
+}
+#endif
 
 static int which_SC_zones ( SC_ID zones[], int front_blk, int back_blk ) {  
   assert( zones );
@@ -109,8 +128,6 @@ static int which_SC_zones ( SC_ID zones[], int front_blk, int back_blk ) {
     r = 1;
   } else {
     r = 0;
-    //zones[0] = SC802; // *****
-    //r = 1; // *****
   }
   printf( "(r, (pBf, pBb), (%d, %d), (zone[0], zone[1])): (%d, (%d, %d))\n", r, (pBf != NULL), (pBb != NULL), SC_ID_CONV_2_INT(zones[0]), SC_ID_CONV_2_INT(zones[1]) ); // *****
 #endif  
@@ -184,7 +201,8 @@ int alloc_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR
     int i;
     for( i = 0; i < n; i++ ) {
       assert( zones[i] != END_OF_SCs );
-      if( !(es[i] = lkup_train_cmd( pTs, &SC_ctrl_cmds[zones[i]], rakeID )) ) {
+      es[i] = lkup_train_cmd( pTs, &SC_ctrl_cmds[zones[i]], rakeID );
+      if( !es[i] ) {
 	assert( standby_train_cmds.pptl );
 	if( !standby_train_cmds.phd ) {
 	  standby_train_cmds.phd = pTs;
@@ -194,7 +212,6 @@ int alloc_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR
       } else
 	r++;
     }
-    assert( r == n );
   } else {
     errorF( "%s", "failed to allocate train command entry to the train:%03d, for invalid Occupied Block(forward/back).\n" );
     r = -1;
