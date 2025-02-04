@@ -9,6 +9,32 @@
 #include "surveill.h"
 #include "timetable.h"
 
+char *cnv2abb_ars_command ( char *abb, ARS_SCHEDULED_CMD cmd ) {
+  const int nchrs = 5;
+  char *r = NULL;
+  int i;
+  const struct {
+    ARS_SCHEDULED_CMD cmd;
+    char *abb
+  } lkup[] = {
+    {ARS_SCHEDULED_ROUTESET, "Set"},
+    {ARS_SCHEDULED_ROUTEREL, "Rel"},
+    {ARS_SCHEDULED_ARRIVAL, "Arr"},
+    {ARS_SCHEDULED_DEPT, "Dep"},
+    {ARS_SCHEDULED_SKIP, "SS"},
+    {END_OF_SCHEDULED_CMDS, "Fin"},
+    {ARS_CMD_NOP, "Nop"},    
+  };
+  for( i = 0; i <= ARS_CMD_NOP; i++ ) {
+    if( cmd == lkup[i].cmd ) {
+      strncpy( abb, lkup[i].abb, nchrs );
+      r = abb;
+      break;
+    }
+  }
+  return r;
+}
+
 const char *cnv2str_ars_reasons[] = {
   "ARS_NO_RAKE_ASGNED",
   "ARS_NO_ROUTESET_CMD",
@@ -1023,7 +1049,8 @@ static BOOL pick_dstcmd ( ARS_REASONS *pres, SCHEDULED_COMMAND_PTR *ppC_dst, SCH
       break;
     case ARS_CMD_NOP:
 #if 0 // ***** for debugging.
-      ;
+      p = p->ln.journey.planned.pNext;
+      break;
 #else
       assert( FALSE );
 #endif

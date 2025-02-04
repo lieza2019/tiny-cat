@@ -651,22 +651,36 @@ int main ( void ) {
 		r = ars_routectl_on_journey( &online_timetable, pJ );
 		//assert( r != ARS_ROUTE_CONTROLLED_NORMALLY ); // *****
 		ars_schcmd_ack( &res, pJ, &ev );
-		printf( "(jid, next_cmd, past_cmds): (%d, %d, ", pJ->jid, pJ->scheduled_commands.pNext->cmd );
-		printf( "{" );
 		{
-		  BOOL first = TRUE;
-		  SCHEDULED_COMMAND_PTR p = pJ->past_commands.phead;
-		  while( p ) {
-		    assert( p );
-		    if( !first )
-		      printf( ", " );
-		    printf( "%d", p->cmd );
-		    p = p->ln.journey.past.pNext;
-		    first = FALSE;
+		  char cmd_name[6] = "";
+		  char *s = NULL;
+		  s = cnv2abb_ars_command( cmd_name, pJ->scheduled_commands.pNext->cmd );
+		  if( !s ) {
+		    strncpy( cmd_name, "???", 5 );
+		    s = cmd_name;
 		  }
+		  printf( "(jid, next_cmd, past_cmds): (%d, %s, ", pJ->jid, s );
+		  printf( "{" );
+		  {
+		    BOOL first = TRUE;
+		    SCHEDULED_COMMAND_PTR p = pJ->past_commands.phead;
+		    while( p ) {
+		      assert( p );
+		      if( !first )
+			printf( ", " );
+		      s = cnv2abb_ars_command(cmd_name,p->cmd);
+		      if( !s ) {
+			strncpy( cmd_name, "???", 5 );
+			s = cmd_name;
+		      }
+		      printf( "%s", s );
+		      p = p->ln.journey.past.pNext;
+		      first = FALSE;
+		    }
+		  }
+		  printf( "})\n" );
+		  //assert( FALSE ); // *****
 		}
-		printf( "})\n" );
-		//assert( FALSE ); // *****
 	      }
 #endif
 #if 0

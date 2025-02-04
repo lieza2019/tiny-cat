@@ -35,6 +35,7 @@ typedef enum ars_scheduled_cmd {
   END_OF_SCHEDULED_CMDS,
   ARS_CMD_NOP
 } ARS_SCHEDULED_CMD;
+extern char *cnv2abb_ars_command ( char *abb, ARS_SCHEDULED_CMD cmd );
 
 typedef enum ars_events_over_sp {
   ARS_DOCK_DETECTED,
