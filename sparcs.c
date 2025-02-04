@@ -65,7 +65,7 @@ SC_CTRL_CMDSET_PTR which_SC_from_train_cmd ( TRAIN_COMMAND_ENTRY_PTR pTc ) {
   return &SC_ctrl_cmds[i];
 }
 
-#if 0 // *****
+#if 1 // *****
 SC_STAT_INFOSET_PTR which_SC_from_train_info ( TRAIN_INFO_ENTRY_PTR pTi ) {
   assert( pTi );
   int i;

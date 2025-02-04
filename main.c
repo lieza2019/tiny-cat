@@ -168,34 +168,7 @@ static int show_tracking_train_stat ( FILE *fp_out ) {
 	pTI = (TRAIN_INFO_ENTRY_PTR)conslt_cbtc_state( &trains_tracking[i], CBTC_TRAIN_INFORMATION, NULL, (void *)&TI, sizeof(TRAIN_INFO_ENTRY) );
 	if( pTI ) {
 	  assert( pTI == &TI );
-	  //assert( trains_tracking[i].rakeID != (int)TRAIN_INFO_RAKEID(TI) );
-#if 0
 	  fprintf( fp_out, "%s:\n", (which_SC_from_train_info(trains_tracking[i].pTI))->sc_name );
-#else
-	  SC_STAT_INFOSET_PTR pSs[END_OF_SCs] = {};
-	  BOOL begin = TRUE;
-	  int nscs = -1;
-	  nscs = which_SC_from_train_info( pSs, trains_tracking[i].pTI );
-	  assert( nscs > 0 );
-	  while( nscs > 0 ) {
-	    int j = 0;
-	    while( j < END_OF_SCs ) {
-	      if( pSs[j] )
-		break;
-	      j++;
-	    }
-	    assert( j < END_OF_SCs );
-	    assert( pSs[j] );
-	    if( begin )
-	      fprintf( fp_out, "%s", pSs[j]->sc_name );
-	    else
-	      fprintf( fp_out, ", %s", pSs[j]->sc_name );
-	    begin = FALSE;
-	    pSs[j] = NULL;
-	    nscs--;
-	  }
-	  fprintf( fp_out, ":\n" );
-#endif
 	  diag_train_info( fp_out, &TI );
 	  fprintf( fp_out, "\n" );
 	  r++;

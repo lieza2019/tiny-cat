@@ -773,34 +773,15 @@ static int enum_alive_rakes ( int (*rakeIDs)[TRAIN_INFO_ENTRIES_NUM + 1] ) {
       if( ! SC_ctrl_cmds[sc].train_command.attribs.u.train_cmd.expired[i] ) {
 	TRAIN_INFO_ENTRY_PTR pE = (SC_ctrl_cmds[sc].train_command.attribs.u.train_cmd.pTrain_stat[i])->pTI;
 	assert( pE );
-#if 0 // *****
-	SC_STAT_INFOSET_PTR pSi = which_SC_from_train_info( pE );
-	assert( pSi );
-#else
-	SC_STAT_INFOSET_PTR pSs[END_OF_SCs] = {};
-	int nscs = -1;
-	nscs = which_SC_from_train_info( pSs, pE );
-	assert( nscs > 0 );
-#if 1 // *****
-	if( sc == SC801 )
-	  printf( "SC801 HIT!\n" );
-#endif
-	assert( pSs[sc] );
-#endif	
-	int j;
-	for( j = 0; j < END_OF_SCs; j++ )
-#if 0 // *****
-	  if( ! strncmp( lkup[j].sc_name, pSi->sc_name, strlen("SC8xx") ) )
-#else
-	  if( ! strncmp( lkup[j].sc_name, pSs[sc]->sc_name, strlen("SC8xx") ) )
-#endif
-	    break;
-	assert( j < END_OF_SCs );
-	assert( sc == lkup[j].sc_id );
-	rakeIDs[lkup[j].sc_id][lkup[j].num_of_rakes] = (int)TRAIN_INFO_RAKEID( *pE );
-	lkup[j].num_of_rakes++;
-	rakeIDs[lkup[j].sc_id][lkup[j].num_of_rakes] = -1;
-	cnt++;
+	if( pE ) {
+	  assert( TRAIN_INFO_RAKEID( *pE ) != 0 );
+	  if( TRAIN_INFO_RAKEID( *pE ) != 0 ) {
+	    rakeIDs[sc][lkup[sc].num_of_rakes] = (int)TRAIN_INFO_RAKEID( *pE );
+	    lkup[sc].num_of_rakes++;
+	    rakeIDs[sc][lkup[sc].num_of_rakes] = -1;
+	    cnt++;
+	  }
+	}
       }
     }
   }

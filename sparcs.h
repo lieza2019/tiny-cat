@@ -148,7 +148,7 @@ extern SC_STAT_INFOSET SC_stat_infos[END_OF_SCs];
 extern STANDBY_TRAIN_CMDS standby_train_cmds;
 
 extern SC_CTRL_CMDSET_PTR which_SC_from_train_cmd ( TRAIN_COMMAND_ENTRY_PTR pTc );
-extern int which_SC_from_train_info ( SC_STAT_INFOSET_PTR pstats[], TRAIN_INFO_ENTRY_PTR pTi );
+extern SC_STAT_INFOSET_PTR which_SC_from_train_info ( TRAIN_INFO_ENTRY_PTR pTi );
 extern int alloc_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR pTs, int rakeID, int front_blk, int back_blk );
 extern int standup_train_cmd_entries ( TRAIN_COMMAND_ENTRY_PTR es[], TINY_TRAIN_STATE_PTR pTs, int rakeID, int front_blk, int back_blk );
 extern SC_CTRL_CMDSET_PTR emit_train_cmd( TINY_SOCK_PTR pS, SC_ID sc_id );
