@@ -774,7 +774,7 @@ static int enum_alive_rakes ( int (*rakeIDs)[TRAIN_INFO_ENTRIES_NUM + 1] ) {
 	TRAIN_INFO_ENTRY_PTR pE = (SC_ctrl_cmds[sc].train_command.attribs.u.train_cmd.pTrain_stat[i])->pTI;
 	assert( pE );
 	if( pE ) {
-	  assert( TRAIN_INFO_RAKEID( *pE ) != 0 );
+	  //assert( TRAIN_INFO_RAKEID( *pE ) != 0 );
 	  if( TRAIN_INFO_RAKEID( *pE ) != 0 ) {
 	    rakeIDs[sc][lkup[sc].num_of_rakes] = (int)TRAIN_INFO_RAKEID( *pE );
 	    lkup[sc].num_of_rakes++;
@@ -862,8 +862,7 @@ static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of
       }
       if( found ) {
 	assert( pE == ++pEp );
-      }
-      else {
+      } else {
 	printf( "(sc_id, rakeID) = (%d, %d)\n", SC_ID_CONV_2_INT(sc_id), rID ); // ***** for debugging.
 	assert( FALSE );
       }

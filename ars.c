@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <pthread.h>
 #include "generic.h"
 #include "misc.h"
 #include "sparcs.h"
@@ -273,60 +274,76 @@ ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVEN
 		BOOL ss = FALSE;
 		CBTC_BLOCK_C_PTR pdst = NULL;
 		SCHEDULED_COMMAND_C_PTR parr_next = NULL;
-		// this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.      
-		parr_next = next_arrcmd( &res_next_arr, &ss, pC );
-		assert( parr_next );
-		//printf( "result of next_arrcmd: %s\n", (res_next_arr != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_next_arr] : "no_claims") ); // *****
-		r = res_next_arr;
-		if( (parr_next->cmd == ARS_SCHEDULED_ARRIVAL) && (res_next_arr == END_OF_ARS_REASONS) )
-		  pdst = lookup_block_of_sp( parr_next->attr.sch_arriv.arr_sp );
-		else
-		  pdst = pR->ars_ctrl.trip_info.dst.pblk;
-		if( pdst ) {
-		  pT->skip_next_stop = ss;
-		  pT->dest_blockID = pdst->block_name;
-		  {
-		    char *route_SoHR = NULL;
-		    char raw[CBI_STAT_IDENT_LEN + 1];
-		    int stat = -1;
-		    strncpy( raw, cnv2str_il_sym( pR->sig_pair.org.sig ), CBI_STAT_IDENT_LEN );
-		    route_SoHR = mangl2_So_Sxxxy_HyR( raw );
+		int r_mutex = -1;
+		r_mutex = pthread_mutex_lock( &cbtc_ctrl_cmds_mutex );
+		if( r_mutex ) {
+		  assert( FALSE );
+		} else {  
+		  // this fragment for CBTC control emission, should be moved to the functions dedicated to manage CBTC command controlling.      
+		  parr_next = next_arrcmd( &res_next_arr, &ss, pC );
+		  assert( parr_next );
+		  //printf( "result of next_arrcmd: %s\n", (res_next_arr != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_next_arr] : "no_claims") ); // *****
+		  r = res_next_arr;
+		  if( (parr_next->cmd == ARS_SCHEDULED_ARRIVAL) && (res_next_arr == END_OF_ARS_REASONS) )
+		    pdst = lookup_block_of_sp( parr_next->attr.sch_arriv.arr_sp );
+		  else
+		    pdst = pR->ars_ctrl.trip_info.dst.pblk;
+		  if( pdst ) {
+		    //pT->skip_next_stop = ss; // *****
+		    change_train_state_skip_next_stop( pT, TRUE, TRUE );
+		    //pT->dest_blockID = pdst->block_name; // *****
+		    change_train_state_dest_blockID( pT, pdst->block_name, TRUE );
 		    {
-		      OC_ID oc_id;
-		      CBI_STAT_KIND kind;
-		      stat = conslt_il_state( &oc_id, &kind, route_SoHR );
-		    }
-		    if( stat > 0) {
-		      if( pC->attr.sch_dept.dep_dir.L )
-			pT->dep_dir = MD_UP_DIR;
-		      else if( pC->attr.sch_dept.dep_dir.R )
-			pT->dep_dir = MD_DOWN_DIR;
-		      else
-			pT->dep_dir = MD_UNKNOWN;
-		      pT->ATO_dept_cmd = TRUE;
-		      r = ARS_NOW_ATODEPT_EMISSION;;
-		    } else {
-		      assert( stat <= 0 );
-		      if( stat == 0 )
-			r = ARS_NO_ROUTE_OPEN;
-		      else {
-			assert( stat < 0 );
-			switch( stat ) {
-			case -1:
-			  r = ARS_MUTEX_BLOCKED;
-			  break;
-			case -2:
-			  r = ARS_FOUND_ERROROUS_INTERLOCKDEF;
-			  break;
-			default:
-			  assert( FALSE );
+		      char *route_SoHR = NULL;
+		      char raw[CBI_STAT_IDENT_LEN + 1];
+		      int stat = -1;
+		      strncpy( raw, cnv2str_il_sym( pR->sig_pair.org.sig ), CBI_STAT_IDENT_LEN );
+		      route_SoHR = mangl2_So_Sxxxy_HyR( raw );
+		      {
+			OC_ID oc_id;
+			CBI_STAT_KIND kind;
+			stat = conslt_il_state( &oc_id, &kind, route_SoHR );
+		      }
+		      if( stat > 0) {
+			if( pC->attr.sch_dept.dep_dir.L )
+			  //pT->dep_dir = MD_UP_DIR; // *****
+			  change_train_state_dep_dir( pT, MD_UP_DIR, TRUE );
+			else if( pC->attr.sch_dept.dep_dir.R )
+			  //pT->dep_dir = MD_DOWN_DIR; // *****
+			  change_train_state_dep_dir( pT, MD_DOWN_DIR, TRUE );
+			else
+			  //pT->dep_dir = MD_UNKNOWN; // *****
+			  change_train_state_dep_dir( pT, MD_UNKNOWN, TRUE );
+			//pT->ATO_dept_cmd = TRUE; // *****
+			change_train_state_ATO_dept_cmd( pT, TRUE, TRUE );
+			r = ARS_NOW_ATODEPT_EMISSION;;
+		      } else {
+			assert( stat <= 0 );
+			if( stat == 0 )
+			  r = ARS_NO_ROUTE_OPEN;
+			else {
+			  assert( stat < 0 );
+			  switch( stat ) {
+			  case -1:
+			    r = ARS_MUTEX_BLOCKED;
+			    break;
+			  case -2:
+			    r = ARS_FOUND_ERROROUS_INTERLOCKDEF;
+			    break;
+			  default:
+			    assert( FALSE );
+			  }
 			}
 		      }
 		    }
+		  } else {
+		    //pT->dest_blockID = 0; // *****
+		    change_train_state_dest_blockID( pT, 0, TRUE );
+		    r = ARS_INCONSISTENT_DEPT;
 		  }
-		} else {
-		  pT->dest_blockID = 0;
-		  r = ARS_INCONSISTENT_DEPT;
+		  r_mutex = -1;
+		  r_mutex = pthread_mutex_unlock( &cbtc_ctrl_cmds_mutex );
+		  assert( !r_mutex );
 		}
 	      } else
 		r = ARS_ILLEGAL_CMD_DEPT;
@@ -1446,7 +1463,8 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 		pC->checked = TRUE;
 		make_it_past( pJ, pC );
 		if( pev_sp->situation == ARS_LEAVE_DETECTED )
-		  pT->ATO_dept_cmd = FALSE;
+		  //pT->ATO_dept_cmd = FALSE; // *****
+		  change_train_state_ATO_dept_cmd( pT, FALSE, FALSE );
 		r = pC->ln.journey.planned.pNext;
 	      }
 	    }
