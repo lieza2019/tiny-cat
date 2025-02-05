@@ -58,13 +58,15 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_SP_EVENTS *pev_sp, DOCK_DETECT_DIR
     assert( pI == &TI );
     const unsigned short occblk_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI );
     const unsigned short occblk_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI );
+    CBTC_BLOCK_C_PTR pB_forward = NULL;
+    CBTC_BLOCK_C_PTR pB_back = NULL;
     if( (occblk_forward > 0) && (occblk_back > 0) ) {
-      CBTC_BLOCK_C_PTR pB_forward = lookup_cbtc_block_prof( occblk_forward );
-      CBTC_BLOCK_C_PTR pB_back = lookup_cbtc_block_prof( occblk_back );
+      pB_forward = lookup_cbtc_block_prof( occblk_forward );
+      pB_back = lookup_cbtc_block_prof( occblk_back );
       if( mode == DOCK_DETECT_MINOR ) {
 	assert( pT->stop_detected != SP_NONSENS );
 	r = pT->stop_detected;
-	goto exam_for_bak_blk;
+	goto chk4_minor;
       } else {
 	assert( mode == DOCK_DETECT_MAJOR );
 	if( (pB_forward != NULL) && (pB_back != NULL) ) {
@@ -103,7 +105,7 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_SP_EVENTS *pev_sp, DOCK_DETECT_DIR
 	  }
 	} else {
 	  assert( !(pB_forward && pB_back) );
-	exam_for_bak_blk:
+	chk4_minor:
 	  if( !pB_forward ) {
 	    if( !pB_back ) {
 	      assert( !pB_forward );
@@ -224,6 +226,20 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_SP_EVENTS *pev_sp, DOCK_DETECT_DIR
 	  assert( FALSE );
 	}
       }
+    } else {
+      assert( r == SP_NONSENS );
+      if( occblk_forward > 0 ) {
+	assert( occblk_back == 0 );
+	pB_forward = lookup_cbtc_block_prof( occblk_forward );
+	assert( !pB_back );
+      } else {
+	assert( occblk_forward == 0 );
+	assert( !pB_forward );
+	assert( !pB_back );
+	if( occblk_back > 0 )
+	  pB_back = lookup_cbtc_block_prof( occblk_back );
+      }
+      goto chk4_minor;
     }
   } else {
     assert( pT );
@@ -252,9 +268,11 @@ STOPPING_POINT_CODE detect_train_skip ( ARS_SP_EVENTS *pev_sp, TINY_TRAIN_STATE_
 	  const STOPPING_POINT_CODE sp_prev = pB_forward_prev->sp.sp_code;
 	  const unsigned short occblk_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI );
 	  const unsigned short occblk_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI );
+	  CBTC_BLOCK_C_PTR pB_forward = NULL;
+	  CBTC_BLOCK_C_PTR pB_back = NULL;
 	  if( (occblk_forward > 0) && (occblk_back > 0) ) {
-	    CBTC_BLOCK_C_PTR pB_forward = lookup_cbtc_block_prof( occblk_forward );
-	    CBTC_BLOCK_C_PTR pB_back = lookup_cbtc_block_prof( occblk_back );
+	    pB_forward = lookup_cbtc_block_prof( occblk_forward );
+	    pB_back = lookup_cbtc_block_prof( occblk_back );
 	    if( (pB_forward != NULL) && (pB_back != NULL) ) {
 	      if( pB_back->sp.has_sp && (pB_back->sp.sp_code == sp_prev) ) {
 		if( (pB_forward_prev->block_name != pB_forward->block_name) && !(pB_forward->sp.has_sp) ) {
@@ -269,6 +287,7 @@ STOPPING_POINT_CODE detect_train_skip ( ARS_SP_EVENTS *pev_sp, TINY_TRAIN_STATE_
 	      }
 	    } else {
 	      assert( !(pB_forward && pB_back) );
+	    ill_blks:
 	      if( !pB_forward ) {
 		if( !pB_back ) {
 		  assert( !pB_forward );
@@ -286,6 +305,19 @@ STOPPING_POINT_CODE detect_train_skip ( ARS_SP_EVENTS *pev_sp, TINY_TRAIN_STATE_
 		errorF( "invalid occupied block (back): %d, detected in skipping-detector.\n", occblk_back );
 	      }
 	    }
+	  } else {
+	    if( occblk_forward > 0 ) {
+	      assert( occblk_back == 0 );
+	      pB_forward = lookup_cbtc_block_prof( occblk_forward );
+	      assert( !pB_back );
+	    } else {
+	      assert( occblk_forward == 0 );
+	      assert( !pB_forward );
+	      assert( !pB_back );
+	      if( occblk_back > 0 )
+		pB_back = lookup_cbtc_block_prof( occblk_back );
+	    }
+	    goto ill_blks;
 	  }
 	}
       }
