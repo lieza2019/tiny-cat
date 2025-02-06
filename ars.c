@@ -112,10 +112,16 @@ STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TI
     pdetects->sp = pT->stop_detected;
     pdetects->situation = ARS_DOCK_DETECTED;
     hit_sp = detect_train_docked( &pdetects->situation, DOCK_DETECT_MINOR, pT );
-    if( hit_sp == SP_NONSENS ) {
-      assert( pdetects->situation != ARS_DOCK_DETECTED );
-      pdetects->sp = SP_NONSENS;
-      pT->stop_detected = SP_NONSENS;
+    if( hit_sp == SP_NONSENS ) {      
+      /* Accounting on the irregular case, detect_train_docked() may return SP_NONSENS, with the condition that
+	 both occupied blocks of front & back has been 0, in the situation the train been in the platform and
+	 still with ARS_DOCK_DETECTED.
+      */
+      //assert( pdetects->situation != ARS_DOCK_DETECTED ); // this assertion seems insufficient, as below.      
+      if( pdetects->situation != ARS_DOCK_DETECTED ) {
+	pdetects->sp = SP_NONSENS;
+	pT->stop_detected = SP_NONSENS;
+      }
     } else {
       if( pdetects->situation == ARS_LEAVE_DETECTED ) {
 	pdetects->sp = hit_sp;

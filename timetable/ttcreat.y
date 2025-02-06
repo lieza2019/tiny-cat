@@ -9,15 +9,20 @@
 %union {
   struct {
     KIND kind;
-    char *name;
-  } signal;
-  char *sp;
+    char name[MAX_ROUTENAME_LEN];
+  } rout;
+  char sp[MAX_SPNAME_LEN];
 }
-%token <signal> MAIN_SIGNAL VIRT_SIGNAL
-%token SP
+%token <rout> ROUTE
+%token <sp> SP
+%type <rout> route
+%start route
 %%
-signal : MAIN_SIGNAL { printf( "(kind, sig_name): (%d, %s)", $1.kind, $1.name ); }
-       | VIRT_SIGNAL { printf( "(kind, sig_name): (%d, %s)", $1.kind, $1.name ); }
+route : ROUTE {
+  $$ = $1;
+  printf( "(kind, name): (%d, %s)\n", $$.kind, $$.name );  
+ }
+;
 %%
 int yyerror ( const char *s ) {
   extern char *yytext;
