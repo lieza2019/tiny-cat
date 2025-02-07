@@ -18,16 +18,16 @@ ttcreat : y.tab.o lex.yy.o
 	$(LD) $(LDFLAGS) $^
 
 y.tab.o : y.tab.c
-	$(CC) -c $^
+	$(CC) -c $<
 
-y.tab.c : ttcreat.y
-	$(YACC) $(YFLAGS) $^
+y.tab.c : ttcreat.y ttcreat.h
+	$(YACC) $(YFLAGS) $<
 
 lex.yy.o : lex.yy.c
-	$(CC) -c $^
+	$(CC) -c $<
 
-lex.yy.c : ttcreat.l
-	$(LEX) $(LFLAGS) $^
+lex.yy.c : ttcreat.l ttcreat.h
+	$(LEX) $(LFLAGS) $<
 
 .PHONY : clean
 clean:

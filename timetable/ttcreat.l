@@ -1,7 +1,5 @@
 %{
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "ttcreat.h"
 
 #include "y.tab.h"
@@ -10,14 +8,26 @@ int yywrap( void ) {
 }
 %}
 %%
+"{" { return '{'; }
+"}" { return '}'; }
+"(" { return '('; }
+")" { return ')'; }
+"," { return ','; }
+
+"JLA" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
+"KIKJ" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
+"OKBS" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
+"BCGN" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
+
+"PL1" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
+
 "SP_"[0-9A-Z][0-9] {
   strncpy( yylval.sp, yytext, MAX_SPNAME_LEN );
-  return SP;
-}
-
-"S"[0-9][0-9][0-9][A-Z]"_S"[0-9][0-9][0-9][A-Z] {
-  yylval.kind = R;
-  strncpy( yylval.name, yytext, MAX_ROUTENAME_LEN );
-  return ROUTE;
-}
+  return TK_SP;
+ }
+("S"|"VS")[0-9][0-9][0-9][A-Z]"_"("S"|"VS")[0-9][0-9][0-9][A-Z] {
+  yylval.attr_route.kind = ROUTE;
+  strncpy( yylval.attr_route.name, yytext, MAX_ROUTENAME_LEN );
+  return TK_ROUTE;
+ }
 %%
