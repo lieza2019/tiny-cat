@@ -170,16 +170,17 @@ routes : route {
   $$.route_prof[0] = $1;
   /* printf( "route: %s\n", $$.route_prof[0].name ); // ***** for debugging. */
 }
-       | route ',' routes {
+       | routes ',' route {
   $$.kind = ROUTES;
   {
     int i;
-    for( i = 0; i < $3.nroutes; i++ ) {
-      $$.route_prof[i + 1] = $3.route_prof[i];
+    for( i = 0; i < $1.nroutes; i++ ) {
+      $$.route_prof[i] = $1.route_prof[i];
     }
-    $$.route_prof[0] = $1;
+    assert( i == $1.nroutes );
+    $$.route_prof[i] = $3;
   }
-  $$.nroutes = $3.nroutes + 1;
+  $$.nroutes = $1.nroutes + 1;
  }
 ;
 route : TK_ROUTE {
