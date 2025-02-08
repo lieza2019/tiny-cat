@@ -5,7 +5,7 @@
 #define MAX_ROUTENAME_LEN 16
 #define MAX_SPNAME_LEN 8
 #define MAX_TRIP_ROUTES 8
-#define MAX_TRIPS 1
+#define MAX_TRIPS 256
 
 typedef enum kind {
   ST_PLTB,

@@ -55,7 +55,7 @@ ATTR_TRIP_PTR reg_trip ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_
   for( i = 0; i < preg_tbl->ntrips; i++ ) {
     assert( i < preg_tbl->ntrips );
     assert( preg_tbl->trip_prof[i].attr_st_pltb_orgdst.kind == ST_PLTB_PAIR );
-    if( ident_trips( &preg_tbl->trip_prof[i].attr_st_pltb_orgdst, &ptrip->attr_st_pltb_orgdst ) ) {
+    if( ! ident_trips( &preg_tbl->trip_prof[i].attr_st_pltb_orgdst, &ptrip->attr_st_pltb_orgdst ) ) {
       if( pobsolete ) {
 	*pobsolete = preg_tbl->trip_prof[i];
 	r = pobsolete;

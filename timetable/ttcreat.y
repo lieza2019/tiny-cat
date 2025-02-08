@@ -63,7 +63,6 @@ ATTR_TRIPS trips_regtbl = { TRIPS };
   ATTR_ROUTE attr_route;
   ATTR_ROUTES attr_routes;  
   ATTR_TRIP attr_trip;
-  /* ATTR_TRIPS attr_trips; with %type <attr_trips> trips */
   ATTR_TRIPS_PTR pattr_trips;
 }
 %token <st_name> TK_STNAME
@@ -83,16 +82,18 @@ trips_decl : TK_KEY_TRIPS ':' trips {
   assert( $3 );
   assert( $3->kind == TRIPS );
   $$ = $3;
-#if 1
+#if 1 /* ***** for debugging. */
   {
     assert( $3 );
     ATTR_TRIP_PTR p = $3->trip_prof;
     int i;
     for( i = 0; i < $3->ntrips; i++ ) {
-      print_trip( p );
+      print_trip( &p[i] );
       printf( "\n" );
     }
   }
+#else
+  printf( "ntrips: %d\n", $3->ntrips );
 #endif
  }
 ;
@@ -107,22 +108,7 @@ trips_decl : TK_KEY_TRIPS ':' trips {
      (((OKBS,PL2), (KIKJ, PL2)), (SP_78, TB_76), {S822A_S832B});
      (((KIKJ,PL2), (JLA, PL1)), (SP_76, TB_73), {S832B_S802B, S802B_S810B});
 */
-/*trips : trip {
-  $$.ntrips = 1;
-  $$.trip_prof[0] = $1;
- }
-      | trip ';' trips {
-  $$.kind = TRIPS;
-  {
-    int i;
-    for( i = 0; i < $3.ntrips; i++ )
-      $$.trip_prof[i + 1] = $3.trip_prof[i];
-  }
-  $$.trip_prof[0] = $1;
-  $$.ntrips = $3.ntrips + 1;
- }
- ; */
-trips : trip {
+trips : trip ';' {
   ATTR_TRIP_PTR p = NULL;
   p = reg_trip( &trips_regtbl, NULL, &$1 );
   if( p != &$1 ) {
@@ -131,11 +117,11 @@ trips : trip {
   }
   $$ = &trips_regtbl;
  }
-      | trip ';' trips {
+      | trips trip ';' {
   ATTR_TRIP dropd = {};
   ATTR_TRIP_PTR p = NULL;
-  p = reg_trip( &trips_regtbl, &dropd, &$1 );
-  if( p != &$1 ) {
+  p = reg_trip( &trips_regtbl, &dropd, &$2 );
+  if( p != &$2 ) {
     assert( p == &dropd );
     assert( p->kind == TRIP );
     printf( "NOTICE: trip attribute has been overridden with.\n" );
@@ -151,21 +137,7 @@ trip : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '
   $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
   $$.attr_sp_orgdst = $8;
   $$.attr_route_ctrl = $11;
-#if 1
-  printf( "(kind, st_pltb_pair, sp_orgdst_pair, trip_routes): (%d, ", $$.kind );
-  {
-    printf( "(" );
-    print_st_pltb( &$$.attr_st_pltb_orgdst.st_pltb_org );
-    printf( ", " );
-    print_st_pltb( &$$.attr_st_pltb_orgdst.st_pltb_dst );
-    printf( ")" );
-    printf( ", " );
-  }
-  print_sp_pair( &$$.attr_sp_orgdst );
-  printf( ", " );
-  print_routes( &$$.attr_route_ctrl );
-  printf( ")\n" );
-#else
+#if 0 /* ***** for debugging. */
   printf( "(kind, st_pltb_pair, sp_orgdst_pair, trip_routes): " );
   print_trip( &$$ );
   printf( "\n" );
@@ -176,17 +148,17 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   $$.kind = ST_PLTB;
   strncpy( $$.st_name, $2, MAX_STNAME_LEN );
   strncpy( $$.pltb_name, $4, MAX_PLTB_NAMELEN );  
-  //print_st_pltb( &$$ );
+  /* print_st_pltb( &$$ ); // ***** for debugging. */
  }
 ;
 sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
   $$.kind = SP_PAIR;
   strncpy( $$.sp_org, $2, MAX_SPNAME_LEN );
   strncpy( $$.sp_dst, $4, MAX_SPNAME_LEN );
-  //print_sp_pair( &$$ );
+  /* print_sp_pair( &$$ ); // ***** for debugging. */
  }
 ;
-routes0 : '{' routes '}' {
+routes0 : '{' routes '}' { /* its only for debugging. */
   printf( "routes: " );
   print_routes( &$2 );
   printf( "\n" );
@@ -196,8 +168,8 @@ routes : route {
   $$.kind = ROUTES;
   $$.nroutes = 1;
   $$.route_prof[0] = $1;
-  /* printf( "route: %s\n", $$.route_prof[0].name ); */
- }
+  /* printf( "route: %s\n", $$.route_prof[0].name ); // ***** for debugging. */
+}
        | route ',' routes {
   $$.kind = ROUTES;
   {
@@ -213,7 +185,7 @@ routes : route {
 route : TK_ROUTE {
   $$.kind = $1.kind;
   strncpy( $$.name, $1.name, MAX_ROUTENAME_LEN );
-  /* printf( "(kind, route): (%d, %s)\n", $$.kind, $$.name ); */
+  /* printf( "(kind, route): (%d, %s)\n", $$.kind, $$.name ); // ***** for debugging. */
  }
 ;
 %%

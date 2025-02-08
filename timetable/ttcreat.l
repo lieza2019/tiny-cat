@@ -33,6 +33,7 @@ int yywrap( void ) {
   strncpy( yylval.sp, yytext, MAX_SPNAME_LEN );
   return TK_SP;
  }
+
 ("S"|"VS")[0-9][0-9][0-9][A-Z]"_"("S"|"VS")[0-9][0-9][0-9][A-Z] {
   yylval.attr_route.kind = ROUTE;
   strncpy( yylval.attr_route.name, yytext, MAX_ROUTENAME_LEN );
