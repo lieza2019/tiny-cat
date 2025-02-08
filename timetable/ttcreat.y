@@ -35,7 +35,7 @@ static void print_routes ( ATTR_ROUTES_PTR proutes ) {
   printf( "}" );
 }
 
-static void print_trip ( ATTR_TRIP *ptrip ) {
+static void print_trip ( ATTR_TRIP_PTR ptrip ) {
   assert( ptrip );
   
   printf( "(%d, ", ptrip->kind );
@@ -51,6 +51,8 @@ static void print_trip ( ATTR_TRIP *ptrip ) {
   print_routes( &ptrip->attr_route_ctrl );
   printf( ")" );
 }
+
+ATTR_TRIPS trips_regtbl = { TRIPS };
 %}
 %union {
   char st_name[MAX_STNAME_LEN];
@@ -61,7 +63,8 @@ static void print_trip ( ATTR_TRIP *ptrip ) {
   ATTR_ROUTE attr_route;
   ATTR_ROUTES attr_routes;  
   ATTR_TRIP attr_trip;
-  //ATTR_TRIPS attr_trips;
+  /* ATTR_TRIPS attr_trips; with %type <attr_trips> trips */
+  ATTR_TRIPS_PTR pattr_trips;
 }
 %token <st_name> TK_STNAME
 %token <pltb_name> TK_PLTB_NAME
@@ -72,8 +75,38 @@ static void print_trip ( ATTR_TRIP *ptrip ) {
 %type <attr_route> route
 %type <attr_routes> routes routes0
 %type <attr_trip> trip
-%start trip
+%token TK_KEY_TRIPS
+%type <pattr_trips> trips trips_decl
+%start trips_decl
 %%
+trips_decl : TK_KEY_TRIPS ':' trips {
+  assert( $3 );
+  assert( $3->kind == TRIPS );
+  $$ = $3;
+#if 1
+  {
+    assert( $3 );
+    ATTR_TRIP_PTR p = $3->trip_prof;
+    int i;
+    for( i = 0; i < $3->ntrips; i++ ) {
+      print_trip( p );
+      printf( "\n" );
+    }
+  }
+#endif
+ }
+;
+/* e.g.
+   trips:
+     (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B});
+     (((KIKJ,PL1), (OKBS, PL1)), (SP_77, SP_79), {S831B_S821A});
+     (((OKBS,PL1), (BTGD, PL1)), (SP_79, SP_81), {S821A_S801A, S801A_S803A});
+     (((BTGD,PL1), (BTGD, TB1)), (SP_81, TB_D5), {S803A_S809A});
+     (((BTGD,TB1), (BTGD, PL2)), (SP_D5, TB_80), {S806A_S804A});
+     (((BTGD,PL2), (OKBS, PL2)), (SP_80, TB_78), {S804A_S822A});
+     (((OKBS,PL2), (KIKJ, PL2)), (SP_78, TB_76), {S822A_S832B});
+     (((KIKJ,PL2), (JLA, PL1)), (SP_76, TB_73), {S832B_S802B, S802B_S810B});
+*/
 /*trips : trip {
   $$.ntrips = 1;
   $$.trip_prof[0] = $1;
@@ -89,6 +122,28 @@ static void print_trip ( ATTR_TRIP *ptrip ) {
   $$.ntrips = $3.ntrips + 1;
  }
  ; */
+trips : trip {
+  ATTR_TRIP_PTR p = NULL;
+  p = reg_trip( &trips_regtbl, NULL, &$1 );
+  if( p != &$1 ) {
+    printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
+    exit( 1 );
+  }
+  $$ = &trips_regtbl;
+ }
+      | trip ';' trips {
+  ATTR_TRIP dropd = {};
+  ATTR_TRIP_PTR p = NULL;
+  p = reg_trip( &trips_regtbl, &dropd, &$1 );
+  if( p != &$1 ) {
+    assert( p == &dropd );
+    assert( p->kind == TRIP );
+    printf( "NOTICE: trip attribute has been overridden with.\n" );
+  }
+  $$ = &trips_regtbl;
+ }
+;
+/* e.g. (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B}) */
 trip : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' ')' {
   $$.kind = TRIP;
   $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;

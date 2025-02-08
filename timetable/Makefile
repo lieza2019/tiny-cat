@@ -8,13 +8,15 @@ LFLAGS = -l
 LD = gcc
 LDFLAGS = -o $(TTCREAT_BINNAME)
 CC = gcc
+CFLAGS = -c -Wall -g
 
+TOUCH = touch
 MV = mv
 CP = cp
 CD = cd
 RM = rm
 
-ttcreat : y.tab.o lex.yy.o
+ttcreat : y.tab.o lex.yy.o trips.o
 	$(LD) $(LDFLAGS) $^
 
 y.tab.o : y.tab.c
@@ -28,6 +30,12 @@ lex.yy.o : lex.yy.c
 
 lex.yy.c : ttcreat.l ttcreat.h
 	$(LEX) $(LFLAGS) $<
+
+trips.o : trips.c ttcreat.h
+	$(CC) $(CFLAGS) $<
+
+ttcreat.h : ../generic.h
+	$(TOUCH) $@
 
 .PHONY : clean
 clean:

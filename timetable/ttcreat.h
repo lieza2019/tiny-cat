@@ -1,15 +1,11 @@
-#ifndef BOOL
-#define BOOL int
-#define TRUE 1
-#define FALSE 0
-#endif
+#include "../generic.h"
 
 #define MAX_STNAME_LEN 8
 #define MAX_PLTB_NAMELEN 8
 #define MAX_ROUTENAME_LEN 16
 #define MAX_SPNAME_LEN 8
 #define MAX_TRIP_ROUTES 8
-#define MAX_TRIPS 256
+#define MAX_TRIPS 1
 
 typedef enum kind {
   ST_PLTB,
@@ -60,3 +56,8 @@ typedef struct attr_trips {
   int ntrips;
   ATTR_TRIP trip_prof[MAX_TRIPS];
 } ATTR_TRIPS, *ATTR_TRIPS_PTR;
+
+extern BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 );
+extern BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_PAIR_PTR pp1, ATTR_ST_PLTB_PAIR_PTR pp2 );
+
+extern ATTR_TRIP_PTR reg_trip ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip );

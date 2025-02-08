@@ -8,6 +8,8 @@ int yywrap( void ) {
 }
 %}
 %%
+";" { return ';'; }
+":" { return ':'; }
 "{" { return '{'; }
 "}" { return '}'; }
 "(" { return '('; }
@@ -17,9 +19,15 @@ int yywrap( void ) {
 "JLA" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
 "KIKJ" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
 "OKBS" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
-"BCGN" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
+"BTGD" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
 
 "PL1" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
+"PL2" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
+"PL3" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
+"TB1" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
+"TB2" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
+
+"trips" { return TK_KEY_TRIPS; }
 
 "SP_"[0-9A-Z][0-9] {
   strncpy( yylval.sp, yytext, MAX_SPNAME_LEN );

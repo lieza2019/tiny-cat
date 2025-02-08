@@ -64,6 +64,7 @@ main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h surveill.h timeta
 .PHONY : clean
 clean:
 	$(CD) ./cbi; $(MAKE) clean
+	$(CD) ./timetable; $(MAKE) clean
 	$(RM) -f ./a.out
 	$(RM) -f ./*.o
 	$(RM) -f ./*~
