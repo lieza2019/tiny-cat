@@ -52,7 +52,22 @@ static void print_trip ( ATTR_TRIP_PTR ptrip ) {
   printf( ")" );
 }
 
+static void print_rjasgn ( ATTR_RJ_ASGN_PTR pasgn ) {
+  assert( pasgn );
+  
+  printf( "(%d, ", pasgn->kind );
+  {
+    char str[8];
+    sprintf( str, "%d", pasgn->rid );
+    printf( "(rake_%s, ", str );
+    sprintf( str, "%d", pasgn->jid );
+    printf( "J%s)", str );
+  }
+  printf( ")" );  
+}
+
 ATTR_TRIPS trips_regtbl = { TRIPS };
+ATTR_RJ_ASGNS rj_asgn_regtbl = { RJ_ASGNS };
 %}
 %union {
   char st_name[MAX_STNAME_LEN];
@@ -64,6 +79,10 @@ ATTR_TRIPS trips_regtbl = { TRIPS };
   ATTR_ROUTES attr_routes;  
   ATTR_TRIP attr_trip;
   ATTR_TRIPS_PTR pattr_trips;
+  int journey_id;
+  int rake_id;
+  ATTR_RJ_ASGN attr_rj_asgn;
+  ATTR_RJ_ASGNS_PTR  pattr_rj_asgns;
 }
 %token <st_name> TK_STNAME
 %token <pltb_name> TK_PLTB_NAME
@@ -76,8 +95,26 @@ ATTR_TRIPS trips_regtbl = { TRIPS };
 %type <attr_trip> trip
 %token TK_KEY_TRIPS
 %type <pattr_trips> trips trips_decl
-%start trips_decl
+%token <journey_id> TK_JOURNEY_ID
+%token <rake_id> TK_RAKE_ID
+%token TK_ASGN
+%type <attr_rj_asgn> jr_asgn
+%token TK_KEY_ASSIGNMENTS
+%type <pattr_rj_asgns> journey_rake_asgnments journey_rake_asgnments_decl
+
+%start journey_rake_asgnments_decl
 %%
+/* e.g.
+   trips:
+     (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B});
+     (((KIKJ,PL1), (OKBS, PL1)), (SP_77, SP_79), {S831B_S821A});
+     (((OKBS,PL1), (BTGD, PL1)), (SP_79, SP_81), {S821A_S801A, S801A_S803A});
+     (((BTGD,PL1), (BTGD, TB1)), (SP_81, TB_D5), {S803A_S809A});
+     (((BTGD,TB1), (BTGD, PL2)), (SP_D5, TB_80), {S806A_S804A});
+     (((BTGD,PL2), (OKBS, PL2)), (SP_80, TB_78), {S804A_S822A});
+     (((OKBS,PL2), (KIKJ, PL2)), (SP_78, TB_76), {S822A_S832B});
+     (((KIKJ,PL2), (JLA, PL1)), (SP_76, TB_73), {S832B_S802B, S802B_S810B});
+*/
 trips_decl : TK_KEY_TRIPS ':' trips {
   assert( $3 );
   assert( $3->kind == TRIPS );
@@ -92,22 +129,9 @@ trips_decl : TK_KEY_TRIPS ':' trips {
       printf( "\n" );
     }
   }
-#else
-  printf( "ntrips: %d\n", $3->ntrips );
 #endif
  }
 ;
-/* e.g.
-   trips:
-     (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B});
-     (((KIKJ,PL1), (OKBS, PL1)), (SP_77, SP_79), {S831B_S821A});
-     (((OKBS,PL1), (BTGD, PL1)), (SP_79, SP_81), {S821A_S801A, S801A_S803A});
-     (((BTGD,PL1), (BTGD, TB1)), (SP_81, TB_D5), {S803A_S809A});
-     (((BTGD,TB1), (BTGD, PL2)), (SP_D5, TB_80), {S806A_S804A});
-     (((BTGD,PL2), (OKBS, PL2)), (SP_80, TB_78), {S804A_S822A});
-     (((OKBS,PL2), (KIKJ, PL2)), (SP_78, TB_76), {S822A_S832B});
-     (((KIKJ,PL2), (JLA, PL1)), (SP_76, TB_73), {S832B_S802B, S802B_S810B});
-*/
 trips : trip ';' {
   ATTR_TRIP_PTR p = NULL;
   p = reg_trip( &trips_regtbl, NULL, &$1 );
@@ -187,6 +211,56 @@ route : TK_ROUTE {
   $$.kind = $1.kind;
   strncpy( $$.name, $1.name, MAX_ROUTENAME_LEN );
   /* printf( "(kind, route): (%d, %s)\n", $$.kind, $$.name ); // ***** for debugging. */
+ }
+;
+
+/* e.g.
+   assignments:
+     rake_801 := J1; rake_802 := J2; rake_803 := J3; rake_804 := J4;
+*/
+journey_rake_asgnments_decl : TK_KEY_ASSIGNMENTS ':'journey_rake_asgnments {
+  assert( $3 );
+  assert( $3->kind == RJ_ASGNS );
+  $$ = $3;
+#if 1 /* ***** for debugging. */
+  {
+    assert( $$ );
+    ATTR_RJ_ASGN_PTR p = $$->rj_asgn;
+    int i;
+    for( i = 0; i < $$->nasgns; i++ ) {
+      print_rjasgn( &p[i] );
+      printf( "\n" );
+    }
+  }
+#endif
+ }
+;
+journey_rake_asgnments : jr_asgn ';' {
+  ATTR_RJ_ASGN_PTR p = NULL;
+  p = reg_rjasgn( &rj_asgn_regtbl, NULL, &$1 );
+  if( p != &$1 ) {
+    printf( "FATAL: INTERNAL-error, in rake-journey assignment registration, giving up.\n" );
+    exit( 1 );
+  }
+  $$ = &rj_asgn_regtbl;
+ }
+                       | journey_rake_asgnments jr_asgn ';' {
+  ATTR_RJ_ASGN dropd = {};
+  ATTR_RJ_ASGN_PTR p = NULL;
+  p = reg_rjasgn( &rj_asgn_regtbl, &dropd, &$2 );
+  if( p != &$2 ) {
+    assert( p == &dropd );
+    assert( p->kind == RJ_ASGN );
+    printf( "NOTICE: rake-journey assignment has been overridden with.\n" );
+  }
+  $$ = &rj_asgn_regtbl;
+ }
+;
+jr_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
+  $$.kind = RJ_ASGN;
+  $$.jid = $3;
+  $$.rid = $1;
+  /* print_rjasgn( &$$ ); // ***** for debugging. */
  }
 ;
 %%

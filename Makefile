@@ -1,4 +1,4 @@
-Rm = rm
+RM = rm
 TOUCH = touch
 CD = cd
 CC = /usr/bin/gcc

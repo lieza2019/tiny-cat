@@ -50,8 +50,8 @@ ATTR_TRIP_PTR reg_trip ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_
   assert( ptrip->attr_st_pltb_orgdst.kind == ST_PLTB_PAIR );
   BOOL ovw = FALSE;
   ATTR_TRIP_PTR r = NULL;
-  int i;
   
+  int i;  
   for( i = 0; i < preg_tbl->ntrips; i++ ) {
     assert( i < preg_tbl->ntrips );
     assert( preg_tbl->trip_prof[i].attr_st_pltb_orgdst.kind == ST_PLTB_PAIR );
@@ -74,6 +74,42 @@ ATTR_TRIP_PTR reg_trip ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_
       r = ptrip;
     } else {
       printf( "FATAL: trip definition has been exhausted.\n" );
+      exit( 1 );
+    }
+  }
+  return r;
+}
+
+ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev_asgn, ATTR_RJ_ASGN_PTR pasgn ) {
+  assert( preg_tbl );
+  assert( pasgn );
+  assert( preg_tbl->kind == RJ_ASGNS );
+  assert( pasgn->kind == RJ_ASGN );
+  BOOL ovw = FALSE;
+  ATTR_RJ_ASGN_PTR r = NULL;
+  
+  int i;
+  for( i = 0; i < preg_tbl->nasgns; i++ ) {
+    assert( i < preg_tbl->nasgns );
+    assert( preg_tbl->rj_asgn[i].kind == RJ_ASGN );
+    if( preg_tbl->rj_asgn[i].jid == pasgn->jid ) {
+      if( pprev_asgn ) {
+	*pprev_asgn = preg_tbl->rj_asgn[i];
+	r = pprev_asgn;
+	preg_tbl->rj_asgn[i] = *pasgn;
+      } else
+	printf( "NOTICE: failed in redefinition the rake-journey assignment of.\n" );
+      ovw = TRUE;
+    }
+  }
+  if( !ovw ) {
+    assert( i == preg_tbl->nasgns );
+    if( i < MAX_RJ_ASGNMENTS ) {
+      preg_tbl->rj_asgn[i] = *pasgn;
+      preg_tbl->nasgns++;
+      r = pasgn;
+    } else {
+      printf( "FATAL: rake-journey assignments has been exhausted.\n" );
       exit( 1 );
     }
   }
