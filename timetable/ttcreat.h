@@ -77,6 +77,7 @@ typedef struct attr_timetable {
   ATTR_TRIPS trips_regtbl;
   ATTR_RJ_ASGNS rj_asgn_regtbl;
 } ATTR_TIMETABLE, *ATTR_TIMETABLE_PTR;
+extern ATTR_TIMETABLE timetable_symtbl;
 
 extern BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 );
 extern BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_PAIR_PTR pp1, ATTR_ST_PLTB_PAIR_PTR pp2 );

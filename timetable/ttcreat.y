@@ -66,8 +66,7 @@ static void print_rjasgn ( ATTR_RJ_ASGN_PTR pasgn ) {
   printf( ")" );  
 }
 
-ATTR_TRIPS trips_regtbl = { TRIPS };
-ATTR_RJ_ASGNS rj_asgn_regtbl = { RJ_ASGNS };
+ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
 %}
 %union {
   char st_name[MAX_STNAME_LEN];
@@ -102,7 +101,7 @@ ATTR_RJ_ASGNS rj_asgn_regtbl = { RJ_ASGNS };
 %token TK_KEY_ASSIGNMENTS
 %type <pattr_rj_asgns> journey_rake_asgnments journey_rake_asgnments_decl
 
-%start journey_rake_asgnments_decl
+%start trips_decl
 %%
 timetable_decl : trips_decl journey_rake_asgnments_decl {
   emit_ars_schcmds();
@@ -139,23 +138,23 @@ trips_decl : TK_KEY_TRIPS ':' trips {
 ;
 trips : trip ';' {
   ATTR_TRIP_PTR p = NULL;
-  p = reg_trip( &trips_regtbl, NULL, &$1 );
+  p = reg_trip( &timetable_symtbl.trips_regtbl, NULL, &$1 );
   if( p != &$1 ) {
     printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
     exit( 1 );
   }
-  $$ = &trips_regtbl;
+  $$ = &timetable_symtbl.trips_regtbl;
  }
       | trips trip ';' {
   ATTR_TRIP dropd = {};
   ATTR_TRIP_PTR p = NULL;
-  p = reg_trip( &trips_regtbl, &dropd, &$2 );
+  p = reg_trip( &timetable_symtbl.trips_regtbl, &dropd, &$2 );
   if( p != &$2 ) {
     assert( p == &dropd );
     assert( p->kind == TRIP );
     printf( "NOTICE: trip attribute has been overridden with.\n" );
   }
-  $$ = &trips_regtbl;
+  $$ = &timetable_symtbl.trips_regtbl;
  }
 ;
 /* e.g. (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B}) */
@@ -243,23 +242,23 @@ journey_rake_asgnments_decl : TK_KEY_ASSIGNMENTS ':'journey_rake_asgnments {
 ;
 journey_rake_asgnments : jr_asgn ';' {
   ATTR_RJ_ASGN_PTR p = NULL;
-  p = reg_rjasgn( &rj_asgn_regtbl, NULL, &$1 );
+  p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, NULL, &$1 );
   if( p != &$1 ) {
     printf( "FATAL: INTERNAL-error, in rake-journey assignment registration, giving up.\n" );
     exit( 1 );
   }
-  $$ = &rj_asgn_regtbl;
+  $$ = &timetable_symtbl.rj_asgn_regtbl;
  }
                        | journey_rake_asgnments jr_asgn ';' {
   ATTR_RJ_ASGN dropd = {};
   ATTR_RJ_ASGN_PTR p = NULL;
-  p = reg_rjasgn( &rj_asgn_regtbl, &dropd, &$2 );
+  p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, &dropd, &$2 );
   if( p != &$2 ) {
     assert( p == &dropd );
     assert( p->kind == RJ_ASGN );
     printf( "NOTICE: rake-journey assignment has been overridden with.\n" );
   }
-  $$ = &rj_asgn_regtbl;
+  $$ = &timetable_symtbl.rj_asgn_regtbl;
  }
 ;
 jr_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
