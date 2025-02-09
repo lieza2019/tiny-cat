@@ -21,6 +21,11 @@ typedef enum kind {
   RJ_ASGNS
 } KIND;
 
+typedef enum ars_sp_cond {
+  DWELL,
+  SKIP
+} ARS_SP_COND;
+
 typedef struct attr_sp_pair {
   KIND kind;
   char sp_org[MAX_SPNAME_LEN];
@@ -48,11 +53,14 @@ typedef struct attr_routes {
   ATTR_ROUTE route_prof[MAX_TRIP_ROUTES];
 } ATTR_ROUTES, *ATTR_ROUTES_PTR;
 
+typedef int DWELL_TIME;
 typedef struct attr_trip {
   KIND kind;
   ATTR_ST_PLTB_PAIR attr_st_pltb_orgdst;
   ATTR_SP_PAIR attr_sp_orgdst;
   ATTR_ROUTES attr_route_ctrl;
+  ARS_SP_COND sp_cond;
+  DWELL_TIME dwell;
 } ATTR_TRIP, *ATTR_TRIP_PTR;
 typedef struct attr_trips {
   KIND kind;
@@ -72,6 +80,12 @@ typedef struct attr_rj_asgns {
   int nasgns;
   ATTR_RJ_ASGN rj_asgn[MAX_RJ_ASGNMENTS];
 } ATTR_RJ_ASGNS, *ATTR_RJ_ASGNS_PTR;
+
+typedef struct attr_journey {
+  KIND kind;
+  JOURNEY_ID jid;
+  ATTR_TRIPS trips;
+} ATTR_JOURNEY, *ATTR_JOURNEY_PTR;
 
 typedef struct attr_timetable {
   ATTR_TRIPS trips_regtbl;

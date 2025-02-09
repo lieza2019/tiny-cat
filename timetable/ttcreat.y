@@ -78,8 +78,8 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
   ATTR_ROUTES attr_routes;  
   ATTR_TRIP attr_trip;
   ATTR_TRIPS_PTR pattr_trips;
-  int journey_id;
-  int rake_id;
+  JOURNEY_ID journey_id;
+  RAKE_ID rake_id;
   ATTR_RJ_ASGN attr_rj_asgn;
   ATTR_RJ_ASGNS_PTR  pattr_rj_asgns;
   ATTR_TIMETABLE_PTR ptimetable_symtbl;
@@ -135,6 +135,21 @@ timetable_decl : trips_decl journey_rake_asgnments_decl {
 #endif
   emit_ars_schcmds();
  }
+;
+
+journey : {
+  /* Each trip of journey has following attributes,
+       Origin St.& PL/TB
+       Destination St.& PL/TB
+       S.P.(Stopping Point) condition: DWELLing or SKIPping
+       Arrival time of this Stopping Point
+       Departure time of this Stopping Point
+       Dwell time of this Stopping Point
+       Performance regime, of the departure from this Stopping Point
+       Is revenue operation, or not.
+       Crew ID, of the crew assigned to the departure from this Stopping Point
+  */
+}
 ;
 
 /* e.g.
