@@ -23,5 +23,3 @@ clean:
 	$(RM) -f ./*~
 	$(RM) -f ./#*#
 	$(RM) -f ./*.stackdump
-	$(RM) -f y.tab.c lex.yy.c y.tab.h
-	$(RM) -f $(TTCREAT_BINNAME)

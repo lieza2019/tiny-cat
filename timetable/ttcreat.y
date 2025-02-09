@@ -69,6 +69,7 @@ static void print_rjasgn ( ATTR_RJ_ASGN_PTR pasgn ) {
 ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
 %}
 %union {
+  int nat;
   char st_name[MAX_STNAME_LEN];
   char pltb_name[MAX_PLTB_NAMELEN];
   ATTR_ST_PLTB attr_st_pltb;
@@ -82,8 +83,13 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
   RAKE_ID rake_id;
   ATTR_RJ_ASGN attr_rj_asgn;
   ATTR_RJ_ASGNS_PTR  pattr_rj_asgns;
+  DWELL_TIME dwell_time;
+  PERFREG_LEVEL perf_regime;
+  ATTR_TRIP attr_trip_journey;
+  
   ATTR_TIMETABLE_PTR ptimetable_symtbl;
 }
+%token <nat> TK_NAT
 %token <st_name> TK_STNAME
 %token <pltb_name> TK_PLTB_NAME
 %type <attr_st_pltb> st_and_pltb
@@ -92,17 +98,20 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
 %token <attr_route> TK_ROUTE
 %type <attr_route> route
 %type <attr_routes> routes routes0
-%type <attr_trip> trip
+%type <attr_trip> trip_def
 %token TK_KEY_TRIPS
-%type <pattr_trips> trips trips_decl
+%type <pattr_trips> trips_definition trips_decl
 %token <journey_id> TK_JOURNEY_ID
 %token <rake_id> TK_RAKE_ID
 %token TK_ASGN
 %type <attr_rj_asgn> jr_asgn
 %token TK_KEY_ASSIGNMENTS
 %type <pattr_rj_asgns> journey_rake_asgnments journey_rake_asgnments_decl
+%type <dwell_time> dwell_journey
+%token <perf_regime> TK_PERFREG
+%type <attr_trip_journey> trip_journey
 %type <ptimetable_symtbl> timetable_decl
-%start timetable_decl
+%start trip_journey
 %%
 timetable_decl : trips_decl journey_rake_asgnments_decl {
 #if 1 /* ***** for debugging. */
@@ -137,21 +146,67 @@ timetable_decl : trips_decl journey_rake_asgnments_decl {
  }
 ;
 
-journey : {
-  /* Each trip of journey has following attributes,
+/* Each trip of journey has following attributes,
        Origin St.& PL/TB
        Destination St.& PL/TB
        S.P.(Stopping Point) condition: DWELLing or SKIPping
-       Arrival time of this Stopping Point
-       Departure time of this Stopping Point
-       Dwell time of this Stopping Point
+     Arrival time of this Stopping Point
+     Departure time of this Stopping Point
+       Dwell time [sec] of this Stopping Point
        Performance regime, of the departure from this Stopping Point
        Is revenue operation, or not.
        Crew ID, of the crew assigned to the departure from this Stopping Point
-  */
+*/
+/* e.g.
+   ( ((JLA,PL1), (KIKJ, PL1)) )-
+   ( ((JLA,PL1), (KIKJ, PL1)), 17 )
+*/
+/* trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' dwell_journey arrtime_journey deptime_journey perf_journey revenue_journey crewid_journey ')' { */
+trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' dwell_journey ')' {
+  $$.kind = JOURNEY;
+  $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+  $$.attr_st_pltb_orgdst.st_pltb_org = $3;
+  $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
+  if( $7 >= 0 ) {
+    $$.dwell_time = $7;
+    if( $7 > 0 ) {
+      $$.sp_cond = DWELL;
+    } else {
+     assert( $7 == 0 );
+     $$.sp_cond = SKIP;
+    }
+  } else {
+    assert( $7 < 0 );
+    $$.dwell_time = 30; /* default dwell time [sec]. */
+  }
+  print_trip( &$$ ); // ***** for debugging.
+ }
+;
+dwell_journey : /* omitted */ {
+  $$ = -1;
+}
+
+              | ',' TK_NAT { /* dwell time in sec. */
+  $$ = $2;
+ }
+;
+/* 
+arrtime_journey : {
+}
+;  
+deptime_journey : {
 }
 ;
-
+perf_journey : {
+}
+;
+revenue_journey : {
+}
+;
+crewid_journey : {
+}
+;
+*/
 /* e.g.
    trips:
      (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B});
@@ -163,7 +218,7 @@ journey : {
      (((OKBS,PL2), (KIKJ, PL2)), (SP_78, TB_76), {S822A_S832B});
      (((KIKJ,PL2), (JLA, PL1)), (SP_76, TB_73), {S832B_S802B, S802B_S810B});
 */
-trips_decl : TK_KEY_TRIPS ':' trips {
+trips_decl : TK_KEY_TRIPS ':' trips_definition {
   assert( $3 );
   assert( $3->kind == TRIPS );
   $$ = $3;
@@ -180,7 +235,7 @@ trips_decl : TK_KEY_TRIPS ':' trips {
 #endif
  }
 ;
-trips : trip ';' {
+trips_definition : trip_def ';' {
   ATTR_TRIP_PTR p = NULL;
   p = reg_trip( &timetable_symtbl.trips_regtbl, NULL, &$1 );
   if( p != &$1 ) {
@@ -189,7 +244,7 @@ trips : trip ';' {
   }
   $$ = &timetable_symtbl.trips_regtbl;
  }
-      | trips trip ';' {
+      | trips_definition trip_def ';' {
   ATTR_TRIP dropd = {};
   ATTR_TRIP_PTR p = NULL;
   p = reg_trip( &timetable_symtbl.trips_regtbl, &dropd, &$2 );
@@ -202,7 +257,7 @@ trips : trip ';' {
  }
 ;
 /* e.g. (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B}) */
-trip : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' ')' {
+trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' ')' {
   $$.kind = TRIP;
   $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
   $$.attr_st_pltb_orgdst.st_pltb_org = $3;

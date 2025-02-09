@@ -30,10 +30,19 @@ int yywrap( void ) {
 "TB1" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
 "TB2" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
 
+"perfslow" { yylval.perf_regime = PERFREG_SLOW; return TK_PERFREG; }
+"perfnormal" { yylval.perf_regime = PERFREG_NORMAL; return TK_PERFREG; }
+"perffast" { yylval.perf_regime = PERFREG_FAST; return TK_PERFREG; }
+
 "trips" { return TK_KEY_TRIPS; }
 "assignments" { return TK_KEY_ASSIGNMENTS; }
 
 ":=" { return TK_ASGN; }
+
+[0-9]+ {
+  yylval.nat = atoi( yytext );
+  return TK_NAT;
+}
 
 ("J"|"j")[0-9]+ {
   assert( (yytext[0] == 'J') || (yytext[0] == 'j') );

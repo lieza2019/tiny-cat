@@ -18,13 +18,27 @@ typedef enum kind {
   TRIP,
   TRIPS,
   RJ_ASGN,
-  RJ_ASGNS
+  RJ_ASGNS,
+  JOURNEY
 } KIND;
 
 typedef enum ars_sp_cond {
   DWELL,
   SKIP
 } ARS_SP_COND;
+
+typedef enum perfreg_level {
+  PERFREG_SLOW,
+  PERFREG_NORMAL,
+  PERFREG_FAST
+} PERFREG_LEVEL;
+
+typedef enum _crew_id {
+  CREW_ID0001,
+  CREW_ID0002,
+  CREW_ID0003,
+  CREW_NO_ID
+} CREW_ID;
 
 typedef struct attr_sp_pair {
   KIND kind;
@@ -59,8 +73,12 @@ typedef struct attr_trip {
   ATTR_ST_PLTB_PAIR attr_st_pltb_orgdst;
   ATTR_SP_PAIR attr_sp_orgdst;
   ATTR_ROUTES attr_route_ctrl;
+  ;
   ARS_SP_COND sp_cond;
-  DWELL_TIME dwell;
+  DWELL_TIME dwell_time;
+  PERFREG_LEVEL perf_regime;
+  BOOL revenue;
+  CREW_ID crew_id;  
 } ATTR_TRIP, *ATTR_TRIP_PTR;
 typedef struct attr_trips {
   KIND kind;
