@@ -104,6 +104,11 @@ ATTR_RJ_ASGNS rj_asgn_regtbl = { RJ_ASGNS };
 
 %start journey_rake_asgnments_decl
 %%
+timetable_decl : trips_decl journey_rake_asgnments_decl {
+  emit_ars_schcmds();
+ }
+;
+
 /* e.g.
    trips:
      (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B});
@@ -217,6 +222,7 @@ route : TK_ROUTE {
 /* e.g.
    assignments:
      rake_801 := J1; rake_802 := J2; rake_803 := J3; rake_804 := J4;
+     rake_811 := J11; rake_812 := J12; rake_813 := J13; rake_814 := J14;
 */
 journey_rake_asgnments_decl : TK_KEY_ASSIGNMENTS ':'journey_rake_asgnments {
   assert( $3 );

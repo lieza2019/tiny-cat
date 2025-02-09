@@ -115,3 +115,6 @@ ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev
   }
   return r;
 }
+
+void emit_ars_schcmds( void ) {
+}

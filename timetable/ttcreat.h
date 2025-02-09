@@ -74,8 +74,8 @@ typedef struct attr_rj_asgns {
 } ATTR_RJ_ASGNS, *ATTR_RJ_ASGNS_PTR;
 
 typedef struct attr_timetable {
-  ATTR_TRIPS_PTR pattr_trips;
-  ATTR_RJ_ASGN_PTR pattr_rj_asgn;
+  ATTR_TRIPS trips_regtbl;
+  ATTR_RJ_ASGNS rj_asgn_regtbl;
 } ATTR_TIMETABLE, *ATTR_TIMETABLE_PTR;
 
 extern BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 );
@@ -83,3 +83,5 @@ extern BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_PAIR_PTR pp1, ATTR_ST_PLTB_PAIR_PTR p
 
 extern ATTR_TRIP_PTR reg_trip ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip );
 extern ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev_asgn, ATTR_RJ_ASGN_PTR pasgn );
+
+extern void emit_ars_schcmds( void );
