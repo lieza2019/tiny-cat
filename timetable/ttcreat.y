@@ -82,6 +82,7 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
   int rake_id;
   ATTR_RJ_ASGN attr_rj_asgn;
   ATTR_RJ_ASGNS_PTR  pattr_rj_asgns;
+  ATTR_TIMETABLE_PTR ptimetable_symtbl;
 }
 %token <st_name> TK_STNAME
 %token <pltb_name> TK_PLTB_NAME
@@ -100,10 +101,38 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
 %type <attr_rj_asgn> jr_asgn
 %token TK_KEY_ASSIGNMENTS
 %type <pattr_rj_asgns> journey_rake_asgnments journey_rake_asgnments_decl
-
-%start trips_decl
+%type <ptimetable_symtbl> timetable_decl
+%start timetable_decl
 %%
 timetable_decl : trips_decl journey_rake_asgnments_decl {
+#if 1 /* ***** for debugging. */
+  {
+    const int nspc_indent = 2;
+    printf("trips:\n" );
+    {
+      assert( $1 );
+      ATTR_TRIP_PTR p = $1->trip_prof;
+      int i;
+      for( i = 0; i < $1->ntrips; i++ ) {
+	{int j; for(j = 0; j < nspc_indent; j++ ) printf(" "); }
+	print_trip( &p[i] );
+	printf( "\n" );
+      }
+    }
+    printf( "\n" );
+    printf("assignments:\n" );
+    {
+      assert( $2 );
+      ATTR_RJ_ASGN_PTR p = $2->rj_asgn;
+      int i;
+      for( i = 0; i < $2->nasgns; i++ ) {
+	{int j; for(j = 0; j < nspc_indent; j++ ) printf(" "); }
+	print_rjasgn( &p[i] );
+	printf( "\n" );
+      }
+    }
+  }
+#endif
   emit_ars_schcmds();
  }
 ;
@@ -123,12 +152,12 @@ trips_decl : TK_KEY_TRIPS ':' trips {
   assert( $3 );
   assert( $3->kind == TRIPS );
   $$ = $3;
-#if 1 /* ***** for debugging. */
+#if 0 /* ***** for debugging. */
   {
-    assert( $3 );
-    ATTR_TRIP_PTR p = $3->trip_prof;
+    assert( $$ );
+    ATTR_TRIP_PTR p = $$->trip_prof;
     int i;
-    for( i = 0; i < $3->ntrips; i++ ) {
+    for( i = 0; i < $$->ntrips; i++ ) {
       print_trip( &p[i] );
       printf( "\n" );
     }
@@ -227,7 +256,7 @@ journey_rake_asgnments_decl : TK_KEY_ASSIGNMENTS ':'journey_rake_asgnments {
   assert( $3 );
   assert( $3->kind == RJ_ASGNS );
   $$ = $3;
-#if 1 /* ***** for debugging. */
+#if 0 /* ***** for debugging. */
   {
     assert( $$ );
     ATTR_RJ_ASGN_PTR p = $$->rj_asgn;
