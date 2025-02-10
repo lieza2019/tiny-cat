@@ -6,8 +6,38 @@
 #include "ttcreat.h"
 
 #include "y.tab.h"
+
 int yywrap( void ) {
   return 1;
+}
+
+static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin, const char *psec ) {
+  assert( ptime );
+  assert( phour );
+  assert( pmin );
+  assert( psec );
+  BOOL r = FALSE;
+  int hour;
+  int min;
+  int sec;
+#if 0 // ***** for debugging.
+  printf( "(hour, min, sec): (%s, %s, %s)\n", phour, pmin, psec );
+#endif
+  
+  hour = atoi( phour );
+  if( (hour >= 0) && (hour <= 23) ) {
+    min = atoi( pmin );
+    if( (min >= 0) && (min <= 59) ) {
+      sec = atoi( psec );
+      if( (sec >= 0) && (sec <= 59) ) {
+	ptime->hour = hour;
+	ptime->min = min;
+	ptime->sec = sec;
+	r = TRUE;
+      }
+    }
+  }
+  return r;
 }
 %}
 %%
@@ -42,6 +72,22 @@ int yywrap( void ) {
 [0-9]+ {
   yylval.nat = atoi( yytext );
   return TK_NAT;
+}
+
+[0-9][0-9]":"[0-9][0-9]":"[0-9][0-9] {
+  /* {(0|1|2)[0-9]":"[0-5][0-9]":"[0-5][0-9] */  
+  assert( (yytext[2] == ':') && (yytext[5] == ':') );
+  ATTR_TIME time = {-1, -1, -1};
+  yytext[2] = 0;
+  yytext[5] = 0;
+  if( chk_time( &time, yytext, &yytext[3], &yytext[6] ) ) { 
+    assert( (time.hour >= 0) && (time.hour <= 23) );
+    assert( (time.min >= 0) && (time.min <= 59) );
+    assert( (time.sec >= 0) && (time.sec <= 59) );
+    yylval.attr_time = time;
+    return TK_TIME;
+  } else
+    printf( "invalid time specifier, %s:%s:%s.\n", yytext, &yytext[3], &yytext[6] );
 }
 
 ("J"|"j")[0-9]+ {

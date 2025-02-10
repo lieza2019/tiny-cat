@@ -5,6 +5,122 @@
 #include "../generic.h"
 #include "ttcreat.h"
 
+char *cnv2str_kind ( char *pstr, KIND kind, const int buflen ) {
+  assert( pstr );
+  assert( buflen > 0 );
+  char *r = NULL;
+  
+  switch( kind ) {
+  case ST_PLTB:
+    strncpy( pstr, "ST_PLTB", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case ST_PLTB_PAIR:
+    strncpy( pstr, "ST_PLTB_PAIR", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case SP:
+    strncpy( pstr, "SP", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case SP_PAIR:
+    strncpy( pstr, "SP_PAIR", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case ROUTE:
+    strncpy( pstr, "ROUTE", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case ROUTES:
+    strncpy( pstr, "ROUTES", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case TRIP:
+    strncpy( pstr, "TRIP", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case TRIPS:
+    strncpy( pstr, "TRIPS", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case RJ_ASGN:
+    strncpy( pstr, "RJ_ASGN", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case RJ_ASGNS:
+    strncpy( pstr, "RJ_ASGNS", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case JOURNEY:
+    strncpy( pstr, "JOURNEY", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  default:
+    assert( FALSE );
+  }
+  return r;
+}
+
+char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen ) {
+  assert( pstr );
+  assert( buflen > 0 );
+  char *r = NULL;
+
+  switch( sp_cond ) {
+  case DWELL:
+    strncpy( pstr, "DWELL", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case SKIP:
+    strncpy( pstr, "SKIP", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  default:
+    assert( FALSE );
+  }
+  return r;
+}
+
+char *cnv2str_perf_regime ( char *pstr, PERFREG_LEVEL perfreg, const int buflen ) {
+  assert( pstr );
+  assert( buflen > 0 );
+  char *r = NULL;
+  
+  switch( perfreg ) {
+  case PERFREG_SLOW:
+    strncpy( pstr, "PERFREG_SLOW", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case PERFREG_NORMAL:
+    strncpy( pstr, "PERFREG_NORMAL", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  case PERFREG_FAST:
+    strncpy( pstr, "PERFREG_FAST", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
+  default:
+    assert( FALSE );
+  }
+  return r;
+}
+   
 BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 ) {
   assert( p1 );
   assert( p2 );

@@ -1,5 +1,7 @@
 #include "../generic.h"
 
+#define DEFAULT_DWELL_TIME 17 // in sec.
+
 #define MAX_STNAME_LEN 8
 #define MAX_PLTB_NAMELEN 8
 #define MAX_ROUTENAME_LEN 16
@@ -21,17 +23,20 @@ typedef enum kind {
   RJ_ASGNS,
   JOURNEY
 } KIND;
+extern char *cnv2str_kind ( char *pstr, KIND kind, const int buflen );
 
 typedef enum ars_sp_cond {
   DWELL,
   SKIP
 } ARS_SP_COND;
+extern char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen );
 
 typedef enum perfreg_level {
   PERFREG_SLOW,
   PERFREG_NORMAL,
   PERFREG_FAST
 } PERFREG_LEVEL;
+extern char *cnv2str_perf_regime ( char *pstr, PERFREG_LEVEL perfreg, const int buflen );
 
 typedef enum _crew_id {
   CREW_ID0001,
@@ -39,6 +44,17 @@ typedef enum _crew_id {
   CREW_ID0003,
   CREW_NO_ID
 } CREW_ID;
+
+typedef struct attr_date {
+  int year;
+  int month;
+  int day;
+} ATTR_DATE, *ATTR_DATE_PTR;
+typedef struct attr_time {
+  int hour;
+  int min;
+  int sec;
+} ATTR_TIME, *ATTR_TIME_PTR;
 
 typedef struct attr_sp_pair {
   KIND kind;
@@ -73,8 +89,12 @@ typedef struct attr_trip {
   ATTR_ST_PLTB_PAIR attr_st_pltb_orgdst;
   ATTR_SP_PAIR attr_sp_orgdst;
   ATTR_ROUTES attr_route_ctrl;
-  ;
+  
   ARS_SP_COND sp_cond;
+  struct {
+    ATTR_TIME arr_time;
+    ATTR_TIME dep_time;
+  } arrdep_time;
   DWELL_TIME dwell_time;
   PERFREG_LEVEL perf_regime;
   BOOL revenue;

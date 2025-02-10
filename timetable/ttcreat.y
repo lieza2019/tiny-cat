@@ -7,6 +7,13 @@
 
 #define YYDEBUG 1
 
+#define PRINT_STRBUF_MAXLEN 256
+
+static void print_time ( ATTR_TIME_PTR ptime ) {
+  assert( ptime );
+  printf( "(hour, min, sec): (%02d, %02d, %02d)\n", ptime->hour, ptime->min, ptime->sec );
+}
+
 static void print_st_pltb ( ATTR_ST_PLTB_PTR pst_pltb ) {
   assert( pst_pltb );
   char st_pltb_strbuf[(MAX_STNAME_LEN + 1 + MAX_PLTB_NAMELEN) + 1] = "";
@@ -35,10 +42,11 @@ static void print_routes ( ATTR_ROUTES_PTR proutes ) {
   printf( "}" );
 }
 
-static void print_trip ( ATTR_TRIP_PTR ptrip ) {
+static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
   assert( ptrip );
+  char buf[PRINT_STRBUF_MAXLEN] = "";
   
-  printf( "(%d, ", ptrip->kind );
+  printf( "(%s, ", cnv2str_kind(buf, ptrip->kind, PRINT_STRBUF_MAXLEN) );
   
   printf( "(" );
   print_st_pltb( &ptrip->attr_st_pltb_orgdst.st_pltb_org );
@@ -49,6 +57,15 @@ static void print_trip ( ATTR_TRIP_PTR ptrip ) {
   print_sp_pair( &ptrip->attr_sp_orgdst );
   printf( ", " );
   print_routes( &ptrip->attr_route_ctrl );
+  
+  if( ext ) {
+    printf( ", %s, ", cnv2str_sp_cond(buf, ptrip->sp_cond, PRINT_STRBUF_MAXLEN) );
+    
+    printf( "(%02d:%02d:%02d,", ptrip->arrdep_time.arr_time.hour, ptrip->arrdep_time.arr_time.min, ptrip->arrdep_time.arr_time.sec );
+    printf( " %02d:%02d:%02d)", ptrip->arrdep_time.dep_time.hour, ptrip->arrdep_time.dep_time.min, ptrip->arrdep_time.dep_time.sec );
+    
+    printf( ", %d", ptrip->dwell_time );
+  }
   printf( ")" );
 }
 
@@ -70,6 +87,12 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
 %}
 %union {
   int nat;
+  ATTR_DATE attr_date;
+  ATTR_TIME attr_time;
+  struct {
+    ATTR_TIME arr_time;
+    ATTR_TIME dep_time;
+  } attr_arrdep_time;
   char st_name[MAX_STNAME_LEN];
   char pltb_name[MAX_PLTB_NAMELEN];
   ATTR_ST_PLTB attr_st_pltb;
@@ -89,6 +112,8 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
   
   ATTR_TIMETABLE_PTR ptimetable_symtbl;
 }
+%token <attr_date> TK_DATE
+%token <attr_time> TK_TIME
 %token <nat> TK_NAT
 %token <st_name> TK_STNAME
 %token <pltb_name> TK_PLTB_NAME
@@ -108,6 +133,8 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
 %token TK_KEY_ASSIGNMENTS
 %type <pattr_rj_asgns> journey_rake_asgnments journey_rake_asgnments_decl
 %type <dwell_time> dwell_journey
+%type <attr_arrdep_time> arrdep_time_journey
+%type <attr_time> time
 %token <perf_regime> TK_PERFREG
 %type <attr_trip_journey> trip_journey
 %type <ptimetable_symtbl> timetable_decl
@@ -124,7 +151,7 @@ timetable_decl : trips_decl journey_rake_asgnments_decl {
       int i;
       for( i = 0; i < $1->ntrips; i++ ) {
 	{int j; for(j = 0; j < nspc_indent; j++ ) printf(" "); }
-	print_trip( &p[i] );
+	print_trip( &p[i], FALSE );
 	printf( "\n" );
       }
     }
@@ -150,8 +177,8 @@ timetable_decl : trips_decl journey_rake_asgnments_decl {
        Origin St.& PL/TB
        Destination St.& PL/TB
        S.P.(Stopping Point) condition: DWELLing or SKIPping
-     Arrival time of this Stopping Point
-     Departure time of this Stopping Point
+       Arrival time of this Stopping Point
+       Departure time of this Stopping Point
        Dwell time [sec] of this Stopping Point
        Performance regime, of the departure from this Stopping Point
        Is revenue operation, or not.
@@ -161,8 +188,9 @@ timetable_decl : trips_decl journey_rake_asgnments_decl {
    ( ((JLA,PL1), (KIKJ, PL1)) )-
    ( ((JLA,PL1), (KIKJ, PL1)), 17 )
 */
-/* trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' dwell_journey arrtime_journey deptime_journey perf_journey revenue_journey crewid_journey ')' { */
-trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' dwell_journey ')' {
+/* trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey ',' '('arrtime_journey ',' deptime_journey')' ',' perf_journey ',' revenue_journey ',' crewid_journey ')' { */
+//trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' dwell_journey ')' {
+trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' dwell_journey arrdep_time_journey ')' {
   $$.kind = JOURNEY;
   $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
   $$.attr_st_pltb_orgdst.st_pltb_org = $3;
@@ -177,26 +205,142 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' dwell_journey ')' {
     }
   } else {
     assert( $7 < 0 );
-    $$.dwell_time = 30; /* default dwell time [sec]. */
+    $$.dwell_time = DEFAULT_DWELL_TIME;
   }
-  print_trip( &$$ ); // ***** for debugging.
+  $$.arrdep_time.arr_time = $8.arr_time;
+  $$.arrdep_time.dep_time = $8.dep_time;
+#if 1 // ***** for debugging.
+  {
+    print_trip( &$$, TRUE );
+  }
+#endif
  }
 ;
-dwell_journey : /* omitted */ {
+dwell_journey : /* omitted. */ {
   $$ = -1;
 }
-
               | ',' TK_NAT { /* dwell time in sec. */
   $$ = $2;
  }
 ;
-/* 
-arrtime_journey : {
+arrdep_time_journey : /* whole omitted. */ {
+  $$.arr_time.hour = -1;
+  $$.arr_time.min = -1;
+  $$.arr_time.sec = -1;
+  $$.dep_time.hour = -1;
+  $$.dep_time.min = -1;
+  $$.dep_time.sec = -1;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.dep_time );
+  }
+#endif
 }
-;  
-deptime_journey : {
-}
+                    | ',' '(' ')' { /* both omitted, form 1. */
+  $$.arr_time.hour = -1;
+  $$.arr_time.min = -1;
+  $$.arr_time.sec = -1;
+  $$.dep_time.hour = -1;
+  $$.dep_time.min = -1;
+  $$.dep_time.sec = -1;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.dep_time );
+  }
+#endif
+ }
+                    | ',' '(' ',' ')' { /* both omitted, form 2. */
+  $$.arr_time.hour = -1;
+  $$.arr_time.min = -1;
+  $$.arr_time.sec = -1;
+  $$.dep_time.hour = -1;
+  $$.dep_time.min = -1;
+  $$.dep_time.sec = -1;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.dep_time );
+  }
+#endif
+ }
+                    | ',' '(' time ')' { /* deparure-time omitted, form 1. */
+  $$.arr_time.hour = $3.hour;
+  $$.arr_time.min = $3.min;
+  $$.arr_time.sec = $3.sec;
+  $$.dep_time.hour = -1;
+  $$.dep_time.min = -1;
+  $$.dep_time.sec = -1;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.dep_time );
+  }
+#endif
+ }
+                    | ',' '(' time ',' ')' { /* deparure-time omitted, form 2. */
+  $$.arr_time.hour = $3.hour;
+  $$.arr_time.min = $3.min;
+  $$.arr_time.sec = $3.sec;
+  $$.dep_time.hour = -1;
+  $$.dep_time.min = -1;
+  $$.dep_time.sec = -1;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.dep_time );
+  }
+#endif
+ }
+                    | ',' '(' ',' time ')' { /* arrival-time omitted. */
+  $$.arr_time.hour = -1;
+  $$.arr_time.min = -1;
+  $$.arr_time.sec = -1;
+  $$.dep_time.hour = $4.hour;
+  $$.dep_time.min = $4.min;
+  $$.dep_time.sec = $4.sec;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.dep_time );
+  }
+#endif
+ }
+                    | ',' '(' time ',' time ')' {
+  $$.arr_time.hour = $3.hour;
+  $$.arr_time.min = $3.min;
+  $$.arr_time.sec = $3.sec;
+  $$.dep_time.hour = $5.hour;
+  $$.dep_time.min = $5.min;
+  $$.dep_time.sec = $5.sec;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.dep_time );
+  }
+#endif
+ }
 ;
+time : TK_TIME {
+  $$ = $1;
+ }
+;
+/*
 perf_journey : {
 }
 ;
@@ -228,7 +372,7 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
     ATTR_TRIP_PTR p = $$->trip_prof;
     int i;
     for( i = 0; i < $$->ntrips; i++ ) {
-      print_trip( &p[i] );
+      print_trip( &p[i], FALSE );
       printf( "\n" );
     }
   }
@@ -266,7 +410,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
   $$.attr_route_ctrl = $11;
 #if 0 /* ***** for debugging. */
   printf( "(kind, st_pltb_pair, sp_orgdst_pair, trip_routes): " );
-  print_trip( &$$ );
+  print_trip( &$$, FALSE );
   printf( "\n" );
 #endif
  }
