@@ -1,6 +1,9 @@
 #include "../generic.h"
 
 #define DEFAULT_DWELL_TIME 17 // in sec.
+#define DEFAULT_PERFLEVEL PERFREG_NORMAL
+#define DEFAULT_REVENUE FALSE
+#define DEFAULT_CREWID -1
 
 #define MAX_STNAME_LEN 8
 #define MAX_PLTB_NAMELEN 8
@@ -38,13 +41,6 @@ typedef enum perfreg_level {
   PERFREG_FAST
 } PERFREG_LEVEL;
 extern char *cnv2str_perf_regime ( char *pstr, PERFREG_LEVEL perfreg, const int buflen );
-
-typedef enum _crew_id {
-  CREW_ID0001 = 1,
-  CREW_ID0002,
-  CREW_ID0003,
-  CREW_NO_ID
-} CREW_ID;
 
 typedef struct attr_date {
   int year;
@@ -99,7 +95,7 @@ typedef struct attr_trip {
   DWELL_TIME dwell_time;
   PERFREG_LEVEL perf_regime;
   BOOL revenue;
-  CREW_ID crew_id;
+  int crew_id;
 } ATTR_TRIP, *ATTR_TRIP_PTR;
 typedef struct attr_trips {
   KIND kind;

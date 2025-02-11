@@ -96,9 +96,9 @@ static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   ptrip->arrdep_time.dep_time.sec = -1;
   
   ptrip->dwell_time = DEFAULT_DWELL_TIME;
-  ptrip->perf_regime = PERFREG_NORMAL;
-  ptrip->revenue = FALSE;
-  ptrip->crew_id = CREW_NO_ID;
+  ptrip->perf_regime = DEFAULT_PERFLEVEL;
+  ptrip->revenue = DEFAULT_REVENUE;
+  ptrip->crew_id = DEFAULT_CREWID;
   return ptrip;
 }
 
@@ -122,6 +122,8 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
   ATTR_RJ_ASGN attr_rj_asgn;
   ATTR_RJ_ASGNS_PTR  pattr_rj_asgns;
   PERFREG_LEVEL perf_regime;
+  BOOL revenue;
+  int crew_id;
   ATTR_TRIP attr_trip_journey;
   
   ATTR_TIMETABLE_PTR ptimetable_symtbl;
@@ -148,7 +150,9 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
 %type <pattr_rj_asgns> journey_rake_asgnments journey_rake_asgnments_decl
 %type <attr_time> time
 %token <perf_regime> TK_PERFREG
-%type <attr_trip_journey> trip_journey dwell_journey arrdep_time_journey
+%token <revenue> TK_REVENUE
+%token <crew_id> TK_CREWID
+%type <attr_trip_journey> trip_journey dwell_journey arrdep_time_journey perf_journey revenue_journey crewid_journey
 %type <ptimetable_symtbl> timetable_decl
 %start trip_journey
 %%
@@ -269,6 +273,23 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
+                    | '(' ')' ',' perf_journey {
+  $$ = $4;
+  $$.arrdep_time.arr_time.hour = -1;
+  $$.arrdep_time.arr_time.min = -1;
+  $$.arrdep_time.arr_time.sec = -1;
+  $$.arrdep_time.dep_time.hour = -1;
+  $$.arrdep_time.dep_time.min = -1;
+  $$.arrdep_time.dep_time.sec = -1;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arrdep_time.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.arrdep_time.dep_time );
+  }
+#endif
+ }
                     | '(' ',' ')' ')' { /* both omitted, form 2. */
   raw_journey_trip( &$$ );
   $$.arrdep_time.arr_time.hour = -1;
@@ -286,8 +307,43 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
+                    | '(' ',' ')' ',' perf_journey {
+  $$ = $5;
+  $$.arrdep_time.arr_time.hour = -1;
+  $$.arrdep_time.arr_time.min = -1;
+  $$.arrdep_time.arr_time.sec = -1;
+  $$.arrdep_time.dep_time.hour = -1;
+  $$.arrdep_time.dep_time.min = -1;
+  $$.arrdep_time.dep_time.sec = -1;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arrdep_time.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.arrdep_time.dep_time );
+  }
+#endif
+ }
+
                     | '(' time ')' ')' { /* deparure-time omitted, form 1. */
   raw_journey_trip( &$$ );
+  $$.arrdep_time.arr_time.hour = $2.hour;
+  $$.arrdep_time.arr_time.min = $2.min;
+  $$.arrdep_time.arr_time.sec = $2.sec;
+  $$.arrdep_time.dep_time.hour = -1;
+  $$.arrdep_time.dep_time.min = -1;
+  $$.arrdep_time.dep_time.sec = -1;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arrdep_time.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.arrdep_time.dep_time );
+  }
+#endif
+ }
+                    | '(' time ')' ',' perf_journey {
+  $$ = $5;
   $$.arrdep_time.arr_time.hour = $2.hour;
   $$.arrdep_time.arr_time.min = $2.min;
   $$.arrdep_time.arr_time.sec = $2.sec;
@@ -320,6 +376,23 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
+                    | '(' time ',' ')' ',' perf_journey {
+  $$ = $6;
+  $$.arrdep_time.arr_time.hour = $2.hour;
+  $$.arrdep_time.arr_time.min = $2.min;
+  $$.arrdep_time.arr_time.sec = $2.sec;
+  $$.arrdep_time.dep_time.hour = -1;
+  $$.arrdep_time.dep_time.min = -1;
+  $$.arrdep_time.dep_time.sec = -1;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arrdep_time.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.arrdep_time.dep_time );
+  }
+#endif
+ }
                     | '(' ',' time ')' ')' { /* arrival-time omitted. */
   raw_journey_trip( &$$ );
   $$.arrdep_time.arr_time.hour = -1;
@@ -336,6 +409,24 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     print_time( &$$.arrdep_time.dep_time );
   }
 #endif
+ }
+                    | '(' ',' time ')' perf_journey {
+  $$ = $5;
+  $$.arrdep_time.arr_time.hour = -1;
+  $$.arrdep_time.arr_time.min = -1;
+  $$.arrdep_time.arr_time.sec = -1;
+  $$.arrdep_time.dep_time.hour = $3.hour;
+  $$.arrdep_time.dep_time.min = $3.min;
+  $$.arrdep_time.dep_time.sec = $3.sec;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arrdep_time.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.arrdep_time.dep_time );
+  }
+#endif
+  
  }
                     | '(' time ',' time ')' ')' {
   raw_journey_trip( &$$ );
@@ -354,23 +445,64 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
+                    | '(' time ',' time ')' ',' perf_journey {
+  $$ = $7;
+  $$.arrdep_time.arr_time.hour = $2.hour;
+  $$.arrdep_time.arr_time.min = $2.min;
+  $$.arrdep_time.arr_time.sec = $2.sec;
+  $$.arrdep_time.dep_time.hour = $4.hour;
+  $$.arrdep_time.dep_time.min = $4.min;
+  $$.arrdep_time.dep_time.sec = $4.sec;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arrdep_time.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.arrdep_time.dep_time );
+  }
+#endif
+ }
 ;
+perf_journey : TK_PERFREG ')' {
+  raw_journey_trip( &$$ );
+  $$.perf_regime = $1;
+ }
+             | TK_PERFREG ',' revenue_journey {
+  $$ = $3;
+  $$.perf_regime = $1;
+ }
+| ',' revenue_journey {
+  $$ = $2;
+  $$.perf_regime = DEFAULT_PERFLEVEL;
+ }
+;
+revenue_journey : TK_REVENUE ')' {
+  raw_journey_trip( &$$ );
+  $$.revenue = $1;
+ }
+                | TK_REVENUE ',' crewid_journey {
+  $$ = $3;
+  $$.revenue = DEFAULT_REVENUE;
+ }
+                | ',' crewid_journey {
+  $$ = $2;
+  $$.revenue = DEFAULT_REVENUE;
+ }
+;
+crewid_journey : TK_CREWID ')' {
+  raw_journey_trip( &$$ );
+  $$.crew_id = $1;
+ }
+               | ')' {
+  raw_journey_trip( &$$ );
+  $$.crew_id = -1;
+ }
+;
+
 time : TK_TIME {
   $$ = $1;
  }
 ;
-
-/*
-perf_journey : {
-}
-;
-revenue_journey : {
-}
-;
-crewid_journey : {
-}
-;
-*/
 
 /* e.g.
    trips:

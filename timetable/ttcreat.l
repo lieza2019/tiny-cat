@@ -64,6 +64,9 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
 "perfnormal" { yylval.perf_regime = PERFREG_NORMAL; return TK_PERFREG; }
 "perffast" { yylval.perf_regime = PERFREG_FAST; return TK_PERFREG; }
 
+"revenue" {yylval.revenue = TRUE; return TK_REVENUE; }
+"nonreve" {yylval.revenue = FALSE; return TK_REVENUE; }
+
 "trips" { return TK_KEY_TRIPS; }
 "assignments" { return TK_KEY_ASSIGNMENTS; }
 
@@ -112,4 +115,10 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
   strncpy( yylval.attr_route.name, yytext, MAX_ROUTENAME_LEN );
   return TK_ROUTE;
  }
+
+crew_[0-9]+ {
+  assert( (yytext[0] == 'c') && (yytext[1] == 'r') && (yytext[2] == 'e') && (yytext[3] == 'w') && (yytext[4] == '_') );
+  yylval.crew_id = atoi( &yytext[5] );
+  return TK_CREWID;
+}
 %%
