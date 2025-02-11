@@ -44,7 +44,7 @@ static void print_routes ( ATTR_ROUTES_PTR proutes ) {
 
 static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
   assert( ptrip );
-  char buf[PRINT_STRBUF_MAXLEN] = "";
+  char buf[PRINT_STRBUF_MAXLEN + 1] = "";
   
   printf( "(%s, ", cnv2str_kind(buf, ptrip->kind, PRINT_STRBUF_MAXLEN) );
   
@@ -60,11 +60,23 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
   
   if( ext ) {
     printf( ", %s, ", cnv2str_sp_cond(buf, ptrip->sp_cond, PRINT_STRBUF_MAXLEN) );
-    
     printf( "(%02d:%02d:%02d,", ptrip->arrdep_time.arr_time.hour, ptrip->arrdep_time.arr_time.min, ptrip->arrdep_time.arr_time.sec );
     printf( " %02d:%02d:%02d)", ptrip->arrdep_time.dep_time.hour, ptrip->arrdep_time.dep_time.min, ptrip->arrdep_time.dep_time.sec );
-    
     printf( ", %d", ptrip->dwell_time );
+    
+    printf( ", %s", cnv2str_perf_regime( buf, ptrip->perf_regime, PRINT_STRBUF_MAXLEN ) );
+    printf( ", %s", (ptrip->revenue ? "revenue" : "nonreve") );
+
+    if( ptrip->crew_id > -1 ) {
+      int i;
+      strncpy( buf, "crew_", PRINT_STRBUF_MAXLEN );
+      i = strnlen( buf, PRINT_STRBUF_MAXLEN );
+      sprintf( &buf[i], "%04d", ptrip->crew_id );
+    } else {
+      assert( ptrip->crew_id < 0 );
+      strncpy( buf, "no_crew_id", PRINT_STRBUF_MAXLEN );
+    }
+    printf( ", %s", buf );
   }
   printf( ")" );
 }
@@ -94,10 +106,11 @@ static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   ptrip->arrdep_time.dep_time.hour = -1;
   ptrip->arrdep_time.dep_time.min = -1;
   ptrip->arrdep_time.dep_time.sec = -1;
-  
   ptrip->dwell_time = DEFAULT_DWELL_TIME;
+  
   ptrip->perf_regime = DEFAULT_PERFLEVEL;
   ptrip->revenue = DEFAULT_REVENUE;
+  
   ptrip->crew_id = DEFAULT_CREWID;
   return ptrip;
 }
@@ -324,7 +337,23 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
-
+                    | perf_journey { /* both omitted, form 3. */
+  $$ = $1;
+  $$.arrdep_time.arr_time.hour = -1;
+  $$.arrdep_time.arr_time.min = -1;
+  $$.arrdep_time.arr_time.sec = -1;
+  $$.arrdep_time.dep_time.hour = -1;
+  $$.arrdep_time.dep_time.min = -1;
+  $$.arrdep_time.dep_time.sec = -1;
+#if 0 // ***** for debugging.
+  {
+    printf( "arr_time: " );
+    print_time( &$$.arrdep_time.arr_time );
+    printf( "dep_time: " );
+    print_time( &$$.arrdep_time.dep_time );
+  }
+  #endif
+ }
                     | '(' time ')' ')' { /* deparure-time omitted, form 1. */
   raw_journey_trip( &$$ );
   $$.arrdep_time.arr_time.hour = $2.hour;
@@ -471,8 +500,8 @@ perf_journey : TK_PERFREG ')' {
   $$ = $3;
   $$.perf_regime = $1;
  }
-| ',' revenue_journey {
-  $$ = $2;
+             | revenue_journey { /* omitted */
+  $$ = $1;
   $$.perf_regime = DEFAULT_PERFLEVEL;
  }
 ;
@@ -484,8 +513,8 @@ revenue_journey : TK_REVENUE ')' {
   $$ = $3;
   $$.revenue = DEFAULT_REVENUE;
  }
-                | ',' crewid_journey {
-  $$ = $2;
+                | crewid_journey { /* omitted */
+  $$ = $1;
   $$.revenue = DEFAULT_REVENUE;
  }
 ;

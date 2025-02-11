@@ -116,7 +116,7 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
   return TK_ROUTE;
  }
 
-crew_[0-9]+ {
+"crew_"[0-9]+ {
   assert( (yytext[0] == 'c') && (yytext[1] == 'r') && (yytext[2] == 'e') && (yytext[3] == 'w') && (yytext[4] == '_') );
   yylval.crew_id = atoi( &yytext[5] );
   return TK_CREWID;

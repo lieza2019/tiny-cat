@@ -86,7 +86,7 @@ typedef struct attr_trip {
   ATTR_ST_PLTB_PAIR attr_st_pltb_orgdst;
   ATTR_SP_PAIR attr_sp_orgdst;
   ATTR_ROUTES attr_route_ctrl;
-  
+  // belows are extends.
   ARS_SP_COND sp_cond;
   struct {
     ATTR_TIME arr_time;
