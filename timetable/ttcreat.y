@@ -83,16 +83,31 @@ static void print_rjasgn ( ATTR_RJ_ASGN_PTR pasgn ) {
   printf( ")" );  
 }
 
+static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
+  assert( ptrip );
+  ptrip->kind = UNKNOWN;
+  
+  ptrip->sp_cond = DWELL;
+  ptrip->arrdep_time.arr_time.hour = -1;
+  ptrip->arrdep_time.arr_time.min = -1;
+  ptrip->arrdep_time.arr_time.sec = -1;
+  ptrip->arrdep_time.dep_time.hour = -1;
+  ptrip->arrdep_time.dep_time.min = -1;
+  ptrip->arrdep_time.dep_time.sec = -1;
+  
+  ptrip->dwell_time = DEFAULT_DWELL_TIME;
+  ptrip->perf_regime = PERFREG_NORMAL;
+  ptrip->revenue = FALSE;
+  ptrip->crew_id = CREW_NO_ID;
+  return ptrip;
+}
+
 ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
 %}
 %union {
   int nat;
   ATTR_DATE attr_date;
-  ATTR_TIME attr_time;
-  struct {
-    ATTR_TIME arr_time;
-    ATTR_TIME dep_time;
-  } attr_arrdep_time;
+  ATTR_TIME attr_time;  
   char st_name[MAX_STNAME_LEN];
   char pltb_name[MAX_PLTB_NAMELEN];
   ATTR_ST_PLTB attr_st_pltb;
@@ -106,7 +121,6 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
   RAKE_ID rake_id;
   ATTR_RJ_ASGN attr_rj_asgn;
   ATTR_RJ_ASGNS_PTR  pattr_rj_asgns;
-  DWELL_TIME dwell_time;
   PERFREG_LEVEL perf_regime;
   ATTR_TRIP attr_trip_journey;
   
@@ -132,11 +146,9 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
 %type <attr_rj_asgn> jr_asgn
 %token TK_KEY_ASSIGNMENTS
 %type <pattr_rj_asgns> journey_rake_asgnments journey_rake_asgnments_decl
-%type <dwell_time> dwell_journey
-%type <attr_arrdep_time> arrdep_time_journey
 %type <attr_time> time
 %token <perf_regime> TK_PERFREG
-%type <attr_trip_journey> trip_journey
+%type <attr_trip_journey> trip_journey dwell_journey arrdep_time_journey
 %type <ptimetable_symtbl> timetable_decl
 %start trip_journey
 %%
@@ -174,41 +186,40 @@ timetable_decl : trips_decl journey_rake_asgnments_decl {
 ;
 
 /* Each trip of journey has following attributes,
-       Origin St.& PL/TB
-       Destination St.& PL/TB
-       S.P.(Stopping Point) condition: DWELLing or SKIPping
-       Arrival time of this Stopping Point
-       Departure time of this Stopping Point
-       Dwell time [sec] of this Stopping Point
-       Performance regime, of the departure from this Stopping Point
-       Is revenue operation, or not.
-       Crew ID, of the crew assigned to the departure from this Stopping Point
+    Origin St.& PL/TB
+    Destination St.& PL/TB
+    S.P.(Stopping Point) condition: DWELLing or SKIPping
+    Arrival time of this Stopping Point
+    Departure time of this Stopping Point
+    Dwell time [sec] of this Stopping Point
+    Performance regime, of the departure from this Stopping Point
+    Is revenue operation, or not.
+    Crew ID, of the crew assigned to the departure from this Stopping Point
 */
-/* e.g.
-   ( ((JLA,PL1), (KIKJ, PL1)) )-
-   ( ((JLA,PL1), (KIKJ, PL1)), 17 )
+/* trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey ',' '('arrtime_journey ',' deptime_journey')' ',' perf_journey ',' revenue_journey ',' crewid_journey ')'
+   e.g.
+    ( ((JLA,PL1), (KIKJ, PL1)) )
+    ( ((JLA,PL1), (KIKJ, PL1)), 17 )
+    ( ((JLA,PL1), (KIKJ, PL1)), 17, (11:22:33, 23:59:59) )
 */
-/* trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey ',' '('arrtime_journey ',' deptime_journey')' ',' perf_journey ',' revenue_journey ',' crewid_journey ')' { */
-//trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' dwell_journey ')' {
-trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' dwell_journey arrdep_time_journey ')' {
+trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' {
+  raw_journey_trip( &$$ );
   $$.kind = JOURNEY;
   $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
   $$.attr_st_pltb_orgdst.st_pltb_org = $3;
   $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
-  if( $7 >= 0 ) {
-    $$.dwell_time = $7;
-    if( $7 > 0 ) {
-      $$.sp_cond = DWELL;
-    } else {
-     assert( $7 == 0 );
-     $$.sp_cond = SKIP;
-    }
-  } else {
-    assert( $7 < 0 );
-    $$.dwell_time = DEFAULT_DWELL_TIME;
+#if 1 // ***** for debugging.
+  {
+    print_trip( &$$, TRUE );
   }
-  $$.arrdep_time.arr_time = $8.arr_time;
-  $$.arrdep_time.dep_time = $8.dep_time;
+#endif
+ }
+             | '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey {
+  $$ = $8;
+  $$.kind = JOURNEY;
+  $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+  $$.attr_st_pltb_orgdst.st_pltb_org = $3;
+  $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
 #if 1 // ***** for debugging.
   {
     print_trip( &$$, TRUE );
@@ -216,122 +227,130 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' dwell_journey arrdep_time_j
 #endif
  }
 ;
-dwell_journey : /* omitted. */ {
-  $$ = -1;
-}
-              | ',' TK_NAT { /* dwell time in sec. */
-  $$ = $2;
+dwell_journey : TK_NAT ')' {
+  raw_journey_trip( &$$ );
+  if( $1 == 0 ) {
+    $$.sp_cond = SKIP;
+  } else {
+    assert( $1 > 0 );
+    $$.sp_cond = DWELL;
+  }
+  $$.dwell_time = $1;
+ }
+              | TK_NAT ',' arrdep_time_journey {
+  $$ = $3;
+  if( $1 == 0 ) {
+    $$.sp_cond = SKIP;
+  } else {
+    assert( $1 > 0 );
+    $$.sp_cond = DWELL;
+  }
+  $$.dwell_time = $1;  
+ }
+              | arrdep_time_journey { /* omitted. */
+  $$ = $1;
+  $$.dwell_time = DEFAULT_DWELL_TIME;
  }
 ;
-arrdep_time_journey : /* whole omitted. */ {
-  $$.arr_time.hour = -1;
-  $$.arr_time.min = -1;
-  $$.arr_time.sec = -1;
-  $$.dep_time.hour = -1;
-  $$.dep_time.min = -1;
-  $$.dep_time.sec = -1;
+arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
+  raw_journey_trip( &$$ );
+  $$.arrdep_time.arr_time.hour = -1;
+  $$.arrdep_time.arr_time.min = -1;
+  $$.arrdep_time.arr_time.sec = -1;
+  $$.arrdep_time.dep_time.hour = -1;
+  $$.arrdep_time.dep_time.min = -1;
+  $$.arrdep_time.dep_time.sec = -1;
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
-    print_time( &$$.arr_time );
+    print_time( &$$.arrdep_time.arr_time );
     printf( "dep_time: " );
-    print_time( &$$.dep_time );
-  }
-#endif
-}
-                    | ',' '(' ')' { /* both omitted, form 1. */
-  $$.arr_time.hour = -1;
-  $$.arr_time.min = -1;
-  $$.arr_time.sec = -1;
-  $$.dep_time.hour = -1;
-  $$.dep_time.min = -1;
-  $$.dep_time.sec = -1;
-#if 0 // ***** for debugging.
-  {
-    printf( "arr_time: " );
-    print_time( &$$.arr_time );
-    printf( "dep_time: " );
-    print_time( &$$.dep_time );
+    print_time( &$$.arrdep_time.dep_time );
   }
 #endif
  }
-                    | ',' '(' ',' ')' { /* both omitted, form 2. */
-  $$.arr_time.hour = -1;
-  $$.arr_time.min = -1;
-  $$.arr_time.sec = -1;
-  $$.dep_time.hour = -1;
-  $$.dep_time.min = -1;
-  $$.dep_time.sec = -1;
+                    | '(' ',' ')' ')' { /* both omitted, form 2. */
+  raw_journey_trip( &$$ );
+  $$.arrdep_time.arr_time.hour = -1;
+  $$.arrdep_time.arr_time.min = -1;
+  $$.arrdep_time.arr_time.sec = -1;
+  $$.arrdep_time.dep_time.hour = -1;
+  $$.arrdep_time.dep_time.min = -1;
+  $$.arrdep_time.dep_time.sec = -1;
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
-    print_time( &$$.arr_time );
+    print_time( &$$.arrdep_time.arr_time );
     printf( "dep_time: " );
-    print_time( &$$.dep_time );
+    print_time( &$$.arrdep_time.dep_time );
   }
 #endif
  }
-                    | ',' '(' time ')' { /* deparure-time omitted, form 1. */
-  $$.arr_time.hour = $3.hour;
-  $$.arr_time.min = $3.min;
-  $$.arr_time.sec = $3.sec;
-  $$.dep_time.hour = -1;
-  $$.dep_time.min = -1;
-  $$.dep_time.sec = -1;
+                    | '(' time ')' ')' { /* deparure-time omitted, form 1. */
+  raw_journey_trip( &$$ );
+  $$.arrdep_time.arr_time.hour = $2.hour;
+  $$.arrdep_time.arr_time.min = $2.min;
+  $$.arrdep_time.arr_time.sec = $2.sec;
+  $$.arrdep_time.dep_time.hour = -1;
+  $$.arrdep_time.dep_time.min = -1;
+  $$.arrdep_time.dep_time.sec = -1;
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
-    print_time( &$$.arr_time );
+    print_time( &$$.arrdep_time.arr_time );
     printf( "dep_time: " );
-    print_time( &$$.dep_time );
+    print_time( &$$.arrdep_time.dep_time );
   }
 #endif
  }
-                    | ',' '(' time ',' ')' { /* deparure-time omitted, form 2. */
-  $$.arr_time.hour = $3.hour;
-  $$.arr_time.min = $3.min;
-  $$.arr_time.sec = $3.sec;
-  $$.dep_time.hour = -1;
-  $$.dep_time.min = -1;
-  $$.dep_time.sec = -1;
+                    | '(' time ',' ')' ')' { /* deparure-time omitted, form 2. */
+  raw_journey_trip( &$$ );
+  $$.arrdep_time.arr_time.hour = $2.hour;
+  $$.arrdep_time.arr_time.min = $2.min;
+  $$.arrdep_time.arr_time.sec = $2.sec;
+  $$.arrdep_time.dep_time.hour = -1;
+  $$.arrdep_time.dep_time.min = -1;
+  $$.arrdep_time.dep_time.sec = -1;
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
-    print_time( &$$.arr_time );
+    print_time( &$$.arrdep_time.arr_time );
     printf( "dep_time: " );
-    print_time( &$$.dep_time );
+    print_time( &$$.arrdep_time.dep_time );
   }
 #endif
  }
-                    | ',' '(' ',' time ')' { /* arrival-time omitted. */
-  $$.arr_time.hour = -1;
-  $$.arr_time.min = -1;
-  $$.arr_time.sec = -1;
-  $$.dep_time.hour = $4.hour;
-  $$.dep_time.min = $4.min;
-  $$.dep_time.sec = $4.sec;
+                    | '(' ',' time ')' ')' { /* arrival-time omitted. */
+  raw_journey_trip( &$$ );
+  $$.arrdep_time.arr_time.hour = -1;
+  $$.arrdep_time.arr_time.min = -1;
+  $$.arrdep_time.arr_time.sec = -1;
+  $$.arrdep_time.dep_time.hour = $3.hour;
+  $$.arrdep_time.dep_time.min = $3.min;
+  $$.arrdep_time.dep_time.sec = $3.sec;
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
-    print_time( &$$.arr_time );
+    print_time( &$$.arrdep_time.arr_time );
     printf( "dep_time: " );
-    print_time( &$$.dep_time );
+    print_time( &$$.arrdep_time.dep_time );
   }
 #endif
  }
-                    | ',' '(' time ',' time ')' {
-  $$.arr_time.hour = $3.hour;
-  $$.arr_time.min = $3.min;
-  $$.arr_time.sec = $3.sec;
-  $$.dep_time.hour = $5.hour;
-  $$.dep_time.min = $5.min;
-  $$.dep_time.sec = $5.sec;
+                    | '(' time ',' time ')' ')' {
+  raw_journey_trip( &$$ );
+  $$.arrdep_time.arr_time.hour = $2.hour;
+  $$.arrdep_time.arr_time.min = $2.min;
+  $$.arrdep_time.arr_time.sec = $2.sec;
+  $$.arrdep_time.dep_time.hour = $4.hour;
+  $$.arrdep_time.dep_time.min = $4.min;
+  $$.arrdep_time.dep_time.sec = $4.sec;
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
-    print_time( &$$.arr_time );
+    print_time( &$$.arrdep_time.arr_time );
     printf( "dep_time: " );
-    print_time( &$$.dep_time );
+    print_time( &$$.arrdep_time.dep_time );
   }
 #endif
  }
@@ -340,6 +359,7 @@ time : TK_TIME {
   $$ = $1;
  }
 ;
+
 /*
 perf_journey : {
 }
@@ -351,6 +371,7 @@ crewid_journey : {
 }
 ;
 */
+
 /* e.g.
    trips:
      (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B});

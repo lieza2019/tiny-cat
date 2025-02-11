@@ -66,6 +66,11 @@ char *cnv2str_kind ( char *pstr, KIND kind, const int buflen ) {
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
+  case UNKNOWN:
+    strncpy( pstr, "UNKNOWN", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
   default:
     assert( FALSE );
   }

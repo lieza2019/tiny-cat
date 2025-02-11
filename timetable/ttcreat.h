@@ -11,7 +11,7 @@
 #define MAX_RJ_ASGNMENTS 64
 
 typedef enum kind {
-  ST_PLTB,
+  ST_PLTB = 1,
   ST_PLTB_PAIR,
   SP,
   SP_PAIR,
@@ -21,25 +21,26 @@ typedef enum kind {
   TRIPS,
   RJ_ASGN,
   RJ_ASGNS,
-  JOURNEY
+  JOURNEY,
+  UNKNOWN,
 } KIND;
 extern char *cnv2str_kind ( char *pstr, KIND kind, const int buflen );
 
 typedef enum ars_sp_cond {
-  DWELL,
+  DWELL = 1,
   SKIP
 } ARS_SP_COND;
 extern char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen );
 
 typedef enum perfreg_level {
-  PERFREG_SLOW,
+  PERFREG_SLOW = 1,
   PERFREG_NORMAL,
   PERFREG_FAST
 } PERFREG_LEVEL;
 extern char *cnv2str_perf_regime ( char *pstr, PERFREG_LEVEL perfreg, const int buflen );
 
 typedef enum _crew_id {
-  CREW_ID0001,
+  CREW_ID0001 = 1,
   CREW_ID0002,
   CREW_ID0003,
   CREW_NO_ID
@@ -98,7 +99,7 @@ typedef struct attr_trip {
   DWELL_TIME dwell_time;
   PERFREG_LEVEL perf_regime;
   BOOL revenue;
-  CREW_ID crew_id;  
+  CREW_ID crew_id;
 } ATTR_TRIP, *ATTR_TRIP_PTR;
 typedef struct attr_trips {
   KIND kind;
