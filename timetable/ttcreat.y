@@ -215,9 +215,8 @@ timetable_decl : trips_decl journey_rake_asgnments_decl {
 */
 /* trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey ',' '('arrtime_journey ',' deptime_journey')' ',' perf_journey ',' revenue_journey ',' crewid_journey ')'
    e.g.
-    ( ((JLA,PL1), (KIKJ, PL1)) )
-    ( ((JLA,PL1), (KIKJ, PL1)), 17 )
-    ( ((JLA,PL1), (KIKJ, PL1)), 17, (11:22:33, 23:59:59) )
+    ( ((JLA,PL1), (KIKJ, PL1)), 37, (11:22:33, 23:59:59), perfslow, revenue, crew_021 )
+    ( ((BTGD,PL2), (OKBS, PL2)), 15, (00:13:51, 21:57:13), perffast, revenue, crew_007 )
 */
 trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' {
   raw_journey_trip( &$$ );
