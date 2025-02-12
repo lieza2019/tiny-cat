@@ -12,6 +12,7 @@
 #define MAX_TRIP_ROUTES 8
 #define MAX_TRIPS 256
 #define MAX_RJ_ASGNMENTS 64
+#define MAX_JOURNEYS 256
 
 typedef enum kind {
   ST_PLTB = 1,
@@ -25,7 +26,8 @@ typedef enum kind {
   RJ_ASGN,
   RJ_ASGNS,
   JOURNEY,
-  UNKNOWN,
+  JOURNEYS,
+  UNKNOWN
 } KIND;
 extern char *cnv2str_kind ( char *pstr, KIND kind, const int buflen );
 
@@ -121,17 +123,23 @@ typedef struct attr_journey {
   JOURNEY_ID jid;
   ATTR_TRIPS trips;
 } ATTR_JOURNEY, *ATTR_JOURNEY_PTR;
+typedef struct attr_journeys {
+  KIND kind;
+  int njourneys;
+  ATTR_JOURNEY journey_prof[MAX_JOURNEYS + 1];
+} ATTR_JOURNEYS, *ATTR_JOURNEYS_PTR;
 
 typedef struct attr_timetable {
   ATTR_TRIPS trips_regtbl;
   ATTR_RJ_ASGNS rj_asgn_regtbl;
+  ATTR_JOURNEYS journeys_regtbl;
 } ATTR_TIMETABLE, *ATTR_TIMETABLE_PTR;
 extern ATTR_TIMETABLE timetable_symtbl;
 
 extern BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 );
 extern BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_PAIR_PTR pp1, ATTR_ST_PLTB_PAIR_PTR pp2 );
 
-extern ATTR_TRIP_PTR reg_trip ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip );
+extern ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip );
 extern ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev_asgn, ATTR_RJ_ASGN_PTR pasgn );
 
 extern void emit_ars_schcmds( void );

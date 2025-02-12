@@ -115,7 +115,7 @@ static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   return ptrip;
 }
 
-ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
+ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
 %}
 %union {
   int nat;
@@ -138,6 +138,7 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
   BOOL revenue;
   int crew_id;
   ATTR_TRIP attr_trip_journey;
+  ATTR_TRIPS_PTR pattr_trips_journey;
   
   ATTR_TIMETABLE_PTR ptimetable_symtbl;
 }
@@ -166,6 +167,7 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}};
 %token <revenue> TK_REVENUE
 %token <crew_id> TK_CREWID
 %type <attr_trip_journey> trip_journey dwell_journey arrdep_time_journey perf_journey revenue_journey crewid_journey
+%type <pattr_trips_journey> trips_journey
 %type <ptimetable_symtbl> timetable_decl
 %start trip_journey
 %%
@@ -199,6 +201,14 @@ timetable_decl : trips_decl journey_rake_asgnments_decl {
   }
 #endif
   emit_ars_schcmds();
+ }
+;
+
+trips_journey : { /* empty journies */
+}
+| trip_journey {
+ }
+| trips_journey ',' trip_journey {
  }
 ;
 
@@ -562,7 +572,7 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
 ;
 trips_definition : trip_def ';' {
   ATTR_TRIP_PTR p = NULL;
-  p = reg_trip( &timetable_symtbl.trips_regtbl, NULL, &$1 );
+  p = reg_trip_def( &timetable_symtbl.trips_regtbl, NULL, &$1 );
   if( p != &$1 ) {
     printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
     exit( 1 );
@@ -572,7 +582,7 @@ trips_definition : trip_def ';' {
       | trips_definition trip_def ';' {
   ATTR_TRIP dropd = {};
   ATTR_TRIP_PTR p = NULL;
-  p = reg_trip( &timetable_symtbl.trips_regtbl, &dropd, &$2 );
+  p = reg_trip_def( &timetable_symtbl.trips_regtbl, &dropd, &$2 );
   if( p != &$2 ) {
     assert( p == &dropd );
     assert( p->kind == TRIP );

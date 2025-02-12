@@ -164,7 +164,7 @@ static BOOL ident_trips ( ATTR_ST_PLTB_PAIR_PTR pt1, ATTR_ST_PLTB_PAIR_PTR pt2 )
   return r;
 }
 
-ATTR_TRIP_PTR reg_trip ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip ) {
+ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip ) {
   assert( preg_tbl );
   assert( ptrip );
   assert( preg_tbl->kind == TRIPS );
@@ -234,6 +234,52 @@ ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev
       exit( 1 );
     }
   }
+  return r;
+}
+
+static BOOL next2_pred ( ATTR_TRIP_PTR ppred, ATTR_TRIP_PTR psucc ) {
+  assert( ppred );
+  assert( psucc );
+  BOOL r = FALSE;
+  
+  return r;
+}
+
+ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, ATTR_TRIP_PTR pconf, ATTR_TRIP_PTR ptrip ) {
+  assert( preg_tbl );
+  assert( preg_tbl->kind == JOURNEYS );
+  assert( (jid >= 1) && (jid <= MAX_JOURNEYS) );
+  assert( pconf );
+  assert( ptrip );
+  assert( ptrip->kind == TRIP );
+  ATTR_TRIP_PTR r = NULL;
+  
+  ATTR_JOURNEY_PTR pJ = &preg_tbl->journeys_prof[jid];
+  assert( pJ );
+  int nts = pJ->trips.ntrips;
+  assert( nts >= 0 );
+  if( nts < MAX_TRIPS ) {
+    if( pJ->kind == JOURNEY ) {
+      assert( pJ->jid == jid );
+      assert( (nts - 1) >= 0 );
+      if( ! next2_pred( &pJ->trips.trip_prof[nts - 1], ptrip ) ) {
+	;
+	return NULL;
+      }
+    } else {
+      assert( ! pJ->kind );
+      assert( nts == 0 );
+      pJ->kind = JOURNEY;
+      pJ->jid = jid;
+    }
+    {
+      ATTR_TRIP_PTR pavail = &pJ->trips.trip_prof[nts];
+      assert( pavail );
+      assert( nts < MAX_TRIPS );
+      ;
+    }
+  } else
+    ;
   return r;
 }
 
