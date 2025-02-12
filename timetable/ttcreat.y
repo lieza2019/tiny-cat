@@ -439,8 +439,8 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
-                    | '(' ',' time ')' perf_journey {
-  $$ = $5;
+                    | '(' ',' time ')' ',' perf_journey {
+  $$ = $6;
   $$.arrdep_time.arr_time.hour = -1;
   $$.arrdep_time.arr_time.min = -1;
   $$.arrdep_time.arr_time.sec = -1;
@@ -511,7 +511,7 @@ revenue_journey : TK_REVENUE ')' {
  }
                 | TK_REVENUE ',' crewid_journey {
   $$ = $3;
-  $$.revenue = DEFAULT_REVENUE;
+  $$.revenue = $1;
  }
                 | crewid_journey { /* omitted */
   $$ = $1;
