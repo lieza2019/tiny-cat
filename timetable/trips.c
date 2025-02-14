@@ -242,6 +242,7 @@ static BOOL next2_pred ( ATTR_TRIP_PTR ppred, ATTR_TRIP_PTR psucc ) {
   assert( psucc );
   BOOL r = FALSE;
   ;
+  r = TRUE;
   return r;
 }
 
@@ -261,9 +262,8 @@ ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, ATT
     assert( pJ->trips.kind == TRIPS );
     assert( nts > 0 );
     if( nts < MAX_TRIPS ) {
-      if( ! next2_pred( &pJ->trips.trip_prof[nts - 1], ptrip ) ) {
-	printf( "NOTICE: Trip skew detected on journey %d.\n", jid );
-      }
+      if( ! next2_pred( &pJ->trips.trip_prof[nts - 1], ptrip ) )
+	printf( "NOTICE: Undefined trip found on journey %d.\n", jid );
       pJ->trips.trip_prof[nts] = *ptrip;
       pJ->trips.ntrips++;
     } else {
@@ -284,4 +284,5 @@ ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, ATT
 }
 
 void emit_ars_schcmds( void ) {
+  ;
 }

@@ -69,6 +69,7 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
 
 "trips" { return TK_KEY_TRIPS; }
 "assignments" { return TK_KEY_ASSIGNMENTS; }
+"journeys" { return TK_JOURNEYS; }
 
 ":=" { return TK_ASGN; }
 
