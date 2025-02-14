@@ -115,6 +115,7 @@ static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   return ptrip;
 }
 
+static JOURNEY_ID jid_w = -1;
 ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
 %}
 %union {
@@ -139,6 +140,7 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
   int crew_id;
   ATTR_TRIP attr_trip_journey;
   ATTR_TRIPS_PTR pattr_trips_journey;
+  ATTR_JOURNEY_PTR pattr_journey;
   
   ATTR_TIMETABLE_PTR ptimetable_symtbl;
 }
@@ -157,6 +159,7 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
 %token TK_KEY_TRIPS
 %type <pattr_trips> trips_definition trips_decl
 %token <journey_id> TK_JOURNEY_ID
+%type <journey_id> journey_definition
 %token <rake_id> TK_RAKE_ID
 %token TK_ASGN
 %type <attr_rj_asgn> jr_asgn
@@ -168,10 +171,11 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
 %token <crew_id> TK_CREWID
 %type <attr_trip_journey> trip_journey dwell_journey arrdep_time_journey perf_journey revenue_journey crewid_journey
 %type <pattr_trips_journey> trips_journey
+%type <pattr_journey> journey_decl
 %type <ptimetable_symtbl> timetable_decl
 %start trip_journey
 %%
-timetable_decl : trips_decl journey_rake_asgnments_decl {
+timetable_decl : trips_decl journey_rake_asgnments_decl journey_decl {
 #if 1 /* ***** for debugging. */
   {
     const int nspc_indent = 2;
@@ -204,11 +208,34 @@ timetable_decl : trips_decl journey_rake_asgnments_decl {
  }
 ;
 
-trips_journey : { /* empty journies */
-}
-| trip_journey {
+journey_decl : journey_definition trips_journey {
+  assert( jid_w < 0 );
+  assert( $1 > 0 );
+  jid_w = $1;
+  assert( timetable_symtbl.journeys_regtbl.journey_prof[jid_w].jid == jid_w );
+  assert( timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips == $2 );
+  $$ = &timetable_symtbl.journeys_regtbl.journey_prof[jid_w];
+  jid_w = 1;
  }
-| trips_journey ',' trip_journey {
+;
+journey_definition : TK_JOURNEY_ID ':' TK_JOURNEY_ID {
+  $$ = 3;
+ }
+;
+trips_journey : /* empty journies */ {
+  assert( jid_w > -1 );
+  $$ = NULL;
+}
+              | trip_journey {
+  assert( jid_w > -1 );
+  $$ = reg_trip_journey( timetable_symtbl.journeys_regtbl, jid_w, &$1 );
+ }
+              | trips_journey ';' trip_journey {
+  assert( jid_w > -1 );
+  ATTR_TRIP_PTR ppred = $1;
+  assert( ppred );
+  $$ = reg_trip_journey( timetable_symtbl.journeys_regtbl, jid_w, &$3 );
+  asssert( $$ == (ppred + 1) );
  }
 ;
 

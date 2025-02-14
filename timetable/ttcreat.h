@@ -107,17 +107,6 @@ typedef struct attr_trips {
 
 typedef int JOURNEY_ID;
 typedef int RAKE_ID;
-typedef struct attr_rj_asgn {
-  KIND kind;
-  JOURNEY_ID jid;
-  RAKE_ID rid;
-} ATTR_RJ_ASGN, *ATTR_RJ_ASGN_PTR;
-typedef struct attr_rj_asgns {
-  KIND kind;
-  int nasgns;
-  ATTR_RJ_ASGN rj_asgn[MAX_RJ_ASGNMENTS];
-} ATTR_RJ_ASGNS, *ATTR_RJ_ASGNS_PTR;
-
 typedef struct attr_journey {
   KIND kind;
   JOURNEY_ID jid;
@@ -128,6 +117,17 @@ typedef struct attr_journeys {
   int njourneys;
   ATTR_JOURNEY journey_prof[MAX_JOURNEYS + 1];
 } ATTR_JOURNEYS, *ATTR_JOURNEYS_PTR;
+
+typedef struct attr_rj_asgn {
+  KIND kind;
+  JOURNEY_ID jid;
+  RAKE_ID rid;
+} ATTR_RJ_ASGN, *ATTR_RJ_ASGN_PTR;
+typedef struct attr_rj_asgns {
+  KIND kind;
+  int nasgns;
+  ATTR_RJ_ASGN rj_asgn[MAX_RJ_ASGNMENTS];
+} ATTR_RJ_ASGNS, *ATTR_RJ_ASGNS_PTR;
 
 typedef struct attr_timetable {
   ATTR_TRIPS trips_regtbl;
@@ -141,5 +141,6 @@ extern BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_PAIR_PTR pp1, ATTR_ST_PLTB_PAIR_PTR p
 
 extern ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip );
 extern ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev_asgn, ATTR_RJ_ASGN_PTR pasgn );
+extern ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, ATTR_TRIP_PTR ptrip );
 
 extern void emit_ars_schcmds( void );
