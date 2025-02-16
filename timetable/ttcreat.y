@@ -165,9 +165,9 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
 %type <journey_id> journey_ident
 %token <rake_id> TK_RAKE_ID
 %token TK_ASGN
-%type <attr_rj_asgn> jr_asgn
+%type <attr_rj_asgn> rj_asgn
 %token TK_KEY_ASSIGNMENTS
-%type <pattr_rj_asgns> journey_rake_asgnments journey_rake_asgnments_decl
+%type <pattr_rj_asgns> rake_journey_asgnmnts rake_journey_asgnmnts_decl
 %type <attr_time> time
 %token <perf_regime> TK_PERFREG
 %token <revenue> TK_REVENUE
@@ -179,7 +179,7 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
 %type <ptimetable_symtbl> timetable_decl
 %start timetable_decl
 %%
-timetable_decl : trips_decl journey_rake_asgnments_decl journeys_decl {
+timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
 #if 1 /* ***** for debugging. */
   {
     printf( "trips:\n" );
@@ -307,8 +307,6 @@ trips_journey : /* empty trips */ {
   $2.kind = TRIP;
   preg = reg_trip_journey( &timetable_symtbl.journeys_regtbl, jid_w, &$2 );
   assert( pnxt == preg );
-  /* assert( timetable_symtbl.journeys_regtbl.njourneys > 0 ); */
-  /* timetable_symtbl.journeys_regtbl.njourneys++; */
   $$ = &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips;
  }
 ;
@@ -671,23 +669,27 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
 #endif
  }
 ;
-trips_definition : trip_def ';' {
-  ATTR_TRIP_PTR p = NULL;
-  p = reg_trip_def( &timetable_symtbl.trips_regtbl, NULL, &$1 );
-  if( p != &$1 ) {
-    printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
-    exit( 1 );
-  }
+trips_definition : /* empty journies */ {
   $$ = &timetable_symtbl.trips_regtbl;
- }
-      | trips_definition trip_def ';' {
-  ATTR_TRIP dropd = {};
+  assert( $$->ntrips == 0 );
+}
+                 | trips_definition trip_def ';' {
+  
   ATTR_TRIP_PTR p = NULL;
-  p = reg_trip_def( &timetable_symtbl.trips_regtbl, &dropd, &$2 );
-  if( p != &$2 ) {
-    assert( p == &dropd );
-    assert( p->kind == TRIP );
-    printf( "NOTICE: trip attribute has been overridden with.\n" );
+  if( timetable_symtbl.trips_regtbl.ntrips == 0 ) {
+    p = reg_trip_def( &timetable_symtbl.trips_regtbl, NULL, &$2 );
+    if( p != &$2 ) {
+      printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
+      exit( 1 );
+    }
+  } else {
+    ATTR_TRIP dropd = {};
+    p = reg_trip_def( &timetable_symtbl.trips_regtbl, &dropd, &$2 );
+    if( p != &$2 ) {
+      assert( p == &dropd );
+      assert( p->kind == TRIP );
+      printf( "NOTICE: trip attribute has been overridden with.\n" );
+    }
   }
   $$ = &timetable_symtbl.trips_regtbl;
  }
@@ -753,12 +755,14 @@ route : TK_ROUTE {
  }
 ;
 
-/* e.g.
+/* rake_journey_asgnmnts_decl := TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts
+   rake_journey_asgnmnts := (TK_RAKE_ID ":=" TK_JOURNEY_ID ';')*
+   e.g.
    assignments:
      rake_801 := J1; rake_802 := J2; rake_803 := J3; rake_804 := J4;
      rake_811 := J11; rake_812 := J12; rake_813 := J13; rake_814 := J14;
 */
-journey_rake_asgnments_decl : TK_KEY_ASSIGNMENTS ':'journey_rake_asgnments {
+rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':'rake_journey_asgnmnts {
   assert( $3 );
   assert( $3->kind == RJ_ASGNS );
   $$ = $3;
@@ -775,28 +779,31 @@ journey_rake_asgnments_decl : TK_KEY_ASSIGNMENTS ':'journey_rake_asgnments {
 #endif
  }
 ;
-journey_rake_asgnments : jr_asgn ';' {
-  ATTR_RJ_ASGN_PTR p = NULL;
-  p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, NULL, &$1 );
-  if( p != &$1 ) {
-    printf( "FATAL: INTERNAL-error, in rake-journey assignment registration, giving up.\n" );
-    exit( 1 );
-  }
+rake_journey_asgnmnts : /* empty journies */ {
   $$ = &timetable_symtbl.rj_asgn_regtbl;
+  assert( $$->nasgns == 0 );
  }
-                       | journey_rake_asgnments jr_asgn ';' {
-  ATTR_RJ_ASGN dropd = {};
+                       | rake_journey_asgnmnts rj_asgn ';' {
   ATTR_RJ_ASGN_PTR p = NULL;
-  p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, &dropd, &$2 );
-  if( p != &$2 ) {
-    assert( p == &dropd );
-    assert( p->kind == RJ_ASGN );
-    printf( "NOTICE: rake-journey assignment has been overridden with.\n" );
+  if( timetable_symtbl.rj_asgn_regtbl.nasgns == 0 ) {
+    p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, NULL, &$2 );
+    if( p != &$2 ) {
+      printf( "FATAL: INTERNAL-error, in rake-journey assignment registration, giving up.\n" );
+      exit( 1 );
+    }
+  } else {
+    ATTR_RJ_ASGN dropd = {};
+    p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, &dropd, &$2 );
+    if( p != &$2 ) {
+      assert( p == &dropd );
+      assert( p->kind == RJ_ASGN );
+      printf( "NOTICE: rake-journey assignment has been overridden with.\n" );
+    }
   }
   $$ = &timetable_symtbl.rj_asgn_regtbl;
  }
 ;
-jr_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
+rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
   $$.kind = RJ_ASGN;
   $$.jid = $3;
   $$.rid = $1;

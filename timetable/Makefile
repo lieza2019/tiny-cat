@@ -17,7 +17,7 @@ CP = cp
 CD = cd
 RM = rm
 
-ttcreat : y.tab.o lex.yy.o trips.o
+ttcreat : y.tab.o lex.yy.o helpers.o
 	$(LD) $(LDFLAGS) $^
 
 y.tab.o : y.tab.c
@@ -32,7 +32,7 @@ lex.yy.o : lex.yy.c
 lex.yy.c : ttcreat.l ttcreat.h
 	$(LEX) $(LFLAGS) $<
 
-trips.o : trips.c ttcreat.h
+helpers.o : helpers.c ttcreat.h
 	$(CC) $(CFLAGS) $<
 
 ttcreat.h : ../generic.h
