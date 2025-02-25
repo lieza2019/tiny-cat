@@ -177,7 +177,8 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
 %type <pattr_journey> journey_definition
 %type <pattr_journeys> journeys_decl
 %type <ptimetable_symtbl> timetable_decl
-%start timetable_decl
+ /* %start timetable_decl */
+%start rake_journey_asgnmnts_decl
 %%
 timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
 #if 1 /* ***** for debugging. */
@@ -762,7 +763,7 @@ route : TK_ROUTE {
      rake_801 := J1; rake_802 := J2; rake_803 := J3; rake_804 := J4;
      rake_811 := J11; rake_812 := J12; rake_813 := J13; rake_814 := J14;
 */
-rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':'rake_journey_asgnmnts {
+rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   assert( $3 );
   assert( $3->kind == RJ_ASGNS );
   $$ = $3;
@@ -783,7 +784,7 @@ rake_journey_asgnmnts : /* empty journies */ {
   $$ = &timetable_symtbl.rj_asgn_regtbl;
   assert( $$->nasgns == 0 );
  }
-                       | rake_journey_asgnmnts rj_asgn ';' {
+                      | rake_journey_asgnmnts rj_asgn ';' {
   ATTR_RJ_ASGN_PTR p = NULL;
   if( timetable_symtbl.rj_asgn_regtbl.nasgns == 0 ) {
     p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, NULL, &$2 );
@@ -801,6 +802,10 @@ rake_journey_asgnmnts : /* empty journies */ {
     }
   }
   $$ = &timetable_symtbl.rj_asgn_regtbl;
+ }
+| rake_journey_asgnmnts error ';' {
+  printf( "FATAL: syntax-error, in rake-journey assignments at (LINE, COL) = (%d, %d).\n", yylloc, yylloc );
+  yyerrok;
  }
 ;
 rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {

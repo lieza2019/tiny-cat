@@ -122,4 +122,7 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
   yylval.crew_id = atoi( &yytext[5] );
   return TK_CREWID;
 }
+
+[ \t] {}
+. { return yytext[0]; }
 %%
