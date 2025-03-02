@@ -763,6 +763,7 @@ route : TK_ROUTE {
      rake_801 := J1; rake_802 := J2; rake_803 := J3; rake_804 := J4;
      rake_811 := J11; rake_812 := J12; rake_813 := J13; rake_814 := J14;
 */
+/* rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts { */
 rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   assert( $3 );
   assert( $3->kind == RJ_ASGNS );
@@ -779,7 +780,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   }
 #endif
  }
-                           | error {
+| error TK_JOURNEYS {
   printf( "FATAL: syntax-error, no rake-journey assignments section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
   yyerrok;
  }
