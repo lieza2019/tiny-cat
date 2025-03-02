@@ -41,39 +41,129 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
 }
 %}
 %%
-";" { return ';'; }
-":" { return ':'; }
-"{" { return '{'; }
-"}" { return '}'; }
-"(" { return '('; }
-")" { return ')'; }
-"," { return ','; }
+";" {
+  yylloc.first_column++;
+  return ';';
+}
+":" {
+  yylloc.first_column++;
+  return ':';
+}
+"{" {
+  yylloc.first_column++;
+  return '{';
+}
+"}" {
+  yylloc.first_column++;
+  return '}';
+}
+"(" {
+  yylloc.first_column++;
+  return '(';
+}
+")" {
+  yylloc.first_column++;
+  return ')';
+}
+"," {
+  yylloc.first_column++;
+  return ',';
+}
 
-"JLA" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
-"KIKJ" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
-"OKBS" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
-"BTGD" { strncpy( yylval.st_name, yytext, MAX_STNAME_LEN); return TK_STNAME; }
+"JLA" {
+  yylloc.first_column += strlen( yytext );
+  strncpy( yylval.st_name, yytext, MAX_STNAME_LEN);
+  return TK_STNAME;
+}
+"KIKJ" {
+  yylloc.first_column += strlen( yytext );
+  strncpy( yylval.st_name, yytext, MAX_STNAME_LEN);
+  return TK_STNAME;
+}
+"OKBS" {
+  yylloc.first_column += strlen( yytext );
+  strncpy( yylval.st_name, yytext, MAX_STNAME_LEN);
+  return TK_STNAME;
+}
+"BTGD" {
+  yylloc.first_column += strlen( yytext );
+  strncpy( yylval.st_name, yytext, MAX_STNAME_LEN);
+  return TK_STNAME;
+}
 
-"PL1" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
-"PL2" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
-"PL3" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
-"TB1" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
-"TB2" { strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN); return TK_PLTB_NAME; }
+"PL1" {
+  yylloc.first_column += strlen( yytext );
+  strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN);
+  return TK_PLTB_NAME;
+}
+"PL2" {
+  yylloc.first_column += strlen( yytext );
+  strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN);
+  return TK_PLTB_NAME;
+}
+"PL3" {
+  yylloc.first_column += strlen( yytext );
+  strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN);
+  return TK_PLTB_NAME;
+}
+"TB1" {
+  yylloc.first_column += strlen( yytext );
+  strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN);
+  return TK_PLTB_NAME;
+}
+"TB2" {
+  yylloc.first_column += strlen( yytext );
+  strncpy( yylval.pltb_name, yytext, MAX_PLTB_NAMELEN);
+  return TK_PLTB_NAME;
+}
 
-"perfslow" { yylval.perf_regime = PERFREG_SLOW; return TK_PERFREG; }
-"perfnormal" { yylval.perf_regime = PERFREG_NORMAL; return TK_PERFREG; }
-"perffast" { yylval.perf_regime = PERFREG_FAST; return TK_PERFREG; }
+"perfslow" {
+  yylloc.first_column += strlen( yytext );
+  yylval.perf_regime = PERFREG_SLOW;
+  return TK_PERFREG;
+}
+"perfnormal" {
+  yylloc.first_column += strlen( yytext );
+  yylval.perf_regime = PERFREG_NORMAL;
+  return TK_PERFREG;
+}
+"perffast" {
+  yylloc.first_column += strlen( yytext );
+  yylval.perf_regime = PERFREG_FAST;
+  return TK_PERFREG;
+}
 
-"revenue" {yylval.revenue = TRUE; return TK_REVENUE; }
-"nonreve" {yylval.revenue = FALSE; return TK_REVENUE; }
+"revenue" {
+  yylloc.first_column += strlen( yytext );
+  yylval.revenue = TRUE;
+  return TK_REVENUE;
+}
+"nonreve" {
+  yylloc.first_column += strlen( yytext );
+  yylval.revenue = FALSE;
+  return TK_REVENUE;
+}
 
-"trips" { return TK_KEY_TRIPS; }
-"assignments" { return TK_KEY_ASSIGNMENTS; }
-"journeys" { return TK_JOURNEYS; }
+"trips" {
+  yylloc.first_column += strlen( yytext );
+  return TK_KEY_TRIPS;
+}
+"assignments" {
+  yylloc.first_column += strlen( yytext );
+  return TK_KEY_ASSIGNMENTS;
+}
+"journeys" {
+  yylloc.first_column += strlen( yytext );
+  return TK_JOURNEYS;
+}
 
-":=" { return TK_ASGN; }
+":=" {
+  yylloc.first_column += strlen( yytext );
+  return TK_ASGN;
+}
 
 [0-9]+ {
+  yylloc.first_column += strlen( yytext );
   yylval.nat = atoi( yytext );
   return TK_NAT;
 }
@@ -81,9 +171,11 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
 [0-9][0-9]":"[0-9][0-9]":"[0-9][0-9] {
   /* {(0|1|2)[0-9]":"[0-5][0-9]":"[0-5][0-9] */  
   assert( (yytext[2] == ':') && (yytext[5] == ':') );
+  assert( strlen(yytext) == 8 );
   ATTR_TIME time = {-1, -1, -1};
   yytext[2] = 0;
   yytext[5] = 0;
+  yylloc.first_column += 8;
   if( chk_time( &time, yytext, &yytext[3], &yytext[6] ) ) { 
     assert( (time.hour >= 0) && (time.hour <= 23) );
     assert( (time.min >= 0) && (time.min <= 59) );
@@ -95,23 +187,27 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
 }
 
 ("J"|"j")[0-9]+ {
-  assert( (yytext[0] == 'J') || (yytext[0] == 'j') );
+  assert( (yytext[0] == 'J') || (yytext[0] == 'j') );  
   yylval.journey_id = atoi( &yytext[1] );
+  yylloc.first_column += strlen( yytext );
   return TK_JOURNEY_ID;
 }
 
 "rake_"[0-9][0-9][0-9] {
   assert( (yytext[0] = 'r') && (yytext[1] = 'a') && (yytext[2] = 'k') && (yytext[3] = 'e') && (yytext[4] = '_') );
   yylval.rake_id = atoi( &yytext[5]);
+  yylloc.first_column += strlen( yytext );
   return TK_RAKE_ID;
 }
 
 "SP_"[0-9A-Z][0-9] {
+  yylloc.first_column += strlen( yytext );
   strncpy( yylval.sp, yytext, MAX_SPNAME_LEN );
   return TK_SP;
  }
 
-("S"|"VS")[0-9][0-9][0-9][A-Z]"_"("S"|"VS")[0-9][0-9][0-9][A-Z] {
+("S"|"VS")[0-9][0-9][0-9][A-Z]"_"("S"|"VS")[0-9][0-9][0-9][A-Z] {  
+  yylloc.first_column += strlen( yytext );
   yylval.attr_route.kind = ROUTE;
   strncpy( yylval.attr_route.name, yytext, MAX_ROUTENAME_LEN );
   return TK_ROUTE;
@@ -120,9 +216,15 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
 "crew_"[0-9]+ {
   assert( (yytext[0] == 'c') && (yytext[1] == 'r') && (yytext[2] == 'e') && (yytext[3] == 'w') && (yytext[4] == '_') );
   yylval.crew_id = atoi( &yytext[5] );
+  yylloc.first_column += strlen( yytext );
   return TK_CREWID;
 }
 
-[ \t] {}
-. { return yytext[0]; }
+[ \t] { yylloc.first_column++; }
+"\n" { yylloc.first_line++; yylloc.first_column = 1; }
+
+. {
+  yylloc.first_column++;
+  return yytext[0];
+}
 %%

@@ -8,7 +8,7 @@
 #define YYDEBUG 1
 
 #define PRINT_STRBUF_MAXLEN 256
-
+ 
 static void print_time ( ATTR_TIME_PTR ptime ) {
   assert( ptime );
   printf( "(hour, min, sec): (%02d, %02d, %02d)\n", ptime->hour, ptime->min, ptime->sec );
@@ -177,8 +177,8 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
 %type <pattr_journey> journey_definition
 %type <pattr_journeys> journeys_decl
 %type <ptimetable_symtbl> timetable_decl
- /* %start timetable_decl */
-%start rake_journey_asgnmnts_decl
+ /* %start rake_journey_asgnmnts_decl */
+%start timetable_decl
 %%
 timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
 #if 1 /* ***** for debugging. */
@@ -779,6 +779,10 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   }
 #endif
  }
+                           | error {
+  printf( "FATAL: syntax-error, no rake-journey assignments section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+  yyerrok;
+ }
 ;
 rake_journey_asgnmnts : /* empty journies */ {
   $$ = &timetable_symtbl.rj_asgn_regtbl;
@@ -804,7 +808,7 @@ rake_journey_asgnmnts : /* empty journies */ {
   $$ = &timetable_symtbl.rj_asgn_regtbl;
  }
 | rake_journey_asgnmnts error ';' {
-  printf( "FATAL: syntax-error, in rake-journey assignments at (LINE, COL) = (%d, %d).\n", yylloc, yylloc );
+  printf( "FATAL: syntax-error, in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
   yyerrok;
  }
 ;
