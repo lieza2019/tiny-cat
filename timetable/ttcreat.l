@@ -223,6 +223,8 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
 [ \t] { yylloc.first_column++; }
 "\n" { yylloc.first_line++; yylloc.first_column = 1; }
 
+<<eof>> { return TK_EOF; }
+
 . {
   yylloc.first_column++;
   return yytext[0];

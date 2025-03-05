@@ -6,9 +6,10 @@
 #include "ttcreat.h"
 
 #define YYDEBUG 1
-
 #define PRINT_STRBUF_MAXLEN 256
- 
+
+static BOOL dirty;
+
 static void print_time ( ATTR_TIME_PTR ptime ) {
   assert( ptime );
   printf( "(hour, min, sec): (%02d, %02d, %02d)\n", ptime->hour, ptime->min, ptime->sec );
@@ -146,6 +147,7 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
   
   ATTR_TIMETABLE_PTR ptimetable_symtbl;
 }
+%token TK_EOF
 %token <attr_date> TK_DATE
 %token <attr_time> TK_TIME
 %token <nat> TK_NAT
@@ -669,6 +671,23 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
   }
 #endif
  }
+           | error TK_KEY_ASSIGNMENTS {
+  if( !dirty ) {
+    printf( "FATAL: syntax-error, no trips declarations at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    dirty = TRUE;
+  }
+  yyerrok;
+ }
+           | error TK_JOURNEYS {
+  if( !dirty ) {
+    printf( "FATAL: syntax-error, no trips declarations at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    dirty = TRUE;
+  }
+  yyerrok;
+ }
+| error TK_EOF {
+  assert( FALSE );
+ }
 ;
 trips_definition : /* empty journies */ {
   $$ = &timetable_symtbl.trips_regtbl;
@@ -780,8 +799,11 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   }
 #endif
  }
-| error TK_JOURNEYS {
-  printf( "FATAL: syntax-error, no rake-journey assignments section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+                           | error TK_JOURNEYS {
+  if( !dirty ) {
+    printf( "FATAL: syntax-error, no rake-journey assignments section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    dirty = TRUE;
+  }
   yyerrok;
  }
 ;
@@ -808,8 +830,11 @@ rake_journey_asgnmnts : /* empty journies */ {
   }
   $$ = &timetable_symtbl.rj_asgn_regtbl;
  }
-| rake_journey_asgnmnts error ';' {
-  printf( "FATAL: syntax-error, in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+                      | rake_journey_asgnmnts error ';' {
+  if( !dirty ) {
+    printf( "FATAL: syntax-error, in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    dirty = TRUE;
+  }
   yyerrok;
  }
 ;
@@ -822,10 +847,6 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
 ;
 %%
 int yyerror ( const char *s ) {
-#if 0
-  extern char *yytext;
-  printf( "parse error near %s.\n", yytext );
-#endif
   return 1;
 }
 
