@@ -10,8 +10,10 @@
 
 static BOOL dirty;
 static struct {
+  BOOL err_rake_journey_asgnmnts_decl;
   BOOL err_rj_asgn;
 } err_ctrl;
+
 static void print_time ( ATTR_TIME_PTR ptime ) {
   assert( ptime );
   printf( "(hour, min, sec): (%02d, %02d, %02d)\n", ptime->hour, ptime->min, ptime->sec );
@@ -801,12 +803,36 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   }
 #endif
  }
-                           | error TK_JOURNEYS {
-  if( !dirty ) {
-    printf( "FATAL: syntax-error, no rake-journey assignments section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    dirty = TRUE;
+                           | TK_KEY_ASSIGNMENTS error rake_journey_asgnmnts {
+  if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, missing delimiter in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
+  assert( $3 );
+  assert( $3->kind == RJ_ASGNS );
+  $$ = $3;
   yyerrok;
+ }
+                           | error {
+  if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, no rake-journey assignments section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
+  }
+  yyclearin;
+ }
+                           | TK_KEY_ASSIGNMENTS error {
+  if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, ILL-FORMED rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
+  }
+  yyclearin;
+ }
+                           | TK_KEY_ASSIGNMENTS ':' error {
+  if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, ILL-FORMED rake-journey assignments at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
+  }
+  yyclearin;
  }
 ;
 rake_journey_asgnmnts : /* empty journies */ {
@@ -832,23 +858,23 @@ rake_journey_asgnmnts : /* empty journies */ {
       }
     }
   }
-  printf( "%d\n", (int)yychar );
   $$ = &timetable_symtbl.rj_asgn_regtbl;
  }
 ;
 rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
   $$.kind = RJ_ASGN;
   $$.rid = $1;
-  $$.jid = $3;  
-  /* print_rjasgn( &$$ ); // ***** for debugging. */
+  $$.jid = $3;
   yyerrok;
+  /* print_rjasgn( &$$ ); // ***** for debugging. */
  }
         | error {
   if( !err_ctrl.err_rj_asgn ) {
-    printf( "FATAL: SYNTAX-error, in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    printf( "FATAL: syntax-error, in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
+  yyclearin;
  }
         | TK_RAKE_ID error TK_JOURNEY_ID ';' {
   if( !err_ctrl.err_rj_asgn ) {
@@ -866,13 +892,15 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
+  yyclearin;
  }
         | TK_RAKE_ID TK_ASGN error {
   if( !err_ctrl.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, ILL-formed rake-journey assignments at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    printf( "FATAL: syntax-error, ill-formed rake-journey assignments at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
+  yyclearin;
  }
 ;
 %%
