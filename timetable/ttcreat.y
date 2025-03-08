@@ -10,6 +10,7 @@
 
 static BOOL dirty;
 static struct {
+  BOOL trips_decl;
   BOOL err_rake_journey_asgnmnts_decl;
   BOOL err_rj_asgn;
 } err_ctrl;
@@ -151,7 +152,7 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
   
   ATTR_TIMETABLE_PTR ptimetable_symtbl;
 }
-%token TK_EOF
+/* %token TK_EOF */
 %token <attr_date> TK_DATE
 %token <attr_time> TK_TIME
 %token <nat> TK_NAT
@@ -675,40 +676,42 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
   }
 #endif
  }
+           | TK_KEY_TRIPS error trips_definition {
+  if( !err_ctrl.trips_decl ) {
+    printf( "FATAL: syntax-error, missing delimiter in trip declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_ctrl.trips_decl = TRUE;
+  }
+  yyerrok;
+ }
+           | error {
+  if( !err_ctrl.trips_decl ) {
+    printf( "FATAL: syntax-error, no trip declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.trips_decl = TRUE;
+  }
+ }
+           | TK_KEY_TRIPS error {
+  if( !err_ctrl.trips_decl ) {
+    printf( "FATAL: syntax-error, incomplete trip declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_ctrl.trips_decl = TRUE;
+  }
+ }
+           | TK_KEY_TRIPS ':' error {
+  if( !err_ctrl.trips_decl ) {
+    printf( "FATAL: syntax-error, ill-formed trip declaration at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.trips_decl = TRUE;
+  }
+ }
 /*
-| TK_KEY_TRIPS error trips_definition {
-  printf( "FATAL: syntax-error, missing delimiter in rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
- }
-| error {
- }
-| TK_KEY_TRIPS error {
- }
-| TK_KEY_TRIPS ':' error {
-}
-*/
-           | error TK_KEY_ASSIGNMENTS {
-  if( !dirty ) {
-    printf( "FATAL: syntax-error, no trips declarations at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    dirty = TRUE;
-  }
-  yyerrok;
- }
-           | error TK_JOURNEYS {
-  if( !dirty ) {
-    printf( "FATAL: syntax-error, no trips declarations at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    dirty = TRUE;
-  }
-  yyerrok;
- }
-| error TK_EOF {
+           | error TK_EOF {
   assert( FALSE );
  }
+*/
 ;
 trips_definition : /* empty journies */ {
   $$ = &timetable_symtbl.trips_regtbl;
   assert( $$->ntrips == 0 );
 }
-                 | trips_definition trip_def ';' {
+                 | trips_definition trip_def {
   
   ATTR_TRIP_PTR p = NULL;
   if( timetable_symtbl.trips_regtbl.ntrips == 0 ) {
@@ -730,7 +733,7 @@ trips_definition : /* empty journies */ {
  }
 ;
 /* e.g. (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B}) */
-trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' ')' {
+trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' ')' ';' {
   $$.kind = TRIP;
   $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
   $$.attr_st_pltb_orgdst.st_pltb_org = $3;
@@ -826,7 +829,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
  }
                            | error {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, no rake-journey assignments section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    printf( "FATAL: syntax-error, no rake-journey assignments declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
   /* yyclearin; */
@@ -876,7 +879,6 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
   $$.kind = RJ_ASGN;
   $$.rid = $1;
   $$.jid = $3;
-  yyerrok;
   /* print_rjasgn( &$$ ); // ***** for debugging. */
  }
         | error {
