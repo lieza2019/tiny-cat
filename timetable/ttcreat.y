@@ -10,6 +10,7 @@
 
 static BOOL dirty;
 static struct {
+  BOOL rake_journey_asgnmnts_decl;
   BOOL trips_decl;
   BOOL err_rake_journey_asgnmnts_decl;
   BOOL err_rj_asgn;
@@ -712,21 +713,23 @@ trips_definition : /* empty journies */ {
   assert( $$->ntrips == 0 );
 }
                  | trips_definition trip_def {
-  
-  ATTR_TRIP_PTR p = NULL;
-  if( timetable_symtbl.trips_regtbl.ntrips == 0 ) {
-    p = reg_trip_def( &timetable_symtbl.trips_regtbl, NULL, &$2 );
-    if( p != &$2 ) {
-      printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
-      exit( 1 );
-    }
-  } else {
-    ATTR_TRIP dropd = {};
-    p = reg_trip_def( &timetable_symtbl.trips_regtbl, &dropd, &$2 );
-    if( p != &$2 ) {
-      assert( p == &dropd );
-      assert( p->kind == TRIP );
-      printf( "NOTICE: trip attribute has been overridden with.\n" );
+
+  if( $2.kind == TRIP ) {
+    ATTR_TRIP_PTR p = NULL;
+    if( timetable_symtbl.trips_regtbl.ntrips == 0 ) {
+      p = reg_trip_def( &timetable_symtbl.trips_regtbl, NULL, &$2 );
+      if( p != &$2 ) {
+	printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
+	exit( 1 );
+      }
+    } else {
+      ATTR_TRIP dropd = {};
+      p = reg_trip_def( &timetable_symtbl.trips_regtbl, &dropd, &$2 );
+      if( p != &$2 ) {
+	assert( p == &dropd );
+	assert( p->kind == TRIP );
+	printf( "NOTICE: trip attribute has been overridden with.\n" );
+      }
     }
   }
   $$ = &timetable_symtbl.trips_regtbl;
@@ -734,12 +737,14 @@ trips_definition : /* empty journies */ {
 ;
 /* e.g. (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B}) */
 trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' ')' ';' {
-  $$.kind = TRIP;
+  $$.kind = UNKNOWN;
   $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
   $$.attr_st_pltb_orgdst.st_pltb_org = $3;
   $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
   $$.attr_sp_orgdst = $8;
   $$.attr_route_ctrl = $11;
+  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($8.kind == SP_PAIR) && ($11.kind == ROUTES) )
+    $$.kind = TRIP;
 #if 0 /* ***** for debugging. */
   printf( "(kind, st_pltb_pair, sp_orgdst_pair, trip_routes): " );
   print_trip( &$$, FALSE );
@@ -752,6 +757,66 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   strncpy( $$.st_name, $2, MAX_STNAME_LEN );
   strncpy( $$.pltb_name, $4, MAX_PLTB_NAMELEN );  
   /* print_st_pltb( &$$ ); // ***** for debugging. */
+ }
+            | error TK_STNAME ',' TK_PLTB_NAME ')' {
+  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, missing opening parenthesis in src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+  }
+  $$.kind = ST_PLTB;
+  strncpy( $$.st_name, $2, MAX_STNAME_LEN );
+  strncpy( $$.pltb_name, $4, MAX_PLTB_NAMELEN );
+  yyerrok;
+  /* print_st_pltb( &$$ ); // ***** for debugging. */
+ }
+            | '(' error ',' TK_PLTB_NAME ')' {
+  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, no origin station name found in src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+            | '(' TK_STNAME ',' error ')' {
+  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, no origin platform/turnback found in src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
+    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+            | '(' TK_STNAME ',' TK_PLTB_NAME error {
+  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
+    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+            | error {
+  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, no src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+            | '(' error {
+  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, ill-formed src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+            | '(' TK_STNAME error {
+  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, incomplete src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+            | '(' TK_STNAME ',' error {
+  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, incomplete src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
+    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
 ;
 sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
