@@ -805,7 +805,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
  }
                            | TK_KEY_ASSIGNMENTS error rake_journey_asgnmnts {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, missing delimiter in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, missing delimiter in rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
   assert( $3 );
@@ -822,14 +822,14 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
  }
                            | TK_KEY_ASSIGNMENTS error {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, ILL-FORMED rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, incomplete rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
   yyclearin;
  }
                            | TK_KEY_ASSIGNMENTS ':' error {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, ILL-FORMED rake-journey assignments at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    printf( "FATAL: syntax-error, ill-formed rake-journey assignments declaration at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
   yyclearin;
@@ -888,7 +888,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
  }
         | TK_RAKE_ID error {
   if( !err_ctrl.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, ill-formed rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, missing operator in rake-journeu assignment, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
