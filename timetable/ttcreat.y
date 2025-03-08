@@ -10,8 +10,8 @@
 
 static BOOL dirty;
 static struct {
-  BOOL rake_journey_asgnmnts_decl;
-  BOOL trips_decl;
+  BOOL err_trips_decl;
+  BOOL err_st_and_pltb;
   BOOL err_rake_journey_asgnmnts_decl;
   BOOL err_rj_asgn;
 } err_ctrl;
@@ -210,7 +210,7 @@ timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
       const int nspc_indent = 2;
       assert( $2 );
       ATTR_RJ_ASGN_PTR p = $2->rj_asgn;
-      assert( p );
+      assert( p );      
       int i;
       for( i = 0; i < $2->nasgns; i++ ) {
 	{int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
@@ -678,28 +678,28 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
 #endif
  }
            | TK_KEY_TRIPS error trips_definition {
-  if( !err_ctrl.trips_decl ) {
+  if( !err_ctrl.err_trips_decl ) {
     printf( "FATAL: syntax-error, missing delimiter in trip declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_ctrl.trips_decl = TRUE;
+    err_ctrl.err_trips_decl = TRUE;
   }
   yyerrok;
  }
            | error {
-  if( !err_ctrl.trips_decl ) {
+  if( !err_ctrl.err_trips_decl ) {
     printf( "FATAL: syntax-error, no trip declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.trips_decl = TRUE;
+    err_ctrl.err_trips_decl = TRUE;
   }
  }
            | TK_KEY_TRIPS error {
-  if( !err_ctrl.trips_decl ) {
+  if( !err_ctrl.err_trips_decl ) {
     printf( "FATAL: syntax-error, incomplete trip declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_ctrl.trips_decl = TRUE;
+    err_ctrl.err_trips_decl = TRUE;
   }
  }
            | TK_KEY_TRIPS ':' error {
-  if( !err_ctrl.trips_decl ) {
+  if( !err_ctrl.err_trips_decl ) {
     printf( "FATAL: syntax-error, ill-formed trip declaration at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_ctrl.trips_decl = TRUE;
+    err_ctrl.err_trips_decl = TRUE;
   }
  }
 /*
@@ -759,9 +759,9 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   /* print_st_pltb( &$$ ); // ***** for debugging. */
  }
             | error TK_STNAME ',' TK_PLTB_NAME ')' {
-  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+  if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, missing opening parenthesis in src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+    err_ctrl.err_st_and_pltb = TRUE;
   }
   $$.kind = ST_PLTB;
   strncpy( $$.st_name, $2, MAX_STNAME_LEN );
@@ -770,51 +770,51 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   /* print_st_pltb( &$$ ); // ***** for debugging. */
  }
             | '(' error ',' TK_PLTB_NAME ')' {
-  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+  if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, no origin station name found in src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+    err_ctrl.err_st_and_pltb = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | '(' TK_STNAME ',' error ')' {
-  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+  if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, no origin platform/turnback found in src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+    err_ctrl.err_st_and_pltb = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | '(' TK_STNAME ',' TK_PLTB_NAME error {
-  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+  if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
-    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+    err_ctrl.err_st_and_pltb = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | error {
-  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+  if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, no src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+    err_ctrl.err_st_and_pltb = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | '(' error {
-  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+  if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, ill-formed src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+    err_ctrl.err_st_and_pltb = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | '(' TK_STNAME error {
-  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+  if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, incomplete src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+    err_ctrl.err_st_and_pltb = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | '(' TK_STNAME ',' error {
-  if( !err_ctrl.rake_journey_asgnmnts_decl ) {
+  if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, incomplete src & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_ctrl.rake_journey_asgnmnts_decl = TRUE;
+    err_ctrl.err_st_and_pltb = TRUE;
   }
   $$.kind = UNKNOWN;
  }
@@ -897,6 +897,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
     printf( "FATAL: syntax-error, no rake-journey assignments declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
+  $$ = &timetable_symtbl.rj_asgn_regtbl;
   /* yyclearin; */
  }
                            | TK_KEY_ASSIGNMENTS error {
@@ -904,6 +905,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
     printf( "FATAL: syntax-error, incomplete rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
+  $$ = &timetable_symtbl.rj_asgn_regtbl;
   /* yyclearin; */
  }
                            | TK_KEY_ASSIGNMENTS ':' error {
@@ -911,11 +913,13 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
     printf( "FATAL: syntax-error, ill-formed rake-journey assignments declaration at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
+  $$ = &timetable_symtbl.rj_asgn_regtbl;
   /* yyclearin; */
  }
 ;
 rake_journey_asgnmnts : /* empty journies */ {
   $$ = &timetable_symtbl.rj_asgn_regtbl;
+  assert( $$->kind == RJ_ASGNS );
   assert( $$->nasgns == 0 );
  }
                       | rake_journey_asgnmnts rj_asgn {

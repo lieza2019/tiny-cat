@@ -9,9 +9,7 @@ trips:
   (((KIKJ,PL2), (JLA, PL1)), (SP_76, SP_73), {S832B_S802B, S802B_S810B});
 
 assignments:
-  rake_801 := J1; rake_802 := J2; rake_803 := J3; rake_804 := J4;
-  rake_811 := J11; rake_812 := J12; rake_813 := J13; rake_814 := J14;
-
+;
 journeys:
   J01:
     ( ((JLA,PL1), (KIKJ, PL1)), 37, (11:22:33, 23:59:59), perfslow, revenue, crew_021 );
