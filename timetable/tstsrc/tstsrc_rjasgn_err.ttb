@@ -8,8 +8,9 @@ trips:
   (((OKBS,PL2), (KIKJ, PL2)), (SP_78, SP_76), {S822A_S832B});
   (((KIKJ,PL2), (JLA, PL1)), (SP_76, SP_73), {S832B_S802B, S802B_S810B});
 
-assignments 
-  rake_801 J1; rake_802 := J2;
+assignments :
+rake_801  J1 rake_802 := J2; rake_803 := J3; rake_804 := J4
+
 
 journeys:
   J01:

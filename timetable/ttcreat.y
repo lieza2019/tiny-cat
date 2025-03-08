@@ -675,6 +675,17 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
   }
 #endif
  }
+/*
+| TK_KEY_TRIPS error trips_definition {
+  printf( "FATAL: syntax-error, missing delimiter in rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+ }
+| error {
+ }
+| TK_KEY_TRIPS error {
+ }
+| TK_KEY_TRIPS ':' error {
+}
+*/
            | error TK_KEY_ASSIGNMENTS {
   if( !dirty ) {
     printf( "FATAL: syntax-error, no trips declarations at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
@@ -818,21 +829,21 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
     printf( "FATAL: syntax-error, no rake-journey assignments section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
-  yyclearin;
+  /* yyclearin; */
  }
                            | TK_KEY_ASSIGNMENTS error {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
     printf( "FATAL: syntax-error, incomplete rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
-  yyclearin;
+  /* yyclearin; */
  }
                            | TK_KEY_ASSIGNMENTS ':' error {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
     printf( "FATAL: syntax-error, ill-formed rake-journey assignments declaration at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
-  yyclearin;
+  /* yyclearin; */
  }
 ;
 rake_journey_asgnmnts : /* empty journies */ {
@@ -874,11 +885,11 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
-  yyclearin;
+  /* yyclearin; */
  }
         | TK_RAKE_ID error TK_JOURNEY_ID ';' {
   if( !err_ctrl.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, missing delimiter in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, missing operator in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = RJ_ASGN;
@@ -888,11 +899,11 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
  }
         | TK_RAKE_ID error {
   if( !err_ctrl.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, missing operator in rake-journeu assignment, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, incomplete rake-journey assignment, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
-  yyclearin;
+  /* yyclearin; */
  }
         | TK_RAKE_ID TK_ASGN error {
   if( !err_ctrl.err_rj_asgn ) {
@@ -900,7 +911,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
-  yyclearin;
+  /* yyclearin; */
  }
 ;
 %%
