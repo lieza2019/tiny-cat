@@ -10,6 +10,7 @@
 
 static BOOL dirty;
 static struct {
+  BOOL err_route;
   BOOL err_trips_decl;
   BOOL err_sp_orgdst_pair;
   BOOL err_st_and_pltb;
@@ -856,7 +857,7 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
     err_ctrl.err_sp_orgdst_pair = TRUE;
   }
   $$.kind = UNKNOWN;
- }
+  }
                | '(' TK_SP ',' error ')' {
   if( !err_ctrl.err_sp_orgdst_pair ) {
     printf( "FATAL: syntax-error, no dest found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
@@ -906,29 +907,43 @@ routes0 : '{' routes '}' { /* its only for debugging. */
   printf( "\n" );
  }
 ;
-routes : route {
-  $$.kind = ROUTES;
-  $$.nroutes = 1;
-  $$.route_prof[0] = $1;
-  /* printf( "route: %s\n", $$.route_prof[0].name ); // ***** for debugging. */
-}
+routes : route {  
+  if( $1.kind == ROUTE ) {
+    $$.kind = ROUTES;
+    $$.nroutes = 1;
+    $$.route_prof[0] = $1;
+    /* printf( "route: %s\n", $$.route_prof[0].name ); // ***** for debugging. */
+  } else {
+    $$.kind = UNKNOWN;
+    $$.nroutes = 0;
+  }
+ }
        | routes ',' route {
-  $$.kind = ROUTES;
-  {
-    int i;
-    for( i = 0; i < $1.nroutes; i++ ) {
+  assert( $1.nroutes < MAX_TRIP_ROUTES );  
+  if( $3.kind == ROUTE ) {    
+    int i;    
+    for( i = 0; i < $1.nroutes; i++ )
       $$.route_prof[i] = $1.route_prof[i];
-    }
     assert( i == $1.nroutes );
     $$.route_prof[i] = $3;
+    $$.nroutes = $1.nroutes + 1;
+    $$.kind = ROUTES;
   }
-  $$.nroutes = $1.nroutes + 1;
  }
 ;
 route : TK_ROUTE {
+  assert( $1.kind == ROUTE );
   $$.kind = $1.kind;
   strncpy( $$.name, $1.name, MAX_ROUTENAME_LEN );
+  yyerrok;
   /* printf( "(kind, route): (%d, %s)\n", $$.kind, $$.name ); // ***** for debugging. */
+ }
+      | error {
+  if( !err_ctrl.err_route ) {
+    printf( "FATAL: syntax-error, illegal controlled route in trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.err_route = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
 ;
 

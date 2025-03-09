@@ -1,7 +1,7 @@
 TTCREAT_BINNAME = ttcreat
 
 YACC = bison
-YFLAGS = -dy
+YFLAGS = -dy -Wconflicts-sr -Wconflicts-rr -Wcounterexamples -Wother
 LEX = flex
 LFLAGS = -l
 
