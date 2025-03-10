@@ -679,13 +679,14 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
   }
 #endif
  }
+/* reduce/reduce confliction arises with the rule of-> TK_KEY_TRIPS error, as below
            | TK_KEY_TRIPS error trips_definition {
   if( !err_ctrl.err_trips_decl ) {
     printf( "FATAL: syntax-error, missing delimiter in trip declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trips_decl = TRUE;
   }
   yyerrok;
- }
+ } */
            | error {
   if( !err_ctrl.err_trips_decl ) {
     printf( "FATAL: syntax-error, no trip declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
@@ -778,13 +779,14 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   }
   $$.kind = UNKNOWN;
  }
+/* shift/reduce confliction arises with the rule of-> '(' error, as below.
             | '(' error ',' TK_PLTB_NAME ')' {
   if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, no origin station name found in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_st_and_pltb = TRUE;
   }
   $$.kind = UNKNOWN;
- }
+ } */
             | '(' TK_STNAME ',' error ')' {
   if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, no dest platform/turnback found in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
@@ -971,6 +973,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   }
 #endif
  }
+/* reduce/reduce confliction arises with the rule of-> TK_KEY_ASSIGNMENTS error, as below.
                            | TK_KEY_ASSIGNMENTS error rake_journey_asgnmnts {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
     printf( "FATAL: syntax-error, missing delimiter in rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
@@ -980,7 +983,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   assert( $3->kind == RJ_ASGNS );
   $$ = $3;
   yyerrok;
- }
+ } */
                            | error {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
     printf( "FATAL: syntax-error, no rake-journey assignments declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
