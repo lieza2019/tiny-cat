@@ -166,7 +166,8 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
 %type <attr_sp_pair> sp_orgdst_pair
 %token <attr_route> TK_ROUTE
 %type <attr_route> route
-%type <attr_routes> routes routes0
+%type <attr_routes> routes
+ /* %type <attr_routes> routes0 // for debugging. */
 %type <attr_trip> trip_def
 %token TK_KEY_TRIPS
 %type <pattr_trips> trips_definition trips_decl
@@ -663,20 +664,6 @@ time : TK_TIME {
      (((OKBS,PL2), (KIKJ, PL2)), (SP_78, TB_76), {S822A_S832B});
      (((KIKJ,PL2), (JLA, PL1)), (SP_76, TB_73), {S832B_S802B, S802B_S810B});
 */
-/*
-  causes following shift/reduce conflicts,
-  
-  ttcreat.y: warning: 1 shift/reduce conflict [-Wconflicts-sr]
-  ttcreat.y: warning: shift/reduce conflict on token error [-Wcounterexamples]
-  First example: rake_journey_asgnmnts_decl journeys_decl
-  Shift derivation
-    timetable_decl
-    ↳ 1: rake_journey_asgnmnts_decl journeys_decl
-  Second example: error journeys_decl
-  Reduce derivation
-    timetable_decl
-    ↳ 1: error journeys_decl
-*/
 trips_decl : TK_KEY_TRIPS ':' trips_definition {
   assert( $3 );
   assert( $3->kind == TRIPS );
@@ -713,12 +700,26 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
     err_ctrl.err_trips_decl = TRUE;
   }
  }
+/*
+  causes following shift/reduce conflicts, 2025/3/12.
+  
+  ttcreat.y: warning: 1 shift/reduce conflict [-Wconflicts-sr]
+  ttcreat.y: warning: shift/reduce conflict on token error [-Wcounterexamples]
+  First example: rake_journey_asgnmnts_decl journeys_decl
+  Shift derivation
+    timetable_decl
+    ↳ 1: rake_journey_asgnmnts_decl journeys_decl
+  Second example: error journeys_decl
+  Reduce derivation
+    timetable_decl
+    ↳ 1: error journeys_decl
+    
            | TK_KEY_TRIPS ':' error {
   if( !err_ctrl.err_trips_decl ) {
     printf( "FATAL: syntax-error, ill-formed trip declaration at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_trips_decl = TRUE;
   }
- }
+ } */
 /*
            | error TK_EOF {
   assert( FALSE );
@@ -921,12 +922,13 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
   $$.kind = UNKNOWN;
  }
 ;
-routes0 : '{' routes '}' { /* its only for debugging. */
+/*
+routes0 : '{' routes '}' { // its only for debugging.
   printf( "routes: " );
   print_routes( &$2 );
   printf( "\n" );
  }
-;
+ ; */
 routes : route {  
   if( $1.kind == ROUTE ) {
     $$.kind = ROUTES;
