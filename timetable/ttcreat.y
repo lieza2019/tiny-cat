@@ -787,13 +787,15 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   }
   $$.kind = UNKNOWN;
  } */
+/*
+  shift/reduce confliction arises with the rule of-> '(' TK_STNAME ',' error, as below.
             | '(' TK_STNAME ',' error ')' {
   if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, no dest platform/turnback found in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_ctrl.err_st_and_pltb = TRUE;
   }
   $$.kind = UNKNOWN;
- }
+ } */
             | '(' TK_STNAME ',' TK_PLTB_NAME error {
   if( !err_ctrl.err_st_and_pltb ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
@@ -853,13 +855,15 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
   }
   $$.kind = UNKNOWN;
  }
+/*
+  shift/reduce confliction arises with the rule of-> '(' error, as below.
                | '(' error ',' TK_SP ')' {
   if( !err_ctrl.err_sp_orgdst_pair ) {
     printf( "FATAL: syntax-error, no origin found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_sp_orgdst_pair = TRUE;
   }
   $$.kind = UNKNOWN;
-  }
+  } */
                | '(' TK_SP ',' error ')' {
   if( !err_ctrl.err_sp_orgdst_pair ) {
     printf( "FATAL: syntax-error, no dest found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
@@ -1000,14 +1004,15 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   $$ = &timetable_symtbl.rj_asgn_regtbl;
   /* yyclearin; */
  }
+/* reduce/reduce confliction arises with the rule-> | error, of rj_asgn as below.
                            | TK_KEY_ASSIGNMENTS ':' error {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
     printf( "FATAL: syntax-error, ill-formed rake-journey assignments declaration at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
   $$ = &timetable_symtbl.rj_asgn_regtbl;
-  /* yyclearin; */
- }
+  // yyclearin;
+ } */
 ;
 rake_journey_asgnmnts : /* empty journies */ {
   $$ = &timetable_symtbl.rj_asgn_regtbl;
