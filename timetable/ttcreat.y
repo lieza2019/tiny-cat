@@ -663,6 +663,20 @@ time : TK_TIME {
      (((OKBS,PL2), (KIKJ, PL2)), (SP_78, TB_76), {S822A_S832B});
      (((KIKJ,PL2), (JLA, PL1)), (SP_76, TB_73), {S832B_S802B, S802B_S810B});
 */
+/*
+  causes following shift/reduce conflicts,
+  
+  ttcreat.y: warning: 1 shift/reduce conflict [-Wconflicts-sr]
+  ttcreat.y: warning: shift/reduce conflict on token error [-Wcounterexamples]
+  First example: rake_journey_asgnmnts_decl journeys_decl
+  Shift derivation
+    timetable_decl
+    ↳ 1: rake_journey_asgnmnts_decl journeys_decl
+  Second example: error journeys_decl
+  Reduce derivation
+    timetable_decl
+    ↳ 1: error journeys_decl
+*/
 trips_decl : TK_KEY_TRIPS ':' trips_definition {
   assert( $3 );
   assert( $3->kind == TRIPS );
