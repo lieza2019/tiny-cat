@@ -730,7 +730,6 @@ trips_definition : /* empty journies */ {
   assert( $$->ntrips == 0 );
 }
                  | trips_definition trip_def {
-
   if( $2.kind == TRIP ) {
     ATTR_TRIP_PTR p = NULL;
     if( timetable_symtbl.trips_regtbl.ntrips == 0 ) {
@@ -760,13 +759,76 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
   $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
   $$.attr_sp_orgdst = $8;
   $$.attr_route_ctrl = $11;
-  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($8.kind == SP_PAIR) && ($11.kind == ROUTES) )
+  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($8.kind == SP_PAIR) && ($11.kind == ROUTES) ) {
     $$.kind = TRIP;
+  }
+  err_ctrl.err_trip_def = FALSE;
 #if 0 /* ***** for debugging. */
   printf( "(kind, st_pltb_pair, sp_orgdst_pair, trip_routes): " );
   print_trip( &$$, FALSE );
   printf( "\n" );
 #endif
+ }
+| '(' error {
+  if( !err_ctrl.err_trip_def ) {
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_ctrl.err_trip_def = TRUE;
+  }
+ }
+| '(' '(' error {
+  if( !err_ctrl.err_trip_def ) {
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.err_trip_def = TRUE;
+  }
+ }
+/* the follow reduction rule arises reduce/reduce conflicts.
+   | '(' '('st_and_pltb error {
+     ;
+   } */
+| '(' '('st_and_pltb ',' error {
+  if( !err_ctrl.err_trip_def ) {
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
+    err_ctrl.err_trip_def = TRUE;
+  }
+ }
+/* the follow reduction rule arises reduce/reduce conflicts.
+   | '(' '('st_and_pltb ',' st_and_pltb error {
+     ;
+   } */
+| '(' '('st_and_pltb ',' st_and_pltb')' error {
+  if( !err_ctrl.err_trip_def ) {
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @7.first_line, @7.first_column );
+    err_ctrl.err_trip_def = TRUE;
+  }
+ }
+| '(' '('st_and_pltb ',' st_and_pltb')' ',' error {
+  if( !err_ctrl.err_trip_def ) {
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @8.first_line, @8.first_column );
+    err_ctrl.err_trip_def = TRUE;
+  }
+ }
+/* the follow reduction rule arises reduce/reduce conflicts.
+   | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair error {
+     ;
+   } */
+| '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' error {
+  if( !err_ctrl.err_trip_def ) {
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @10.first_line, @10.first_column );
+    err_ctrl.err_trip_def = TRUE;
+  }
+ }
+/* the follow reduction rules arise reduce/reduce conflicts.
+   | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' error {
+     ;
+   }
+   | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes error {
+     ;
+   } */ 
+| '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' error {
+  if( !err_ctrl.err_trip_def ) {
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @13.first_line, @13.first_column );
+    err_ctrl.err_trip_def = TRUE;
+  }
  }
 ;
 st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
@@ -984,7 +1046,6 @@ route : TK_ROUTE {
   assert( $1.kind == ROUTE );
   $$.kind = $1.kind;
   strncpy( $$.name, $1.name, MAX_ROUTENAME_LEN );
-  yyerrok;
   /* printf( "(kind, route): (%d, %s)\n", $$.kind, $$.name ); // ***** for debugging. */
  }
       | error {
@@ -1096,7 +1157,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
-  /* yyclearin; */
+  // yyclearin;
  }
         | TK_RAKE_ID error TK_JOURNEY_ID ';' {
   if( !err_ctrl.err_rj_asgn ) {
@@ -1114,7 +1175,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
-  /* yyclearin; */
+  // yyclearin;
  }
         | TK_RAKE_ID TK_ASGN error {
   if( !err_ctrl.err_rj_asgn ) {
@@ -1122,7 +1183,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
-  /* yyclearin; */
+  // yyclearin;
  }
 ;
 %%
