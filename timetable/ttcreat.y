@@ -10,7 +10,7 @@
 
 static BOOL dirty;
 static struct {
-  BOOL err_route;
+  BOOL err_routes;
   BOOL err_trips_decl;
   BOOL err_trip_def;
   BOOL err_rake_journey_asgnmnts_decl;
@@ -949,9 +949,9 @@ routes : route {
   if( $2.kind == ROUTE ) {
     int i;
     if( $1.nroutes > 0 ) {
-      if( !err_ctrl.err_trip_def ) {
+      if( !err_ctrl.err_routes ) {
 	printf( "FATAL: syntax-error, missing delimiter in ars controlled routes specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-	err_ctrl.err_trip_def = TRUE;
+	err_ctrl.err_routes = TRUE;
       }
     }
     for( i = 0; i < $1.nroutes; i++ )
@@ -988,9 +988,9 @@ route : TK_ROUTE {
   /* printf( "(kind, route): (%d, %s)\n", $$.kind, $$.name ); // ***** for debugging. */
  }
       | error {
-  if( !err_ctrl.err_route ) {
+  if( !err_ctrl.err_routes ) {
     printf( "FATAL: syntax-error, illegal ars controlled route in trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.err_route = TRUE;
+    err_ctrl.err_routes = TRUE;
   }
   $$.kind = UNKNOWN;
  }
