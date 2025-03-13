@@ -12,8 +12,7 @@ static BOOL dirty;
 static struct {
   BOOL err_route;
   BOOL err_trips_decl;
-  BOOL err_sp_orgdst_pair;
-  BOOL err_st_and_pltb;
+  BOOL err_trip_def;
   BOOL err_rake_journey_asgnmnts_decl;
   BOOL err_rj_asgn;
 } err_ctrl;
@@ -776,10 +775,10 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   strncpy( $$.pltb_name, $4, MAX_PLTB_NAMELEN );  
   /* print_st_pltb( &$$ ); // ***** for debugging. */
  }
-| '(' TK_STNAME TK_PLTB_NAME ')' {
-  if( !err_ctrl.err_st_and_pltb ) {
-    printf( "FATAL: syntax-error, delimiter in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_ctrl.err_st_and_pltb = TRUE;
+            | '(' TK_STNAME TK_PLTB_NAME ')' {
+  if( !err_ctrl.err_trip_def ) {
+    printf( "FATAL: syntax-error, missing delimiter in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = ST_PLTB;
   strncpy( $$.st_name, $2, MAX_STNAME_LEN );
@@ -788,61 +787,61 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   /* print_st_pltb( &$$ ); // ***** for debugging. */
  }
             | error TK_STNAME ',' TK_PLTB_NAME ')' {
-  if( !err_ctrl.err_st_and_pltb ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, missing opening parenthesis in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.err_st_and_pltb = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
 /* shift/reduce confliction arises with the rule of-> '(' error, as below.
             | '(' error ',' TK_PLTB_NAME ')' {
-  if( !err_ctrl.err_st_and_pltb ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, no origin station name found in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_ctrl.err_st_and_pltb = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  } */
 /*
   shift/reduce confliction arises with the rule of-> '(' TK_STNAME ',' error, as below.
             | '(' TK_STNAME ',' error ')' {
-  if( !err_ctrl.err_st_and_pltb ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, no dest platform/turnback found in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_ctrl.err_st_and_pltb = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  } */
             | '(' TK_STNAME ',' TK_PLTB_NAME error {
-  if( !err_ctrl.err_st_and_pltb ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
-    err_ctrl.err_st_and_pltb = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | error {
-  if( !err_ctrl.err_st_and_pltb ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, no org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.err_st_and_pltb = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | '(' error {
-  if( !err_ctrl.err_st_and_pltb ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_ctrl.err_st_and_pltb = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | '(' TK_STNAME error {
-  if( !err_ctrl.err_st_and_pltb ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_ctrl.err_st_and_pltb = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | '(' TK_STNAME ',' error {
-  if( !err_ctrl.err_st_and_pltb ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_ctrl.err_st_and_pltb = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
@@ -854,9 +853,9 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
   /* print_sp_pair( &$$ ); // ***** for debugging. */
  }
                | '(' TK_SP TK_SP ')' {
-  if( !err_ctrl.err_sp_orgdst_pair ) {
-    printf( "FATAL: syntax-error, delimiter in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.err_sp_orgdst_pair = TRUE;
+  if( !err_ctrl.err_trip_def ) {
+    printf( "FATAL: syntax-error, missing delimiter in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = SP_PAIR;
   strncpy( $$.sp_org, $2, MAX_SPNAME_LEN );
@@ -864,60 +863,60 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
   yyerrok;
  }
                | error TK_SP ',' TK_SP ')' {
-  if( !err_ctrl.err_sp_orgdst_pair ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, missing opening parenthesis in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.err_sp_orgdst_pair = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
 /*
   shift/reduce confliction arises with the rule of-> '(' error, as below.
                | '(' error ',' TK_SP ')' {
-  if( !err_ctrl.err_sp_orgdst_pair ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, no origin found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_ctrl.err_sp_orgdst_pair = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
   } */
                | '(' TK_SP ',' error ')' {
-  if( !err_ctrl.err_sp_orgdst_pair ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, no dest found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_ctrl.err_sp_orgdst_pair = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
                | '(' TK_SP ',' TK_SP error {
-  if( !err_ctrl.err_sp_orgdst_pair ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
-    err_ctrl.err_sp_orgdst_pair = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
 | error {
-  if( !err_ctrl.err_sp_orgdst_pair ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, no org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.err_sp_orgdst_pair = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
                | '(' error {
-  if( !err_ctrl.err_sp_orgdst_pair ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_ctrl.err_sp_orgdst_pair = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
                | '(' TK_SP error {
-  if( !err_ctrl.err_sp_orgdst_pair ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_ctrl.err_sp_orgdst_pair = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
                | '(' TK_SP ',' error {
-  if( !err_ctrl.err_sp_orgdst_pair ) {
+  if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_ctrl.err_sp_orgdst_pair = TRUE;
+    err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
@@ -940,9 +939,37 @@ routes : route {
     $$.nroutes = 0;
   }
  }
+       | routes route {
+  if( $1.kind == ROUTES ) {
+    assert( ($1.nroutes > 0) && ($1.nroutes < MAX_TRIP_ROUTES) );
+  } else {
+    assert( $1.kind == UNKNOWN );
+    assert( $1.nroutes == 0 );
+  }
+  if( $2.kind == ROUTE ) {
+    int i;
+    if( $1.nroutes > 0 ) {
+      if( !err_ctrl.err_trip_def ) {
+	printf( "FATAL: syntax-error, missing delimiter in ars controlled routes specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+	err_ctrl.err_trip_def = TRUE;
+      }
+    }
+    for( i = 0; i < $1.nroutes; i++ )
+      $$.route_prof[i] = $1.route_prof[i];
+    assert( i == $1.nroutes );
+    $$.route_prof[i] = $2;
+    $$.nroutes = $1.nroutes + 1;
+    $$.kind = ROUTES;
+  }
+ }
        | routes ',' route {
-  assert( $1.nroutes < MAX_TRIP_ROUTES );  
-  if( $3.kind == ROUTE ) {    
+  if( $1.kind == ROUTES ) {
+    assert( ($1.nroutes > 0) && ($1.nroutes < MAX_TRIP_ROUTES) );
+  } else {
+    assert( $1.kind == UNKNOWN );
+    assert( $1.nroutes == 0 );
+  }
+  if( $3.kind == ROUTE ) {
     int i;    
     for( i = 0; i < $1.nroutes; i++ )
       $$.route_prof[i] = $1.route_prof[i];
@@ -962,7 +989,7 @@ route : TK_ROUTE {
  }
       | error {
   if( !err_ctrl.err_route ) {
-    printf( "FATAL: syntax-error, illegal controlled route in trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    printf( "FATAL: syntax-error, illegal ars controlled route in trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_route = TRUE;
   }
   $$.kind = UNKNOWN;
