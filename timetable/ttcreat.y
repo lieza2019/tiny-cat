@@ -682,7 +682,7 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
 /* reduce/reduce confliction arises with the rule of-> TK_KEY_TRIPS error, as below
            | TK_KEY_TRIPS error trips_definition {
   if( !err_ctrl.err_trips_decl ) {
-    printf( "FATAL: syntax-error, missing delimiter in trip declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, missing delimiter in trip declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_trips_decl = TRUE;
   }
   yyerrok;
@@ -695,7 +695,7 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
  }
            | TK_KEY_TRIPS error {
   if( !err_ctrl.err_trips_decl ) {
-    printf( "FATAL: syntax-error, incomplete trip declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, incomplete trip declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_trips_decl = TRUE;
   }
  }
@@ -715,7 +715,7 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
     
            | TK_KEY_TRIPS ':' error {
   if( !err_ctrl.err_trips_decl ) {
-    printf( "FATAL: syntax-error, ill-formed trip declaration at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    printf( "FATAL: syntax-error, ill-formed trip declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trips_decl = TRUE;
   }
  } */
@@ -771,13 +771,13 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
  }
 | '(' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, ILL-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
  }
 | '(' '(' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
  }
@@ -787,7 +787,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    } */
 | '(' '('st_and_pltb ',' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
  }
@@ -797,13 +797,13 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    } */
 | '(' '('st_and_pltb ',' st_and_pltb')' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @7.first_line, @7.first_column );
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
  }
 | '(' '('st_and_pltb ',' st_and_pltb')' ',' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @8.first_line, @8.first_column );
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @7.first_line, @7.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
  }
@@ -813,7 +813,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    } */
 | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @10.first_line, @10.first_column );
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @9.first_line, @9.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
  }
@@ -826,7 +826,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    } */ 
 | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @13.first_line, @13.first_column );
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @12.first_line, @12.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
  }
@@ -858,7 +858,7 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
 /* shift/reduce confliction arises with the rule of-> '(' error, as below.
             | '(' error ',' TK_PLTB_NAME ')' {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, no origin station name found in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, no origin station name found in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
@@ -867,14 +867,14 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   shift/reduce confliction arises with the rule of-> '(' TK_STNAME ',' error, as below.
             | '(' TK_STNAME ',' error ')' {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, no dest platform/turnback found in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
+    printf( "FATAL: syntax-error, no dest platform/turnback found in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  } */
             | '(' TK_STNAME ',' TK_PLTB_NAME error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, missing closing parenthesis in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
+    printf( "FATAL: syntax-error, missing closing parenthesis in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
@@ -888,21 +888,21 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
  }
             | '(' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, ill-formed org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | '(' TK_STNAME error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, incomplete org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    printf( "FATAL: syntax-error, incomplete org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
             | '(' TK_STNAME ',' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, incomplete org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
+    printf( "FATAL: syntax-error, incomplete org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
@@ -935,21 +935,21 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
   shift/reduce confliction arises with the rule of-> '(' error, as below.
                | '(' error ',' TK_SP ')' {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, no origin found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, no origin found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
   } */
                | '(' TK_SP ',' error ')' {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, no dest found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
+    printf( "FATAL: syntax-error, no dest found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
                | '(' TK_SP ',' TK_SP error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, missing closing parenthesis in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
+    printf( "FATAL: syntax-error, missing closing parenthesis in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
@@ -963,21 +963,21 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
  }
                | '(' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, ill-formed org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
                | '(' TK_SP error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, incomplete org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    printf( "FATAL: syntax-error, incomplete org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
  }
                | '(' TK_SP ',' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, incomplete org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
+    printf( "FATAL: syntax-error, incomplete org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
   $$.kind = UNKNOWN;
@@ -1012,7 +1012,7 @@ routes : route {
     int i;
     if( $1.nroutes > 0 ) {
       if( !err_ctrl.err_routes ) {
-	printf( "FATAL: syntax-error, missing delimiter in ars controlled routes specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+	printf( "FATAL: syntax-error, missing delimiter in ars controlled routes specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
 	err_ctrl.err_routes = TRUE;
       }
     }
@@ -1084,7 +1084,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
 /* reduce/reduce confliction arises with the rule of-> TK_KEY_ASSIGNMENTS error, as below.
                            | TK_KEY_ASSIGNMENTS error rake_journey_asgnmnts {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, missing delimiter in rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, missing delimiter in rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
   assert( $3 );
@@ -1102,7 +1102,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
  }
                            | TK_KEY_ASSIGNMENTS error {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, incomplete rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, incomplete rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
   $$ = &timetable_symtbl.rj_asgn_regtbl;
@@ -1111,7 +1111,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
 /* reduce/reduce confliction arises with the rule-> | error, of rj_asgn as below.
                            | TK_KEY_ASSIGNMENTS ':' error {
   if( !err_ctrl.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, ill-formed rake-journey assignments declaration at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    printf( "FATAL: syntax-error, ill-formed rake-journey assignments declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_rake_journey_asgnmnts_decl = TRUE;
   }
   $$ = &timetable_symtbl.rj_asgn_regtbl;
@@ -1161,7 +1161,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
  }
         | TK_RAKE_ID error TK_JOURNEY_ID ';' {
   if( !err_ctrl.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, missing operator in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, missing operator in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = RJ_ASGN;
@@ -1171,7 +1171,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
  }
         | TK_RAKE_ID error {
   if( !err_ctrl.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, incomplete rake-journey assignment, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, incomplete rake-journey assignment, at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
@@ -1179,7 +1179,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
  }
         | TK_RAKE_ID TK_ASGN error {
   if( !err_ctrl.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, ill-formed rake-journey assignments at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    printf( "FATAL: syntax-error, ill-formed rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_rj_asgn = TRUE;
   }
   $$.kind = UNKNOWN;
