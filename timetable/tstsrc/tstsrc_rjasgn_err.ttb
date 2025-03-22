@@ -1,5 +1,5 @@
 trips:
- (@  :   (((KIKJ,PL1), (OKBS, PL1)), (SP_77, SP_79), {S831B_S821A});
+  (((KIKJ,PL1), (OKBS, PL1)), (SP_77, SP_79), {S831B_S821A}];
   (((OKBS,PL1), (BTGD, PL1)), (SP_79, SP_81), {S821A_S801A, S801A_S803A});
   (((BTGD,PL1), (BTGD, TB1)), (SP_81, SP_D5), {S803A_S809A});
   (((BTGD,TB1), (BTGD, PL2)), (SP_D5, SP_80), {S806A_S804A});

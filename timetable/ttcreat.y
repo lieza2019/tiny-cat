@@ -8,6 +8,9 @@
 #define YYDEBUG 1
 #define PRINT_STRBUF_MAXLEN 256
 
+static JOURNEY_ID jid_w = -1;
+ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
+
 static BOOL dirty;
 static struct {
   BOOL err_routes;
@@ -124,8 +127,31 @@ static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   return ptrip;
 }
 
-static JOURNEY_ID jid_w = -1;
-ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
+static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
+  assert( ptrip );
+  ATTR_TRIP_PTR r = NULL;
+  
+  if( ptrip->kind == TRIP ) {
+    ATTR_TRIP_PTR p = NULL;
+    if( timetable_symtbl.trips_regtbl.ntrips == 0 ) {
+      p = reg_trip_def( &timetable_symtbl.trips_regtbl, NULL, ptrip );
+      if( p != ptrip ) {
+	printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
+	exit( 1 );
+      }
+    } else {
+      ATTR_TRIP drop = {};
+      p = reg_trip_def( &timetable_symtbl.trips_regtbl, &drop, ptrip );
+      if( p != ptrip ) {
+	assert( p == &drop );
+	assert( p->kind == TRIP );
+	printf( "NOTICE: trip attribute has been overridden with.\n" );
+      }
+    }
+    r = p;
+  }
+  return r;
+}
 %}
 %union {
   int nat;
@@ -729,30 +755,17 @@ trips_definition : /* empty journies */ {
   $$ = &timetable_symtbl.trips_regtbl;
   assert( $$->ntrips == 0 );
 }
-                 | trips_definition trip_def {
-  if( $2.kind == TRIP ) {
-    ATTR_TRIP_PTR p = NULL;
-    if( timetable_symtbl.trips_regtbl.ntrips == 0 ) {
-      p = reg_trip_def( &timetable_symtbl.trips_regtbl, NULL, &$2 );
-      if( p != &$2 ) {
-	printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
-	exit( 1 );
-      }
-    } else {
-      ATTR_TRIP dropd = {};
-      p = reg_trip_def( &timetable_symtbl.trips_regtbl, &dropd, &$2 );
-      if( p != &$2 ) {
-	assert( p == &dropd );
-	assert( p->kind == TRIP );
-	printf( "NOTICE: trip attribute has been overridden with.\n" );
-      }
-    }
-  }
+                 | trips_definition trip_def ';'{
+  reg_trip( &$2 );
+  $$ = &timetable_symtbl.trips_regtbl;
+ }
+                 | trips_definition trip_def error ';' {
+  reg_trip( &$2 );
   $$ = &timetable_symtbl.trips_regtbl;
  }
 ;
 /* e.g. (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B}) */
-trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' ')' ';' {
+trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' ')' {
   $$.kind = UNKNOWN;
   $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
   $$.attr_st_pltb_orgdst.st_pltb_org = $3;
@@ -769,13 +782,13 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
   printf( "\n" );
 #endif
  }
-| '(' error {
+         | '(' error {
   if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, ILL-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
  }
-| '(' '(' error {
+         | '(' '(' error {
   if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trip_def = TRUE;
@@ -785,7 +798,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    | '(' '('st_and_pltb error {
      ;
    } */
-| '(' '('st_and_pltb ',' error {
+         | '(' '('st_and_pltb ',' error {
   if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_ctrl.err_trip_def = TRUE;
@@ -795,13 +808,13 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    | '(' '('st_and_pltb ',' st_and_pltb error {
      ;
    } */
-| '(' '('st_and_pltb ',' st_and_pltb')' error {
+         | '(' '('st_and_pltb ',' st_and_pltb')' error {
   if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
  }
-| '(' '('st_and_pltb ',' st_and_pltb')' ',' error {
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' error {
   if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @7.first_line, @7.first_column );
     err_ctrl.err_trip_def = TRUE;
@@ -811,7 +824,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair error {
      ;
    } */
-| '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' error {
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' error {
   if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @9.first_line, @9.first_column );
     err_ctrl.err_trip_def = TRUE;
@@ -824,7 +837,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes error {
      ;
    } */ 
-| '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' error {
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' error {
   if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @12.first_line, @12.first_column );
     err_ctrl.err_trip_def = TRUE;
