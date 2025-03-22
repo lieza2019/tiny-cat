@@ -1162,12 +1162,16 @@ rake_journey_asgnmnts : /* empty journies */ {
   assert( $$->kind == RJ_ASGNS );
   assert( $$->nasgns == 0 );
  }
-                      | rake_journey_asgnmnts rj_asgn {
+                      | rake_journey_asgnmnts rj_asgn ';' {
+  reg_rake_journey_asgn( &$2 );
+  $$ = &timetable_symtbl.rj_asgn_regtbl;
+ }
+                      | rake_journey_asgnmnts rj_asgn error ';' {  
   reg_rake_journey_asgn( &$2 );
   $$ = &timetable_symtbl.rj_asgn_regtbl;
  }
 ;
-rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
+rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
   $$.kind = RJ_ASGN;
   $$.rid = $1;
   $$.jid = $3;
@@ -1181,7 +1185,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID ';' {
   $$.kind = UNKNOWN;
   // yyclearin;
  }
-        | TK_RAKE_ID error TK_JOURNEY_ID ';' {
+        | TK_RAKE_ID error TK_JOURNEY_ID {
   if( !err_ctrl.err_rj_asgn ) {
     printf( "FATAL: syntax-error, missing operator in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_rj_asgn = TRUE;
