@@ -127,6 +127,32 @@ static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   return ptrip;
 }
 
+static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
+  assert( prj_asgn );
+  ATTR_RJ_ASGN_PTR r = NULL;
+  
+  if( prj_asgn->kind == RJ_ASGN ) {
+    ATTR_RJ_ASGN_PTR p = NULL;
+    if( timetable_symtbl.rj_asgn_regtbl.nasgns == 0 ) {    
+      p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, NULL, prj_asgn );
+      if( p != prj_asgn ) {
+	printf( "FATAL: INTERNAL-error, in rake-journey assignment registration, giving up.\n" );
+	exit( 1 );
+      }
+    } else {
+      ATTR_RJ_ASGN drop = {};
+      p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, &drop, prj_asgn );
+      if( p != prj_asgn ) {
+	assert( p == &drop );
+	assert( p->kind == RJ_ASGN );
+	printf( "NOTICE: rake-journey assignment has been overridden with.\n" );
+      }
+    }
+    r = p;
+  }
+  return r;
+}
+
 static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
   assert( ptrip );
   ATTR_TRIP_PTR r = NULL;
@@ -1137,24 +1163,7 @@ rake_journey_asgnmnts : /* empty journies */ {
   assert( $$->nasgns == 0 );
  }
                       | rake_journey_asgnmnts rj_asgn {
-  if( $2.kind == RJ_ASGN ) {
-    ATTR_RJ_ASGN_PTR p = NULL;
-    if( timetable_symtbl.rj_asgn_regtbl.nasgns == 0 ) {    
-      p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, NULL, &$2 );    
-      if( p != &$2 ) {
-	printf( "FATAL: INTERNAL-error, in rake-journey assignment registration, giving up.\n" );
-	exit( 1 );
-      }
-    } else {
-      ATTR_RJ_ASGN dropd = {};
-      p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, &dropd, &$2 );
-      if( p != &$2 ) {
-	assert( p == &dropd );
-	assert( p->kind == RJ_ASGN );
-	printf( "NOTICE: rake-journey assignment has been overridden with.\n" );
-      }
-    }
-  }
+  reg_rake_journey_asgn( &$2 );
   $$ = &timetable_symtbl.rj_asgn_regtbl;
  }
 ;
