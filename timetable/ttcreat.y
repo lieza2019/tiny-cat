@@ -16,10 +16,8 @@ static struct {
   BOOL err_trip_journey;
   BOOL err_routes;
   BOOL err_trips_decl;
-  /* BOOL err_trips_definition; */
   BOOL err_trip_def;
   BOOL err_rake_journey_asgnmnts_decl;
-  /* BOOL err_rake_journey_asgnmnts; */
   BOOL err_rj_asgn;
 } err_ctrl;
 
@@ -936,6 +934,21 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
   }
   $$.kind = UNKNOWN;
  }
+         | '(' '('st_and_pltb ',' st_and_pltb')' sp_orgdst_pair ',' '{' routes '}' ')' {
+  if( !err_ctrl.err_trip_def ) {    
+    printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
+    err_ctrl.err_trip_def = TRUE;
+  }
+  $$.kind = UNKNOWN;
+  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($7.kind == SP_PAIR) && ($10.kind == ROUTES) ) {
+    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+    $$.attr_st_pltb_orgdst.st_pltb_org = $3;
+    $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
+    $$.attr_sp_orgdst = $7;
+    $$.attr_route_ctrl = $10;
+    $$.kind = TRIP;
+  }
+ }
 /* the follow reduction rule arises reduce/reduce conflicts.
    | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair error {
      ;
@@ -947,13 +960,28 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
   }
   $$.kind = UNKNOWN;
  }
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair '{' routes '}' ')' {
+  if( !err_ctrl.err_trip_def ) {
+    printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @8.first_line, @8.first_column );
+    err_ctrl.err_trip_def = TRUE;    
+  }
+  $$.kind = UNKNOWN;  
+  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($8.kind == SP_PAIR) && ($10.kind == ROUTES) ) {
+    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+    $$.attr_st_pltb_orgdst.st_pltb_org = $3;
+    $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
+    $$.attr_sp_orgdst = $8;
+    $$.attr_route_ctrl = $10;
+    $$.kind = TRIP;
+  }
+ }
 /* the follow reduction rules arise reduce/reduce conflicts.
    | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' error {
      ;
    }
    | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes error {
      ;
-   } */ 
+   } */
          | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' error {
   if( !err_ctrl.err_trip_def ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in trip definition at (LINE, COL) = (%d, %d).\n", @12.first_line, @12.first_column );
