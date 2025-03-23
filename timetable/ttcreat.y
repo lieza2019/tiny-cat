@@ -13,6 +13,7 @@ ATTR_TIMETABLE timetable_symtbl = {{TRIPS}, {RJ_ASGNS}, {JOURNEYS}};
 
 static BOOL dirty;
 static struct {
+  BOOL err_trip_journey;
   BOOL err_routes;
   BOOL err_trips_decl;
   BOOL err_trip_def;
@@ -127,32 +128,6 @@ static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   return ptrip;
 }
 
-static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
-  assert( prj_asgn );
-  ATTR_RJ_ASGN_PTR r = NULL;
-  
-  if( prj_asgn->kind == RJ_ASGN ) {
-    ATTR_RJ_ASGN_PTR p = NULL;
-    if( timetable_symtbl.rj_asgn_regtbl.nasgns == 0 ) {    
-      p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, NULL, prj_asgn );
-      if( p != prj_asgn ) {
-	printf( "FATAL: INTERNAL-error, in rake-journey assignment registration, giving up.\n" );
-	exit( 1 );
-      }
-    } else {
-      ATTR_RJ_ASGN drop = {};
-      p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, &drop, prj_asgn );
-      if( p != prj_asgn ) {
-	assert( p == &drop );
-	assert( p->kind == RJ_ASGN );
-	printf( "NOTICE: rake-journey assignment has been overridden with.\n" );
-      }
-    }
-    r = p;
-  }
-  return r;
-}
-
 static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
   assert( ptrip );
   ATTR_TRIP_PTR r = NULL;
@@ -172,6 +147,32 @@ static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
 	assert( p == &drop );
 	assert( p->kind == TRIP );
 	printf( "NOTICE: trip attribute has been overridden with.\n" );
+      }
+    }
+    r = p;
+  }
+  return r;
+}
+
+static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
+  assert( prj_asgn );
+  ATTR_RJ_ASGN_PTR r = NULL;
+  
+  if( prj_asgn->kind == RJ_ASGN ) {
+    ATTR_RJ_ASGN_PTR p = NULL;
+    if( timetable_symtbl.rj_asgn_regtbl.nasgns == 0 ) {    
+      p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, NULL, prj_asgn );
+      if( p != prj_asgn ) {
+	printf( "FATAL: INTERNAL-error, in rake-journey assignment registration, giving up.\n" );
+	exit( 1 );
+      }
+    } else {
+      ATTR_RJ_ASGN drop = {};
+      p = reg_rjasgn( &timetable_symtbl.rj_asgn_regtbl, &drop, prj_asgn );
+      if( p != prj_asgn ) {
+	assert( p == &drop );
+	assert( p->kind == RJ_ASGN );
+	printf( "NOTICE: rake-journey assignment has been overridden with.\n" );
       }
     }
     r = p;
@@ -364,12 +365,26 @@ trips_journey : /* empty trips */ {
 }
               | trips_journey trip_journey ';' {
   assert( jid_w > -1 );
-  assert( $1 == &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips );  
-  ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
-  ATTR_TRIP_PTR preg = NULL;
-  $2.kind = TRIP;
-  preg = reg_trip_journey( &timetable_symtbl.journeys_regtbl, jid_w, &$2 );
-  assert( pnxt == preg );
+  if( $2.kind == TRIP ) {
+    assert( $1 == &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips );  
+    ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
+    ATTR_TRIP_PTR preg = NULL;
+    $2.kind = TRIP;
+    preg = reg_trip_journey( &timetable_symtbl.journeys_regtbl, jid_w, &$2 );
+    assert( pnxt == preg );    
+  }
+  $$ = &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips;
+ }
+              | trips_journey trip_journey error ';' {
+  assert( jid_w > -1 );
+  if( $2.kind == TRIP ) {
+    assert( $1 == &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips );  
+    ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
+    ATTR_TRIP_PTR preg = NULL;
+    $2.kind = TRIP;
+    preg = reg_trip_journey( &timetable_symtbl.journeys_regtbl, jid_w, &$2 );
+    assert( pnxt == preg );
+  }
   $$ = &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips;
  }
 ;
@@ -385,12 +400,12 @@ trips_journey : /* empty trips */ {
     Is revenue operation, or not.
     Crew ID, of the crew assigned to the departure from this Stopping Point
 */
-/* trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey ',' '('arrtime_journey ',' deptime_journey')' ',' perf_journey ',' revenue_journey ',' crewid_journey ')'
+/* trip_journey: '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey ',' '('arrtime_journey ',' deptime_journey')' ',' perf_journey ',' revenue_journey ',' crewid_journey ')'
    e.g.
     ( ((JLA,PL1), (KIKJ, PL1)), 37, (11:22:33, 23:59:59), perfslow, revenue, crew_021 )
     ( ((BTGD,PL2), (OKBS, PL2)), 15, (00:13:51, 21:57:13), perffast, revenue, crew_007 )
 */
-trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' {
+trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elements. */
   raw_journey_trip( &$$ );
   $$.kind = TRIP;
   $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
@@ -401,6 +416,63 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' {
     print_trip( &$$, TRUE );
   }
 #endif
+ }
+             | error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+             | '(' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+             | '(' '('st_and_pltb st_and_pltb')' ')' {
+  /* including the case of -> '(' '(' error. */
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL!!!: syntax-error, missing delimiter in org & dst platform/turnback section specifier in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
+  if( ($3.kind == ST_PLTB) && ($4.kind == ST_PLTB) ) {
+    raw_journey_trip( &$$ );
+    $$.kind = TRIP;
+    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+    $$.attr_st_pltb_orgdst.st_pltb_org = $3;
+    $$.attr_st_pltb_orgdst.st_pltb_dst = $4;
+  }
+ }
+             | '(' '('st_and_pltb ',' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+             | '(' '('st_and_pltb ',' st_and_pltb ')' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis of trip description in journey definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+             | '(' '('st_and_pltb st_and_pltb')' ',' dwell_journey {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing delimiter in org & dst platform/turnback section specifier in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
+  if( ($3.kind == ST_PLTB) && ($4.kind == ST_PLTB) ) {
+    $$ = $7;
+    $$.kind = TRIP;
+    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+    $$.attr_st_pltb_orgdst.st_pltb_org = $3;
+    $$.attr_st_pltb_orgdst.st_pltb_dst = $4;
+  }
  }
              | '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey {
   $$ = $8;
@@ -810,7 +882,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
  }
          | '(' error {
   if( !err_ctrl.err_trip_def ) {
-    printf( "FATAL: syntax-error, ILL-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trip_def = TRUE;
   }
  }
@@ -884,7 +956,6 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   $$.kind = ST_PLTB;
   strncpy( $$.st_name, $2, MAX_STNAME_LEN );
   strncpy( $$.pltb_name, $3, MAX_PLTB_NAMELEN );
-  yyerrok;
   /* print_st_pltb( &$$ ); // ***** for debugging. */
  }
             | error TK_STNAME ',' TK_PLTB_NAME ')' {
@@ -961,7 +1032,6 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
   $$.kind = SP_PAIR;
   strncpy( $$.sp_org, $2, MAX_SPNAME_LEN );
   strncpy( $$.sp_dst, $3, MAX_SPNAME_LEN );
-  yyerrok;
  }
                | error TK_SP ',' TK_SP ')' {
   if( !err_ctrl.err_trip_def ) {
