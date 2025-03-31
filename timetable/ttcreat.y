@@ -345,9 +345,10 @@ journeys_decl : TK_JOURNEYS ':' /* empty journies */ {
 ;
 journey_definition : journey_ident ':' trips_journey {
   assert( jid_w == $1 );
-  assert( timetable_symtbl.journeys_regtbl.journey_prof[jid_w].jid == jid_w );
   assert( &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips == $3 );
-  timetable_symtbl.journeys_regtbl.journey_prof[jid_w].kind = JOURNEY;
+  if( timetable_symtbl.journeys_regtbl.journey_prof[jid_w].jid == jid_w ) {
+    timetable_symtbl.journeys_regtbl.journey_prof[jid_w].kind = JOURNEY;
+  }
   $$ = &timetable_symtbl.journeys_regtbl.journey_prof[jid_w];
  }
 ;
@@ -466,7 +467,7 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
     err_ctrl.err_trip_journey = TRUE;
   }
   $$.kind = UNKNOWN;
-  if( ($3.kind == ST_PLTB) && ($4.kind == ST_PLTB) ) {
+  if( ($3.kind == ST_PLTB) && ($4.kind == ST_PLTB) && ($7.kind == TRIP) ) {
     $$ = $7;
     $$.kind = TRIP;
     $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
@@ -474,12 +475,15 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
     $$.attr_st_pltb_orgdst.st_pltb_dst = $4;
   }
  }
-             | '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey {
-  $$ = $8;
-  $$.kind = TRIP;
-  $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
-  $$.attr_st_pltb_orgdst.st_pltb_org = $3;
-  $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
+             | '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey {  
+  $$.kind = UNKNOWN;
+  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($8.kind == TRIP) ) {
+    $$ = $8;
+    $$.kind = TRIP;
+    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+    $$.attr_st_pltb_orgdst.st_pltb_org = $3;
+    $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
+  }
 #if 0 // ***** for debugging.
   {
     print_trip( &$$, TRUE );
@@ -496,6 +500,14 @@ dwell_journey : TK_NAT ')' {
     $$.sp_cond = DWELL;
   }
   $$.dwell_time = $1;
+  $$.kind = TRIP;
+ }
+              | error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, ill-formed dwell description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
               | TK_NAT ',' arrdep_time_journey {
   $$ = $3;
@@ -505,11 +517,13 @@ dwell_journey : TK_NAT ')' {
     assert( $1 > 0 );
     $$.sp_cond = DWELL;
   }
-  $$.dwell_time = $1;  
+  $$.dwell_time = $1;
+  $$.kind = TRIP; // *****
  }
               | arrdep_time_journey { /* omitted. */
   $$ = $1;
   $$.dwell_time = DEFAULT_DWELL_TIME;
+  $$.kind = TRIP;
  }
 ;
 arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */

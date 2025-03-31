@@ -14,8 +14,8 @@ assignments:
 
 journeys:
   J01:
-    ( ((JLA,PL1) (KIKJ, PL1)) );
-    ( ((BTGD,PL2), (OKBS, PL2)), 15, (00:13:51, 21:57:13), perffast, revenue, crew_007 );
+    ( ((JLA,PL1), (KIKJ, PL1)) );
+    ( ((BTGD,PL2), (OKBS, PL2)), 10, (00:13:51, 21:57:13), perffast, revenue, crew_007 );
   J02:
     ( ((JLA,PL1), (KIKJ, PL1)), 37, (11:22:33, 23:59:59), perfslow, revenue, crew_021 );
     ( ((BTGD,PL2), (OKBS, PL2)), 15, (00:13:51, 21:57:13), perffast, revenue, crew_007 );
