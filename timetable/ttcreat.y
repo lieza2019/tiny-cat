@@ -552,7 +552,11 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.kind = UNKNOWN;
  }
 | '(' ')' error {
-  ;
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
                     | '(' ')' ',' perf_journey {
   $$ = $4;
@@ -590,11 +594,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
-| '(' ',' error {
-  ;
+                    | '(' ',' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
-| '(' ',' ')' error {
-  ;
+                    | '(' ',' ')' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
                     | '(' ',' ')' ',' perf_journey {
   $$ = $5;
@@ -650,8 +662,12 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
-| '(' time ')' error {
-  ;
+                    | '(' time ')' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
                     | '(' time ')' ',' perf_journey {
   $$ = $5;
@@ -689,11 +705,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
-| '(' time ',' error {
-  ;
+                    | '(' time ',' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
-| '(' time ',' ')' error {
-  ;
+                    | '(' time ',' ')' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
                     | '(' time ',' ')' ',' perf_journey {
   $$ = $6;
@@ -731,8 +755,12 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
-| '(' ',' time ')' error {
-  ;
+                    | '(' ',' time ')' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
                     | '(' ',' time ')' ',' perf_journey {
   $$ = $6;
@@ -770,8 +798,12 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
-| '(' time ',' time ')' error {
-  ;
+                    | '(' time ',' time ')' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
                     | '(' time ',' time ')' ',' perf_journey {
   $$ = $7;
