@@ -546,7 +546,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
  }
                     | '(' error {
   if( !err_ctrl.err_trip_journey ) {
-    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_trip_journey = TRUE;
   }
   $$.kind = UNKNOWN;
@@ -596,7 +596,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
  }
                     | '(' ',' error {
   if( !err_ctrl.err_trip_journey ) {
-    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trip_journey = TRUE;
   }
   $$.kind = UNKNOWN;
@@ -707,7 +707,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
  }
                     | '(' time ',' error {
   if( !err_ctrl.err_trip_journey ) {
-    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_trip_journey = TRUE;
   }
   $$.kind = UNKNOWN;
@@ -827,38 +827,58 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 perf_journey : TK_PERFREG ')' {
   raw_journey_trip( &$$ );
   $$.perf_regime = $1;
+  $$.kind = PERF_REGIME;
  }
              | TK_PERFREG ',' revenue_journey {
   $$ = $3;
   $$.perf_regime = $1;
+  if( $$.kind == REVENUE_STAT ) {
+    $$.kind = PERF_REGIME;
+  } else
+    assert( $$.kind == UNKNOWN );
  }
              | revenue_journey { /* omitted */
   $$ = $1;
   $$.perf_regime = DEFAULT_PERFLEVEL;
+  if( $$.kind == REVENUE_STAT ) {
+    $$.kind = PERF_REGIME;
+  } else
+    assert( $$.kind == UNKNOWN );
  }
 ;
 revenue_journey : TK_REVENUE ')' {
   raw_journey_trip( &$$ );
   $$.revenue = $1;
+  $$.kind = REVENUE_STAT;
  }
                 | TK_REVENUE ',' crewid_journey {
   $$ = $3;
   $$.revenue = $1;
+  if( $$.kind == CREWID ) {
+    $$.kind = REVENUE_STAT;
+  } else
+    assert( $$.kind == UNKNOWN );
  }
                 | crewid_journey { /* omitted */
   $$ = $1;
   $$.revenue = DEFAULT_REVENUE;
+  if( $$.kind == CREWID ) {
+    $$.kind = REVENUE_STAT;
+  } else
+    assert( $$.kind == UNKNOWN );
  }
 ;
 crewid_journey : TK_CREWID ')' {
   raw_journey_trip( &$$ );
   $$.crew_id = $1;
+  $$.kind = CREWID;
  }
                | ')' { /* omitted */
   raw_journey_trip( &$$ );
   $$.crew_id = -1;
+  $$.kind = CREWID;
  }
-| error {
+               | error {
   if( !err_ctrl.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed dwell description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_ctrl.err_trip_journey = TRUE;
@@ -869,9 +889,14 @@ crewid_journey : TK_CREWID ')' {
 
 time : TK_TIME {
   $$ = $1;
+  $$.kind = TIME_SPEC;
  }
-| error {
-  ;
+     | error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
 ;
 

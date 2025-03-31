@@ -15,7 +15,9 @@
 #define MAX_JOURNEYS 256
 
 typedef enum kind {
-  ST_PLTB = 1,
+  DATE_SPEC = 1,
+  TIME_SPEC,
+  ST_PLTB,
   ST_PLTB_PAIR,
   SP,
   SP_PAIR,
@@ -23,6 +25,9 @@ typedef enum kind {
   ROUTES,
   TRIP,
   TRIPS,
+  PERF_REGIME,
+  REVENUE_STAT,
+  CREWID,
   RJ_ASGN,
   RJ_ASGNS,
   JOURNEY,
@@ -45,11 +50,13 @@ typedef enum perfreg_level {
 extern char *cnv2str_perf_regime ( char *pstr, PERFREG_LEVEL perfreg, const int buflen );
 
 typedef struct attr_date {
+  KIND kind;
   int year;
   int month;
   int day;
 } ATTR_DATE, *ATTR_DATE_PTR;
 typedef struct attr_time {
+  KIND kind;
   int hour;
   int min;
   int sec;
