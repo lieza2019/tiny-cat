@@ -511,19 +511,26 @@ dwell_journey : TK_NAT ')' {
  }
               | TK_NAT ',' arrdep_time_journey {
   $$ = $3;
-  if( $1 == 0 ) {
-    $$.sp_cond = SKIP;
-  } else {
-    assert( $1 > 0 );
-    $$.sp_cond = DWELL;
-  }
-  $$.dwell_time = $1;
-  $$.kind = TRIP; // *****
+  if( $3.kind == TRIP ) {    
+    if( $1 == 0 ) {
+      $$.sp_cond = SKIP;
+    } else {
+      assert( $1 > 0 );
+      $$.sp_cond = DWELL;
+    }
+    $$.dwell_time = $1;
+    assert( $$.kind == TRIP );
+  } else
+    assert( $$.kind == UNKNOWN );
  }
               | arrdep_time_journey { /* omitted. */
   $$ = $1;
-  $$.dwell_time = DEFAULT_DWELL_TIME;
-  $$.kind = TRIP;
+  if( $1.kind == TRIP ) {
+    $$.sp_cond = DWELL;
+    $$.dwell_time = DEFAULT_DWELL_TIME;
+    assert( $$.kind == TRIP );
+  } else
+    assert( $$.kind == UNKNOWN );
  }
 ;
 arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
@@ -534,6 +541,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = -1;
   $$.arrdep_time.dep_time.min = -1;
   $$.arrdep_time.dep_time.sec = -1;
+  $$.kind = TRIP;
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -551,6 +559,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = -1;
   $$.arrdep_time.dep_time.min = -1;
   $$.arrdep_time.dep_time.sec = -1;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -568,6 +577,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = -1;
   $$.arrdep_time.dep_time.min = -1;
   $$.arrdep_time.dep_time.sec = -1;
+  $$.kind = TRIP;
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -585,6 +595,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = -1;
   $$.arrdep_time.dep_time.min = -1;
   $$.arrdep_time.dep_time.sec = -1;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -602,6 +613,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = -1;
   $$.arrdep_time.dep_time.min = -1;
   $$.arrdep_time.dep_time.sec = -1;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -619,6 +631,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = -1;
   $$.arrdep_time.dep_time.min = -1;
   $$.arrdep_time.dep_time.sec = -1;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -636,6 +649,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = -1;
   $$.arrdep_time.dep_time.min = -1;
   $$.arrdep_time.dep_time.sec = -1;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -653,6 +667,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = -1;
   $$.arrdep_time.dep_time.min = -1;
   $$.arrdep_time.dep_time.sec = -1;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -670,6 +685,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = -1;
   $$.arrdep_time.dep_time.min = -1;
   $$.arrdep_time.dep_time.sec = -1;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -687,6 +703,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = $3.hour;
   $$.arrdep_time.dep_time.min = $3.min;
   $$.arrdep_time.dep_time.sec = $3.sec;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -704,6 +721,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = $3.hour;
   $$.arrdep_time.dep_time.min = $3.min;
   $$.arrdep_time.dep_time.sec = $3.sec;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -722,6 +740,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = $4.hour;
   $$.arrdep_time.dep_time.min = $4.min;
   $$.arrdep_time.dep_time.sec = $4.sec;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -739,6 +758,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.dep_time.hour = $4.hour;
   $$.arrdep_time.dep_time.min = $4.min;
   $$.arrdep_time.dep_time.sec = $4.sec;
+  $$.kind = TRIP; // *****
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -747,6 +767,13 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     print_time( &$$.arrdep_time.dep_time );
   }
 #endif
+ }
+| '(' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
 ;
 perf_journey : TK_PERFREG ')' {
