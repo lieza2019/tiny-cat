@@ -502,13 +502,6 @@ dwell_journey : TK_NAT ')' {
   $$.dwell_time = $1;
   $$.kind = TRIP;
  }
-              | error {
-  if( !err_ctrl.err_trip_journey ) {
-    printf( "FATAL: syntax-error, ill-formed dwell description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.err_trip_journey = TRUE;
-  }
-  $$.kind = UNKNOWN;
- }
               | TK_NAT ',' arrdep_time_journey {
   $$ = $3;
   if( $3.kind == TRIP ) {    
@@ -551,6 +544,16 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
+                    | '(' error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
+ }
+| '(' ')' error {
+  ;
+ }
                     | '(' ')' ',' perf_journey {
   $$ = $4;
   $$.arrdep_time.arr_time.hour = -1;
@@ -586,6 +589,12 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     print_time( &$$.arrdep_time.dep_time );
   }
 #endif
+ }
+| '(' ',' error {
+  ;
+ }
+| '(' ',' ')' error {
+  ;
  }
                     | '(' ',' ')' ',' perf_journey {
   $$ = $5;
@@ -641,6 +650,9 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
+| '(' time ')' error {
+  ;
+ }
                     | '(' time ')' ',' perf_journey {
   $$ = $5;
   $$.arrdep_time.arr_time.hour = $2.hour;
@@ -676,6 +688,12 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     print_time( &$$.arrdep_time.dep_time );
   }
 #endif
+ }
+| '(' time ',' error {
+  ;
+ }
+| '(' time ',' ')' error {
+  ;
  }
                     | '(' time ',' ')' ',' perf_journey {
   $$ = $6;
@@ -713,6 +731,9 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
+| '(' ',' time ')' error {
+  ;
+ }
                     | '(' ',' time ')' ',' perf_journey {
   $$ = $6;
   $$.arrdep_time.arr_time.hour = -1;
@@ -730,7 +751,6 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     print_time( &$$.arrdep_time.dep_time );
   }
 #endif
-  
  }
                     | '(' time ',' time ')' ')' {
   raw_journey_trip( &$$ );
@@ -750,6 +770,9 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
 #endif
  }
+| '(' time ',' time ')' error {
+  ;
+ }
                     | '(' time ',' time ')' ',' perf_journey {
   $$ = $7;
   $$.arrdep_time.arr_time.hour = $2.hour;
@@ -767,13 +790,6 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     print_time( &$$.arrdep_time.dep_time );
   }
 #endif
- }
-| '(' error {
-  if( !err_ctrl.err_trip_journey ) {
-    printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_ctrl.err_trip_journey = TRUE;
-  }
-  $$.kind = UNKNOWN;
  }
 ;
 perf_journey : TK_PERFREG ')' {
@@ -806,14 +822,24 @@ crewid_journey : TK_CREWID ')' {
   raw_journey_trip( &$$ );
   $$.crew_id = $1;
  }
-               | ')' {
+               | ')' { /* omitted */
   raw_journey_trip( &$$ );
   $$.crew_id = -1;
+ }
+| error {
+  if( !err_ctrl.err_trip_journey ) {
+    printf( "FATAL: syntax-error, ill-formed dwell description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_ctrl.err_trip_journey = TRUE;
+  }
+  $$.kind = UNKNOWN;
  }
 ;
 
 time : TK_TIME {
   $$ = $1;
+ }
+| error {
+  ;
  }
 ;
 
