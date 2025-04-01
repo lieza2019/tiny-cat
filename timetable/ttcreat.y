@@ -9,7 +9,7 @@
 #define PRINT_STRBUF_MAXLEN 256
 
 static JOURNEY_ID jid_w = -1;
-ATTR_TIMETABLE timetable_symtbl = {{UNKNOWN}, {UNKNOWN}, {JOURNEYS}};
+ATTR_TIMETABLE timetable_symtbl = {{UNKNOWN}, {UNKNOWN}, {UNKNOWN}};
 
 static BOOL dirty;
 static struct {
@@ -318,8 +318,9 @@ timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
 */
 journeys_decl : TK_JOURNEYS ':' /* empty journies */ {
   assert( jid_w < 0 );
-  assert( timetable_symtbl.journeys_regtbl.kind == JOURNEYS );
+  assert( timetable_symtbl.journeys_regtbl.kind == UNKNOWN );
   assert( timetable_symtbl.journeys_regtbl.njourneys == 0 );
+  timetable_symtbl.journeys_regtbl.kind = JOURNEYS;
   $$ = &timetable_symtbl.journeys_regtbl;
 }
               | journeys_decl journey_definition {
@@ -346,9 +347,10 @@ journeys_decl : TK_JOURNEYS ':' /* empty journies */ {
 journey_definition : journey_ident ':' trips_journey {
   assert( jid_w == $1 );
   assert( &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips == $3 );
-  if( timetable_symtbl.journeys_regtbl.journey_prof[jid_w].jid == jid_w ) {
+  if( timetable_symtbl.journeys_regtbl.journey_prof[jid_w].jid == jid_w )
     timetable_symtbl.journeys_regtbl.journey_prof[jid_w].kind = JOURNEY;
-  }
+  else
+    timetable_symtbl.journeys_regtbl.journey_prof[jid_w].kind = UNKNOWN;
   $$ = &timetable_symtbl.journeys_regtbl.journey_prof[jid_w];
  }
 ;
@@ -408,10 +410,15 @@ trips_journey : /* empty trips */ {
 */
 trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elements. */
   raw_journey_trip( &$$ );
-  $$.kind = TRIP;
-  $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
-  $$.attr_st_pltb_orgdst.st_pltb_org = $3;
-  $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
+  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) ) {
+    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+    $$.attr_st_pltb_orgdst.st_pltb_org = $3;
+    $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
+    $$.kind = TRIP;
+  } else {
+    assert( ($3.kind == UNKNOWN) || ($5.kind == UNKNOWN) );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     print_trip( &$$, TRUE );
@@ -438,13 +445,15 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
     printf( "FATAL: syntax-error, missing delimiter in org & dst platform/turnback section specifier in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  raw_journey_trip( &$$ );
   if( ($3.kind == ST_PLTB) && ($4.kind == ST_PLTB) ) {
-    raw_journey_trip( &$$ );
-    $$.kind = TRIP;
     $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $4;
+    $$.kind = TRIP;
+  } else {
+    assert( ($3.kind == UNKNOWN) || ($4.kind == UNKNOWN) );
+    $$.kind = UNKNOWN;
   }
  }
              | '(' '('st_and_pltb ',' error {
@@ -466,23 +475,27 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
     printf( "FATAL: syntax-error, missing delimiter in org & dst platform/turnback section specifier in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_ctrl.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
   if( ($3.kind == ST_PLTB) && ($4.kind == ST_PLTB) && ($7.kind == TRIP) ) {
     $$ = $7;
     $$.kind = TRIP;
     $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $4;
+  } else {
+    assert( ($3.kind == UNKNOWN) || ($4.kind == UNKNOWN) || ($7.kind == UNKNOWN) );
+    $$.kind = UNKNOWN;
   }
  }
              | '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey {  
-  $$.kind = UNKNOWN;
   if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($8.kind == TRIP) ) {
     $$ = $8;
     $$.kind = TRIP;
     $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
+  } else {
+    assert( ($3.kind == UNKNOWN) || ($5.kind == UNKNOWN) || ($8.kind == UNKNOWN) );
+    $$.kind = UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -503,8 +516,8 @@ dwell_journey : TK_NAT ')' {
   $$.kind = TRIP;
  }
               | TK_NAT ',' arrdep_time_journey {
-  $$ = $3;
-  if( $3.kind == TRIP ) {    
+  if( $3.kind == TRIP ) {
+    $$ = $3;
     if( $1 == 0 ) {
       $$.sp_cond = SKIP;
     } else {
@@ -512,18 +525,22 @@ dwell_journey : TK_NAT ')' {
       $$.sp_cond = DWELL;
     }
     $$.dwell_time = $1;
-    assert( $$.kind == TRIP );
-  } else
-    assert( $$.kind == UNKNOWN );
+    $$.kind == TRIP;
+  } else {
+    assert( $3.kind == UNKNOWN );
+    $$.kind == UNKNOWN;
+  }
  }
               | arrdep_time_journey { /* omitted. */
-  $$ = $1;
   if( $1.kind == TRIP ) {
+    $$ = $1;
     $$.sp_cond = DWELL;
     $$.dwell_time = DEFAULT_DWELL_TIME;
-    assert( $$.kind == TRIP );
-  } else
-    assert( $$.kind == UNKNOWN );
+    $$.kind == TRIP;
+  } else {
+    assert( $1.kind == UNKNOWN );
+    $$.kind == UNKNOWN;
+  }
  }
 ;
 arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
@@ -551,7 +568,7 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   }
   $$.kind = UNKNOWN;
  }
-| '(' ')' error {
+                    | '(' ')' error {
   if( !err_ctrl.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_ctrl.err_trip_journey = TRUE;
@@ -559,14 +576,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.kind = UNKNOWN;
  }
                     | '(' ')' ',' perf_journey {
-  $$ = $4;
-  $$.arrdep_time.arr_time.hour = -1;
-  $$.arrdep_time.arr_time.min = -1;
-  $$.arrdep_time.arr_time.sec = -1;
-  $$.arrdep_time.dep_time.hour = -1;
-  $$.arrdep_time.dep_time.min = -1;
-  $$.arrdep_time.dep_time.sec = -1;
-  $$.kind = TRIP; // *****
+  if( $4.kind == PERF_REGIME ) {
+    $$ = $4;
+    $$.arrdep_time.arr_time.hour = -1;
+    $$.arrdep_time.arr_time.min = -1;
+    $$.arrdep_time.arr_time.sec = -1;
+    $$.arrdep_time.dep_time.hour = -1;
+    $$.arrdep_time.dep_time.min = -1;
+    $$.arrdep_time.dep_time.sec = -1;  
+    $$.kind = TRIP;
+  } else {
+    assert( $4.kind == UNKNOWN );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -609,14 +631,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.kind = UNKNOWN;
  }
                     | '(' ',' ')' ',' perf_journey {
-  $$ = $5;
-  $$.arrdep_time.arr_time.hour = -1;
-  $$.arrdep_time.arr_time.min = -1;
-  $$.arrdep_time.arr_time.sec = -1;
-  $$.arrdep_time.dep_time.hour = -1;
-  $$.arrdep_time.dep_time.min = -1;
-  $$.arrdep_time.dep_time.sec = -1;
-  $$.kind = TRIP; // *****
+  if( $5.kind == PERF_REGIME ) {
+    $$ = $5;
+    $$.arrdep_time.arr_time.hour = -1;
+    $$.arrdep_time.arr_time.min = -1;
+    $$.arrdep_time.arr_time.sec = -1;
+    $$.arrdep_time.dep_time.hour = -1;
+    $$.arrdep_time.dep_time.min = -1;
+    $$.arrdep_time.dep_time.sec = -1;
+    $$.kind = TRIP;
+  } else {
+    assert( $5.kind == UNKNOWN );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -627,14 +654,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | perf_journey { /* both omitted, form 3. */
-  $$ = $1;
-  $$.arrdep_time.arr_time.hour = -1;
-  $$.arrdep_time.arr_time.min = -1;
-  $$.arrdep_time.arr_time.sec = -1;
-  $$.arrdep_time.dep_time.hour = -1;
-  $$.arrdep_time.dep_time.min = -1;
-  $$.arrdep_time.dep_time.sec = -1;
-  $$.kind = TRIP; // *****
+  if( $1.kind == PERF_REGIME ) {
+    $$ = $1;
+    $$.arrdep_time.arr_time.hour = -1;
+    $$.arrdep_time.arr_time.min = -1;
+    $$.arrdep_time.arr_time.sec = -1;
+    $$.arrdep_time.dep_time.hour = -1;
+    $$.arrdep_time.dep_time.min = -1;
+    $$.arrdep_time.dep_time.sec = -1;
+    $$.kind = TRIP;
+  } else {
+    assert( $1.kind == UNKNOWN );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -645,14 +677,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   #endif
  }
                     | '(' time ')' ')' { /* deparure-time omitted, form 1. */
-  raw_journey_trip( &$$ );
-  $$.arrdep_time.arr_time.hour = $2.hour;
-  $$.arrdep_time.arr_time.min = $2.min;
-  $$.arrdep_time.arr_time.sec = $2.sec;
-  $$.arrdep_time.dep_time.hour = -1;
-  $$.arrdep_time.dep_time.min = -1;
-  $$.arrdep_time.dep_time.sec = -1;
-  $$.kind = TRIP; // *****
+  if( $2.kind == TIME_SPEC ) {
+    raw_journey_trip( &$$ );
+    $$.arrdep_time.arr_time.hour = $2.hour;
+    $$.arrdep_time.arr_time.min = $2.min;
+    $$.arrdep_time.arr_time.sec = $2.sec;
+    $$.arrdep_time.dep_time.hour = -1;
+    $$.arrdep_time.dep_time.min = -1;
+    $$.arrdep_time.dep_time.sec = -1;
+    $$.kind = TRIP;
+  } else {
+    assert( $2.kind == UNKNOWN );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -670,14 +707,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.kind = UNKNOWN;
  }
                     | '(' time ')' ',' perf_journey {
-  $$ = $5;
-  $$.arrdep_time.arr_time.hour = $2.hour;
-  $$.arrdep_time.arr_time.min = $2.min;
-  $$.arrdep_time.arr_time.sec = $2.sec;
-  $$.arrdep_time.dep_time.hour = -1;
-  $$.arrdep_time.dep_time.min = -1;
-  $$.arrdep_time.dep_time.sec = -1;
-  $$.kind = TRIP; // *****
+  if( ($2.kind == TIME_SPEC) && ($5.kind == PERF_REGIME) ) {
+    $$ = $5;
+    $$.arrdep_time.arr_time.hour = $2.hour;
+    $$.arrdep_time.arr_time.min = $2.min;
+    $$.arrdep_time.arr_time.sec = $2.sec;
+    $$.arrdep_time.dep_time.hour = -1;
+    $$.arrdep_time.dep_time.min = -1;
+    $$.arrdep_time.dep_time.sec = -1;
+    $$.kind = TRIP;
+  } else {
+    assert( ($2.kind == UNKNOWN) || ($5.kind == UNKNOWN) );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -688,14 +730,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' time ',' ')' ')' { /* deparure-time omitted, form 2. */
-  raw_journey_trip( &$$ );
-  $$.arrdep_time.arr_time.hour = $2.hour;
-  $$.arrdep_time.arr_time.min = $2.min;
-  $$.arrdep_time.arr_time.sec = $2.sec;
-  $$.arrdep_time.dep_time.hour = -1;
-  $$.arrdep_time.dep_time.min = -1;
-  $$.arrdep_time.dep_time.sec = -1;
-  $$.kind = TRIP; // *****
+  if( $2.kind == TIME_SPEC ) {
+    raw_journey_trip( &$$ );
+    $$.arrdep_time.arr_time.hour = $2.hour;
+    $$.arrdep_time.arr_time.min = $2.min;
+    $$.arrdep_time.arr_time.sec = $2.sec;
+    $$.arrdep_time.dep_time.hour = -1;
+    $$.arrdep_time.dep_time.min = -1;
+    $$.arrdep_time.dep_time.sec = -1;
+    $$.kind = TRIP;
+  } else {
+    assert( $2.kind == UNKNOWN );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -720,14 +767,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.kind = UNKNOWN;
  }
                     | '(' time ',' ')' ',' perf_journey {
-  $$ = $6;
-  $$.arrdep_time.arr_time.hour = $2.hour;
-  $$.arrdep_time.arr_time.min = $2.min;
-  $$.arrdep_time.arr_time.sec = $2.sec;
-  $$.arrdep_time.dep_time.hour = -1;
-  $$.arrdep_time.dep_time.min = -1;
-  $$.arrdep_time.dep_time.sec = -1;
-  $$.kind = TRIP; // *****
+  if( ($2.kind == TIME_SPEC) && ($6.kind == PERF_REGIME) ) {
+    $$ = $6;
+    $$.arrdep_time.arr_time.hour = $2.hour;
+    $$.arrdep_time.arr_time.min = $2.min;
+    $$.arrdep_time.arr_time.sec = $2.sec;
+    $$.arrdep_time.dep_time.hour = -1;
+    $$.arrdep_time.dep_time.min = -1;
+    $$.arrdep_time.dep_time.sec = -1;  
+    $$.kind = TRIP;
+  } else {
+    assert( ($2.kind == UNKNOWN) || ($6.kind == UNKNOWN) );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -738,14 +790,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' ',' time ')' ')' { /* arrival-time omitted. */
-  raw_journey_trip( &$$ );
-  $$.arrdep_time.arr_time.hour = -1;
-  $$.arrdep_time.arr_time.min = -1;
-  $$.arrdep_time.arr_time.sec = -1;
-  $$.arrdep_time.dep_time.hour = $3.hour;
-  $$.arrdep_time.dep_time.min = $3.min;
-  $$.arrdep_time.dep_time.sec = $3.sec;
-  $$.kind = TRIP; // *****
+  if( $3.kind == TIME_SPEC ) {
+    raw_journey_trip( &$$ );
+    $$.arrdep_time.arr_time.hour = -1;
+    $$.arrdep_time.arr_time.min = -1;
+    $$.arrdep_time.arr_time.sec = -1;
+    $$.arrdep_time.dep_time.hour = $3.hour;
+    $$.arrdep_time.dep_time.min = $3.min;
+    $$.arrdep_time.dep_time.sec = $3.sec;
+    $$.kind = TRIP;
+  } else {
+    assert( $3.kind == UNKNOWN );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -763,14 +820,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.kind = UNKNOWN;
  }
                     | '(' ',' time ')' ',' perf_journey {
-  $$ = $6;
-  $$.arrdep_time.arr_time.hour = -1;
-  $$.arrdep_time.arr_time.min = -1;
-  $$.arrdep_time.arr_time.sec = -1;
-  $$.arrdep_time.dep_time.hour = $3.hour;
-  $$.arrdep_time.dep_time.min = $3.min;
-  $$.arrdep_time.dep_time.sec = $3.sec;
-  $$.kind = TRIP; // *****
+  if( ($3.kind == TIME_SPEC) && ($6.kind == PERF_REGIME) ) {
+    $$ = $6;
+    $$.arrdep_time.arr_time.hour = -1;
+    $$.arrdep_time.arr_time.min = -1;
+    $$.arrdep_time.arr_time.sec = -1;
+    $$.arrdep_time.dep_time.hour = $3.hour;
+    $$.arrdep_time.dep_time.min = $3.min;
+    $$.arrdep_time.dep_time.sec = $3.sec;
+    $$.kind = TRIP;
+  } else {
+    assert( ($3.kind == UNKNOWN) || ($6.kind == UNKNOWN) );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -781,14 +843,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' time ',' time ')' ')' {
-  raw_journey_trip( &$$ );
-  $$.arrdep_time.arr_time.hour = $2.hour;
-  $$.arrdep_time.arr_time.min = $2.min;
-  $$.arrdep_time.arr_time.sec = $2.sec;
-  $$.arrdep_time.dep_time.hour = $4.hour;
-  $$.arrdep_time.dep_time.min = $4.min;
-  $$.arrdep_time.dep_time.sec = $4.sec;
-  $$.kind = TRIP; // *****
+  if( ($2.kind == TIME_SPEC) && ($4.kind == TIME_SPEC) ) {
+    raw_journey_trip( &$$ );
+    $$.arrdep_time.arr_time.hour = $2.hour;
+    $$.arrdep_time.arr_time.min = $2.min;
+    $$.arrdep_time.arr_time.sec = $2.sec;
+    $$.arrdep_time.dep_time.hour = $4.hour;
+    $$.arrdep_time.dep_time.min = $4.min;
+    $$.arrdep_time.dep_time.sec = $4.sec;
+    $$.kind = TRIP;
+  } else {
+    assert( ($2.kind == UNKNOWN) || ($4.kind == UNKNOWN) );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -806,14 +873,19 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.kind = UNKNOWN;
  }
                     | '(' time ',' time ')' ',' perf_journey {
-  $$ = $7;
-  $$.arrdep_time.arr_time.hour = $2.hour;
-  $$.arrdep_time.arr_time.min = $2.min;
-  $$.arrdep_time.arr_time.sec = $2.sec;
-  $$.arrdep_time.dep_time.hour = $4.hour;
-  $$.arrdep_time.dep_time.min = $4.min;
-  $$.arrdep_time.dep_time.sec = $4.sec;
-  $$.kind = TRIP; // *****
+  if( ($2.kind == TIME_SPEC) && ($4.kind == TIME_SPEC) && ($7.kind == PERF_REGIME) ) {
+    $$ = $7;
+    $$.arrdep_time.arr_time.hour = $2.hour;
+    $$.arrdep_time.arr_time.min = $2.min;
+    $$.arrdep_time.arr_time.sec = $2.sec;
+    $$.arrdep_time.dep_time.hour = $4.hour;
+    $$.arrdep_time.dep_time.min = $4.min;
+    $$.arrdep_time.dep_time.sec = $4.sec;
+    $$.kind = TRIP;
+  } else {
+    assert( ($2.kind == UNKNOWN) || ($4.kind == UNKNOWN) || ($7.kind == UNKNOWN) );
+    $$.kind = UNKNOWN;
+  }
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -830,20 +902,24 @@ perf_journey : TK_PERFREG ')' {
   $$.kind = PERF_REGIME;
  }
              | TK_PERFREG ',' revenue_journey {
-  $$ = $3;
-  $$.perf_regime = $1;
-  if( $$.kind == REVENUE_STAT ) {
+  if( $3.kind == REVENUE_STAT ) {
+    $$ = $3;
+    $$.perf_regime = $1;
     $$.kind = PERF_REGIME;
-  } else
-    assert( $$.kind == UNKNOWN );
+  } else {
+    assert( $3.kind == UNKNOWN );
+    $$.kind = UNKNOWN;
+  }
  }
              | revenue_journey { /* omitted */
-  $$ = $1;
-  $$.perf_regime = DEFAULT_PERFLEVEL;
-  if( $$.kind == REVENUE_STAT ) {
+  if( $1.kind == REVENUE_STAT ) {
+    $$ = $1;
+    $$.perf_regime = DEFAULT_PERFLEVEL;
     $$.kind = PERF_REGIME;
-  } else
-    assert( $$.kind == UNKNOWN );
+  } else {
+    assert( $1.kind == UNKNOWN );
+    $$.kind == UNKNOWN;
+  }
  }
 ;
 revenue_journey : TK_REVENUE ')' {
@@ -852,20 +928,24 @@ revenue_journey : TK_REVENUE ')' {
   $$.kind = REVENUE_STAT;
  }
                 | TK_REVENUE ',' crewid_journey {
-  $$ = $3;
-  $$.revenue = $1;
-  if( $$.kind == CREWID ) {
+  if( $3.kind == CREWID ) {
+    $$ = $3;
+    $$.revenue = $1;
     $$.kind = REVENUE_STAT;
-  } else
-    assert( $$.kind == UNKNOWN );
+  } else {
+    assert( $3.kind == UNKNOWN );
+    $$.kind == UNKNOWN;
+  }
  }
                 | crewid_journey { /* omitted */
-  $$ = $1;
-  $$.revenue = DEFAULT_REVENUE;
-  if( $$.kind == CREWID ) {
+  if( $1.kind == CREWID ) {
+    $$ = $1;
+    $$.revenue = DEFAULT_REVENUE;
     $$.kind = REVENUE_STAT;
-  } else
-    assert( $$.kind == UNKNOWN );
+  } else {
+    assert( $1.kind == UNKNOWN );
+    $$.kind == UNKNOWN;
+  }
  }
 ;
 crewid_journey : TK_CREWID ')' {
