@@ -14,6 +14,16 @@
 #define MAX_RJ_ASGNMENTS 64
 #define MAX_JOURNEYS 256
 
+typedef struct err_stat {
+  BOOL err_trip_journey;
+  BOOL err_routes;
+  BOOL err_trips_decl;
+  BOOL err_trip_def;
+  BOOL err_rake_journey_asgnmnts_decl;
+  BOOL err_rj_asgn;
+} ERR_STAT;
+extern ERR_STAT err_stat;
+
 typedef enum kind {
   DATE_SPEC = 1,
   TIME_SPEC,

@@ -12,6 +12,7 @@ static JOURNEY_ID jid_w = -1;
 ATTR_TIMETABLE timetable_symtbl = {{UNKNOWN}, {UNKNOWN}, {UNKNOWN}};
 
 static BOOL dirty;
+ERR_STAT err_stat;
 static struct {
   BOOL err_trip_journey;
   BOOL err_routes;
@@ -1546,15 +1547,4 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
 %%
 int yyerror ( const char *s ) {
   return 1;
-}
-
-int main ( void ) {
-  extern int yyparse( void );
-  extern FILE *yyin;
-  
-  yyin = stdin;
-  if( yyparse() ) {
-    return 1;
-  }
-  return 0;
 }

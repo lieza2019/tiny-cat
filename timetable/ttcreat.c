@@ -286,3 +286,32 @@ ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, ATT
 void emit_ars_schcmds( void ) {
   ;
 }
+
+int main ( void ) {
+  extern int yyparse( void );
+  extern FILE *yyin;
+  
+  int r = 0;
+  BOOL err = FALSE;
+  
+  yyin = stdin;
+  if( yyparse() ) {
+    err = TRUE;
+    r = 1;
+  } else {
+    if( err_stat.err_trip_journey ||
+	err_stat.err_routes ||
+	err_stat.err_trips_decl ||
+	err_stat.err_trip_def ||
+	err_stat.err_rake_journey_asgnmnts_decl ||
+	err_stat.err_rj_asgn ) {
+      err = TRUE;
+      r = 1;
+    }
+  }
+  if( err ) {
+    printf( "error terminated.\n" );
+    r = 1;
+  }
+  return r;
+}
