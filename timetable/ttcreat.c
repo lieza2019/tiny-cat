@@ -293,7 +293,6 @@ int main ( void ) {
   
   int r = 0;
   BOOL err = FALSE;
-  
   yyin = stdin;
   if( yyparse() ) {
     err = TRUE;
