@@ -1,4 +1,5 @@
 #include "../generic.h"
+#include "../cbtc.h"
 
 #define DEFAULT_DWELL_TIME 17 // in sec.
 #define DEFAULT_PERFLEVEL PERFREG_NORMAL
@@ -52,11 +53,13 @@ typedef enum ars_sp_cond {
 } ARS_SP_COND;
 extern char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen );
 
+#if 0 // *****
 typedef enum perfreg_level {
   PERFREG_SLOW = 1,
   PERFREG_NORMAL,
   PERFREG_FAST
 } PERFREG_LEVEL;
+#endif
 extern char *cnv2str_perf_regime ( char *pstr, PERFREG_LEVEL perfreg, const int buflen );
 
 typedef struct attr_date {

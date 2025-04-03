@@ -287,7 +287,33 @@ void emit_ars_schcmds( void ) {
   ;
 }
 
-int main ( void ) {
+static BOOL chk_st_pltb_pair_cons ( ATTR_ST_PLTB_PAIR_PTR ppair ) {
+  assert( ppair );
+  assert( ppair->kind == ST_PLTB_PAIR );
+  BOOL r = FALSE;
+  
+  assert( ppair->st_pltb_org.kind == ST_PLTB );
+  assert( ppair->st_pltb_dst.kind == ST_PLTB );
+  
+  return r;
+}
+
+static BOOL chk_trips_consist( ATTR_TRIPS_PTR ptrips ) {
+  BOOL r = FALSE;
+  assert( ptrips );
+  assert( ptrips->kind == TRIPS );
+  
+  int i;
+  assert( ptrips->ntrips >= 0 );
+  for( i = 0; i < ptrips->ntrips; i++ ) {
+    assert( ptrips->trip_prof[i].kind == TRIP );
+    chk_st_pltb_pair_cons( &ptrips->trip_prof[i].attr_st_pltb_orgdst );
+    ;
+  }
+  return r;
+}
+
+static int ttcreat ( void ) {
   extern int yyparse( void );
   extern FILE *yyin;
   
@@ -309,8 +335,18 @@ int main ( void ) {
     }
   }
   if( err ) {
-    printf( "error terminated.\n" );
+    printf( "terminated with fatal errors.\n" );
     r = 1;
+  } else {
+    chk_trips_consist( &timetable_symtbl.trips_regtbl );
+    ;
   }
+  return r;
+}
+
+int main ( void ) {
+  int r = -1;
+
+  r = ttcreat();
   return r;
 }

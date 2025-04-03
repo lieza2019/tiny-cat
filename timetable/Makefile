@@ -5,9 +5,9 @@ YFLAGS = -dy -Wconflicts-sr -Wconflicts-rr -Wcounterexamples -Wother
 LEX = flex
 LFLAGS = -l
 
-LD = gcc
+LD = /usr/bin/gcc
 LDFLAGS = -o $(TTCREAT_BINNAME)
-CC = gcc
+CC = /usr/bin/gcc
 CFLAGS = -c -Wall -g
 
 MAKE = make
