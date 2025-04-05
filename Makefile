@@ -1,16 +1,24 @@
 RM = rm
 TOUCH = touch
 CD = cd
+
 CC = /usr/bin/gcc
 CFLAGS = -Wall -Wno-unused-value  -g -DCHK_STRICT_CONSISTENCY
+LD = /usr/bin/gcc
+LDFLAGS =
+
 MAKE = make
-TINY_NAME = tiny_cat
-TINY_NAME_BIN = $(TINY_NAME)
+TINY_DLL_NAME = libtiny.so
+TINY_EXE_NAME = tiny-cat
 GEN_IL_DEF_NAME = gen_il_def
 GEN_IL_DEF_BIN = $(GEN_IL_DEF_NAME)
 
-$(TINY_NAME_BIN) : misc.o network.o sparcs.o train_cmd.o cbtc.o train_ctrl.o cbi.o interlock.o surveill.o ars.o timetable.o main.o
-	$(CC) $(CFLAGS) $^ -o $@
+$(TINY_EXE_NAME) : main.o $(TINY_DLL_NAME)
+	$(LD) $(LDFLAGS) -o $@ main.o -L. -ltiny
+#	$(LD) $(LDFLAGS) -o $@ $< $(TINY_DLL_NAME)
+
+$(TINY_DLL_NAME) : misc.o network.o sparcs.o train_cmd.o cbtc.o train_ctrl.o cbi.o interlock.o surveill.o ars.o timetable.o
+	$(CC) -shared -fPIC -o $@ $^ 
 
 train_info.h : generic.h misc.h
 	$(TOUCH) $@
@@ -70,4 +78,5 @@ clean:
 	$(RM) -f ./*~
 	$(RM) -f ./#*#
 	$(RM) -f ./*.stackdump
-	$(RM) -f $(TINY_NAME_BIN)
+	$(RM) -f $(TINY_DLL_NAME)
+	$(RM) -f $(TINY_EXE_NAME)

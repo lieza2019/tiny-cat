@@ -1,24 +1,31 @@
-TTCREAT_BINNAME = ttcreat
+EXE_SUFFIX = .exe
+
+RM = rm
+TOUCH = touch
+CD = cd
 
 YACC = bison
 YFLAGS = -dy -Wconflicts-sr -Wconflicts-rr -Wcounterexamples -Wother
 LEX = flex
-LFLAGS = -l
 
-LD = /usr/bin/gcc
-LDFLAGS = -o $(TTCREAT_BINNAME)
+LFLAGS = -l
 CC = /usr/bin/gcc
 CFLAGS = -c -Wall -g
+LD = /usr/bin/gcc
+LDFLAGS = -L../
+
+TINY_DLL_NAME = libtiny.so
 
 MAKE = make
-TOUCH = touch
-MV = mv
-CP = cp
-CD = cd
-RM = rm
+TINY_DLL_NAME = libtiny.so
+TINY_EXE_NAME = tiny-cat
+TTCREAT_EXE_NAME = ttcreat
 
-ttcreat : y.tab.o lex.yy.o ttcreat.o
-	$(LD) $(LDFLAGS) $^
+ttcreat : y.tab.o lex.yy.o ttcreat.o ../$(TINY_DLL_NAME)
+	$(LD) -o $(TTCREAT_EXE_NAME) y.tab.o lex.yy.o ttcreat.o $(LDFLAGS) -ltiny
+
+../$(TINY_DLL_NAME) : ../$(TINY_EXE_NAME)$(EXE_SUFFIX)
+	$(TOUCH) $@
 
 y.tab.o : y.tab.c
 	$(CC) -c $<
@@ -35,8 +42,11 @@ lex.yy.c : ttcreat_lex.l ttcreat.h
 ttcreat.o : ttcreat.c ttcreat.h
 	$(CC) $(CFLAGS) $<
 
-ttcreat.h : ../generic.h
+ttcreat.h : ../$(TINY_EXE_NAME)$(EXE_SUFFIX)
 	$(TOUCH) $@
+
+../$(TINY_EXE_NAME)$(EXE_SUFFIX) :
+	$(CD) ../; $(MAKE);
 
 .PHONY : clean
 clean:
@@ -47,4 +57,4 @@ clean:
 	$(RM) -f ./#*#
 	$(RM) -f ./*.stackdump
 	$(RM) -f y.tab.c lex.yy.c y.tab.h
-	$(RM) -f $(TTCREAT_BINNAME)
+	$(RM) -f $(TTCREAT_EXE_NAME)

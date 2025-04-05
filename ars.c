@@ -10,6 +10,14 @@
 #include "surveill.h"
 #include "timetable.h"
 
+const char *cnv2str_perf_regime[] = {
+  "PERFREG_SLOW",
+  "PERFREG_NORMAL",
+  "PERFREG_FAST",
+  "END_OF_PERFREG",
+  NULL
+};
+
 char *cnv2abb_ars_command ( char *abb, ARS_SCHEDULED_CMD cmd ) {
   const int nchrs = 5;
   char *r = NULL;

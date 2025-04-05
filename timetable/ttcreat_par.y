@@ -79,8 +79,12 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
     printf( "(%02d:%02d:%02d,", ptrip->arrdep_time.arr_time.hour, ptrip->arrdep_time.arr_time.min, ptrip->arrdep_time.arr_time.sec );
     printf( " %02d:%02d:%02d)", ptrip->arrdep_time.dep_time.hour, ptrip->arrdep_time.dep_time.min, ptrip->arrdep_time.dep_time.sec );
     printf( ", %d", ptrip->dwell_time );
-    
+#if 0 // *****
     printf( ", %s", cnv2str_perf_regime( buf, ptrip->perf_regime, PRINT_STRBUF_MAXLEN ) );
+#else
+    buf[PRINT_STRBUF_MAXLEN - 1] = 0;
+    printf( ", %s", strncpy( buf, cnv2str_perf_regime[ptrip->perf_regime], (PRINT_STRBUF_MAXLEN - 1) ) );
+#endif
     printf( ", %s", (ptrip->revenue ? "revenue" : "nonreve") );
 
     if( ptrip->crew_id > -1 ) {

@@ -53,15 +53,6 @@ typedef enum ars_sp_cond {
 } ARS_SP_COND;
 extern char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen );
 
-#if 0 // *****
-typedef enum perfreg_level {
-  PERFREG_SLOW = 1,
-  PERFREG_NORMAL,
-  PERFREG_FAST
-} PERFREG_LEVEL;
-#endif
-extern char *cnv2str_perf_regime ( char *pstr, PERFREG_LEVEL perfreg, const int buflen );
-
 typedef struct attr_date {
   KIND kind;
   int year;
@@ -155,6 +146,8 @@ typedef struct attr_timetable {
   ATTR_JOURNEYS journeys_regtbl;
 } ATTR_TIMETABLE, *ATTR_TIMETABLE_PTR;
 extern ATTR_TIMETABLE timetable_symtbl;
+
+#include "ttcreat_def.h"
 
 extern BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 );
 extern BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_PAIR_PTR pp1, ATTR_ST_PLTB_PAIR_PTR pp2 );
