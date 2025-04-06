@@ -5,42 +5,6 @@
 #include "../generic.h"
 #include "ttcreat.h"
 
-#if 0
-char *cnv2str_perf_regime ( char *pstr, PERFREG_LEVEL perfreg, const int buflen ) {
-  assert( pstr );
-  assert( buflen > 0 );
-  char *r = NULL;
-  
-  switch( perfreg ) {
-  case PERFREG_SLOW:
-    strncpy( pstr, "PERFREG_SLOW", (buflen - 1) );
-    pstr[buflen - 1] = 0;
-    r = pstr;
-    break;
-  case PERFREG_NORMAL:
-    strncpy( pstr, "PERFREG_NORMAL", (buflen - 1) );
-    pstr[buflen - 1] = 0;
-    r = pstr;
-    break;
-  case PERFREG_FAST:
-    strncpy( pstr, "PERFREG_FAST", (buflen - 1) );
-    pstr[buflen - 1] = 0;
-    r = pstr;
-    break;
-  default:
-    assert( FALSE );
-  }
-  return r;
-}
-const char *cnv2str_perf_regime[] = {
-  "PERFREG_SLOW",
-  "PERFREG_NORMAL",
-  "PERFREG_FAST",
-  "END_OF_PERFREG",
-  NULL
-};
-#endif
-
 char *cnv2str_kind ( char *pstr, KIND kind, const int buflen ) {
   assert( pstr );
   assert( buflen > 0 );

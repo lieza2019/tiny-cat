@@ -533,10 +533,10 @@ dwell_journey : TK_NAT ')' {
       $$.sp_cond = DWELL;
     }
     $$.dwell_time = $1;
-    $$.kind == TRIP;
+    $$.kind = TRIP;
   } else {
     assert( $3.kind == UNKNOWN );
-    $$.kind == UNKNOWN;
+    $$.kind = UNKNOWN;
   }
  }
               | arrdep_time_journey { /* omitted. */
@@ -544,10 +544,10 @@ dwell_journey : TK_NAT ')' {
     $$ = $1;
     $$.sp_cond = DWELL;
     $$.dwell_time = DEFAULT_DWELL_TIME;
-    $$.kind == TRIP;
+    $$.kind = TRIP;
   } else {
     assert( $1.kind == UNKNOWN );
-    $$.kind == UNKNOWN;
+    $$.kind = UNKNOWN;
   }
  }
 ;
@@ -926,7 +926,7 @@ perf_journey : TK_PERFREG ')' {
     $$.kind = PERF_REGIME;
   } else {
     assert( $1.kind == UNKNOWN );
-    $$.kind == UNKNOWN;
+    $$.kind = UNKNOWN;
   }
  }
 ;
@@ -942,7 +942,7 @@ revenue_journey : TK_REVENUE ')' {
     $$.kind = REVENUE_STAT;
   } else {
     assert( $3.kind == UNKNOWN );
-    $$.kind == UNKNOWN;
+    $$.kind = UNKNOWN;
   }
  }
                 | crewid_journey { /* omitted */
@@ -952,7 +952,7 @@ revenue_journey : TK_REVENUE ')' {
     $$.kind = REVENUE_STAT;
   } else {
     assert( $1.kind == UNKNOWN );
-    $$.kind == UNKNOWN;
+    $$.kind = UNKNOWN;
   }
  }
 ;
