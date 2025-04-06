@@ -114,46 +114,17 @@ typedef struct attr_routes {
 } ATTR_ROUTES, *ATTR_ROUTES_PTR;
 
 typedef int DWELL_TIME;
-#if 0
 typedef struct attr_trip {
   KIND kind;
   ATTR_ST_PLTB_PAIR attr_st_pltb_orgdst;
   ATTR_SP_PAIR attr_sp_orgdst;
   ATTR_ROUTES attr_route_ctrl;
   // belows are extends.
-  ARS_SP_COND sp_cond;
-  struct {
-    ATTR_TIME arr_time;
-    ATTR_TIME dep_time;
-  } arrdep_time;
-  DWELL_TIME dwell_time;
-  PERFREG_LEVEL perf_regime;
-  BOOL revenue;
-  int crew_id;
-} ATTR_TRIP, *ATTR_TRIP_PTR;
-#else
-typedef struct attr_trip {
-  KIND kind;
-  ATTR_ST_PLTB_PAIR attr_st_pltb_orgdst;
-  ATTR_SP_PAIR attr_sp_orgdst;
-  ATTR_ROUTES attr_route_ctrl;
-  // belows are extends.
-#if 0 // *****
-  DWELL_TIME dwell_time;
-  ARS_SP_COND sp_cond;
-#else
   struct {
     ARS_SP_COND stop_skip;
     DWELL_TIME dwell_time;
     SRC_POS pos;
   } sp_cond;
-#endif
-#if 0 // *****
-  struct {
-    ATTR_TIME arr_time;
-    ATTR_TIME dep_time;
-  } arrdep_time;
-#else
   struct {
     struct {
       ATTR_TIME arr_time;
@@ -164,34 +135,19 @@ typedef struct attr_trip {
       SRC_POS pos;
     } dept;
   } arrdep_time;
-#endif
-#if 0 // *****
-  PERFREG_LEVEL perf_regime;
-#else
   struct {
     PERFREG_LEVEL perfreg_cmd;
     SRC_POS pos;
   } perf_regime;
-#endif
-#if 0 // *****
-  BOOL revenue;
-#else
   struct {
     BOOL stat;
     SRC_POS pos;
   } revenue;
-#endif
-#if 0 // *****
-  int crew_id;
-#else
   struct {
-    int id;
+    int cid;
     SRC_POS pos;
   } crew_id;
-#endif
 } ATTR_TRIP, *ATTR_TRIP_PTR;
-#endif
-
 typedef struct attr_trips {
   KIND kind;
   int ntrips;
@@ -199,23 +155,34 @@ typedef struct attr_trips {
 } ATTR_TRIPS, *ATTR_TRIPS_PTR;
 
 typedef int JOURNEY_ID;
-typedef int RAKE_ID;
 typedef struct attr_journey {
   KIND kind;
-  JOURNEY_ID jid;
+  struct {
+    JOURNEY_ID jid;
+    SRC_POS pos;
+  } journey_id;
   ATTR_TRIPS trips;
 } ATTR_JOURNEY, *ATTR_JOURNEY_PTR;
+
 typedef struct attr_journeys {
   KIND kind;
   int njourneys;
   ATTR_JOURNEY journey_prof[MAX_JOURNEYS + 1];
 } ATTR_JOURNEYS, *ATTR_JOURNEYS_PTR;
 
+typedef int RAKE_ID;
 typedef struct attr_rj_asgn {
   KIND kind;
-  JOURNEY_ID jid;
-  RAKE_ID rid;
+  struct {
+    JOURNEY_ID jid;
+    SRC_POS pos;
+  } journey_id;
+  struct {
+    RAKE_ID rid;
+    SRC_POS pos;
+  } rake_id;
 } ATTR_RJ_ASGN, *ATTR_RJ_ASGN_PTR;
+
 typedef struct attr_rj_asgns {
   KIND kind;
   int nasgns;
@@ -236,6 +203,6 @@ extern BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_PAIR_PTR pp1, ATTR_ST_PLTB_PAIR_PTR p
 
 extern ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip );
 extern ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev_asgn, ATTR_RJ_ASGN_PTR pasgn );
-extern ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, ATTR_TRIP_PTR ptrip );
+extern ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, SRC_POS_PTR ppos, ATTR_TRIP_PTR ptrip );
 
 extern void emit_ars_schcmds( void );

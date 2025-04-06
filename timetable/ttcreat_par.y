@@ -8,22 +8,14 @@
 #define YYDEBUG 1
 #define PRINT_STRBUF_MAXLEN 256
 
-static JOURNEY_ID jid_w = -1;
+static struct {
+  JOURNEY_ID jid_w;
+  SRC_POS pos;
+} journey_id_w = {-1};
 ATTR_TIMETABLE timetable_symtbl = {{UNKNOWN}, {UNKNOWN}, {UNKNOWN}};
 
 static BOOL dirty;
-#if 0
-static struct {
-  BOOL err_trip_journey;
-  BOOL err_routes;
-  BOOL err_trips_decl;
-  BOOL err_trip_def;
-  BOOL err_rake_journey_asgnmnts_decl;
-  BOOL err_rj_asgn;
-} err_stat;
-#else
 ERR_STAT err_stat;
-#endif
 
 static void print_time ( ATTR_TIME_PTR ptime ) {
   assert( ptime );
@@ -87,13 +79,13 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
 #endif
     printf( ", %s", (ptrip->revenue.stat ? "revenue" : "nonreve") );
 
-    if( ptrip->crew_id.id > -1 ) {
+    if( ptrip->crew_id.cid > -1 ) {
       int i;
       strncpy( buf, "crew_", PRINT_STRBUF_MAXLEN );
       i = strnlen( buf, PRINT_STRBUF_MAXLEN );
-      sprintf( &buf[i], "%04d", ptrip->crew_id.id );
+      sprintf( &buf[i], "%04d", ptrip->crew_id.cid );
     } else {
-      assert( ptrip->crew_id.id < 0 );
+      assert( ptrip->crew_id.cid < 0 );
       strncpy( buf, "no_crew_id", PRINT_STRBUF_MAXLEN );
     }
     printf( ", %s", buf );
@@ -108,9 +100,9 @@ static void print_rjasgn ( ATTR_RJ_ASGN_PTR pasgn ) {
   printf( "(%s, ", cnv2str_kind(buf, pasgn->kind, PRINT_STRBUF_MAXLEN) );
   {
     char str[8];
-    sprintf( str, "%d", pasgn->rid );
+    sprintf( str, "%d", pasgn->rake_id.rid );
     printf( "(rake_%s, ", str );
-    sprintf( str, "%d", pasgn->jid );
+    sprintf( str, "%d", pasgn->journey_id.jid );
     printf( "J%s)", str );
   }
   printf( ")" );  
@@ -132,7 +124,7 @@ static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   ptrip->perf_regime.perfreg_cmd = DEFAULT_PERFLEVEL;
   ptrip->revenue.stat = DEFAULT_REVENUE;
   
-  ptrip->crew_id.id = DEFAULT_CREWID;
+  ptrip->crew_id.cid = DEFAULT_CREWID;
   return ptrip;
 }
 
@@ -291,11 +283,11 @@ timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
 	while( j < MAX_JOURNEYS ) {
 	  ATTR_JOURNEY_PTR p = &timetable_symtbl.journeys_regtbl.journey_prof[j];
 	  assert( p );
-	  if( p->jid > 0 ) {
+	  if( p->journey_id.jid > 0 ) {
 	    assert( p->kind == JOURNEY );
 	    int k;
 	    {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-	    printf( "J%02d: \n", p->jid );
+	    printf( "J%02d: \n", p->journey_id.jid );
 	    for( k = 0; k < p->trips.ntrips; k++ ) {
 	      assert( p->trips.kind == TRIPS );
 	      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
@@ -325,14 +317,14 @@ timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
        ( ((BTGD,PL2), (OKBS, PL2)), 15, (00:13:51, 21:57:13), perffast, revenue, crew_007 );
 */
 journeys_decl : TK_JOURNEYS ':' /* empty journies */ {
-  assert( jid_w < 0 );
+  assert( journey_id_w.jid_w < 0 );
   assert( timetable_symtbl.journeys_regtbl.kind == UNKNOWN );
   assert( timetable_symtbl.journeys_regtbl.njourneys == 0 );
   timetable_symtbl.journeys_regtbl.kind = JOURNEYS;
   $$ = &timetable_symtbl.journeys_regtbl;
 }
               | journeys_decl journey_definition {
-  assert( jid_w > 0 );
+  assert( journey_id_w.jid_w > 0 );
   assert( timetable_symtbl.journeys_regtbl.kind == JOURNEYS );
   timetable_symtbl.journeys_regtbl.njourneys++;
   {
@@ -341,62 +333,64 @@ journeys_decl : TK_JOURNEYS ':' /* empty journies */ {
     int i;
     for( i = 0; i < MAX_JOURNEYS; i++ ) {
       assert( n >= 0 );
-      if( timetable_symtbl.journeys_regtbl.journey_prof[i].jid > 0 ) {
+      if( timetable_symtbl.journeys_regtbl.journey_prof[i].journey_id.jid > 0 ) {
 	assert( timetable_symtbl.journeys_regtbl.journey_prof[i].kind == JOURNEY );
 	n--;
       }
     }
     assert( n == 0 );
   }
-  jid_w = -1;
+  journey_id_w.jid_w = -1;
   $$ = &timetable_symtbl.journeys_regtbl;  
  }
 ;
 journey_definition : journey_ident ':' trips_journey {
-  assert( jid_w == $1 );
-  assert( &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips == $3 );
-  if( timetable_symtbl.journeys_regtbl.journey_prof[jid_w].jid == jid_w )
-    timetable_symtbl.journeys_regtbl.journey_prof[jid_w].kind = JOURNEY;
+  assert( journey_id_w.jid_w == $1 );
+  assert( &timetable_symtbl.journeys_regtbl.journey_prof[journey_id_w.jid_w].trips == $3 );
+  if( timetable_symtbl.journeys_regtbl.journey_prof[journey_id_w.jid_w].journey_id.jid == journey_id_w.jid_w )
+    timetable_symtbl.journeys_regtbl.journey_prof[journey_id_w.jid_w].kind = JOURNEY;
   else
-    timetable_symtbl.journeys_regtbl.journey_prof[jid_w].kind = UNKNOWN;
-  $$ = &timetable_symtbl.journeys_regtbl.journey_prof[jid_w];
+    timetable_symtbl.journeys_regtbl.journey_prof[journey_id_w.jid_w].kind = UNKNOWN;
+  $$ = &timetable_symtbl.journeys_regtbl.journey_prof[journey_id_w.jid_w];
  }
 ;
 journey_ident : TK_JOURNEY_ID {
-  assert( jid_w < 0 );
+  assert( journey_id_w.jid_w < 0 );
   assert( $1 > 0 );
-  jid_w = $1;
-  $$ = jid_w;
+  journey_id_w.jid_w = $1;
+  journey_id_w.pos.row = @1.first_line;
+  journey_id_w.pos.col = @1.first_column;
+  $$ = journey_id_w.jid_w;
  }
 ;
 trips_journey : /* empty trips */ {
-  assert( jid_w > -1 );
-  $$ = &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips;
+  assert( journey_id_w.jid_w > -1 );
+  $$ = &timetable_symtbl.journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
   assert( $$->ntrips == 0 );
 }
               | trips_journey trip_journey ';' {
-  assert( jid_w > -1 );
+  assert( journey_id_w.jid_w > -1 );
   if( $2.kind == TRIP ) {
-    assert( $1 == &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips );  
+    assert( $1 == &timetable_symtbl.journeys_regtbl.journey_prof[journey_id_w.jid_w].trips );
     ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
     ATTR_TRIP_PTR preg = NULL;
     $2.kind = TRIP;
-    preg = reg_trip_journey( &timetable_symtbl.journeys_regtbl, jid_w, &$2 );
+    preg = reg_trip_journey( &timetable_symtbl.journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
     assert( pnxt == preg );    
   }
-  $$ = &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips;
+  $$ = &timetable_symtbl.journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
  }
               | trips_journey trip_journey error ';' {
-  assert( jid_w > -1 );
+  assert( journey_id_w.jid_w > -1 );
   if( $2.kind == TRIP ) {
-    assert( $1 == &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips );  
+    assert( $1 == &timetable_symtbl.journeys_regtbl.journey_prof[journey_id_w.jid_w].trips );
     ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
     ATTR_TRIP_PTR preg = NULL;
     $2.kind = TRIP;
-    preg = reg_trip_journey( &timetable_symtbl.journeys_regtbl, jid_w, &$2 );
+    preg = reg_trip_journey( &timetable_symtbl.journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
     assert( pnxt == preg );
   }
-  $$ = &timetable_symtbl.journeys_regtbl.journey_prof[jid_w].trips;
+  $$ = &timetable_symtbl.journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
  }
 ;
 
@@ -1028,14 +1022,14 @@ revenue_journey : TK_REVENUE ')' {
 ;
 crewid_journey : TK_CREWID ')' {
   raw_journey_trip( &$$ );
-  $$.crew_id.id = $1;
+  $$.crew_id.cid = $1;
   $$.crew_id.pos.row = @1.first_line;
   $$.crew_id.pos.col = @1.first_column;
   $$.kind = CREWID;
  }
                | ')' { /* omitted */
   raw_journey_trip( &$$ );
-  $$.crew_id.id = -1;
+  $$.crew_id.cid = -1;
   $$.crew_id.pos.row = @1.first_line;
   $$.crew_id.pos.col = @1.first_column;
   $$.kind = CREWID;
@@ -1607,8 +1601,12 @@ rake_journey_asgnmnts : /* empty journies */ {
 ;
 rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
   $$.kind = RJ_ASGN;
-  $$.rid = $1;
-  $$.jid = $3;
+  $$.rake_id.rid = $1;
+  $$.rake_id.pos.row = @1.first_line;
+  $$.rake_id.pos.col = @1.first_column;;
+  $$.journey_id.jid = $3;
+  $$.journey_id.pos.row = @3.first_line;
+  $$.journey_id.pos.col = @3.first_column;;
   /* print_rjasgn( &$$ ); // ***** for debugging. */
  }
         | error {
@@ -1625,8 +1623,12 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
     err_stat.err_rj_asgn = TRUE;
   }
   $$.kind = RJ_ASGN;
-  $$.rid = $1;
-  $$.jid = $2;
+  $$.rake_id.rid = $1;
+  $$.rake_id.pos.row = @1.first_line;
+  $$.rake_id.pos.col = @1.first_column;;
+  $$.journey_id.jid = $2;
+  $$.journey_id.pos.row = @2.first_line;
+  $$.journey_id.pos.col = @2.first_column;;
  }
         | TK_RAKE_ID error {
   if( !err_stat.err_rj_asgn ) {
