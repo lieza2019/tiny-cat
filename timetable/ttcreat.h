@@ -15,16 +15,6 @@
 #define MAX_RJ_ASGNMENTS 64
 #define MAX_JOURNEYS 256
 
-typedef struct err_stat {
-  BOOL err_trip_journey;
-  BOOL err_routes;
-  BOOL err_trips_decl;
-  BOOL err_trip_def;
-  BOOL err_rake_journey_asgnmnts_decl;
-  BOOL err_rj_asgn;
-} ERR_STAT;
-extern ERR_STAT err_stat;
-
 typedef enum kind {
   DATE_SPEC = 1,
   TIME_SPEC,
@@ -53,29 +43,58 @@ typedef enum ars_sp_cond {
 } ARS_SP_COND;
 extern char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen );
 
+typedef struct err_stat {
+  BOOL err_trip_journey;
+  BOOL err_routes;
+  BOOL err_trips_decl;
+  BOOL err_trip_def;
+  BOOL err_rake_journey_asgnmnts_decl;
+  BOOL err_rj_asgn;
+} ERR_STAT;
+extern ERR_STAT err_stat;
+
+typedef struct src_pos {
+  int row;
+  int col;
+} SRC_POS, *SRC_POS_PTR;
+
 typedef struct attr_date {
   KIND kind;
   int year;
   int month;
   int day;
+  SRC_POS pos;
 } ATTR_DATE, *ATTR_DATE_PTR;
 typedef struct attr_time {
   KIND kind;
   int hour;
   int min;
   int sec;
+  SRC_POS pos;
 } ATTR_TIME, *ATTR_TIME_PTR;
 
 typedef struct attr_sp_pair {
   KIND kind;
-  char sp_org[MAX_SPNAME_LEN];
-  char sp_dst[MAX_SPNAME_LEN];
+  struct {
+    char sp_id[MAX_SPNAME_LEN];
+    SRC_POS pos;
+  } org;
+  struct {
+    char sp_id[MAX_SPNAME_LEN];
+    SRC_POS pos;
+  } dst;
 } ATTR_SP_PAIR, *ATTR_SP_PAIR_PTR;
 
 typedef struct attr_st_pltb {
   KIND kind;
-  char st_name[MAX_STNAME_LEN];
-  char pltb_name[MAX_PLTB_NAMELEN];
+  struct {
+    char name[MAX_STNAME_LEN];
+    SRC_POS pos;
+  } st;
+  struct {
+    char id[MAX_PLTB_NAMELEN];
+    SRC_POS pos;
+  } pltb;
 } ATTR_ST_PLTB, *ATTR_ST_PLTB_PTR;
 typedef struct attr_st_pltb_pair {
   KIND kind;
@@ -86,6 +105,7 @@ typedef struct attr_st_pltb_pair {
 typedef struct attr_route {
   KIND kind;
   char name[MAX_ROUTENAME_LEN];
+  SRC_POS pos;
 } ATTR_ROUTE, *ATTR_ROUTE_PTR;
 typedef struct attr_routes {
   KIND kind;
@@ -94,6 +114,7 @@ typedef struct attr_routes {
 } ATTR_ROUTES, *ATTR_ROUTES_PTR;
 
 typedef int DWELL_TIME;
+#if 0
 typedef struct attr_trip {
   KIND kind;
   ATTR_ST_PLTB_PAIR attr_st_pltb_orgdst;
@@ -110,6 +131,67 @@ typedef struct attr_trip {
   BOOL revenue;
   int crew_id;
 } ATTR_TRIP, *ATTR_TRIP_PTR;
+#else
+typedef struct attr_trip {
+  KIND kind;
+  ATTR_ST_PLTB_PAIR attr_st_pltb_orgdst;
+  ATTR_SP_PAIR attr_sp_orgdst;
+  ATTR_ROUTES attr_route_ctrl;
+  // belows are extends.
+#if 0 // *****
+  DWELL_TIME dwell_time;
+  ARS_SP_COND sp_cond;
+#else
+  struct {
+    ARS_SP_COND stop_skip;
+    DWELL_TIME dwell_time;
+    SRC_POS pos;
+  } sp_cond;
+#endif
+#if 0 // *****
+  struct {
+    ATTR_TIME arr_time;
+    ATTR_TIME dep_time;
+  } arrdep_time;
+#else
+  struct {
+    struct {
+      ATTR_TIME arr_time;
+      SRC_POS pos;
+    } arriv;
+    struct {
+      ATTR_TIME dep_time;
+      SRC_POS pos;
+    } dept;
+  } arrdep_time;
+#endif
+#if 0 // *****
+  PERFREG_LEVEL perf_regime;
+#else
+  struct {
+    PERFREG_LEVEL perfreg_cmd;
+    SRC_POS pos;
+  } perf_regime;
+#endif
+#if 0 // *****
+  BOOL revenue;
+#else
+  struct {
+    BOOL stat;
+    SRC_POS pos;
+  } revenue;
+#endif
+#if 0 // *****
+  int crew_id;
+#else
+  struct {
+    int id;
+    SRC_POS pos;
+  } crew_id;
+#endif
+} ATTR_TRIP, *ATTR_TRIP_PTR;
+#endif
+
 typedef struct attr_trips {
   KIND kind;
   int ntrips;

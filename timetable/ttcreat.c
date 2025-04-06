@@ -106,8 +106,8 @@ BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 ) {
   assert( p2->kind == ST_PLTB );
   BOOL r = FALSE;
   
-  if( ! strncmp( p1->st_name, p2->st_name, MAX_STNAME_LEN ) )
-    if( ! strncmp( p1->pltb_name, p2->pltb_name, MAX_PLTB_NAMELEN ) )
+  if( ! strncmp( p1->st.name, p2->st.name, MAX_STNAME_LEN ) )
+    if( ! strncmp( p1->pltb.id, p2->pltb.id, MAX_PLTB_NAMELEN ) )
       r = TRUE;
   return r;
 }
