@@ -352,8 +352,8 @@ static int ttcreat ( void ) {
     printf( "terminated with fatal errors.\n" );
     r = 1;
   } else {
-    chk_trips_consist( &timetable_symtbl.trips_regtbl );
-    ;
+    // chk_trips_consist( &timetable_symtbl.trips_regtbl );
+    chk_trips_consist( &timetable_symtbl1->trips_regtbl );
   }
   return r;
 }
@@ -366,6 +366,10 @@ int main ( void ) {
     printf( "memory allocation failed.\n" );
     return r;
   }
+  timetable_symtbl1->trips_regtbl.kind = UNKNOWN;
+  timetable_symtbl1->rj_asgn_regtbl.kind = UNKNOWN;
+  timetable_symtbl1->journeys_regtbl.kind = UNKNOWN;
+  
   r = ttcreat();
   return r;
 }
