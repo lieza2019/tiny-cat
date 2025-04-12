@@ -360,22 +360,12 @@ static int ttcreat ( void ) {
 
 int main ( void ) {
   int r = -1;
-  {
-    BOOL alloc = FALSE;
-    timetable_symtbl1.trips_regtbl = (ATTR_TRIPS_PTR)calloc( sizeof(ATTR_TRIPS), 1 );
-    if( timetable_symtbl1.trips_regtbl ) {
-      timetable_symtbl1.rj_asgn_regtbl = (ATTR_RJ_ASGNS_PTR)calloc( sizeof(ATTR_RJ_ASGNS), 1 );
-      if( timetable_symtbl1.rj_asgn_regtbl ) {
-	timetable_symtbl1.journeys_regtbl = (ATTR_JOURNEYS_PTR)calloc( sizeof( ATTR_JOURNEYS), 1 );
-	alloc = TRUE;
-      }
-    }
-    if( !alloc ) {
-      printf( "memory allocation failed.\n" );
-      return -1;
-    }
-  }
   
+  timetable_symtbl1 = (ATTR_TIMETABLE_PTR)calloc( sizeof(ATTR_TIMETABLE), 1 );
+  if( !timetable_symtbl1 ) {
+    printf( "memory allocation failed.\n" );
+    return r;
+  }
   r = ttcreat();
   return r;
 }
