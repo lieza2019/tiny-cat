@@ -16,15 +16,10 @@ typedef struct system_params {
   int routeset_offset;
   int departure_offset; 
 } SYSTEM_PARAMS, *SYSTEM_PARAMS_PTR;
-typedef struct ars_assoc_time {
-  int hour;
-  int minute;
-  int second;
-  int year;
-  int month;
-  int day;
-} ARS_ASSOC_TIME, *ARS_ASSOC_TIME_PTR;
-typedef struct ars_assoc_time const *ARS_ASSOC_TIME_C_PTR;
+
+typedef TINY_TIME_DESC ARS_ASSOC_TIME;
+typedef TINY_TIME_DESC_PTR ARS_ASSOC_TIME_PTR;
+typedef struct tiny_time_desc const *ARS_ASSOC_TIME_C_PTR;
 
 typedef enum ars_scheduled_cmd {
   ARS_SCHEDULED_ROUTESET,

@@ -12,9 +12,6 @@ static struct {
   JOURNEY_ID jid_w;
   SRC_POS pos;
 } journey_id_w = {-1};
-#if 0
-ATTR_TIMETABLE timetable_symtbl = {{UNKNOWN}, {UNKNOWN}, {UNKNOWN}};
-#endif
 ATTR_TIMETABLE_PTR timetable_symtbl = NULL;
 
 static BOOL dirty;
@@ -22,7 +19,7 @@ ERR_STAT err_stat;
 
 static void print_time ( ATTR_TIME_PTR ptime ) {
   assert( ptime );
-  printf( "(hour, min, sec): (%02d, %02d, %02d)\n", ptime->hour, ptime->min, ptime->sec );
+  printf( "(hour, min, sec): (%02d, %02d, %02d)\n", ptime->t.hour, ptime->t.minute, ptime->t.second );
 }
 
 static void print_st_pltb ( ATTR_ST_PLTB_PTR pst_pltb ) {
@@ -71,8 +68,8 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
   
   if( ext ) {
     printf( ", %s, ", cnv2str_sp_cond(buf, ptrip->sp_cond.stop_skip, PRINT_STRBUF_MAXLEN) );
-    printf( "(%02d:%02d:%02d,", ptrip->arrdep_time.arriv.arr_time.hour, ptrip->arrdep_time.arriv.arr_time.min, ptrip->arrdep_time.arriv.arr_time.sec );
-    printf( " %02d:%02d:%02d)", ptrip->arrdep_time.dept.dep_time.hour, ptrip->arrdep_time.dept.dep_time.min, ptrip->arrdep_time.dept.dep_time.sec );
+    printf( "(%02d:%02d:%02d,", ptrip->arrdep_time.arriv.arr_time.t.hour, ptrip->arrdep_time.arriv.arr_time.t.minute, ptrip->arrdep_time.arriv.arr_time.t.second);
+    printf( " %02d:%02d:%02d)", ptrip->arrdep_time.dept.dep_time.t.hour, ptrip->arrdep_time.dept.dep_time.t.minute, ptrip->arrdep_time.dept.dep_time.t.second );
     printf( ", %d", ptrip->sp_cond.dwell_time );
 #if 0 // *****
     printf( ", %s", cnv2str_perf_regime( buf, ptrip->perf_regime, PRINT_STRBUF_MAXLEN ) );
@@ -113,15 +110,15 @@ static void print_rjasgn ( ATTR_RJ_ASGN_PTR pasgn ) {
 
 static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   assert( ptrip );
-  ptrip->kind = UNKNOWN;
+  ptrip->kind = PAR_UNKNOWN;
   
   ptrip->sp_cond.stop_skip = DWELL;
-  ptrip->arrdep_time.arriv.arr_time.hour = -1;
-  ptrip->arrdep_time.arriv.arr_time.min = -1;
-  ptrip->arrdep_time.arriv.arr_time.sec = -1;
-  ptrip->arrdep_time.dept.dep_time.hour = -1;
-  ptrip->arrdep_time.dept.dep_time.min = -1;
-  ptrip->arrdep_time.dept.dep_time.sec = -1;
+  ptrip->arrdep_time.arriv.arr_time.t.hour = -1;
+  ptrip->arrdep_time.arriv.arr_time.t.minute = -1;
+  ptrip->arrdep_time.arriv.arr_time.t.second = -1;
+  ptrip->arrdep_time.dept.dep_time.t.hour = -1;
+  ptrip->arrdep_time.dept.dep_time.t.minute = -1;
+  ptrip->arrdep_time.dept.dep_time.t.second = -1;
   ptrip->sp_cond.dwell_time = DEFAULT_DWELL_TIME;
   
   ptrip->perf_regime.perfreg_cmd = DEFAULT_PERFLEVEL;
@@ -135,7 +132,7 @@ static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
   assert( ptrip );
   ATTR_TRIP_PTR r = NULL;
   
-  if( ptrip->kind == TRIP ) {
+  if( ptrip->kind == PAR_TRIP ) {
     ATTR_TRIP_PTR p = NULL;
     if( timetable_symtbl->trips_regtbl.ntrips == 0 ) {
       p = reg_trip_def( &timetable_symtbl->trips_regtbl, NULL, ptrip );
@@ -148,7 +145,7 @@ static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
       p = reg_trip_def( &timetable_symtbl->trips_regtbl, &drop, ptrip );
       if( p != ptrip ) {
 	assert( p == &drop );
-	assert( p->kind == TRIP );
+	assert( p->kind == PAR_TRIP );
 	printf( "NOTICE: trip attribute has been overridden with.\n" );
       }
     }
@@ -161,7 +158,7 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
   assert( prj_asgn );
   ATTR_RJ_ASGN_PTR r = NULL;
   
-  if( prj_asgn->kind == RJ_ASGN ) {
+  if( prj_asgn->kind == PAR_RJ_ASGN ) {
     ATTR_RJ_ASGN_PTR p = NULL;
     if( timetable_symtbl->rj_asgn_regtbl.nasgns == 0 ) {    
       p = reg_rjasgn( &timetable_symtbl->rj_asgn_regtbl, NULL, prj_asgn );
@@ -174,7 +171,7 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
       p = reg_rjasgn( &timetable_symtbl->rj_asgn_regtbl, &drop, prj_asgn );
       if( p != prj_asgn ) {
 	assert( p == &drop );
-	assert( p->kind == RJ_ASGN );
+	assert( p->kind == PAR_RJ_ASGN );
 	printf( "NOTICE: rake-journey assignment has been overridden with.\n" );
       }
     }
@@ -185,7 +182,6 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
 %}
 %union {
   int nat;
-  ATTR_DATE attr_date;
   ATTR_TIME attr_time;  
   char st_name[MAX_STNAME_LEN];
   char pltb_name[MAX_PLTB_NAMELEN];
@@ -211,7 +207,6 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
   ATTR_TIMETABLE_PTR ptimetable_symtbl;
 }
 /* %token TK_EOF */
-%token <attr_date> TK_DATE
 %token <attr_time> TK_TIME
 %token <nat> TK_NAT
 %token <st_name> TK_STNAME
@@ -280,19 +275,19 @@ timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
     printf( "journeys:\n" );    
     {
       const int nspc_indent = 2;
-      assert( timetable_symtbl->journeys_regtbl.kind == JOURNEYS );
+      assert( timetable_symtbl->journeys_regtbl.kind == PAR_JOURNEYS );
       int i, j;
       for( i = 0, j = 0;i < timetable_symtbl->journeys_regtbl.njourneys; i++, j++ ) {
 	while( j < MAX_JOURNEYS ) {
 	  ATTR_JOURNEY_PTR p = &timetable_symtbl->journeys_regtbl.journey_prof[j];
 	  assert( p );
 	  if( p->journey_id.jid > 0 ) {
-	    assert( p->kind == JOURNEY );
+	    assert( p->kind == PAR_JOURNEY );
 	    int k;
 	    {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
 	    printf( "J%02d: \n", p->journey_id.jid );
 	    for( k = 0; k < p->trips.ntrips; k++ ) {
-	      assert( p->trips.kind == TRIPS );
+	      assert( p->trips.kind == PAR_TRIPS );
 	      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
 	      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
 	      print_trip( &p->trips.trip_prof[k], TRUE );
@@ -321,14 +316,14 @@ timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
 */
 journeys_decl : TK_JOURNEYS ':' /* empty journies */ {
   assert( journey_id_w.jid_w < 0 );
-  assert( timetable_symtbl->journeys_regtbl.kind == UNKNOWN );
+  assert( timetable_symtbl->journeys_regtbl.kind == PAR_UNKNOWN );
   assert( timetable_symtbl->journeys_regtbl.njourneys == 0 );
-  timetable_symtbl->journeys_regtbl.kind = JOURNEYS;
+  timetable_symtbl->journeys_regtbl.kind = PAR_JOURNEYS;
   $$ = &timetable_symtbl->journeys_regtbl;
 }
               | journeys_decl journey_definition {
   assert( journey_id_w.jid_w > 0 );
-  assert( timetable_symtbl->journeys_regtbl.kind == JOURNEYS );
+  assert( timetable_symtbl->journeys_regtbl.kind == PAR_JOURNEYS );
   timetable_symtbl->journeys_regtbl.njourneys++;
   {
     int n = timetable_symtbl->journeys_regtbl.njourneys;
@@ -337,7 +332,7 @@ journeys_decl : TK_JOURNEYS ':' /* empty journies */ {
     for( i = 0; i < MAX_JOURNEYS; i++ ) {
       assert( n >= 0 );
       if( timetable_symtbl->journeys_regtbl.journey_prof[i].journey_id.jid > 0 ) {
-	assert( timetable_symtbl->journeys_regtbl.journey_prof[i].kind == JOURNEY );
+	assert( timetable_symtbl->journeys_regtbl.journey_prof[i].kind == PAR_JOURNEY );
 	n--;
       }
     }
@@ -351,9 +346,9 @@ journey_definition : journey_ident ':' trips_journey {
   assert( journey_id_w.jid_w == $1 );
   assert( &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips == $3 );
   if( timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].journey_id.jid == journey_id_w.jid_w )
-    timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].kind = JOURNEY;
+    timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].kind = PAR_JOURNEY;
   else
-    timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].kind = UNKNOWN;
+    timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].kind = PAR_UNKNOWN;
   $$ = &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w];
  }
 ;
@@ -373,11 +368,11 @@ trips_journey : /* empty trips */ {
 }
               | trips_journey trip_journey ';' {
   assert( journey_id_w.jid_w > -1 );
-  if( $2.kind == TRIP ) {
+  if( $2.kind == PAR_TRIP ) {
     assert( $1 == &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips );
     ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
     ATTR_TRIP_PTR preg = NULL;
-    $2.kind = TRIP;
+    $2.kind = PAR_TRIP;
     preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
     assert( pnxt == preg );    
   }
@@ -385,11 +380,11 @@ trips_journey : /* empty trips */ {
  }
               | trips_journey trip_journey error ';' {
   assert( journey_id_w.jid_w > -1 );
-  if( $2.kind == TRIP ) {
+  if( $2.kind == PAR_TRIP ) {
     assert( $1 == &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips );
     ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
     ATTR_TRIP_PTR preg = NULL;
-    $2.kind = TRIP;
+    $2.kind = PAR_TRIP;
     preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
     assert( pnxt == preg );
   }
@@ -415,14 +410,14 @@ trips_journey : /* empty trips */ {
 */
 trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elements. */
   raw_journey_trip( &$$ );
-  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) ) {
-    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) ) {
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( ($3.kind == UNKNOWN) || ($5.kind == UNKNOWN) );
-    $$.kind = UNKNOWN;
+    assert( ($3.kind == PAR_UNKNOWN) || ($5.kind == PAR_UNKNOWN) );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -435,14 +430,14 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
     printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
              | '(' error {
   if( !err_stat.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
              | '(' '('st_and_pltb st_and_pltb')' ')' {
   /* including the case of -> '(' '(' error. */
@@ -451,14 +446,14 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
     err_stat.err_trip_journey = TRUE;
   }
   raw_journey_trip( &$$ );
-  if( ($3.kind == ST_PLTB) && ($4.kind == ST_PLTB) ) {
-    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+  if( ($3.kind == PAR_ST_PLTB) && ($4.kind == PAR_ST_PLTB) ) {
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $4;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( ($3.kind == UNKNOWN) || ($4.kind == UNKNOWN) );
-    $$.kind = UNKNOWN;
+    assert( ($3.kind == PAR_UNKNOWN) || ($4.kind == PAR_UNKNOWN) );
+    $$.kind = PAR_UNKNOWN;
   }
  }
              | '(' '('st_and_pltb ',' error {
@@ -466,41 +461,41 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
     printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
              | '(' '('st_and_pltb ',' st_and_pltb ')' error {
   if( !err_stat.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis of trip description in journey definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
              | '(' '('st_and_pltb st_and_pltb')' ',' dwell_journey {
   if( !err_stat.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing delimiter in org & dst platform/turnback section specifier in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  if( ($3.kind == ST_PLTB) && ($4.kind == ST_PLTB) && ($7.kind == TRIP) ) {
+  if( ($3.kind == PAR_ST_PLTB) && ($4.kind == PAR_ST_PLTB) && ($7.kind == PAR_TRIP) ) {
     $$ = $7;
-    $$.kind = TRIP;
-    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+    $$.kind = PAR_TRIP;
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $4;
   } else {
-    assert( ($3.kind == UNKNOWN) || ($4.kind == UNKNOWN) || ($7.kind == UNKNOWN) );
-    $$.kind = UNKNOWN;
+    assert( ($3.kind == PAR_UNKNOWN) || ($4.kind == PAR_UNKNOWN) || ($7.kind == PAR_UNKNOWN) );
+    $$.kind = PAR_UNKNOWN;
   }
  }
              | '(' '('st_and_pltb ',' st_and_pltb')' ',' dwell_journey {  
-  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($8.kind == TRIP) ) {
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_TRIP) ) {
     $$ = $8;
-    $$.kind = TRIP;
-    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+    $$.kind = PAR_TRIP;
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
   } else {
-    assert( ($3.kind == UNKNOWN) || ($5.kind == UNKNOWN) || ($8.kind == UNKNOWN) );
-    $$.kind = UNKNOWN;
+    assert( ($3.kind == PAR_UNKNOWN) || ($5.kind == PAR_UNKNOWN) || ($8.kind == PAR_UNKNOWN) );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -520,10 +515,10 @@ dwell_journey : TK_NAT ')' {
   $$.sp_cond.dwell_time = $1;
   $$.sp_cond.pos.row = @1.first_line;
   $$.sp_cond.pos.col = @1.first_column;
-  $$.kind = TRIP;
+  $$.kind = PAR_TRIP;
  }
               | TK_NAT ',' arrdep_time_journey {
-  if( $3.kind == TRIP ) {
+  if( $3.kind == PAR_TRIP ) {
     $$ = $3;
     if( $1 == 0 ) {
       $$.sp_cond.stop_skip = SKIP;
@@ -534,39 +529,39 @@ dwell_journey : TK_NAT ')' {
     $$.sp_cond.dwell_time = $1;
     $$.sp_cond.pos.row = @1.first_line;
     $$.sp_cond.pos.col = @1.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( $3.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $3.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
  }
               | arrdep_time_journey { /* omitted. */
-  if( $1.kind == TRIP ) {
+  if( $1.kind == PAR_TRIP ) {
     $$ = $1;
     $$.sp_cond.stop_skip = DWELL;
     $$.sp_cond.dwell_time = DEFAULT_DWELL_TIME;
     $$.sp_cond.pos.row = @1.first_line;
     $$.sp_cond.pos.col = @1.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( $1.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $1.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
  }
 ;
 arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   raw_journey_trip( &$$ );
-  $$.arrdep_time.arriv.arr_time.hour = -1;
-  $$.arrdep_time.arriv.arr_time.min = -1;
-  $$.arrdep_time.arriv.arr_time.sec = -1;
+  $$.arrdep_time.arriv.arr_time.t.hour = -1;
+  $$.arrdep_time.arriv.arr_time.t.minute = -1;
+  $$.arrdep_time.arriv.arr_time.t.second = -1;
   $$.arrdep_time.arriv.pos.row = @1.first_line;
   $$.arrdep_time.arriv.pos.col = @1.first_column;
-  $$.arrdep_time.dept.dep_time.hour = -1;
-  $$.arrdep_time.dept.dep_time.min = -1;
-  $$.arrdep_time.dept.dep_time.sec = -1;
+  $$.arrdep_time.dept.dep_time.t.hour = -1;
+  $$.arrdep_time.dept.dep_time.t.minute = -1;
+  $$.arrdep_time.dept.dep_time.t.second = -1;
   $$.arrdep_time.dept.pos.row = @1.first_line;
   $$.arrdep_time.dept.pos.col = @1.first_column;
-  $$.kind = TRIP;
+  $$.kind = PAR_TRIP;
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -581,32 +576,32 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                     | '(' ')' error {
   if( !err_stat.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                     | '(' ')' ',' perf_journey {
-  if( $4.kind == PERF_REGIME ) {
+  if( $4.kind == PAR_PERF_REGIME ) {
     $$ = $4;
-    $$.arrdep_time.arriv.arr_time.hour = -1;
-    $$.arrdep_time.arriv.arr_time.min = -1;
-    $$.arrdep_time.arriv.arr_time.sec = -1;
+    $$.arrdep_time.arriv.arr_time.t.hour = -1;
+    $$.arrdep_time.arriv.arr_time.t.minute = -1;
+    $$.arrdep_time.arriv.arr_time.t.second = -1;
     $$.arrdep_time.arriv.pos.row = @1.first_line;
     $$.arrdep_time.arriv.pos.col = @1.first_column;
-    $$.arrdep_time.dept.dep_time.hour = -1;
-    $$.arrdep_time.dept.dep_time.min = -1;
-    $$.arrdep_time.dept.dep_time.sec = -1;
+    $$.arrdep_time.dept.dep_time.t.hour = -1;
+    $$.arrdep_time.dept.dep_time.t.minute = -1;
+    $$.arrdep_time.dept.dep_time.t.second = -1;
     $$.arrdep_time.dept.pos.row = @1.first_line;
     $$.arrdep_time.dept.pos.col = @1.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( $4.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $4.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -619,17 +614,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
  }
                     | '(' ',' ')' ')' { /* both omitted, form 2. */
   raw_journey_trip( &$$ );
-  $$.arrdep_time.arriv.arr_time.hour = -1;
-  $$.arrdep_time.arriv.arr_time.min = -1;
-  $$.arrdep_time.arriv.arr_time.sec = -1;
+  $$.arrdep_time.arriv.arr_time.t.hour = -1;
+  $$.arrdep_time.arriv.arr_time.t.minute = -1;
+  $$.arrdep_time.arriv.arr_time.t.second = -1;
   $$.arrdep_time.arriv.pos.row = @1.first_line;
   $$.arrdep_time.arriv.pos.col = @1.first_column;
-  $$.arrdep_time.dept.dep_time.hour = -1;
-  $$.arrdep_time.dept.dep_time.min = -1;
-  $$.arrdep_time.dept.dep_time.sec = -1;
+  $$.arrdep_time.dept.dep_time.t.hour = -1;
+  $$.arrdep_time.dept.dep_time.t.minute = -1;
+  $$.arrdep_time.dept.dep_time.t.second = -1;
   $$.arrdep_time.dept.pos.row = @1.first_line;
   $$.arrdep_time.dept.pos.col = @1.first_column;
-  $$.kind = TRIP;
+  $$.kind = PAR_TRIP;
 #if 0 // ***** for debugging.
   {
     printf( "arr_time: " );
@@ -644,32 +639,32 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                     | '(' ',' ')' error {
   if( !err_stat.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                     | '(' ',' ')' ',' perf_journey {
-  if( $5.kind == PERF_REGIME ) {
+  if( $5.kind == PAR_PERF_REGIME ) {
     $$ = $5;
-    $$.arrdep_time.arriv.arr_time.hour = -1;
-    $$.arrdep_time.arriv.arr_time.min = -1;
-    $$.arrdep_time.arriv.arr_time.sec = -1;
+    $$.arrdep_time.arriv.arr_time.t.hour = -1;
+    $$.arrdep_time.arriv.arr_time.t.minute = -1;
+    $$.arrdep_time.arriv.arr_time.t.second = -1;
     $$.arrdep_time.arriv.pos.row = @1.first_line;
     $$.arrdep_time.arriv.pos.col = @1.first_column;
-    $$.arrdep_time.dept.dep_time.hour = -1;
-    $$.arrdep_time.dept.dep_time.min = -1;
-    $$.arrdep_time.dept.dep_time.sec = -1;
+    $$.arrdep_time.dept.dep_time.t.hour = -1;
+    $$.arrdep_time.dept.dep_time.t.minute = -1;
+    $$.arrdep_time.dept.dep_time.t.second = -1;
     $$.arrdep_time.dept.pos.row = @1.first_line;
     $$.arrdep_time.dept.pos.col = @1.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( $5.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $5.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -681,22 +676,22 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | perf_journey { /* both omitted, form 3. */
-  if( $1.kind == PERF_REGIME ) {
+  if( $1.kind == PAR_PERF_REGIME ) {
     $$ = $1;
-    $$.arrdep_time.arriv.arr_time.hour = -1;
-    $$.arrdep_time.arriv.arr_time.min = -1;
-    $$.arrdep_time.arriv.arr_time.sec = -1;
+    $$.arrdep_time.arriv.arr_time.t.hour = -1;
+    $$.arrdep_time.arriv.arr_time.t.minute = -1;
+    $$.arrdep_time.arriv.arr_time.t.second = -1;
     $$.arrdep_time.arriv.pos.row = @1.first_line;
     $$.arrdep_time.arriv.pos.col = @1.first_column;
-    $$.arrdep_time.dept.dep_time.hour = -1;
-    $$.arrdep_time.dept.dep_time.min = -1;
-    $$.arrdep_time.dept.dep_time.sec = -1;
+    $$.arrdep_time.dept.dep_time.t.hour = -1;
+    $$.arrdep_time.dept.dep_time.t.minute = -1;
+    $$.arrdep_time.dept.dep_time.t.second = -1;
     $$.arrdep_time.dept.pos.row = @1.first_line;
     $$.arrdep_time.dept.pos.col = @1.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( $1.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $1.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -708,22 +703,22 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   #endif
  }
                     | '(' time ')' ')' { /* deparure-time omitted, form 1. */
-  if( $2.kind == TIME_SPEC ) {
+  if( $2.kind == PAR_TIME_SPEC ) {
     raw_journey_trip( &$$ );
-    $$.arrdep_time.arriv.arr_time.hour = $2.hour;
-    $$.arrdep_time.arriv.arr_time.min = $2.min;
-    $$.arrdep_time.arriv.arr_time.sec = $2.sec;
+    $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
+    $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
+    $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
     $$.arrdep_time.arriv.pos.row = @2.first_line;
     $$.arrdep_time.arriv.pos.col = @2.first_column;
-    $$.arrdep_time.dept.dep_time.hour = -1;
-    $$.arrdep_time.dept.dep_time.min = -1;
-    $$.arrdep_time.dept.dep_time.sec = -1;
+    $$.arrdep_time.dept.dep_time.t.hour = -1;
+    $$.arrdep_time.dept.dep_time.t.minute = -1;
+    $$.arrdep_time.dept.dep_time.t.second = -1;
     $$.arrdep_time.dept.pos.row = @3.first_line;
     $$.arrdep_time.dept.pos.col = @3.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( $2.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $2.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -739,25 +734,25 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                     | '(' time ')' ',' perf_journey {
-  if( ($2.kind == TIME_SPEC) && ($5.kind == PERF_REGIME) ) {
+  if( ($2.kind == PAR_TIME_SPEC) && ($5.kind == PAR_PERF_REGIME) ) {
     $$ = $5;
-    $$.arrdep_time.arriv.arr_time.hour = $2.hour;
-    $$.arrdep_time.arriv.arr_time.min = $2.min;
-    $$.arrdep_time.arriv.arr_time.sec = $2.sec;
+    $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
+    $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
+    $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
     $$.arrdep_time.arriv.pos.row = @2.first_line;
     $$.arrdep_time.arriv.pos.col = @2.first_column;
-    $$.arrdep_time.dept.dep_time.hour = -1;
-    $$.arrdep_time.dept.dep_time.min = -1;
-    $$.arrdep_time.dept.dep_time.sec = -1;
+    $$.arrdep_time.dept.dep_time.t.hour = -1;
+    $$.arrdep_time.dept.dep_time.t.minute = -1;
+    $$.arrdep_time.dept.dep_time.t.second = -1;
     $$.arrdep_time.dept.pos.row = @3.first_line;
     $$.arrdep_time.dept.pos.col = @3.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( ($2.kind == UNKNOWN) || ($5.kind == UNKNOWN) );
-    $$.kind = UNKNOWN;
+    assert( ($2.kind == PAR_UNKNOWN) || ($5.kind == PAR_UNKNOWN) );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -769,22 +764,22 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' time ',' ')' ')' { /* deparure-time omitted, form 2. */
-  if( $2.kind == TIME_SPEC ) {
+  if( $2.kind == PAR_TIME_SPEC ) {
     raw_journey_trip( &$$ );
-    $$.arrdep_time.arriv.arr_time.hour = $2.hour;
-    $$.arrdep_time.arriv.arr_time.min = $2.min;
-    $$.arrdep_time.arriv.arr_time.sec = $2.sec;
+    $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
+    $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
+    $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
     $$.arrdep_time.arriv.pos.row = @2.first_line;
     $$.arrdep_time.arriv.pos.col = @2.first_column;
-    $$.arrdep_time.dept.dep_time.hour = -1;
-    $$.arrdep_time.dept.dep_time.min = -1;
-    $$.arrdep_time.dept.dep_time.sec = -1;
+    $$.arrdep_time.dept.dep_time.t.hour = -1;
+    $$.arrdep_time.dept.dep_time.t.minute = -1;
+    $$.arrdep_time.dept.dep_time.t.second = -1;
     $$.arrdep_time.dept.pos.row = @3.first_line;
     $$.arrdep_time.dept.pos.col = @3.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( $2.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $2.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -800,32 +795,32 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                     | '(' time ',' ')' error {
   if( !err_stat.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                     | '(' time ',' ')' ',' perf_journey {
-  if( ($2.kind == TIME_SPEC) && ($6.kind == PERF_REGIME) ) {
+  if( ($2.kind == PAR_TIME_SPEC) && ($6.kind == PAR_PERF_REGIME) ) {
     $$ = $6;
-    $$.arrdep_time.arriv.arr_time.hour = $2.hour;
-    $$.arrdep_time.arriv.arr_time.min = $2.min;
-    $$.arrdep_time.arriv.arr_time.sec = $2.sec;
+    $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
+    $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
+    $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
     $$.arrdep_time.arriv.pos.row = @2.first_line;
     $$.arrdep_time.arriv.pos.col = @2.first_column;
-    $$.arrdep_time.dept.dep_time.hour = -1;
-    $$.arrdep_time.dept.dep_time.min = -1;
-    $$.arrdep_time.dept.dep_time.sec = -1;
+    $$.arrdep_time.dept.dep_time.t.hour = -1;
+    $$.arrdep_time.dept.dep_time.t.minute = -1;
+    $$.arrdep_time.dept.dep_time.t.second = -1;
     $$.arrdep_time.dept.pos.row = @3.first_line;
     $$.arrdep_time.dept.pos.col = @3.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( ($2.kind == UNKNOWN) || ($6.kind == UNKNOWN) );
-    $$.kind = UNKNOWN;
+    assert( ($2.kind == PAR_UNKNOWN) || ($6.kind == PAR_UNKNOWN) );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -837,22 +832,22 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' ',' time ')' ')' { /* arrival-time omitted. */
-  if( $3.kind == TIME_SPEC ) {
+  if( $3.kind == PAR_TIME_SPEC ) {
     raw_journey_trip( &$$ );
-    $$.arrdep_time.arriv.arr_time.hour = -1;
-    $$.arrdep_time.arriv.arr_time.min = -1;
-    $$.arrdep_time.arriv.arr_time.sec = -1;
+    $$.arrdep_time.arriv.arr_time.t.hour = -1;
+    $$.arrdep_time.arriv.arr_time.t.minute = -1;
+    $$.arrdep_time.arriv.arr_time.t.second = -1;
     $$.arrdep_time.arriv.pos.row = @1.first_line;
     $$.arrdep_time.arriv.pos.col = @1.first_column;
-    $$.arrdep_time.dept.dep_time.hour = $3.hour;
-    $$.arrdep_time.dept.dep_time.min = $3.min;
-    $$.arrdep_time.dept.dep_time.sec = $3.sec;
+    $$.arrdep_time.dept.dep_time.t.hour = $3.t.hour;
+    $$.arrdep_time.dept.dep_time.t.minute = $3.t.minute;
+    $$.arrdep_time.dept.dep_time.t.second = $3.t.second;
     $$.arrdep_time.dept.pos.row = @3.first_line;
     $$.arrdep_time.dept.pos.col = @3.first_column;   
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( $3.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $3.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -868,25 +863,25 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                     | '(' ',' time ')' ',' perf_journey {
-  if( ($3.kind == TIME_SPEC) && ($6.kind == PERF_REGIME) ) {
+  if( ($3.kind == PAR_TIME_SPEC) && ($6.kind == PAR_PERF_REGIME) ) {
     $$ = $6;
-    $$.arrdep_time.arriv.arr_time.hour = -1;
-    $$.arrdep_time.arriv.arr_time.min = -1;
-    $$.arrdep_time.arriv.arr_time.sec = -1;
+    $$.arrdep_time.arriv.arr_time.t.hour = -1;
+    $$.arrdep_time.arriv.arr_time.t.minute = -1;
+    $$.arrdep_time.arriv.arr_time.t.second = -1;
     $$.arrdep_time.arriv.pos.row = @1.first_line;
     $$.arrdep_time.arriv.pos.col = @1.first_column;
-    $$.arrdep_time.dept.dep_time.hour = $3.hour;
-    $$.arrdep_time.dept.dep_time.min = $3.min;
-    $$.arrdep_time.dept.dep_time.sec = $3.sec;
+    $$.arrdep_time.dept.dep_time.t.hour = $3.t.hour;
+    $$.arrdep_time.dept.dep_time.t.minute = $3.t.minute;
+    $$.arrdep_time.dept.dep_time.t.second = $3.t.second;
     $$.arrdep_time.dept.pos.row = @3.first_line;
     $$.arrdep_time.dept.pos.col = @3.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( ($3.kind == UNKNOWN) || ($6.kind == UNKNOWN) );
-    $$.kind = UNKNOWN;
+    assert( ($3.kind == PAR_UNKNOWN) || ($6.kind == PAR_UNKNOWN) );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -898,22 +893,22 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' time ',' time ')' ')' {
-  if( ($2.kind == TIME_SPEC) && ($4.kind == TIME_SPEC) ) {
+  if( ($2.kind == PAR_TIME_SPEC) && ($4.kind == PAR_TIME_SPEC) ) {
     raw_journey_trip( &$$ );
-    $$.arrdep_time.arriv.arr_time.hour = $2.hour;
-    $$.arrdep_time.arriv.arr_time.min = $2.min;
-    $$.arrdep_time.arriv.arr_time.sec = $2.sec;
+    $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
+    $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
+    $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
     $$.arrdep_time.arriv.pos.row = @2.first_line;
     $$.arrdep_time.arriv.pos.col = @2.first_column;
-    $$.arrdep_time.dept.dep_time.hour = $4.hour;
-    $$.arrdep_time.dept.dep_time.min = $4.min;
-    $$.arrdep_time.dept.dep_time.sec = $4.sec;
+    $$.arrdep_time.dept.dep_time.t.hour = $4.t.hour;
+    $$.arrdep_time.dept.dep_time.t.minute = $4.t.minute;
+    $$.arrdep_time.dept.dep_time.t.second = $4.t.second;
     $$.arrdep_time.dept.pos.row = @4.first_line;
     $$.arrdep_time.dept.pos.col = @4.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( ($2.kind == UNKNOWN) || ($4.kind == UNKNOWN) );
-    $$.kind = UNKNOWN;
+    assert( ($2.kind == PAR_UNKNOWN) || ($4.kind == PAR_UNKNOWN) );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -929,25 +924,25 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                     | '(' time ',' time ')' ',' perf_journey {
-  if( ($2.kind == TIME_SPEC) && ($4.kind == TIME_SPEC) && ($7.kind == PERF_REGIME) ) {
+  if( ($2.kind == PAR_TIME_SPEC) && ($4.kind == PAR_TIME_SPEC) && ($7.kind == PAR_PERF_REGIME) ) {
     $$ = $7;
-    $$.arrdep_time.arriv.arr_time.hour = $2.hour;
-    $$.arrdep_time.arriv.arr_time.min = $2.min;
-    $$.arrdep_time.arriv.arr_time.sec = $2.sec;
+    $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
+    $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
+    $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
     $$.arrdep_time.arriv.pos.row = @2.first_line;
     $$.arrdep_time.arriv.pos.col = @2.first_column;
-    $$.arrdep_time.dept.dep_time.hour = $4.hour;
-    $$.arrdep_time.dept.dep_time.min = $4.min;
-    $$.arrdep_time.dept.dep_time.sec = $4.sec;
+    $$.arrdep_time.dept.dep_time.t.hour = $4.t.hour;
+    $$.arrdep_time.dept.dep_time.t.minute = $4.t.minute;
+    $$.arrdep_time.dept.dep_time.t.second = $4.t.second;
     $$.arrdep_time.dept.pos.row = @4.first_line;
     $$.arrdep_time.dept.pos.col = @4.first_column;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   } else {
-    assert( ($2.kind == UNKNOWN) || ($4.kind == UNKNOWN) || ($7.kind == UNKNOWN) );
-    $$.kind = UNKNOWN;
+    assert( ($2.kind == PAR_UNKNOWN) || ($4.kind == PAR_UNKNOWN) || ($7.kind == PAR_UNKNOWN) );
+    $$.kind = PAR_UNKNOWN;
   }
 #if 0 // ***** for debugging.
   {
@@ -964,30 +959,30 @@ perf_journey : TK_PERFREG ')' {
   $$.perf_regime.perfreg_cmd = $1;
   $$.perf_regime.pos.row = @1.first_line;
   $$.perf_regime.pos.col = @1.first_column;
-  $$.kind = PERF_REGIME;
+  $$.kind = PAR_PERF_REGIME;
  }
              | TK_PERFREG ',' revenue_journey {
-  if( $3.kind == REVENUE_STAT ) {
+  if( $3.kind == PAR_REVENUE_STAT ) {
     $$ = $3;
     $$.perf_regime.perfreg_cmd = $1;
     $$.perf_regime.pos.row = @1.first_line;
     $$.perf_regime.pos.col = @1.first_column;
-    $$.kind = PERF_REGIME;
+    $$.kind = PAR_PERF_REGIME;
   } else {
-    assert( $3.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $3.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
  }
              | revenue_journey { /* omitted */
-  if( $1.kind == REVENUE_STAT ) {
+  if( $1.kind == PAR_REVENUE_STAT ) {
     $$ = $1;
     $$.perf_regime.perfreg_cmd = DEFAULT_PERFLEVEL;
     $$.perf_regime.pos.row = @1.first_line;
     $$.perf_regime.pos.col = @1.first_column;
-    $$.kind = PERF_REGIME;
+    $$.kind = PAR_PERF_REGIME;
   } else {
-    assert( $1.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $1.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
  }
 ;
@@ -996,30 +991,30 @@ revenue_journey : TK_REVENUE ')' {
   $$.revenue.stat = $1;
   $$.revenue.pos.row = @1.first_line;
   $$.revenue.pos.col = @1.first_column;
-  $$.kind = REVENUE_STAT;
+  $$.kind = PAR_REVENUE_STAT;
  }
                 | TK_REVENUE ',' crewid_journey {
-  if( $3.kind == CREWID ) {
+  if( $3.kind == PAR_CREWID ) {
     $$ = $3;
     $$.revenue.stat = $1;
     $$.revenue.pos.row = @1.first_line;
     $$.revenue.pos.col = @1.first_column;
-    $$.kind = REVENUE_STAT;
+    $$.kind = PAR_REVENUE_STAT;
   } else {
-    assert( $3.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $3.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
  }
                 | crewid_journey { /* omitted */
-  if( $1.kind == CREWID ) {
+  if( $1.kind == PAR_CREWID ) {
     $$ = $1;
     $$.revenue.stat = DEFAULT_REVENUE;
     $$.revenue.pos.row = @1.first_line;
     $$.revenue.pos.col = @1.first_column;
-    $$.kind = REVENUE_STAT;
+    $$.kind = PAR_REVENUE_STAT;
   } else {
-    assert( $1.kind == UNKNOWN );
-    $$.kind = UNKNOWN;
+    assert( $1.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
   }
  }
 ;
@@ -1028,27 +1023,27 @@ crewid_journey : TK_CREWID ')' {
   $$.crew_id.cid = $1;
   $$.crew_id.pos.row = @1.first_line;
   $$.crew_id.pos.col = @1.first_column;
-  $$.kind = CREWID;
+  $$.kind = PAR_CREWID;
  }
                | ')' { /* omitted */
   raw_journey_trip( &$$ );
   $$.crew_id.cid = -1;
   $$.crew_id.pos.row = @1.first_line;
   $$.crew_id.pos.col = @1.first_column;
-  $$.kind = CREWID;
+  $$.kind = PAR_CREWID;
  }
                | error {
   if( !err_stat.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed dwell description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 ;
 
 time : TK_TIME {
   $$ = $1;
-  $$.kind = TIME_SPEC;
+  $$.kind = PAR_TIME_SPEC;
   $$.pos.row = @1.first_line;
   $$.pos.col = @1.first_column;
  }
@@ -1057,7 +1052,7 @@ time : TK_TIME {
     printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_journey = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 ;
 
@@ -1074,7 +1069,7 @@ time : TK_TIME {
 */
 trips_decl : TK_KEY_TRIPS ':' trips_definition {
   assert( $3 );
-  assert( $3->kind == TRIPS );
+  assert( $3->kind == PAR_TRIPS );
   $$ = $3;
 #if 0 /* ***** for debugging. */
   {
@@ -1135,24 +1130,24 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
 */
 ;
 trips_definition : /* empty journies */ {
-  timetable_symtbl->trips_regtbl.kind = TRIPS;
+  timetable_symtbl->trips_regtbl.kind = PAR_TRIPS;
   $$ = &timetable_symtbl->trips_regtbl;
   assert( $$->ntrips == 0 );
 }
                  | trips_definition trip_def ';'{
-  assert( $1->kind == TRIPS );
-  if( $2.kind == TRIP ) {
+  assert( $1->kind == PAR_TRIPS );
+  if( $2.kind == PAR_TRIP ) {
     reg_trip( &$2 );
   }
   $$ = &timetable_symtbl->trips_regtbl;
  }
                  | trips_definition trip_def error ';' {
-  assert( $1->kind == TRIPS );
+  assert( $1->kind == PAR_TRIPS );
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, missing semicolon in end of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  if( $2.kind == TRIP ) {
+  if( $2.kind == PAR_TRIP ) {
     reg_trip( &$2 );
   }
   $$ = &timetable_symtbl->trips_regtbl;
@@ -1160,14 +1155,14 @@ trips_definition : /* empty journies */ {
 ;
 /* e.g. (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B}) */
 trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' ')' {
-  $$.kind = UNKNOWN;
-  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($8.kind == SP_PAIR) && ($11.kind == ROUTES) ) {
-    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+  $$.kind = PAR_UNKNOWN;
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_SP_PAIR) && ($11.kind == PAR_ROUTES) ) {
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
     $$.attr_sp_orgdst = $8;
     $$.attr_route_ctrl = $11;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   }
   err_stat.err_trip_def = FALSE;
 #if 0 /* ***** for debugging. */
@@ -1181,14 +1176,14 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
          | '(' '(' error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 /* the follow reduction rule arises reduce/reduce conflicts.
    | '(' '('st_and_pltb error {
@@ -1199,7 +1194,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 /* the follow reduction rule arises reduce/reduce conflicts.
    | '(' '('st_and_pltb ',' st_and_pltb error {
@@ -1210,28 +1205,28 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
          | '(' '('st_and_pltb ',' st_and_pltb')' ',' error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @7.first_line, @7.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
          | '(' '('st_and_pltb ',' st_and_pltb')' sp_orgdst_pair ',' '{' routes '}' ')' {
   if( !err_stat.err_trip_def ) {    
     printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
-  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($7.kind == SP_PAIR) && ($10.kind == ROUTES) ) {
-    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+  $$.kind = PAR_UNKNOWN;
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($7.kind == PAR_SP_PAIR) && ($10.kind == PAR_ROUTES) ) {
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
     $$.attr_sp_orgdst = $7;
     $$.attr_route_ctrl = $10;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   }
  }
 /* the follow reduction rule arises reduce/reduce conflicts.
@@ -1243,21 +1238,21 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @9.first_line, @9.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
          | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair '{' routes '}' ')' {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @8.first_line, @8.first_column );
     err_stat.err_trip_def = TRUE;    
   }
-  $$.kind = UNKNOWN;  
-  if( ($3.kind == ST_PLTB) && ($5.kind == ST_PLTB) && ($8.kind == SP_PAIR) && ($10.kind == ROUTES) ) {
-    $$.attr_st_pltb_orgdst.kind = ST_PLTB_PAIR;
+  $$.kind = PAR_UNKNOWN;  
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_SP_PAIR) && ($10.kind == PAR_ROUTES) ) {
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
     $$.attr_sp_orgdst = $8;
     $$.attr_route_ctrl = $10;
-    $$.kind = TRIP;
+    $$.kind = PAR_TRIP;
   }
  }
 /* the follow reduction rules arise reduce/reduce conflicts.
@@ -1272,11 +1267,11 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
     printf( "FATAL: syntax-error, missing closing parenthesis in trip definition at (LINE, COL) = (%d, %d).\n", @12.first_line, @12.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 ;
 st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
-  $$.kind = ST_PLTB;
+  $$.kind = PAR_ST_PLTB;
   strncpy( $$.st.name, $2, MAX_STNAME_LEN );
   $$.st.pos.row = @2.first_line;
   $$.st.pos.col = @2.first_column;
@@ -1290,7 +1285,7 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
     printf( "FATAL: syntax-error, missing delimiter in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = ST_PLTB;
+  $$.kind = PAR_ST_PLTB;
   strncpy( $$.st.name, $2, MAX_STNAME_LEN );
   $$.st.pos.row = @2.first_line;
   $$.st.pos.col = @2.first_column; 
@@ -1304,7 +1299,7 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
     printf( "FATAL: syntax-error, missing opening parenthesis in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 /* shift/reduce confliction arises with the rule of-> '(' error, as below.
             | '(' error ',' TK_PLTB_NAME ')' {
@@ -1328,39 +1323,39 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
     printf( "FATAL: syntax-error, missing closing parenthesis in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
             | error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, no org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
             | '(' error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
             | '(' TK_STNAME error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
             | '(' TK_STNAME ',' error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 ;
 sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
-  $$.kind = SP_PAIR;
+  $$.kind = PAR_SP_PAIR;
   strncpy( $$.org.sp_id, $2, MAX_SPNAME_LEN );
   $$.org.pos.row = @2.first_line;
   $$.org.pos.col = @2.first_column;
@@ -1374,7 +1369,7 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
     printf( "FATAL: syntax-error, missing delimiter in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = SP_PAIR;
+  $$.kind = PAR_SP_PAIR;
   strncpy( $$.org.sp_id, $2, MAX_SPNAME_LEN );
   $$.org.pos.row = @2.first_line;
   $$.org.pos.col = @2.first_column;
@@ -1387,7 +1382,7 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
     printf( "FATAL: syntax-error, missing opening parenthesis in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 /*
   shift/reduce confliction arises with the rule of-> '(' error, as below.
@@ -1403,42 +1398,42 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
     printf( "FATAL: syntax-error, no dest found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                | '(' TK_SP ',' TK_SP error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 | error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, no org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                | '(' error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                | '(' TK_SP error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
                | '(' TK_SP ',' error {
   if( !err_stat.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_stat.err_trip_def = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 ;
 /*
@@ -1449,24 +1444,24 @@ routes0 : '{' routes '}' { // its only for debugging.
  }
  ; */
 routes : route {  
-  if( $1.kind == ROUTE ) {
-    $$.kind = ROUTES;
+  if( $1.kind == PAR_ROUTE ) {
+    $$.kind = PAR_ROUTES;
     $$.nroutes = 1;
     $$.route_prof[0] = $1;
     /* printf( "route: %s\n", $$.route_prof[0].name ); // ***** for debugging. */
   } else {
-    $$.kind = UNKNOWN;
+    $$.kind = PAR_UNKNOWN;
     $$.nroutes = 0;
   }
  }
        | routes route {
-  if( $1.kind == ROUTES ) {
+  if( $1.kind == PAR_ROUTES ) {
     assert( ($1.nroutes > 0) && ($1.nroutes < MAX_TRIP_ROUTES) );
   } else {
-    assert( $1.kind == UNKNOWN );
+    assert( $1.kind == PAR_UNKNOWN );
     assert( $1.nroutes == 0 );
   }
-  if( $2.kind == ROUTE ) {
+  if( $2.kind == PAR_ROUTE ) {
     int i;
     if( $1.nroutes > 0 ) {
       if( !err_stat.err_routes ) {
@@ -1479,29 +1474,29 @@ routes : route {
     assert( i == $1.nroutes );
     $$.route_prof[i] = $2;
     $$.nroutes = $1.nroutes + 1;
-    $$.kind = ROUTES;
+    $$.kind = PAR_ROUTES;
   }
  }
        | routes ',' route {
-  if( $1.kind == ROUTES ) {
+  if( $1.kind == PAR_ROUTES ) {
     assert( ($1.nroutes > 0) && ($1.nroutes < MAX_TRIP_ROUTES) );
   } else {
-    assert( $1.kind == UNKNOWN );
+    assert( $1.kind == PAR_UNKNOWN );
     assert( $1.nroutes == 0 );
   }
-  if( $3.kind == ROUTE ) {
+  if( $3.kind == PAR_ROUTE ) {
     int i;    
     for( i = 0; i < $1.nroutes; i++ )
       $$.route_prof[i] = $1.route_prof[i];
     assert( i == $1.nroutes );
     $$.route_prof[i] = $3;
     $$.nroutes = $1.nroutes + 1;
-    $$.kind = ROUTES;
+    $$.kind = PAR_ROUTES;
   }
  }
 ;
 route : TK_ROUTE {
-  assert( $1.kind == ROUTE );
+  assert( $1.kind == PAR_ROUTE );
   $$.kind = $1.kind;
   strncpy( $$.name, $1.name, MAX_ROUTENAME_LEN );
   $$.pos.row = @1.first_line;
@@ -1513,7 +1508,7 @@ route : TK_ROUTE {
     printf( "FATAL: syntax-error, illegal ars controlled route in trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_routes = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
  }
 ;
 
@@ -1527,7 +1522,7 @@ route : TK_ROUTE {
 /* rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts { */
 rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   assert( $3 );
-  assert( $3->kind == RJ_ASGNS );
+  assert( $3->kind == PAR_RJ_ASGNS );
   $$ = $3;
 #if 0 /* ***** for debugging. */
   {
@@ -1579,31 +1574,31 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
  } */
 ;
 rake_journey_asgnmnts : /* empty journies */ {
-  timetable_symtbl->rj_asgn_regtbl.kind = RJ_ASGNS;
+  timetable_symtbl->rj_asgn_regtbl.kind = PAR_RJ_ASGNS;
   $$ = &timetable_symtbl->rj_asgn_regtbl;
   assert( $$->nasgns == 0 );
  }
                       | rake_journey_asgnmnts rj_asgn ';' {
-  assert( $1->kind == RJ_ASGNS );
-  if( $2.kind == RJ_ASGN ) {
+  assert( $1->kind == PAR_RJ_ASGNS );
+  if( $2.kind == PAR_RJ_ASGN ) {
     reg_rake_journey_asgn( &$2 );
   }
   $$ = &timetable_symtbl->rj_asgn_regtbl;
  }
                       | rake_journey_asgnmnts rj_asgn error ';' {
-  assert( $1->kind == RJ_ASGNS );
+  assert( $1->kind == PAR_RJ_ASGNS );
   if( !err_stat.err_rj_asgn ) {
     printf( "FATAL: syntax-error, missing semicolon in end of rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.err_rj_asgn = TRUE;
   }
-  if( $2.kind == RJ_ASGN ) {
+  if( $2.kind == PAR_RJ_ASGN ) {
     reg_rake_journey_asgn( &$2 );
   }
   $$ = &timetable_symtbl->rj_asgn_regtbl;
  }
 ;
 rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
-  $$.kind = RJ_ASGN;
+  $$.kind = PAR_RJ_ASGN;
   $$.rake_id.rid = $1;
   $$.rake_id.pos.row = @1.first_line;
   $$.rake_id.pos.col = @1.first_column;;
@@ -1617,7 +1612,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
     printf( "FATAL: syntax-error, in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_rj_asgn = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
   // yyclearin;
  }
         | TK_RAKE_ID TK_JOURNEY_ID {
@@ -1625,7 +1620,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
     printf( "FATAL: syntax-error, missing operator in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_rj_asgn = TRUE;
   }
-  $$.kind = RJ_ASGN;
+  $$.kind = PAR_RJ_ASGN;
   $$.rake_id.rid = $1;
   $$.rake_id.pos.row = @1.first_line;
   $$.rake_id.pos.col = @1.first_column;;
@@ -1638,7 +1633,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
     printf( "FATAL: syntax-error, incomplete rake-journey assignment, at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_rj_asgn = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
   // yyclearin;
  }
         | TK_RAKE_ID TK_ASGN error {
@@ -1646,7 +1641,7 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
     printf( "FATAL: syntax-error, ill-formed rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.err_rj_asgn = TRUE;
   }
-  $$.kind = UNKNOWN;
+  $$.kind = PAR_UNKNOWN;
   // yyclearin;
  }
 ;

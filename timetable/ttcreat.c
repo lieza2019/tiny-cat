@@ -5,68 +5,68 @@
 #include "../generic.h"
 #include "ttcreat.h"
 
-char *cnv2str_kind ( char *pstr, KIND kind, const int buflen ) {
+char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen ) {
   assert( pstr );
   assert( buflen > 0 );
   char *r = NULL;
   
   switch( kind ) {
-  case ST_PLTB:
+  case PAR_ST_PLTB:
     strncpy( pstr, "ST_PLTB", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case ST_PLTB_PAIR:
+  case PAR_ST_PLTB_ORGDST:
     strncpy( pstr, "ST_PLTB_PAIR", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case SP:
+  case PAR_SP:
     strncpy( pstr, "SP", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case SP_PAIR:
+  case PAR_SP_PAIR:
     strncpy( pstr, "SP_PAIR", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case ROUTE:
+  case PAR_ROUTE:
     strncpy( pstr, "ROUTE", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case ROUTES:
+  case PAR_ROUTES:
     strncpy( pstr, "ROUTES", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case TRIP:
+  case PAR_TRIP:
     strncpy( pstr, "TRIP", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case TRIPS:
+  case PAR_TRIPS:
     strncpy( pstr, "TRIPS", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case RJ_ASGN:
+  case PAR_RJ_ASGN:
     strncpy( pstr, "RJ_ASGN", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case RJ_ASGNS:
+  case PAR_RJ_ASGNS:
     strncpy( pstr, "RJ_ASGNS", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case JOURNEY:
+  case PAR_JOURNEY:
     strncpy( pstr, "JOURNEY", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case UNKNOWN:
+  case PAR_UNKNOWN:
     strncpy( pstr, "UNKNOWN", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
@@ -102,8 +102,8 @@ char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen ) {
 BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 ) {
   assert( p1 );
   assert( p2 );
-  assert( p1->kind == ST_PLTB );
-  assert( p2->kind == ST_PLTB );
+  assert( p1->kind == PAR_ST_PLTB );
+  assert( p2->kind == PAR_ST_PLTB );
   BOOL r = FALSE;
   
   if( ! strncmp( p1->st.name, p2->st.name, MAX_STNAME_LEN ) )
@@ -112,11 +112,11 @@ BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 ) {
   return r;
 }
 
-BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_PAIR_PTR pp1, ATTR_ST_PLTB_PAIR_PTR pp2 ) {
+BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_ORGDST_PTR pp1, ATTR_ST_PLTB_ORGDST_PTR pp2 ) {
   assert( pp1 );
   assert( pp2 );
-  assert( pp1->kind == ST_PLTB_PAIR );
-  assert( pp2->kind == ST_PLTB_PAIR );
+  assert( pp1->kind == PAR_ST_PLTB_ORGDST );
+  assert( pp2->kind == PAR_ST_PLTB_ORGDST );
   BOOL r = FALSE;
   
   if( ! eq_st_pltb( &pp1->st_pltb_org, &pp2->st_pltb_org ) )
@@ -125,11 +125,11 @@ BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_PAIR_PTR pp1, ATTR_ST_PLTB_PAIR_PTR pp2 ) {
   return r;
 }
 
-static BOOL ident_trips ( ATTR_ST_PLTB_PAIR_PTR pt1, ATTR_ST_PLTB_PAIR_PTR pt2 ) {
+static BOOL ident_trips ( ATTR_ST_PLTB_ORGDST_PTR pt1, ATTR_ST_PLTB_ORGDST_PTR pt2 ) {
   assert( pt1 );
   assert( pt2 );
-  assert( pt1->kind == ST_PLTB_PAIR );
-  assert( pt2->kind == ST_PLTB_PAIR );
+  assert( pt1->kind == PAR_ST_PLTB_ORGDST );
+  assert( pt2->kind == PAR_ST_PLTB_ORGDST );
   
   BOOL r = FALSE;
   r = eq_st_pltb_pair( pt1, pt2 );
@@ -140,15 +140,15 @@ static BOOL ident_trips ( ATTR_ST_PLTB_PAIR_PTR pt1, ATTR_ST_PLTB_PAIR_PTR pt2 )
 ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip ) {
   assert( preg_tbl );
   assert( ptrip );
-  assert( preg_tbl->kind == TRIPS );
-  assert( ptrip->attr_st_pltb_orgdst.kind == ST_PLTB_PAIR );
+  assert( preg_tbl->kind == PAR_TRIPS );
+  assert( ptrip->attr_st_pltb_orgdst.kind == PAR_ST_PLTB_ORGDST );
   BOOL ovw = FALSE;
   ATTR_TRIP_PTR r = NULL;
   
   int i;  
   for( i = 0; i < preg_tbl->ntrips; i++ ) {
     assert( i < preg_tbl->ntrips );
-    assert( preg_tbl->trip_prof[i].attr_st_pltb_orgdst.kind == ST_PLTB_PAIR );
+    assert( preg_tbl->trip_prof[i].attr_st_pltb_orgdst.kind == PAR_ST_PLTB_ORGDST );
     if( ! ident_trips( &preg_tbl->trip_prof[i].attr_st_pltb_orgdst, &ptrip->attr_st_pltb_orgdst ) ) {
       if( pobsolete ) {
 	*pobsolete = preg_tbl->trip_prof[i];
@@ -177,15 +177,15 @@ ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, A
 ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev_asgn, ATTR_RJ_ASGN_PTR pasgn ) {
   assert( preg_tbl );
   assert( pasgn );
-  assert( preg_tbl->kind == RJ_ASGNS );
-  assert( pasgn->kind == RJ_ASGN );
+  assert( preg_tbl->kind == PAR_RJ_ASGNS );
+  assert( pasgn->kind == PAR_RJ_ASGN );
   BOOL ovw = FALSE;
   ATTR_RJ_ASGN_PTR r = NULL;
   
   int i;
   for( i = 0; i < preg_tbl->nasgns; i++ ) {
     assert( i < preg_tbl->nasgns );
-    assert( preg_tbl->rj_asgn[i].kind == RJ_ASGN );
+    assert( preg_tbl->rj_asgn[i].kind == PAR_RJ_ASGN );
     if( preg_tbl->rj_asgn[i].journey_id.jid == pasgn->journey_id.jid ) {
       if( pprev_asgn ) {
 	*pprev_asgn = preg_tbl->rj_asgn[i];
@@ -259,19 +259,19 @@ ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, ATT
 #else
 ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, SRC_POS_PTR ppos, ATTR_TRIP_PTR ptrip ) {
   assert( preg_tbl );
-  assert( preg_tbl->kind == JOURNEYS );
+  assert( preg_tbl->kind == PAR_JOURNEYS );
   assert( (jid >= 1) && (jid <= MAX_JOURNEYS) );
   assert( ppos );
-  assert( ptrip->kind == TRIP );
+  assert( ptrip->kind == PAR_TRIP );
   assert( ptrip );
-  assert( ptrip->kind == TRIP );
+  assert( ptrip->kind == PAR_TRIP );
   
   ATTR_JOURNEY_PTR pJ = &preg_tbl->journey_prof[jid];
   assert( pJ );
   int nts = pJ->trips.ntrips;  
-  if( pJ->kind == JOURNEY ) {
+  if( pJ->kind == PAR_JOURNEY ) {
     assert( pJ->journey_id.jid == jid );
-    assert( pJ->trips.kind == TRIPS );
+    assert( pJ->trips.kind == PAR_TRIPS );
     assert( nts > 0 );
     if( nts < MAX_TRIPS ) {
       if( ! next2_pred( &pJ->trips.trip_prof[nts - 1], ptrip ) )
@@ -285,10 +285,10 @@ ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, SRC
   } else {
     assert( ! pJ->kind );
     assert( nts == 0 );
-    pJ->kind = JOURNEY;
+    pJ->kind = PAR_JOURNEY;
     pJ->journey_id.jid = jid;
     pJ->journey_id.pos = *ppos;
-    pJ->trips.kind = TRIPS;
+    pJ->trips.kind = PAR_TRIPS;
     pJ->trips.trip_prof[nts] = *ptrip;
     pJ->trips.ntrips = 1;
     
@@ -301,26 +301,26 @@ void emit_ars_schcmds( void ) {
   ;
 }
 
-static BOOL chk_st_pltb_pair_cons ( ATTR_ST_PLTB_PAIR_PTR ppair ) {
+static BOOL chk_st_pltb_pair_cons ( ATTR_ST_PLTB_ORGDST_PTR ppair ) {
   assert( ppair );
-  assert( ppair->kind == ST_PLTB_PAIR );
+  assert( ppair->kind == PAR_ST_PLTB_ORGDST );
   BOOL r = FALSE;
   
-  assert( ppair->st_pltb_org.kind == ST_PLTB );
-  assert( ppair->st_pltb_dst.kind == ST_PLTB );
+  assert( ppair->st_pltb_org.kind == PAR_ST_PLTB );
+  assert( ppair->st_pltb_dst.kind == PAR_ST_PLTB );
   
   return r;
 }
 
 static BOOL chk_trips_consist( ATTR_TRIPS_PTR ptrips ) {
   assert( ptrips );
-  assert( ptrips->kind == TRIPS );
+  assert( ptrips->kind == PAR_TRIPS );
   BOOL r = FALSE;
   
   int i;
   assert( ptrips->ntrips >= 0 );
   for( i = 0; i < ptrips->ntrips; i++ ) {
-    assert( ptrips->trip_prof[i].kind == TRIP );
+    assert( ptrips->trip_prof[i].kind == PAR_TRIP );
     chk_st_pltb_pair_cons( &ptrips->trip_prof[i].attr_st_pltb_orgdst );
     ;
   }
@@ -366,9 +366,9 @@ int main ( void ) {
     printf( "memory allocation failed.\n" );
     return r;
   }
-  timetable_symtbl->trips_regtbl.kind = UNKNOWN;
-  timetable_symtbl->rj_asgn_regtbl.kind = UNKNOWN;
-  timetable_symtbl->journeys_regtbl.kind = UNKNOWN;
+  timetable_symtbl->trips_regtbl.kind = PAR_UNKNOWN;
+  timetable_symtbl->rj_asgn_regtbl.kind = PAR_UNKNOWN;
+  timetable_symtbl->journeys_regtbl.kind = PAR_UNKNOWN;
   
   r = ttcreat();
   return r;

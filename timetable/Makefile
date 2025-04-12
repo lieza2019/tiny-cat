@@ -43,7 +43,7 @@ lex.yy.c : ttcreat_lex.l ttcreat.h
 ttcreat.o : ttcreat.c ttcreat.h
 	$(CC) $(CFLAGS) $<
 
-ttcreat.h : ttcreat_def.h ../$(TINY_LIB_NAME)
+ttcreat.h : ttcreat_def.h ttcreat_par.h ../$(TINY_LIB_NAME)
 	$(TOUCH) $@
 
 .PHONY : clean

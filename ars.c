@@ -24,7 +24,7 @@ char *cnv2abb_ars_command ( char *abb, ARS_SCHEDULED_CMD cmd ) {
   int i;
   const struct {
     ARS_SCHEDULED_CMD cmd;
-    char *abb
+    char *abb;
   } lkup[] = {
     {ARS_SCHEDULED_ROUTESET, "Set"},
     {ARS_SCHEDULED_ROUTEREL, "Rel"},

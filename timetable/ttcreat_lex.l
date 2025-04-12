@@ -11,7 +11,7 @@ int yywrap( void ) {
   return 1;
 }
 
-static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin, const char *psec ) {
+static BOOL chk_time ( TINY_TIME_DESC_PTR ptime, const char *phour, const char *pmin, const char *psec ) {
   assert( ptime );
   assert( phour );
   assert( pmin );
@@ -31,8 +31,8 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
       sec = atoi( psec );
       if( (sec >= 0) && (sec <= 59) ) {
 	ptime->hour = hour;
-	ptime->min = min;
-	ptime->sec = sec;
+	ptime->minute = min;
+	ptime->second = sec;
 	r = TRUE;
       }
     }
@@ -172,15 +172,15 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
   /* {(0|1|2)[0-9]":"[0-5][0-9]":"[0-5][0-9] */  
   assert( (yytext[2] == ':') && (yytext[5] == ':') );
   assert( strlen(yytext) == 8 );
-  ATTR_TIME time = {-1, -1, -1};
+  TINY_TIME_DESC time = {-1, -1, -1, -1, -1, -1};
   yytext[2] = 0;
   yytext[5] = 0;
   yylloc.first_column += 8;
   if( chk_time( &time, yytext, &yytext[3], &yytext[6] ) ) { 
     assert( (time.hour >= 0) && (time.hour <= 23) );
-    assert( (time.min >= 0) && (time.min <= 59) );
-    assert( (time.sec >= 0) && (time.sec <= 59) );
-    yylval.attr_time = time;
+    assert( (time.minute >= 0) && (time.minute <= 59) );
+    assert( (time.second >= 0) && (time.second <= 59) );
+    yylval.attr_time.t = time;
     return TK_TIME;
   } else
     printf( "invalid time specifier, %s:%s:%s.\n", yytext, &yytext[3], &yytext[6] );
@@ -208,7 +208,7 @@ static BOOL chk_time ( ATTR_TIME_PTR ptime, const char *phour, const char *pmin,
 
 ("S"|"VS")[0-9][0-9][0-9][A-Z]"_"("S"|"VS")[0-9][0-9][0-9][A-Z] {  
   yylloc.first_column += strlen( yytext );
-  yylval.attr_route.kind = ROUTE;
+  yylval.attr_route.kind = PAR_ROUTE;
   strncpy( yylval.attr_route.name, yytext, MAX_ROUTENAME_LEN );
   return TK_ROUTE;
  }

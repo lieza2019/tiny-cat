@@ -8,34 +8,6 @@
 #include "train_cmd.h"
 #include "train_info.h"
 
-#if 0 // *****
-typedef enum SC_ID {
-  SC801,
-  SC802,
-  SC803,
-  SC804,
-  SC805,
-  SC806,
-  SC807,
-  SC808,
-  SC809,
-  SC810,
-  SC811,
-  SC812,
-  SC813,
-  SC814,
-  SC815,
-  SC816,
-  SC817,
-  SC818,
-  SC819,
-  SC820,
-  SC821,
-  END_OF_SCs
-} SC_ID;
-#define SC_ID_CONV_2_INT( sc_id ) ((sc_id) + 801)
-#endif
-
 #include "train_ctrl.h"
 
 #define UDP_BCAST_RECV_PORT_SC801_Train_command 55143
