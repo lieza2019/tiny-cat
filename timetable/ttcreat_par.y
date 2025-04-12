@@ -13,6 +13,7 @@ static struct {
   SRC_POS pos;
 } journey_id_w = {-1};
 ATTR_TIMETABLE timetable_symtbl = {{UNKNOWN}, {UNKNOWN}, {UNKNOWN}};
+ATTR_TIMETABLE1 timetable_symtbl1 = { NULL, NULL, NULL };
 
 static BOOL dirty;
 ERR_STAT err_stat;
