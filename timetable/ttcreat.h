@@ -195,6 +195,7 @@ typedef struct attr_timetable {
   ATTR_JOURNEYS journeys_regtbl;
 } ATTR_TIMETABLE, *ATTR_TIMETABLE_PTR;
 extern ATTR_TIMETABLE_PTR timetable_symtbl;
+
 #include "ttcreat_def.h"
 
 extern BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 );

@@ -313,9 +313,9 @@ static BOOL chk_st_pltb_pair_cons ( ATTR_ST_PLTB_PAIR_PTR ppair ) {
 }
 
 static BOOL chk_trips_consist( ATTR_TRIPS_PTR ptrips ) {
-  BOOL r = FALSE;
   assert( ptrips );
   assert( ptrips->kind == TRIPS );
+  BOOL r = FALSE;
   
   int i;
   assert( ptrips->ntrips >= 0 );
@@ -352,8 +352,8 @@ static int ttcreat ( void ) {
     printf( "terminated with fatal errors.\n" );
     r = 1;
   } else {
-    // chk_trips_consist( &timetable_symtbl.trips_regtbl );
     chk_trips_consist( &timetable_symtbl->trips_regtbl );
+    ;
   }
   return r;
 }
