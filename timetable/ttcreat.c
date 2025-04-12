@@ -353,7 +353,7 @@ static int ttcreat ( void ) {
     r = 1;
   } else {
     // chk_trips_consist( &timetable_symtbl.trips_regtbl );
-    chk_trips_consist( &timetable_symtbl1->trips_regtbl );
+    chk_trips_consist( &timetable_symtbl->trips_regtbl );
   }
   return r;
 }
@@ -361,14 +361,14 @@ static int ttcreat ( void ) {
 int main ( void ) {
   int r = -1;
   
-  timetable_symtbl1 = (ATTR_TIMETABLE_PTR)calloc( sizeof(ATTR_TIMETABLE), 1 );
-  if( !timetable_symtbl1 ) {
+  timetable_symtbl = (ATTR_TIMETABLE_PTR)calloc( sizeof(ATTR_TIMETABLE), 1 );
+  if( !timetable_symtbl ) {
     printf( "memory allocation failed.\n" );
     return r;
   }
-  timetable_symtbl1->trips_regtbl.kind = UNKNOWN;
-  timetable_symtbl1->rj_asgn_regtbl.kind = UNKNOWN;
-  timetable_symtbl1->journeys_regtbl.kind = UNKNOWN;
+  timetable_symtbl->trips_regtbl.kind = UNKNOWN;
+  timetable_symtbl->rj_asgn_regtbl.kind = UNKNOWN;
+  timetable_symtbl->journeys_regtbl.kind = UNKNOWN;
   
   r = ttcreat();
   return r;

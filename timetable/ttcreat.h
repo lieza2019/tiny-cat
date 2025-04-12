@@ -194,16 +194,7 @@ typedef struct attr_timetable {
   ATTR_RJ_ASGNS rj_asgn_regtbl;
   ATTR_JOURNEYS journeys_regtbl;
 } ATTR_TIMETABLE, *ATTR_TIMETABLE_PTR;
-extern ATTR_TIMETABLE timetable_symtbl;
-extern ATTR_TIMETABLE_PTR timetable_symtbl1;
-#if 0
-typedef struct attr_timetable1 {
-  ATTR_TRIPS_PTR trips_regtbl;
-  ATTR_RJ_ASGNS_PTR rj_asgn_regtbl;
-  ATTR_JOURNEYS_PTR journeys_regtbl;
-} ATTR_TIMETABLE1, *ATTR_TIMETABLE1_PTR;
-extern ATTR_TIMETABLE1 timetable_symtbl1;
-#endif
+extern ATTR_TIMETABLE_PTR timetable_symtbl;
 #include "ttcreat_def.h"
 
 extern BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 );

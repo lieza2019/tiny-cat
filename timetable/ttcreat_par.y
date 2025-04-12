@@ -15,7 +15,7 @@ static struct {
 #if 0
 ATTR_TIMETABLE timetable_symtbl = {{UNKNOWN}, {UNKNOWN}, {UNKNOWN}};
 #endif
-ATTR_TIMETABLE_PTR timetable_symtbl1 = NULL;
+ATTR_TIMETABLE_PTR timetable_symtbl = NULL;
 
 static BOOL dirty;
 ERR_STAT err_stat;
@@ -137,15 +137,15 @@ static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
   
   if( ptrip->kind == TRIP ) {
     ATTR_TRIP_PTR p = NULL;
-    if( timetable_symtbl1->trips_regtbl.ntrips == 0 ) {
-      p = reg_trip_def( &timetable_symtbl1->trips_regtbl, NULL, ptrip );
+    if( timetable_symtbl->trips_regtbl.ntrips == 0 ) {
+      p = reg_trip_def( &timetable_symtbl->trips_regtbl, NULL, ptrip );
       if( p != ptrip ) {
 	printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
 	exit( 1 );
       }
     } else {
       ATTR_TRIP drop = {};
-      p = reg_trip_def( &timetable_symtbl1->trips_regtbl, &drop, ptrip );
+      p = reg_trip_def( &timetable_symtbl->trips_regtbl, &drop, ptrip );
       if( p != ptrip ) {
 	assert( p == &drop );
 	assert( p->kind == TRIP );
@@ -163,15 +163,15 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
   
   if( prj_asgn->kind == RJ_ASGN ) {
     ATTR_RJ_ASGN_PTR p = NULL;
-    if( timetable_symtbl1->rj_asgn_regtbl.nasgns == 0 ) {    
-      p = reg_rjasgn( &timetable_symtbl1->rj_asgn_regtbl, NULL, prj_asgn );
+    if( timetable_symtbl->rj_asgn_regtbl.nasgns == 0 ) {    
+      p = reg_rjasgn( &timetable_symtbl->rj_asgn_regtbl, NULL, prj_asgn );
       if( p != prj_asgn ) {
 	printf( "FATAL: INTERNAL-error, in rake-journey assignment registration, giving up.\n" );
 	exit( 1 );
       }
     } else {
       ATTR_RJ_ASGN drop = {};
-      p = reg_rjasgn( &timetable_symtbl1->rj_asgn_regtbl, &drop, prj_asgn );
+      p = reg_rjasgn( &timetable_symtbl->rj_asgn_regtbl, &drop, prj_asgn );
       if( p != prj_asgn ) {
 	assert( p == &drop );
 	assert( p->kind == RJ_ASGN );
@@ -280,11 +280,11 @@ timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
     printf( "journeys:\n" );    
     {
       const int nspc_indent = 2;
-      assert( timetable_symtbl1->journeys_regtbl.kind == JOURNEYS );
+      assert( timetable_symtbl->journeys_regtbl.kind == JOURNEYS );
       int i, j;
-      for( i = 0, j = 0;i < timetable_symtbl1->journeys_regtbl.njourneys; i++, j++ ) {
+      for( i = 0, j = 0;i < timetable_symtbl->journeys_regtbl.njourneys; i++, j++ ) {
 	while( j < MAX_JOURNEYS ) {
-	  ATTR_JOURNEY_PTR p = &timetable_symtbl1->journeys_regtbl.journey_prof[j];
+	  ATTR_JOURNEY_PTR p = &timetable_symtbl->journeys_regtbl.journey_prof[j];
 	  assert( p );
 	  if( p->journey_id.jid > 0 ) {
 	    assert( p->kind == JOURNEY );
@@ -321,40 +321,40 @@ timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
 */
 journeys_decl : TK_JOURNEYS ':' /* empty journies */ {
   assert( journey_id_w.jid_w < 0 );
-  assert( timetable_symtbl1->journeys_regtbl.kind == UNKNOWN );
-  assert( timetable_symtbl1->journeys_regtbl.njourneys == 0 );
-  timetable_symtbl1->journeys_regtbl.kind = JOURNEYS;
-  $$ = &timetable_symtbl1->journeys_regtbl;
+  assert( timetable_symtbl->journeys_regtbl.kind == UNKNOWN );
+  assert( timetable_symtbl->journeys_regtbl.njourneys == 0 );
+  timetable_symtbl->journeys_regtbl.kind = JOURNEYS;
+  $$ = &timetable_symtbl->journeys_regtbl;
 }
               | journeys_decl journey_definition {
   assert( journey_id_w.jid_w > 0 );
-  assert( timetable_symtbl1->journeys_regtbl.kind == JOURNEYS );
-  timetable_symtbl1->journeys_regtbl.njourneys++;
+  assert( timetable_symtbl->journeys_regtbl.kind == JOURNEYS );
+  timetable_symtbl->journeys_regtbl.njourneys++;
   {
-    int n = timetable_symtbl1->journeys_regtbl.njourneys;
+    int n = timetable_symtbl->journeys_regtbl.njourneys;
     assert( n > 0 );
     int i;
     for( i = 0; i < MAX_JOURNEYS; i++ ) {
       assert( n >= 0 );
-      if( timetable_symtbl1->journeys_regtbl.journey_prof[i].journey_id.jid > 0 ) {
-	assert( timetable_symtbl1->journeys_regtbl.journey_prof[i].kind == JOURNEY );
+      if( timetable_symtbl->journeys_regtbl.journey_prof[i].journey_id.jid > 0 ) {
+	assert( timetable_symtbl->journeys_regtbl.journey_prof[i].kind == JOURNEY );
 	n--;
       }
     }
     assert( n == 0 );
   }
   journey_id_w.jid_w = -1;
-  $$ = &timetable_symtbl1->journeys_regtbl;  
+  $$ = &timetable_symtbl->journeys_regtbl;  
  }
 ;
 journey_definition : journey_ident ':' trips_journey {
   assert( journey_id_w.jid_w == $1 );
-  assert( &timetable_symtbl1->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips == $3 );
-  if( timetable_symtbl1->journeys_regtbl.journey_prof[journey_id_w.jid_w].journey_id.jid == journey_id_w.jid_w )
-    timetable_symtbl1->journeys_regtbl.journey_prof[journey_id_w.jid_w].kind = JOURNEY;
+  assert( &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips == $3 );
+  if( timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].journey_id.jid == journey_id_w.jid_w )
+    timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].kind = JOURNEY;
   else
-    timetable_symtbl1->journeys_regtbl.journey_prof[journey_id_w.jid_w].kind = UNKNOWN;
-  $$ = &timetable_symtbl1->journeys_regtbl.journey_prof[journey_id_w.jid_w];
+    timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].kind = UNKNOWN;
+  $$ = &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w];
  }
 ;
 journey_ident : TK_JOURNEY_ID {
@@ -368,32 +368,32 @@ journey_ident : TK_JOURNEY_ID {
 ;
 trips_journey : /* empty trips */ {
   assert( journey_id_w.jid_w > -1 );
-  $$ = &timetable_symtbl1->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
+  $$ = &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
   assert( $$->ntrips == 0 );
 }
               | trips_journey trip_journey ';' {
   assert( journey_id_w.jid_w > -1 );
   if( $2.kind == TRIP ) {
-    assert( $1 == &timetable_symtbl1->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips );
+    assert( $1 == &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips );
     ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
     ATTR_TRIP_PTR preg = NULL;
     $2.kind = TRIP;
-    preg = reg_trip_journey( &timetable_symtbl1->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
+    preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
     assert( pnxt == preg );    
   }
-  $$ = &timetable_symtbl1->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
+  $$ = &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
  }
               | trips_journey trip_journey error ';' {
   assert( journey_id_w.jid_w > -1 );
   if( $2.kind == TRIP ) {
-    assert( $1 == &timetable_symtbl1->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips );
+    assert( $1 == &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips );
     ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
     ATTR_TRIP_PTR preg = NULL;
     $2.kind = TRIP;
-    preg = reg_trip_journey( &timetable_symtbl1->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
+    preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
     assert( pnxt == preg );
   }
-  $$ = &timetable_symtbl1->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
+  $$ = &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
  }
 ;
 
@@ -1135,8 +1135,8 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
 */
 ;
 trips_definition : /* empty journies */ {
-  timetable_symtbl1->trips_regtbl.kind = TRIPS;
-  $$ = &timetable_symtbl1->trips_regtbl;
+  timetable_symtbl->trips_regtbl.kind = TRIPS;
+  $$ = &timetable_symtbl->trips_regtbl;
   assert( $$->ntrips == 0 );
 }
                  | trips_definition trip_def ';'{
@@ -1144,7 +1144,7 @@ trips_definition : /* empty journies */ {
   if( $2.kind == TRIP ) {
     reg_trip( &$2 );
   }
-  $$ = &timetable_symtbl1->trips_regtbl;
+  $$ = &timetable_symtbl->trips_regtbl;
  }
                  | trips_definition trip_def error ';' {
   assert( $1->kind == TRIPS );
@@ -1155,7 +1155,7 @@ trips_definition : /* empty journies */ {
   if( $2.kind == TRIP ) {
     reg_trip( &$2 );
   }
-  $$ = &timetable_symtbl1->trips_regtbl;
+  $$ = &timetable_symtbl->trips_regtbl;
  }
 ;
 /* e.g. (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B}) */
@@ -1557,7 +1557,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
     printf( "FATAL: syntax-error, no rake-journey assignments declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_rake_journey_asgnmnts_decl = TRUE;
   }
-  $$ = &timetable_symtbl1->rj_asgn_regtbl;
+  $$ = &timetable_symtbl->rj_asgn_regtbl;
   /* yyclearin; */
  }
                            | TK_KEY_ASSIGNMENTS error {
@@ -1565,7 +1565,7 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
     printf( "FATAL: syntax-error, incomplete rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.err_rake_journey_asgnmnts_decl = TRUE;
   }
-  $$ = &timetable_symtbl1->rj_asgn_regtbl;
+  $$ = &timetable_symtbl->rj_asgn_regtbl;
   /* yyclearin; */
  }
 /* reduce/reduce confliction arises with the rule-> | error, of rj_asgn as below.
@@ -1579,8 +1579,8 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
  } */
 ;
 rake_journey_asgnmnts : /* empty journies */ {
-  timetable_symtbl1->rj_asgn_regtbl.kind = RJ_ASGNS;
-  $$ = &timetable_symtbl1->rj_asgn_regtbl;
+  timetable_symtbl->rj_asgn_regtbl.kind = RJ_ASGNS;
+  $$ = &timetable_symtbl->rj_asgn_regtbl;
   assert( $$->nasgns == 0 );
  }
                       | rake_journey_asgnmnts rj_asgn ';' {
@@ -1588,7 +1588,7 @@ rake_journey_asgnmnts : /* empty journies */ {
   if( $2.kind == RJ_ASGN ) {
     reg_rake_journey_asgn( &$2 );
   }
-  $$ = &timetable_symtbl1->rj_asgn_regtbl;
+  $$ = &timetable_symtbl->rj_asgn_regtbl;
  }
                       | rake_journey_asgnmnts rj_asgn error ';' {
   assert( $1->kind == RJ_ASGNS );
@@ -1599,7 +1599,7 @@ rake_journey_asgnmnts : /* empty journies */ {
   if( $2.kind == RJ_ASGN ) {
     reg_rake_journey_asgn( &$2 );
   }
-  $$ = &timetable_symtbl1->rj_asgn_regtbl;
+  $$ = &timetable_symtbl->rj_asgn_regtbl;
  }
 ;
 rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
