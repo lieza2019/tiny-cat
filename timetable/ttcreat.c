@@ -5,6 +5,8 @@
 #include "../generic.h"
 #include "ttcreat.h"
 
+TIMETABLE_DATASET timetbl_dataset;
+
 char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen ) {
   assert( pstr );
   assert( buflen > 0 );
@@ -301,15 +303,123 @@ void emit_ars_schcmds( void ) {
   ;
 }
 
-static BOOL chk_st_pltb_pair_cons ( ATTR_ST_PLTB_ORGDST_PTR ppair ) {
-  assert( ppair );
-  assert( ppair->kind == PAR_ST_PLTB_ORGDST );
-  BOOL r = FALSE;
+static TRIP_DESC_PTR chk_st_pltb_pair_cons ( ATTR_ST_PLTB_ORGDST_PTR pattr_orgdst ) {
+  assert( pattr_orgdst );
+  assert( pattr_orgdst->kind == PAR_ST_PLTB_ORGDST );
+  TRIP_DESC_PTR r = NULL;
   
-  assert( ppair->st_pltb_org.kind == PAR_ST_PLTB );
-  assert( ppair->st_pltb_dst.kind == PAR_ST_PLTB );
+  assert( pattr_orgdst->st_pltb_org.kind == PAR_ST_PLTB );
+  assert( pattr_orgdst->st_pltb_dst.kind == PAR_ST_PLTB );
+  ST_ID st_org = END_OF_ST_ID;
+  ST_ID st_dst = END_OF_ST_ID;    
+  PLTB_ID pltb_org = END_OF_PLTB_ID;
+  PLTB_ID pltb_dst = END_OF_PLTB_ID;
   
+  st_org = ttc_cnv2_st_id( pattr_orgdst->st_pltb_org.st.name );
+  pltb_org = ttc_cnv2_pltb_id( pattr_orgdst->st_pltb_org.pltb.id );
+  assert( st_org != END_OF_ST_ID );
+  assert( pltb_org != END_OF_PLTB_ID );
+  
+  st_dst = ttc_cnv2_st_id( pattr_orgdst->st_pltb_dst.st.name );
+  pltb_dst = ttc_cnv2_pltb_id( pattr_orgdst->st_pltb_dst.pltb.id );
+  assert( st_dst != END_OF_ST_ID );
+  assert( pltb_dst != END_OF_PLTB_ID );
+  {
+    BOOL ovwt = FALSE;
+    int i;
+    assert( timetbl_dataset.trips_decl.num_trips <= MAX_TRIPS );
+    for( i = 0; i < MAX_TRIPS; i++ ) {
+      assert( i < MAX_TRIPS );
+      if( i >= timetbl_dataset.trips_decl.num_trips ) {
+	assert( (int)(timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.org.st) == 0 );
+	break;
+      } else {
+	assert( i < timetbl_dataset.trips_decl.num_trips );
+	assert( (int)(timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.org.st) > 0 );
+	if( ((timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.org.st == st_org) && (timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.org.pltb == pltb_org)) &&
+	    ((timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.dst.st == st_dst) && (timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.dst.pltb == pltb_dst)) ) {
+	  ovwt = TRUE;
+	  break;
+	}
+      }
+    }
+    if( i < MAX_TRIPS ) {
+      r = &timetbl_dataset.trips_decl.trips[i];
+      assert( timetbl_dataset.trips_decl.num_trips < MAX_TRIPS );
+      if( ovwt ) {
+	assert( i < timetbl_dataset.trips_decl.num_trips );
+	assert( (int)(r->st_pltb_orgdst.org.st) > 0 );
+	printf( "NOTICE: trip definition overridden at (LINE, COL) = (%d, %d).\n", pattr_orgdst->st_pltb_org.st.pos.row, pattr_orgdst->st_pltb_org.st.pos.col );
+      } else {
+	assert( i == timetbl_dataset.trips_decl.num_trips );
+	assert( (int)(r->st_pltb_orgdst.org.st) == 0 );
+	timetbl_dataset.trips_decl.num_trips++;
+      }
+    } else {
+      assert( timetbl_dataset.trips_decl.num_trips == MAX_TRIPS );
+      printf( "FATAL: memory exthausted on trip registration.\n" );
+    }
+  }
   return r;
+}
+
+static SP_ORGDST_PAIR_PTR chk_sp_orgdst_cons ( SP_ORGDST_PAIR_PTR ptrip_sps, ATTR_SP_PAIR_PTR pattr_sps ) {
+  assert( ptrip_sps );
+  assert( pattr_sps );
+  assert( pattr_sps->kind == PAR_SP_PAIR );
+  STOPPING_POINT_CODE sp_org = END_OF_SPs;
+  STOPPING_POINT_CODE sp_dst = END_OF_SPs;
+  
+  sp_org = ttc_cnv2_sp_code( pattr_sps->org.sp_id );
+  sp_dst = ttc_cnv2_sp_code( pattr_sps->dst.sp_id );
+  assert( sp_org != END_OF_SPs );
+  assert( sp_dst != END_OF_SPs );
+  ptrip_sps->sp_org = sp_org;
+  ptrip_sps->sp_dst = sp_dst;
+  
+  return ptrip_sps;
+}
+
+static ROUTE_PTR lkup_route_prof ( ATTR_ROUTE_PTR pattr_routes ) {
+  ROUTE_PTR pprof = NULL;
+  return pprof;
+}
+
+static int chk_trip_routes_cons ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR pattr_routes ) {
+  assert( ptrip_routes );
+  assert( pattr_routes );
+  int nroutes = -1;
+  
+  BOOL err = FALSE;
+  int i;
+  assert( pattr_routes->nroutes <= MAX_TRIP_ROUTES );
+  for( i = 0; (i < MAX_TRIP_ROUTES) && !err; i++ ) {
+    assert( i < MAX_TRIP_ROUTES );
+    if( i >= pattr_routes->nroutes ) {
+      assert( ! ptrip_routes[i].pprof );   
+      break;
+    } else {
+      ROUTE_PTR pprof = NULL;      
+      pprof = lkup_route_prof( &pattr_routes->route_prof[i] );
+      if( pprof ) {
+	int j;
+	for( j = 0; j < i; j++ )
+	  if( ptrip_routes[j].pprof == pprof ) {
+	    printf( "FATAL: route redefinition in trip declaration at at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
+	    err = TRUE;
+	    break;
+	  }
+	;
+	nroutes = (nroutes < 0) ? 1 : (assert( nroutes >= 1), nroutes + 1);
+      } else {
+	printf( "FATAL: undefined route found in trip declaration at at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
+	err = TRUE;
+      }
+    }
+  }
+  if( nroutes > 0 )
+    nroutes *= (err ? -1 : 1);
+  return nroutes;
 }
 
 static BOOL chk_trips_consist( ATTR_TRIPS_PTR ptrips ) {
@@ -321,7 +431,15 @@ static BOOL chk_trips_consist( ATTR_TRIPS_PTR ptrips ) {
   assert( ptrips->ntrips >= 0 );
   for( i = 0; i < ptrips->ntrips; i++ ) {
     assert( ptrips->trip_prof[i].kind == PAR_TRIP );
-    chk_st_pltb_pair_cons( &ptrips->trip_prof[i].attr_st_pltb_orgdst );
+    TRIP_DESC_PTR pT = NULL;
+    pT = chk_st_pltb_pair_cons( &ptrips->trip_prof[i].attr_st_pltb_orgdst );
+    if( pT ) {
+      int nroutes = -1;
+      chk_sp_orgdst_cons( &pT->sp_orgdst, &ptrips->trip_prof[i].attr_sp_orgdst );
+      nroutes = chk_trip_routes_cons( pT->routes, &ptrips->trip_prof[i].attr_route_ctrl );
+      assert( nroutes > -1 );
+      pT->num_routes = nroutes;
+    }
     ;
   }
   return r;

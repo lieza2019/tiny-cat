@@ -23,7 +23,7 @@ TINY_LIB_NAME = libtiny.a
 TINY_EXE_NAME = tiny-cat
 TTCREAT_EXE_NAME = ttcreat
 
-ttcreat : y.tab.o lex.yy.o ttcreat.o ../$(TINY_LIB_NAME)
+ttcreat : y.tab.o lex.yy.o ttcreat.o ttcreat_def.o ../$(TINY_LIB_NAME)
 	$(LD) -o $(TTCREAT_EXE_NAME) $^
 ../$(TINY_LIB_NAME) :
 	$(CD) ../; $(MAKE)
@@ -41,6 +41,9 @@ lex.yy.c : ttcreat_lex.l ttcreat.h
 	$(LEX) $(LFLAGS) $<
 
 ttcreat.o : ttcreat.c ttcreat.h
+	$(CC) $(CFLAGS) $<
+
+ttcreat_def.o : ttcreat_def.c ttcreat.h
 	$(CC) $(CFLAGS) $<
 
 ttcreat.h : ttcreat_def.h ttcreat_par.h ../$(TINY_LIB_NAME)

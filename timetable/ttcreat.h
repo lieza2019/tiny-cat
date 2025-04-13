@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #include "../generic.h"
 #include "../cbtc.h"
 #include "../interlock.h"
@@ -35,16 +37,18 @@ typedef struct st_pltb_orgdst {
 typedef struct sp_orgdst_pair {
   STOPPING_POINT_CODE sp_org;
   STOPPING_POINT_CODE sp_dst;
-} SP_ORGDST_PAIR;
+} SP_ORGDST_PAIR, *SP_ORGDST_PAIR_PTR;
 
-typedef struct trip_def {
+typedef struct routes_assoc {
+  IL_SYM id;
+  ROUTE_PTR pprof;
+} ROUTE_ASSOC, *ROUTE_ASSOC_PTR;
+typedef struct trip_desc {
   ST_PLTB_ORGDST st_pltb_orgdst;
   SP_ORGDST_PAIR sp_orgdst;
-  struct {
-    IL_SYM id;
-    ROUTE_PTR pprof;
-  } routes[MAX_TRIP_ROUTES];
-} TRIP_DESC;
+  int num_routes;
+  ROUTE_ASSOC routes[MAX_TRIP_ROUTES];
+} TRIP_DESC, *TRIP_DESC_PTR;
 
 typedef struct {
   ST_PLTB_ORGDST st_pltb_orgdst;
@@ -58,9 +62,15 @@ typedef struct {
   CREW_ID crew_id;
 } JOURNEY_TRIP;
 
-typedef struct t {
-  TRIP_DESC trips_decl[MAX_TRIPS];
+typedef struct timetable_dataset {
+  struct {
+    int num_trips;
+    TRIP_DESC trips[MAX_TRIPS];
+  } trips_decl;
   RAKE_JOURNEY_ASGN rjasgns[MAX_RJ_ASGNMENTS];
   JOURNEY_TRIP journey_trips[MAX_TRIPS];
-} T;
+} TIMETABLE_DATASET, *TIMETABLE_DATASET_PTR;
+TIMETABLE_DATASET timetbl_dataset;
+extern TIMETABLE_DATASET timetbl_dataset;
+
 #include "ttcreat_par.h"

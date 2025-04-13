@@ -63,7 +63,7 @@ SCHEDULED_COMMAND trial_scheduled_commands_3[] = {
   {1, ARS_SCHEDULED_ARRIVAL, { .sch_arriv = {14, SP_79, {05, 03, 00, 2025, 01, 04}} }},
   {3, END_OF_SCHEDULED_CMDS}
 };
-TIMETABLE trial_timetable = {
+ONLINE_TIMETABLE trial_timetable = {
   3,
   { {{TRUE, 1, {05, 00, 00, 2025, 01, 04}, {trial_scheduled_commands_1, &trial_scheduled_commands_1[1]}}},
     {{TRUE, 2, {05, 00, 00, 2025, 01, 04}, {trial_scheduled_commands_2, trial_scheduled_commands_2}}},
@@ -71,5 +71,5 @@ TIMETABLE trial_timetable = {
   }
 };
 #else
-extern TIMETABLE trial_timetable;
+extern ONLINE_TIMETABLE trial_timetable;
 #endif // TIMETABLE_C

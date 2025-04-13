@@ -265,7 +265,7 @@ static SCHEDULED_COMMAND_C_PTR next_arrcmd ( ARS_REASONS *pres, BOOL *pss, SCHED
   return p;
 }
 
-ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp ) {
+ARS_REASONS ars_atodept_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp ) {
   assert( pTT );
   assert( pJ );
   assert( pev_sp );
@@ -1115,7 +1115,7 @@ static SCHEDULED_COMMAND_PTR make_it_past ( JOURNEY_PTR pJ, SCHEDULED_COMMAND_PT
   return ( pJ->scheduled_commands.pNext );
 }
 
-ARS_REASONS ars_routectl_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
+ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ ) {
   assert( pTT );
   assert( pJ );
   assert( pJ->ptrain_ctrl );

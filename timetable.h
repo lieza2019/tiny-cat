@@ -107,11 +107,11 @@ typedef struct timetable {
   struct journeys journeys[MAX_JOURNEYS_IN_TIMETABLE];
   struct journeys *lkup[MAX_JOURNEYS_IN_TIMETABLE + 1]; // 1 origin, for jid > 0.
   SCHEDULE_AT_SP sp_schedule[END_OF_SPs];
-} TIMETABLE, *TIMETABLE_PTR;
+} ONLINE_TIMETABLE, *ONLINE_TIMETABLE_PTR;
 
 #include "timetable_def.h"
 
-extern TIMETABLE online_timetable;
+extern ONLINE_TIMETABLE online_timetbl;;
 
 extern void cons_sp_schedule ( void );
 extern void makeup_online_timetable ( void );
@@ -119,8 +119,8 @@ extern void makeup_online_timetable ( void );
 extern SCHEDULED_COMMAND_PTR sch_cmd_newnode ( void );
 extern time_t mktime_of_cmd ( struct tm *pT, ARS_ASSOC_TIME_C_PTR ptime_cmd );
 extern STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdetects, TINY_TRAIN_STATE_PTR pT );
-extern ARS_REASONS ars_atodept_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp );
-extern ARS_REASONS ars_routectl_on_journey ( TIMETABLE_PTR pTT, JOURNEY_PTR pJ );
+extern ARS_REASONS ars_atodept_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp );
+extern ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ );
 extern SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp );
 
 #endif // TIMETABLE_H

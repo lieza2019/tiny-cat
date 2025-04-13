@@ -8,7 +8,7 @@
 #include "timetable.h"
 #undef TIMETABLE_C
 
-TIMETABLE online_timetable;
+ONLINE_TIMETABLE online_timetbl;
 
 static SCHEDULED_COMMAND_PTR sortbuf_at_sp[SCHEDULED_COMMANDS_NODEBUF_SIZE];
 static struct {
@@ -223,14 +223,14 @@ static BOOL coincide ( ARS_ASSOC_TIME_PTR pT1, ARS_ASSOC_TIME_PTR pT2 ) {
 void cons_sp_schedule ( void ) { // well tested, 2025/01/04
   int i;
   
-  assert( (online_timetable.num_journeys >= 0) && (online_timetable.num_journeys < MAX_JOURNEYS_IN_TIMETABLE) );
-  for( i = 0; i < online_timetable.num_journeys; i++ ) {
-    scattr_over_sp_schedule( (JOURNEY_C_PTR)&online_timetable.journeys[i] );
+  assert( (online_timetbl.num_journeys >= 0) && (online_timetbl.num_journeys < MAX_JOURNEYS_IN_TIMETABLE) );
+  for( i = 0; i < online_timetbl.num_journeys; i++ ) {
+    scattr_over_sp_schedule( (JOURNEY_C_PTR)&online_timetbl.journeys[i] );
   }
 #ifdef CHK_STRICT_CONSISTENCY
   assert( (i >= 0) && (i < MAX_JOURNEYS_IN_TIMETABLE) );
   while( i < MAX_JOURNEYS_IN_TIMETABLE ) {
-    assert( ! online_timetable.journeys[i].journey.valid );
+    assert( ! online_timetbl.journeys[i].journey.valid );
     i++;
   }
   assert( i == MAX_JOURNEYS_IN_TIMETABLE );
@@ -373,12 +373,12 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
   
   for( i = 0; i < END_OF_SPs; i++ ) {
     SCHEDULED_COMMAND_PTR p = NULL;
-    online_timetable.sp_schedule[i].pFirst = events_at_sp[i].pcmds;
-    p = online_timetable.sp_schedule[i].pFirst;
+    online_timetbl.sp_schedule[i].pFirst = events_at_sp[i].pcmds;
+    p = online_timetbl.sp_schedule[i].pFirst;
     while( p ) {
       assert( p );
       if( ! p->checked ) {
-	online_timetable.sp_schedule[i].pNext = p;
+	online_timetbl.sp_schedule[i].pNext = p;
 	break;
       }
       p = p->ln.sp_sch.pNext;
@@ -389,7 +389,7 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
       p = p->ln.sp_sch.pNext;
     }
 #endif // CHK_STRICT_CONSISTENCY
-    online_timetable.sp_schedule[i].num_events = events_at_sp[i].num_cmds;
+    online_timetbl.sp_schedule[i].num_events = events_at_sp[i].num_cmds;
   }
   assert( i == END_OF_SPs );
 }
@@ -397,34 +397,34 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
 void makeup_online_timetable ( void ) { // well tested, 2025/01/04
   int cnt = 0;
   
-  qsort( online_timetable.journeys, online_timetable.num_journeys, sizeof(struct journeys), cmp_over_journeys );
+  qsort( online_timetbl.journeys, online_timetbl.num_journeys, sizeof(struct journeys), cmp_over_journeys );
   {
     int i;
     for( i = 1; i <= MAX_JOURNEYS_IN_TIMETABLE; i++ )
-      online_timetable.lkup[i] = NULL;
+      online_timetbl.lkup[i] = NULL;
     for( i = 0; i < MAX_JOURNEYS_IN_TIMETABLE; i++ ) {
-      JOURNEY_ID jid = online_timetable.journeys[i].journey.jid;
-      if( ! online_timetable.journeys[i].journey.valid )
+      JOURNEY_ID jid = online_timetbl.journeys[i].journey.jid;
+      if( ! online_timetbl.journeys[i].journey.valid )
 	break;
       assert( (jid > 0) && (jid <= MAX_JOURNEYS_IN_TIMETABLE) );
-      online_timetable.lkup[jid] = &online_timetable.journeys[i];
+      online_timetbl.lkup[jid] = &online_timetbl.journeys[i];
       cnt++;
     }
-    online_timetable.num_journeys = cnt;
+    online_timetbl.num_journeys = cnt;
 #ifdef CHK_STRICT_CONSISTENCY
     assert( (i >= 0) && (i < MAX_JOURNEYS_IN_TIMETABLE) );
     while( i < MAX_JOURNEYS_IN_TIMETABLE ) {
-      assert( ! online_timetable.journeys[i].journey.valid );
+      assert( ! online_timetbl.journeys[i].journey.valid );
       i++;
     }
     assert( i == MAX_JOURNEYS_IN_TIMETABLE );
 #endif // CHK_STRICT_CONSISTENCY
   }
   {
-    assert( online_timetable.num_journeys == cnt );
+    assert( online_timetbl.num_journeys == cnt );
     int i;
-    for( i = 0; i < online_timetable.num_journeys; i++ ) {
-      SCHEDULED_COMMAND_PTR pcmd = online_timetable.journeys[i].journey.scheduled_commands.pcmds;
+    for( i = 0; i < online_timetbl.num_journeys; i++ ) {
+      SCHEDULED_COMMAND_PTR pcmd = online_timetbl.journeys[i].journey.scheduled_commands.pcmds;
       while( pcmd ) {
 	assert( pcmd );	
 	if( pcmd->cmd == END_OF_SCHEDULED_CMDS ) {
@@ -437,11 +437,11 @@ void makeup_online_timetable ( void ) { // well tested, 2025/01/04
       assert( pcmd );
       assert( pcmd->cmd == END_OF_SCHEDULED_CMDS );
       
-      pcmd = online_timetable.journeys[i].journey.scheduled_commands.pcmds;
+      pcmd = online_timetbl.journeys[i].journey.scheduled_commands.pcmds;
       while( pcmd ) {
 	assert( pcmd );
 	if( ! pcmd->checked ) {
-	  online_timetable.journeys[i].journey.scheduled_commands.pNext = pcmd;
+	  online_timetbl.journeys[i].journey.scheduled_commands.pNext = pcmd;
 	  break;
 	}
 	pcmd = pcmd->ln.journey.planned.pNext;

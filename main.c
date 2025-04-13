@@ -369,9 +369,9 @@ int main ( void ) {
     const JOURNEY_ID jid = 2;
     int r = -1;
     SCHEDULED_COMMAND_PTR pC = NULL;    
-    online_timetable = trial_timetable;
+    online_timetbl = trial_timetable;
     makeup_online_timetable();
-    pC = online_timetable.lkup[jid]->journey.scheduled_commands.pNext;
+    pC = online_timetbl.lkup[jid]->journey.scheduled_commands.pNext;
     {
       while( pC ) {
 	assert( pC );
@@ -381,7 +381,7 @@ int main ( void ) {
 	pC = pC->ln.journey.pNext;
       }
     }    
-    //r = ars_chk_depschedule( online_timetable.sp_schedule, pC );
+    //r = ars_chk_depschedule( online_timetbl.sp_schedule, pC );
     SCHEDULED_COMMAND_PTR pC_dst = pC;
     SCHEDULED_COMMAND_PTR pC_lok = pC_dst;
     {
@@ -391,13 +391,13 @@ int main ( void ) {
 	pC_lok = pC_lok->ln.journey.pNext;
       }
     }
-    r = ars_chk_dstschedule( online_timetable.sp_schedule, pC_dst, pC_lok );
+    r = ars_chk_dstschedule( online_timetbl.sp_schedule, pC_dst, pC_lok );
     assert( FALSE );
   }
 #endif
 #if 1
   {
-    online_timetable = trial_timetable;
+    online_timetbl = trial_timetable;
     makeup_online_timetable();
   }
 #endif
@@ -641,14 +641,14 @@ int main ( void ) {
 #if 1
 	      {
 		ARS_REASONS r = END_OF_ARS_REASONS;
-		JOURNEY_PTR pJ = &online_timetable.lkup[jid]->journey;
+		JOURNEY_PTR pJ = &online_timetbl.lkup[jid]->journey;
 		ARS_REASONS res = END_OF_ARS_REASONS;
 		ARS_EVENT_ON_SP ev;
 		pJ->ptrain_ctrl = pT;
 		ars_judge_arriv_dept_skip( &ev, pT );		
-		r = ars_atodept_on_journey( &online_timetable, pJ, &ev );
+		r = ars_atodept_on_journey( &online_timetbl, pJ, &ev );
 		//assert( r != ARS_ROUTE_CONTROLLED_NORMALLY ); // *****
-		r = ars_routectl_on_journey( &online_timetable, pJ );
+		r = ars_routectl_on_journey( &online_timetbl, pJ );
 		//assert( r != ARS_ROUTE_CONTROLLED_NORMALLY ); // *****
 		ars_schcmd_ack( &res, pJ, &ev );
 		{
