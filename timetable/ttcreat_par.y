@@ -14,9 +14,6 @@ static struct {
 } journey_id_w = {-1};
 ATTR_TIMETABLE_PTR timetable_symtbl = NULL;
 
-static BOOL dirty;
-ERR_STAT err_stat;
-
 static void print_time ( ATTR_TIME_PTR ptime ) {
   assert( ptime );
   printf( "(hour, min, sec): (%02d, %02d, %02d)\n", ptime->t.hour, ptime->t.minute, ptime->t.second );

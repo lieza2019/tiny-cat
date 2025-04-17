@@ -5,6 +5,8 @@
 #include "../generic.h"
 #include "ttcreat.h"
 
+ERR_STAT err_stat;
+ERR_STAT1 err_stat1;
 TIMETABLE_DATASET timetbl_dataset;
 
 char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen ) {
@@ -329,7 +331,6 @@ static TRIP_DESC_PTR cons_st_pltb_pair ( ATTR_ST_PLTB_ORGDST_PTR pattr_orgdst ) 
     int i;
     assert( timetbl_dataset.trips_decl.num_trips <= MAX_TRIPS );
     for( i = 0; i < MAX_TRIPS; i++ ) {
-      assert( i < MAX_TRIPS );
       if( i >= timetbl_dataset.trips_decl.num_trips ) {
 	assert( (int)(timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.org.st) == 0 );
 	break;
@@ -355,9 +356,15 @@ static TRIP_DESC_PTR cons_st_pltb_pair ( ATTR_ST_PLTB_ORGDST_PTR pattr_orgdst ) 
 	assert( (int)(r->st_pltb_orgdst.org.st) == 0 );
 	timetbl_dataset.trips_decl.num_trips++;
       }
+      r->st_pltb_orgdst.org.st = st_org;
+      r->st_pltb_orgdst.org.pltb = pltb_org;
+      r->st_pltb_orgdst.dst.st = st_dst;
+      r->st_pltb_orgdst.dst.pltb = pltb_dst;
+      r->num_routes = -1;
     } else {
       assert( timetbl_dataset.trips_decl.num_trips == MAX_TRIPS );
       printf( "FATAL: memory exthausted on trip registration.\n" );
+      exit( 1 );
     }
   }
   return r;
@@ -380,6 +387,7 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
   
   BOOL err = FALSE;
   int i;
+  assert( MAX_TRIP_ROUTES > 0 );
   assert( pattr_routes->nroutes <= MAX_TRIP_ROUTES );
   for( i = 0; (i < MAX_TRIP_ROUTES) && !err; i++ ) {
     assert( nroutes <= MAX_TRIP_ROUTES );
@@ -394,6 +402,7 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
 	for( j = 0; j < i; j++ )
 	  if( ptrip_routes[j].pprof == pprof ) {
 	    printf( "FATAL: route redefinition in trip declaration at at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
+	    err_stat1.sem.trips.route_redef = TRUE;
 	    err = TRUE;
 	    break;
 	  }
@@ -403,6 +412,7 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
 	}
       } else {
 	printf( "FATAL: undefined route found in trip declaration at at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
+	err_stat1.sem.trips.route_unknown = TRUE;
 	err = TRUE;
       }
     }
@@ -429,10 +439,9 @@ static SP_ORGDST_PAIR_PTR cons_orgdst_sp_pair ( SP_ORGDST_PAIR_PTR ptrip_sps, AT
   return ptrip_sps;
 }
 
-static BOOL cons_trips( ATTR_TRIPS_PTR ptrips ) {
+static void cons_trips( ATTR_TRIPS_PTR ptrips ) {
   assert( ptrips );
   assert( ptrips->kind == PAR_TRIPS );
-  BOOL r = FALSE;
   
   int i;
   assert( ptrips->ntrips >= 0 );
@@ -444,15 +453,15 @@ static BOOL cons_trips( ATTR_TRIPS_PTR ptrips ) {
       int nroutes = -1;
       cons_orgdst_sp_pair( &pT->sp_orgdst, &ptrips->trip_prof[i].attr_sp_orgdst );
       nroutes = cons_trip_routes( pT->routes, &ptrips->trip_prof[i].attr_route_ctrl );
-      assert( nroutes > -1 );
-      pT->num_routes = nroutes;
+      if( nroutes > -1 ) {
+	assert( pT->num_routes < 0 );
+	pT->num_routes = nroutes;
+      }
     }
-    ;
   }
-  return r;
 }
 
-static int ttcreat ( void ) {
+int ttcreat ( void ) {
   extern int yyparse( void );
   extern FILE *yyin;
   
@@ -473,12 +482,17 @@ static int ttcreat ( void ) {
       r = 1;
     }
   }
-  if( err ) {
-    printf( "terminated with fatal errors.\n" );
-    r = 1;
-  } else {
+  if( !err ) {
     cons_trips( &timetable_symtbl->trips_regtbl );
-    ;
+    if( err_stat1.sem.trips.route_redef ||
+	err_stat1.sem.trips.route_unknown ) {
+      err = TRUE;
+      r = 1;
+    }
+    //assert( FALSE );
+    if( !err ) {
+      ;
+    }
   }
   return r;
 }

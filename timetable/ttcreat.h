@@ -20,6 +20,35 @@
 
 #include "ttcreat_def.h"
 
+#if 1
+typedef struct err_stat {
+  BOOL err_trip_journey;
+  BOOL err_routes;
+  BOOL err_trips_decl;
+  BOOL err_trip_def;
+  BOOL err_rake_journey_asgnmnts_decl;
+  BOOL err_rj_asgn;
+} ERR_STAT;
+extern ERR_STAT err_stat;
+#endif
+typedef struct err_stat1 {
+  struct {
+    BOOL err_trip_journey;
+    BOOL err_routes;
+    BOOL err_trips_decl;
+    BOOL err_trip_def;
+    BOOL err_rake_journey_asgnmnts_decl;
+    BOOL err_rj_asgn;
+  } par;
+  struct {
+    struct {
+      BOOL route_redef;
+      BOOL route_unknown;
+    } trips;
+  } sem;
+} ERR_STAT1;
+extern ERR_STAT1 err_stat1;
+
 typedef struct rake_journey_asgn {
   int rake_id;
   JOURNEY_ID jid;
@@ -73,3 +102,5 @@ typedef struct timetable_dataset {
 extern TIMETABLE_DATASET timetbl_dataset;
 
 #include "ttcreat_par.h"
+
+int ttcreat ( void );

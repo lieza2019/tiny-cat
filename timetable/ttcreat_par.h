@@ -26,16 +26,6 @@ typedef enum ars_sp_cond {
 } ARS_SP_COND;
 extern char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen );
 
-typedef struct err_stat {
-  BOOL err_trip_journey;
-  BOOL err_routes;
-  BOOL err_trips_decl;
-  BOOL err_trip_def;
-  BOOL err_rake_journey_asgnmnts_decl;
-  BOOL err_rj_asgn;
-} ERR_STAT;
-extern ERR_STAT err_stat;
-
 typedef struct src_pos {
   int row;
   int col;
