@@ -303,7 +303,7 @@ void emit_ars_schcmds( void ) {
   ;
 }
 
-static TRIP_DESC_PTR chk_st_pltb_pair_cons ( ATTR_ST_PLTB_ORGDST_PTR pattr_orgdst ) {
+static TRIP_DESC_PTR cons_st_pltb_pair ( ATTR_ST_PLTB_ORGDST_PTR pattr_orgdst ) {
   assert( pattr_orgdst );
   assert( pattr_orgdst->kind == PAR_ST_PLTB_ORGDST );
   TRIP_DESC_PTR r = NULL;
@@ -363,23 +363,6 @@ static TRIP_DESC_PTR chk_st_pltb_pair_cons ( ATTR_ST_PLTB_ORGDST_PTR pattr_orgds
   return r;
 }
 
-static SP_ORGDST_PAIR_PTR chk_sp_orgdst_cons ( SP_ORGDST_PAIR_PTR ptrip_sps, ATTR_SP_PAIR_PTR pattr_sps ) {
-  assert( ptrip_sps );
-  assert( pattr_sps );
-  assert( pattr_sps->kind == PAR_SP_PAIR );
-  STOPPING_POINT_CODE sp_org = END_OF_SPs;
-  STOPPING_POINT_CODE sp_dst = END_OF_SPs;
-  
-  sp_org = ttc_cnv2_sp_code( pattr_sps->org.sp_id );
-  sp_dst = ttc_cnv2_sp_code( pattr_sps->dst.sp_id );
-  assert( sp_org != END_OF_SPs );
-  assert( sp_dst != END_OF_SPs );
-  ptrip_sps->sp_org = sp_org;
-  ptrip_sps->sp_dst = sp_dst;
-  
-  return ptrip_sps;
-}
-
 static ROUTE_C_PTR trip_route_prof ( ATTR_ROUTE_PTR pattr_routes ) {
   assert( pattr_routes );
   assert( pattr_routes->kind == PAR_ROUTE );
@@ -390,7 +373,7 @@ static ROUTE_C_PTR trip_route_prof ( ATTR_ROUTE_PTR pattr_routes ) {
   return pprof;
 }
 
-static int chk_trip_routes_cons ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR pattr_routes ) {
+static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR pattr_routes ) {
   assert( ptrip_routes );
   assert( pattr_routes );
   int nroutes = -1;
@@ -429,7 +412,24 @@ static int chk_trip_routes_cons ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR 
   return nroutes;
 }
 
-static BOOL chk_trips_consist( ATTR_TRIPS_PTR ptrips ) {
+static SP_ORGDST_PAIR_PTR cons_orgdst_sp_pair ( SP_ORGDST_PAIR_PTR ptrip_sps, ATTR_SP_PAIR_PTR pattr_sps ) {
+  assert( ptrip_sps );
+  assert( pattr_sps );
+  assert( pattr_sps->kind == PAR_SP_PAIR );
+  STOPPING_POINT_CODE sp_org = END_OF_SPs;
+  STOPPING_POINT_CODE sp_dst = END_OF_SPs;
+  
+  sp_org = ttc_cnv2_sp_code( pattr_sps->org.sp_id );
+  sp_dst = ttc_cnv2_sp_code( pattr_sps->dst.sp_id );
+  assert( sp_org != END_OF_SPs );
+  assert( sp_dst != END_OF_SPs );
+  ptrip_sps->sp_org = sp_org;
+  ptrip_sps->sp_dst = sp_dst;
+  
+  return ptrip_sps;
+}
+
+static BOOL cons_trips( ATTR_TRIPS_PTR ptrips ) {
   assert( ptrips );
   assert( ptrips->kind == PAR_TRIPS );
   BOOL r = FALSE;
@@ -439,11 +439,11 @@ static BOOL chk_trips_consist( ATTR_TRIPS_PTR ptrips ) {
   for( i = 0; i < ptrips->ntrips; i++ ) {
     assert( ptrips->trip_prof[i].kind == PAR_TRIP );
     TRIP_DESC_PTR pT = NULL;
-    pT = chk_st_pltb_pair_cons( &ptrips->trip_prof[i].attr_st_pltb_orgdst );
+    pT = cons_st_pltb_pair( &ptrips->trip_prof[i].attr_st_pltb_orgdst );
     if( pT ) {
       int nroutes = -1;
-      chk_sp_orgdst_cons( &pT->sp_orgdst, &ptrips->trip_prof[i].attr_sp_orgdst );
-      nroutes = chk_trip_routes_cons( pT->routes, &ptrips->trip_prof[i].attr_route_ctrl );
+      cons_orgdst_sp_pair( &pT->sp_orgdst, &ptrips->trip_prof[i].attr_sp_orgdst );
+      nroutes = cons_trip_routes( pT->routes, &ptrips->trip_prof[i].attr_route_ctrl );
       assert( nroutes > -1 );
       pT->num_routes = nroutes;
     }
@@ -477,7 +477,7 @@ static int ttcreat ( void ) {
     printf( "terminated with fatal errors.\n" );
     r = 1;
   } else {
-    chk_trips_consist( &timetable_symtbl->trips_regtbl );
+    cons_trips( &timetable_symtbl->trips_regtbl );
     ;
   }
   return r;
