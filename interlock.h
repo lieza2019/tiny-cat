@@ -48,6 +48,7 @@ typedef enum route_kind {
 typedef struct route {
   const IL_SYM_KIND kind;
   const ROUTE_KIND route_kind;
+  const char id_chr [CBI_STAT_IDENT_LEN + 1];
   const IL_SYM id;
   const IL_SYM id_ctrl;
   struct {
