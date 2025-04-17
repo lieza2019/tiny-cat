@@ -41,7 +41,7 @@ typedef struct sp_orgdst_pair {
 
 typedef struct routes_assoc {
   IL_SYM id;
-  ROUTE_PTR pprof;
+  ROUTE_C_PTR pprof;
 } ROUTE_ASSOC, *ROUTE_ASSOC_PTR;
 typedef struct trip_desc {
   ST_PLTB_ORGDST st_pltb_orgdst;

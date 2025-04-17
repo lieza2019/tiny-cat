@@ -137,7 +137,7 @@ static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
     if( timetable_symtbl->trips_regtbl.ntrips == 0 ) {
       p = reg_trip_def( &timetable_symtbl->trips_regtbl, NULL, ptrip );
       if( p != ptrip ) {
-	printf( "FATAL: INTERNAL-error, in trip definiton & registration, giving up.\n" );
+	printf( "INTERNAL-error: on trip definiton & registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
 	exit( 1 );
       }
     } else {
@@ -163,7 +163,7 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
     if( timetable_symtbl->rj_asgn_regtbl.nasgns == 0 ) {    
       p = reg_rjasgn( &timetable_symtbl->rj_asgn_regtbl, NULL, prj_asgn );
       if( p != prj_asgn ) {
-	printf( "FATAL: INTERNAL-error, in rake-journey assignment registration, giving up.\n" );
+	printf( "INTERNAL-error: on rake-journey assignment registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
 	exit( 1 );
       }
     } else {

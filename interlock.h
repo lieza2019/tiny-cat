@@ -15,6 +15,7 @@ typedef struct route_lock {
 #define MAX_TRACK_BLOCKS 21
 typedef struct track {
   const IL_SYM_KIND kind;
+  const char id_chr[CBI_STAT_IDENT_LEN + 1];
   const IL_SYM id;
   struct {
     const int num_blocks;
@@ -48,7 +49,7 @@ typedef enum route_kind {
 typedef struct route {
   const IL_SYM_KIND kind;
   const ROUTE_KIND route_kind;
-  const char id_chr [CBI_STAT_IDENT_LEN + 1];
+  const char id_chr[CBI_STAT_IDENT_LEN + 1];
   const IL_SYM id;
   const IL_SYM id_ctrl;
   struct {
@@ -127,6 +128,7 @@ typedef struct il_obj_container const *IL_OBJ_CONTAINER_C_PTR;
 
 extern TRACK_C_PTR conslt_track_prof ( IL_SYM track_id );
 extern ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id );
+extern ROUTE_C_PTR conslt_route_prof_s ( const char *route_id_str );
 
 extern void cons_track_attrib ( TRACK_PTR ptrack );
 extern void cons_route_attrib ( ROUTE_PTR proute );

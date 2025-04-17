@@ -380,13 +380,13 @@ static SP_ORGDST_PAIR_PTR chk_sp_orgdst_cons ( SP_ORGDST_PAIR_PTR ptrip_sps, ATT
   return ptrip_sps;
 }
 
-static ROUTE_PTR trip_route_prof ( ATTR_ROUTE_PTR pattr_routes ) {
+static ROUTE_C_PTR trip_route_prof ( ATTR_ROUTE_PTR pattr_routes ) {
   assert( pattr_routes );
   assert( pattr_routes->kind == PAR_ROUTE );
-  ROUTE_PTR pprof = NULL;
-  // CBI_STAT_ATTR_PTR conslt_cbi_code_tbl ( const char *ident );
-  // ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id );
-  
+  ROUTE_C_PTR pprof = NULL;
+
+  assert( pattr_routes->name );
+  pprof = conslt_route_prof_s( pattr_routes->name );
   return pprof;
 }
 
@@ -399,12 +399,12 @@ static int chk_trip_routes_cons ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR 
   int i;
   assert( pattr_routes->nroutes <= MAX_TRIP_ROUTES );
   for( i = 0; (i < MAX_TRIP_ROUTES) && !err; i++ ) {
-    assert( i < MAX_TRIP_ROUTES );
+    assert( nroutes <= MAX_TRIP_ROUTES );
     if( i >= pattr_routes->nroutes ) {
       assert( ! ptrip_routes[i].pprof );   
       break;
     } else {
-      ROUTE_PTR pprof = NULL;      
+      ROUTE_C_PTR pprof = NULL;      
       pprof = trip_route_prof( &pattr_routes->route_prof[i] );
       if( pprof ) {
 	int j;
@@ -414,8 +414,10 @@ static int chk_trip_routes_cons ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR 
 	    err = TRUE;
 	    break;
 	  }
-	;
-	nroutes = (nroutes < 0) ? 1 : (assert( nroutes >= 1), nroutes + 1);
+	if( !err ) {
+	  ptrip_routes[i].pprof = pprof;
+	  nroutes = (nroutes < 0) ? 1 : (assert( nroutes >= 1), nroutes + 1);
+	}
       } else {
 	printf( "FATAL: undefined route found in trip declaration at at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
 	err = TRUE;

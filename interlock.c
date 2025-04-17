@@ -138,6 +138,25 @@ ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id ) {
   return il_obj_attrib[route_id].ln.route.pprof;
 }
 
+ROUTE_C_PTR conslt_route_prof_s ( const char *route_id_str ) {
+  assert( route_id_str );
+  ROUTE_C_PTR r = NULL;
+  
+  BOOL found = FALSE;
+  int i = 0;
+  while( route_dataset_def[i].kind != END_OF_CBI_STAT_KIND ) {
+    assert( route_dataset_def[i].id_chr[0] );
+    if( !strncmp( route_dataset_def[i].id_chr, route_id_str, CBI_STAT_IDENT_LEN ) ) {
+      found = TRUE;
+      break;
+    }
+    i++;
+  }
+  if( found )
+    r = &route_dataset_def[i];
+  return r;
+}
+
 void cons_track_attrib ( TRACK_PTR ptrack ) {
   assert( ptrack );
   assert( ptrack->kind == _TRACK );
