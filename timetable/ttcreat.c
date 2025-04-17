@@ -6,7 +6,6 @@
 #include "ttcreat.h"
 
 ERR_STAT err_stat;
-ERR_STAT1 err_stat1;
 TIMETABLE_DATASET timetbl_dataset;
 
 char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen ) {
@@ -305,6 +304,66 @@ void emit_ars_schcmds( void ) {
   ;
 }
 
+#if 0 /* ***** for debugging. */
+  {
+    printf( "trips:\n" );
+    {
+      const int nspc_indent = 2;
+      assert( $1 );
+      ATTR_TRIP_PTR p = $1->trip_prof;
+      assert( p );
+      int i;
+      for( i = 0; i < $1->ntrips; i++ ) {
+	{int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+	print_trip( &p[i], FALSE );
+	printf( "\n" );
+      }
+    }
+    printf( "\n" );
+    printf( "assignments:\n" );
+    {
+      const int nspc_indent = 2;
+      assert( $2 );
+      ATTR_RJ_ASGN_PTR p = $2->rj_asgn;
+      assert( p );      
+      int i;
+      for( i = 0; i < $2->nasgns; i++ ) {
+	{int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+	print_rjasgn( &p[i] );
+	printf( "\n" );
+      }
+    }
+    printf( "\n" );
+    printf( "journeys:\n" );    
+    {
+      const int nspc_indent = 2;
+      assert( timetable_symtbl->journeys_regtbl.kind == PAR_JOURNEYS );
+      int i, j;
+      for( i = 0, j = 0;i < timetable_symtbl->journeys_regtbl.njourneys; i++, j++ ) {
+	while( j < MAX_JOURNEYS ) {
+	  ATTR_JOURNEY_PTR p = &timetable_symtbl->journeys_regtbl.journey_prof[j];
+	  assert( p );
+	  if( p->journey_id.jid > 0 ) {
+	    assert( p->kind == PAR_JOURNEY );
+	    int k;
+	    {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+	    printf( "J%02d: \n", p->journey_id.jid );
+	    for( k = 0; k < p->trips.ntrips; k++ ) {
+	      assert( p->trips.kind == PAR_TRIPS );
+	      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+	      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+	      print_trip( &p->trips.trip_prof[k], TRUE );
+	      printf( "\n" );
+	    }
+	    break;
+	  }
+	  j++;
+	}
+      }
+    }
+  }
+#endif
+
 static TRIP_DESC_PTR cons_st_pltb_pair ( ATTR_ST_PLTB_ORGDST_PTR pattr_orgdst ) {
   assert( pattr_orgdst );
   assert( pattr_orgdst->kind == PAR_ST_PLTB_ORGDST );
@@ -402,7 +461,7 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
 	for( j = 0; j < i; j++ )
 	  if( ptrip_routes[j].pprof == pprof ) {
 	    printf( "FATAL: route redefinition in trip declaration at at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
-	    err_stat1.sem.trips.route_redef = TRUE;
+	    err_stat.sem.trips.route_redef = TRUE;
 	    err = TRUE;
 	    break;
 	  }
@@ -412,7 +471,7 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
 	}
       } else {
 	printf( "FATAL: undefined route found in trip declaration at at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
-	err_stat1.sem.trips.route_unknown = TRUE;
+	err_stat.sem.trips.route_unknown = TRUE;
 	err = TRUE;
       }
     }
@@ -472,20 +531,20 @@ int ttcreat ( void ) {
     err = TRUE;
     r = 1;
   } else {
-    if( err_stat.err_trip_journey ||
-	err_stat.err_routes ||
-	err_stat.err_trips_decl ||
-	err_stat.err_trip_def ||
-	err_stat.err_rake_journey_asgnmnts_decl ||
-	err_stat.err_rj_asgn ) {
+    if( err_stat.par.err_trip_journey ||
+	err_stat.par.err_routes ||
+	err_stat.par.err_trips_decl ||
+	err_stat.par.err_trip_def ||
+	err_stat.par.err_rake_journey_asgnmnts_decl ||
+	err_stat.par.err_rj_asgn ) {
       err = TRUE;
       r = 1;
     }
   }
   if( !err ) {
     cons_trips( &timetable_symtbl->trips_regtbl );
-    if( err_stat1.sem.trips.route_redef ||
-	err_stat1.sem.trips.route_unknown ) {
+    if( err_stat.sem.trips.route_redef ||
+	err_stat.sem.trips.route_unknown ) {
       err = TRUE;
       r = 1;
     }

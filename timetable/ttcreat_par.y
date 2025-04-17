@@ -423,24 +423,24 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
 #endif
  }
              | error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
              | '(' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
              | '(' '('st_and_pltb st_and_pltb')' ')' {
   /* including the case of -> '(' '(' error. */
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing delimiter in org & dst platform/turnback section specifier in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   raw_journey_trip( &$$ );
   if( ($3.kind == PAR_ST_PLTB) && ($4.kind == PAR_ST_PLTB) ) {
@@ -454,23 +454,23 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
   }
  }
              | '(' '('st_and_pltb ',' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
              | '(' '('st_and_pltb ',' st_and_pltb ')' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis of trip description in journey definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
              | '(' '('st_and_pltb st_and_pltb')' ',' dwell_journey {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing delimiter in org & dst platform/turnback section specifier in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   if( ($3.kind == PAR_ST_PLTB) && ($4.kind == PAR_ST_PLTB) && ($7.kind == PAR_TRIP) ) {
     $$ = $7;
@@ -569,16 +569,16 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
                     | '(' ')' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -632,16 +632,16 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' ',' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
                     | '(' ',' ')' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -727,9 +727,9 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' time ')' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -788,16 +788,16 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' time ',' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
                     | '(' time ',' ')' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -856,9 +856,9 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' ',' time ')' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -917,9 +917,9 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
 #endif
  }
                     | '(' time ',' time ')' error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in journey definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1030,9 +1030,9 @@ crewid_journey : TK_CREWID ')' {
   $$.kind = PAR_CREWID;
  }
                | error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed dwell description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1045,9 +1045,9 @@ time : TK_TIME {
   $$.pos.col = @1.first_column;
  }
      | error {
-  if( !err_stat.err_trip_journey ) {
+  if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed time specifier found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_journey = TRUE;
+    err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1089,15 +1089,15 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
   yyerrok;
  } */
            | error {
-  if( !err_stat.err_trips_decl ) {
+  if( !err_stat.par.err_trips_decl ) {
     printf( "FATAL: syntax-error, no trip declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trips_decl = TRUE;
+    err_stat.par.err_trips_decl = TRUE;
   }
  }
            | TK_KEY_TRIPS error {
-  if( !err_stat.err_trips_decl ) {
+  if( !err_stat.par.err_trips_decl ) {
     printf( "FATAL: syntax-error, incomplete trip declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trips_decl = TRUE;
+    err_stat.par.err_trips_decl = TRUE;
   }
  }
 /*
@@ -1140,9 +1140,9 @@ trips_definition : /* empty journies */ {
  }
                  | trips_definition trip_def error ';' {
   assert( $1->kind == PAR_TRIPS );
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing semicolon in end of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   if( $2.kind == PAR_TRIP ) {
     reg_trip( &$2 );
@@ -1161,7 +1161,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
     $$.attr_route_ctrl = $11;
     $$.kind = PAR_TRIP;
   }
-  err_stat.err_trip_def = FALSE;
+  err_stat.par.err_trip_def = FALSE;
 #if 0 /* ***** for debugging. */
   printf( "(kind, st_pltb_pair, sp_orgdst_pair, trip_routes): " );
   print_trip( &$$, FALSE );
@@ -1169,16 +1169,16 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
 #endif
  }
          | '(' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
          | '(' '(' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1187,9 +1187,9 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
      ;
    } */
          | '(' '('st_and_pltb ',' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1198,23 +1198,23 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
      ;
    } */
          | '(' '('st_and_pltb ',' st_and_pltb')' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
          | '(' '('st_and_pltb ',' st_and_pltb')' ',' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @7.first_line, @7.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
          | '(' '('st_and_pltb ',' st_and_pltb')' sp_orgdst_pair ',' '{' routes '}' ')' {
-  if( !err_stat.err_trip_def ) {    
+  if( !err_stat.par.err_trip_def ) {    
     printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
   if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($7.kind == PAR_SP_PAIR) && ($10.kind == PAR_ROUTES) ) {
@@ -1231,16 +1231,16 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
      ;
    } */
          | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @9.first_line, @9.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
          | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair '{' routes '}' ')' {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @8.first_line, @8.first_column );
-    err_stat.err_trip_def = TRUE;    
+    err_stat.par.err_trip_def = TRUE;    
   }
   $$.kind = PAR_UNKNOWN;  
   if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_SP_PAIR) && ($10.kind == PAR_ROUTES) ) {
@@ -1260,9 +1260,9 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
      ;
    } */
          | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in trip definition at (LINE, COL) = (%d, %d).\n", @12.first_line, @12.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1278,9 +1278,9 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   /* print_st_pltb( &$$ ); // ***** for debugging. */
  }
             | '(' TK_STNAME TK_PLTB_NAME ')' {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing delimiter in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_ST_PLTB;
   strncpy( $$.st.name, $2, MAX_STNAME_LEN );
@@ -1292,9 +1292,9 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   /* print_st_pltb( &$$ ); // ***** for debugging. */
  }
             | error TK_STNAME ',' TK_PLTB_NAME ')' {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing opening parenthesis in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1316,37 +1316,37 @@ st_and_pltb : '(' TK_STNAME ',' TK_PLTB_NAME ')' {
   $$.kind = UNKNOWN;
  } */
             | '(' TK_STNAME ',' TK_PLTB_NAME error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
             | error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, no org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
             | '(' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
             | '(' TK_STNAME error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
             | '(' TK_STNAME ',' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst platform/turnback section specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1362,9 +1362,9 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
   /* print_sp_pair( &$$ ); // ***** for debugging. */
  }
                | '(' TK_SP TK_SP ')' {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing delimiter in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_SP_PAIR;
   strncpy( $$.org.sp_id, $2, MAX_SPNAME_LEN );
@@ -1375,9 +1375,9 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
   $$.dst.pos.col = @3.first_column;
  }
                | error TK_SP ',' TK_SP ')' {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing opening parenthesis in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1391,44 +1391,44 @@ sp_orgdst_pair : '(' TK_SP ',' TK_SP ')' {
   $$.kind = UNKNOWN;
   } */
                | '(' TK_SP ',' error ')' {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, no dest found in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
                | '(' TK_SP ',' TK_SP error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing closing parenthesis in org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
 | error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, no org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
                | '(' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, ill-formed org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
                | '(' TK_SP error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
                | '(' TK_SP ',' error {
-  if( !err_stat.err_trip_def ) {
+  if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, incomplete org & dst stop-point specifier of trip definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
-    err_stat.err_trip_def = TRUE;
+    err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1461,9 +1461,9 @@ routes : route {
   if( $2.kind == PAR_ROUTE ) {
     int i;
     if( $1.nroutes > 0 ) {
-      if( !err_stat.err_routes ) {
+      if( !err_stat.par.err_routes ) {
 	printf( "FATAL: syntax-error, missing delimiter in ars controlled routes specifier of trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-	err_stat.err_routes = TRUE;
+	err_stat.par.err_routes = TRUE;
       }
     }
     for( i = 0; i < $1.nroutes; i++ )
@@ -1501,9 +1501,9 @@ route : TK_ROUTE {
   /* printf( "(kind, route): (%d, %s)\n", $$.kind, $$.name ); // ***** for debugging. */
  }
       | error {
-  if( !err_stat.err_routes ) {
+  if( !err_stat.par.err_routes ) {
     printf( "FATAL: syntax-error, illegal ars controlled route in trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_routes = TRUE;
+    err_stat.par.err_routes = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
@@ -1545,17 +1545,17 @@ rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
   yyerrok;
  } */
                            | error {
-  if( !err_stat.err_rake_journey_asgnmnts_decl ) {
+  if( !err_stat.par.err_rake_journey_asgnmnts_decl ) {
     printf( "FATAL: syntax-error, no rake-journey assignments declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_rake_journey_asgnmnts_decl = TRUE;
+    err_stat.par.err_rake_journey_asgnmnts_decl = TRUE;
   }
   $$ = &timetable_symtbl->rj_asgn_regtbl;
   /* yyclearin; */
  }
                            | TK_KEY_ASSIGNMENTS error {
-  if( !err_stat.err_rake_journey_asgnmnts_decl ) {
+  if( !err_stat.par.err_rake_journey_asgnmnts_decl ) {
     printf( "FATAL: syntax-error, incomplete rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_rake_journey_asgnmnts_decl = TRUE;
+    err_stat.par.err_rake_journey_asgnmnts_decl = TRUE;
   }
   $$ = &timetable_symtbl->rj_asgn_regtbl;
   /* yyclearin; */
@@ -1584,9 +1584,9 @@ rake_journey_asgnmnts : /* empty journies */ {
  }
                       | rake_journey_asgnmnts rj_asgn error ';' {
   assert( $1->kind == PAR_RJ_ASGNS );
-  if( !err_stat.err_rj_asgn ) {
+  if( !err_stat.par.err_rj_asgn ) {
     printf( "FATAL: syntax-error, missing semicolon in end of rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.err_rj_asgn = TRUE;
+    err_stat.par.err_rj_asgn = TRUE;
   }
   if( $2.kind == PAR_RJ_ASGN ) {
     reg_rake_journey_asgn( &$2 );
@@ -1605,17 +1605,17 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
   /* print_rjasgn( &$$ ); // ***** for debugging. */
  }
         | error {
-  if( !err_stat.err_rj_asgn ) {
+  if( !err_stat.par.err_rj_asgn ) {
     printf( "FATAL: syntax-error, in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_rj_asgn = TRUE;
+    err_stat.par.err_rj_asgn = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
   // yyclearin;
  }
         | TK_RAKE_ID TK_JOURNEY_ID {
-  if( !err_stat.err_rj_asgn ) {
+  if( !err_stat.par.err_rj_asgn ) {
     printf( "FATAL: syntax-error, missing operator in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_rj_asgn = TRUE;
+    err_stat.par.err_rj_asgn = TRUE;
   }
   $$.kind = PAR_RJ_ASGN;
   $$.rake_id.rid = $1;
@@ -1626,17 +1626,17 @@ rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
   $$.journey_id.pos.col = @2.first_column;;
  }
         | TK_RAKE_ID error {
-  if( !err_stat.err_rj_asgn ) {
+  if( !err_stat.par.err_rj_asgn ) {
     printf( "FATAL: syntax-error, incomplete rake-journey assignment, at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_rj_asgn = TRUE;
+    err_stat.par.err_rj_asgn = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
   // yyclearin;
  }
         | TK_RAKE_ID TK_ASGN error {
-  if( !err_stat.err_rj_asgn ) {
+  if( !err_stat.par.err_rj_asgn ) {
     printf( "FATAL: syntax-error, ill-formed rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.err_rj_asgn = TRUE;
+    err_stat.par.err_rj_asgn = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
   // yyclearin;
