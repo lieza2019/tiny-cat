@@ -70,7 +70,6 @@ typedef struct timetable_dataset {
   RAKE_JOURNEY_ASGN rjasgns[MAX_RJ_ASGNMENTS];
   JOURNEY_TRIP journey_trips[MAX_TRIPS];
 } TIMETABLE_DATASET, *TIMETABLE_DATASET_PTR;
-TIMETABLE_DATASET timetbl_dataset;
 extern TIMETABLE_DATASET timetbl_dataset;
 
 #include "ttcreat_par.h"
