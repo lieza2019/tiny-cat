@@ -14,10 +14,14 @@
 #define MAX_ROUTENAME_LEN 16
 #define MAX_SPNAME_LEN 8
 #define MAX_TRIP_ROUTES 8
-#define MAX_TRIPS_DECL 256
 #define MAX_RJ_ASGNMENTS 64
 #define MAX_JOURNEYS 256
+
+#define MAX_TRIPS_DECL 256
 #define MAX_JOURNEY_TRIPS 256
+#if MAX_TRIPS_DECL > MAX_JOURNEY_TRIPS
+#error MAX_JOURNEY_TRIPS must be greater than/equal to MAX_TRIPS_DECL in ttcreat.h.
+#endif
 
 #include "ttcreat_def.h"
 
@@ -81,15 +85,15 @@ typedef struct journey_trip {
   CREW_ID crew_id;
 } JOURNEY_TRIP, JOURNEY_TRIP_PTR;
 typedef struct journey_desc {
-  JOURNEY_ID jid;
-  int num_trips;
   JOURNEY_TRIP trips[MAX_JOURNEY_TRIPS];
+  JOURNEY_ID jid;
+  int num_trips; 
 } JOURNEY_DESC, *JOURNEY_DESC_PTR;
 
 typedef struct timetable_dataset {
   struct {
-    int num_trips;
     TRIP_DESC trips[MAX_TRIPS_DECL];
+    int num_trips;    
   } trips_decl;
   RAKE_JOURNEY_ASGN rjasgns[MAX_RJ_ASGNMENTS];
   struct {

@@ -115,7 +115,7 @@ typedef struct attr_trip {
 typedef struct attr_trips {
   PAR_KIND kind;
   int ntrips;
-  ATTR_TRIP trip_prof[MAX_TRIPS_DECL];
+  ATTR_TRIP trip_prof[MAX_JOURNEY_TRIPS];
 } ATTR_TRIPS, *ATTR_TRIPS_PTR;
 
 typedef int JOURNEY_ID;
@@ -125,15 +125,7 @@ typedef struct attr_journey {
     JOURNEY_ID jid;
     SRC_POS pos;
   } journey_id;
-#if 1
   ATTR_TRIPS trips;
-#else
-  struct {
-    PAR_KIND kind;
-    int ntrips;
-    ATTR_TRIP trip_prof[MAX_JOURNEY_TRIPS];
-  } trips;
-#endif
 } ATTR_JOURNEY, *ATTR_JOURNEY_PTR;
 
 typedef struct attr_journeys {
