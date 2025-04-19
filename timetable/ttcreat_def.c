@@ -1,6 +1,17 @@
 #include "ttcreat.h"
 
-PLTB_ID ttc_cnv2_pltb_id ( const char *pltb_str ) {
+const char *cnv2str_pltb_id[] = {
+  "", // see below line.
+  "PL1", // PL1 = 1
+  "PL2",
+  "PL3",
+  "TB1",
+  "TB2",
+  "TB3",
+  "TB4",
+  NULL
+};
+PLTB_ID str2_pltb_id ( const char *pltb_str ) {
   assert( pltb_str );
   PLTB_ID r = END_OF_PLTB_ID;
   
@@ -25,7 +36,15 @@ PLTB_ID ttc_cnv2_pltb_id ( const char *pltb_str ) {
   return r;
 }
 
-ST_ID ttc_cnv2_st_id ( const char *st_str ) {
+const char *cnv2str_st_id[] = {
+  "", // see below line.
+  "JLA", // JLA = 1
+  "KIKJ",
+  "OKBS",
+  "BTGD",
+  NULL
+};
+ST_ID str2_st_id ( const char *st_str ) {
   assert( st_str );
   ST_ID r = END_OF_ST_ID;
   
@@ -44,7 +63,24 @@ ST_ID ttc_cnv2_st_id ( const char *st_str ) {
   return r;
 }
 
-STOPPING_POINT_CODE ttc_cnv2_sp_code ( const char *sp_str ) {
+const char *cnv2str_sp_code[] = {
+  "SP_NONSENS",
+  "SP_73", // JLA_PL1
+  "SP_74", // JLA_PL2
+  "SP_75", // JLA_PL3
+  "SP_D4", // JLA_TB4
+  "SP_D9", // JLA_TB3
+  "SP_76", // KIKJ_PL2
+  "SP_77", // KIKJ_PL1
+  "SP_78", // OKBS_PL2
+  "SP_79", // OKBS_PL1
+  "SP_80", // BTGD_PL2
+  "SP_81", // BTGD_PL1
+  "SP_D5", // BTGD_TB1
+  "SP_D0", // BTGD_TB2
+  NULL
+};
+STOPPING_POINT_CODE str2_sp_code ( const char *sp_str ) {
   assert( sp_str );
   STOPPING_POINT_CODE r = END_OF_SPs;
   

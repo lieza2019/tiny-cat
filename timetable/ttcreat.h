@@ -14,9 +14,10 @@
 #define MAX_ROUTENAME_LEN 16
 #define MAX_SPNAME_LEN 8
 #define MAX_TRIP_ROUTES 8
-#define MAX_TRIPS 256
+#define MAX_TRIPS_DECL 256
 #define MAX_RJ_ASGNMENTS 64
 #define MAX_JOURNEYS 256
+#define MAX_JOURNEY_TRIPS 256
 
 #include "ttcreat_def.h"
 
@@ -68,7 +69,7 @@ typedef struct trip_desc {
   ROUTE_ASSOC routes[MAX_TRIP_ROUTES];
 } TRIP_DESC, *TRIP_DESC_PTR;
 
-typedef struct {
+typedef struct journey_trip {
   ST_PLTB_ORGDST st_pltb_orgdst;
   int dwell_time;
   struct {
@@ -78,18 +79,27 @@ typedef struct {
   PERFREG_LEVEL perfreg;
   BOOL is_revenue;
   CREW_ID crew_id;
-} JOURNEY_TRIP;
+} JOURNEY_TRIP, JOURNEY_TRIP_PTR;
+typedef struct journey_desc {
+  JOURNEY_ID jid;
+  int num_trips;
+  JOURNEY_TRIP trips[MAX_JOURNEY_TRIPS];
+} JOURNEY_DESC, *JOURNEY_DESC_PTR;
 
 typedef struct timetable_dataset {
   struct {
     int num_trips;
-    TRIP_DESC trips[MAX_TRIPS];
+    TRIP_DESC trips[MAX_TRIPS_DECL];
   } trips_decl;
   RAKE_JOURNEY_ASGN rjasgns[MAX_RJ_ASGNMENTS];
-  JOURNEY_TRIP journey_trips[MAX_TRIPS];
+  struct {
+    int num_journeys;
+    JOURNEY_DESC journeys[MAX_JOURNEYS];
+  } j;
 } TIMETABLE_DATASET, *TIMETABLE_DATASET_PTR;
 extern TIMETABLE_DATASET timetbl_dataset;
 
 #include "ttcreat_par.h"
 
-int ttcreat ( void );
+extern void ttc_print_trips ( TRIP_DESC trips[], int ntrips );
+extern int ttcreat ( void );

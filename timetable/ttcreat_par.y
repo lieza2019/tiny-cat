@@ -269,7 +269,7 @@ timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
       }
     }
     printf( "\n" );
-    printf( "journeys:\n" );    
+    printf( "journeys:\n" );
     {
       const int nspc_indent = 2;
       assert( timetable_symtbl->journeys_regtbl.kind == PAR_JOURNEYS );
