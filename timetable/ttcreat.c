@@ -564,11 +564,11 @@ static void cons_trips ( ATTR_TRIPS_PTR ptrips ) {
   assert( ptrips->ntrips >= 0 );
   for( i = 0; i < ptrips->ntrips; i++ ) {
     assert( ptrips->trip_prof[i].kind == PAR_TRIP );
-    int newnode = -1;
-    newnode = cons_st_pltb_pair( st_pltb_ref, MAX_TRIPS_DECL, timetbl_dataset.trips_decl.num_trips, &ptrips->trip_prof[i].attr_st_pltb_orgdst, TRUE );
-    if( newnode > -1 ) {
-      assert( timetbl_dataset.trips_decl.num_trips == newnode );
-      TRIP_DESC_PTR pT = (TRIP_DESC_PTR)st_pltb_ref[newnode];
+    int newone = -1;
+    newone = cons_st_pltb_pair( st_pltb_ref, MAX_TRIPS_DECL, timetbl_dataset.trips_decl.num_trips, &ptrips->trip_prof[i].attr_st_pltb_orgdst, TRUE );
+    if( newone > -1 ) {
+      assert( timetbl_dataset.trips_decl.num_trips == newone );
+      TRIP_DESC_PTR pT = (TRIP_DESC_PTR)st_pltb_ref[newone];
       assert( pT );
       int nroutes = -1;     
       cons_orgdst_sp_pair( &pT->sp_orgdst, &ptrips->trip_prof[i].attr_sp_orgdst );
@@ -608,11 +608,11 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
       int l;
       for( l = 0; l < pJ_par->trips.ntrips; l++ ) {
 	assert( pJ_par->trips.trip_prof[l].kind == PAR_TRIP );
-	int newnode = -1;
-	newnode = cons_st_pltb_pair( st_pltb_ref, MAX_JOURNEY_TRIPS, timetbl_dataset.j.journeys[i].num_trips, &pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst, FALSE );
-	if( newnode > -1 ) {
-	  assert( timetbl_dataset.j.journeys[i].num_trips == newnode );
-	  JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newnode];
+	int newone = -1;
+	newone = cons_st_pltb_pair( st_pltb_ref, MAX_JOURNEY_TRIPS, timetbl_dataset.j.journeys[i].num_trips, &pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst, FALSE );
+	if( newone > -1 ) {
+	  assert( timetbl_dataset.j.journeys[i].num_trips == newone );
+	  JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
 	  assert( pJ );
 	  // settings for pJ->dwell_time;
 	  // settings for pJ->time_arrdep;
