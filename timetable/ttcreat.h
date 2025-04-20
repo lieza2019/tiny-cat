@@ -83,11 +83,11 @@ typedef struct journey_trip {
   PERFREG_LEVEL perfreg;
   BOOL is_revenue;
   CREW_ID crew_id;
-} JOURNEY_TRIP, JOURNEY_TRIP_PTR;
+} JOURNEY_TRIP, *JOURNEY_TRIP_PTR;
 typedef struct journey_desc {
   JOURNEY_TRIP trips[MAX_JOURNEY_TRIPS];
   JOURNEY_ID jid;
-  int num_trips; 
+  int num_trips;
 } JOURNEY_DESC, *JOURNEY_DESC_PTR;
 
 typedef struct timetable_dataset {
