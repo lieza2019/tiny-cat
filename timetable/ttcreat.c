@@ -589,40 +589,42 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
   int i;
   assert( timetbl_dataset.j.num_journeys == 0 );
   for( i = 0; i < pjourneys->njourneys; i++ ) {
-    assert( pjourneys->journey_prof[i].kind == PAR_JOURNEY );
-    assert( timetbl_dataset.j.journeys[i].num_trips == 0 );
-    {
-      int k = 0;
-      while( k < MAX_JOURNEY_TRIPS ) {
-	st_pltb_ref[k] = &timetbl_dataset.j.journeys[i].trips[k].st_pltb_orgdst;
-	assert( (JOURNEY_TRIP_PTR)st_pltb_ref[k] == &timetbl_dataset.j.journeys[i].trips[k] );
-	k++;
+    if( pjourneys->journey_prof[i].journey_id.jid > 0 ) {
+      assert( pjourneys->journey_prof[i].kind == PAR_JOURNEY );
+      assert( timetbl_dataset.j.journeys[i].num_trips == 0 );
+      {
+	int k = 0;
+	while( k < MAX_JOURNEY_TRIPS ) {
+	  st_pltb_ref[k] = &timetbl_dataset.j.journeys[i].trips[k].st_pltb_orgdst;
+	  assert( (JOURNEY_TRIP_PTR)st_pltb_ref[k] == &timetbl_dataset.j.journeys[i].trips[k] );
+	  k++;
+	}
+	assert( k == MAX_JOURNEY_TRIPS );
       }
-      assert( k == MAX_JOURNEY_TRIPS );
-    }
-    {
-      ATTR_JOURNEY_PTR pJ_par = &pjourneys->journey_prof[i];
-      assert( pJ_par );
-      assert( pJ_par->kind == PAR_JOURNEY );
-      assert( pJ_par->trips.kind == PAR_TRIPS );
-      int l;
-      for( l = 0; l < pJ_par->trips.ntrips; l++ ) {
-	assert( pJ_par->trips.trip_prof[l].kind == PAR_TRIP );
-	int newone = -1;
-	newone = cons_st_pltb_pair( st_pltb_ref, MAX_JOURNEY_TRIPS, timetbl_dataset.j.journeys[i].num_trips, &pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst, FALSE );
-	if( newone > -1 ) {
-	  assert( timetbl_dataset.j.journeys[i].num_trips == newone );
-	  JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
-	  assert( pJ );
-	  // settings for pJ->dwell_time;
-	  // settings for pJ->time_arrdep;
-	  // settings for pJ->perfreg;
-	  // settings for pJ->is_revenue;
-	  timetbl_dataset.j.journeys[i].num_trips++;
+      {
+	ATTR_JOURNEY_PTR pJ_par = &pjourneys->journey_prof[i];
+	assert( pJ_par );
+	assert( pJ_par->kind == PAR_JOURNEY );
+	assert( pJ_par->trips.kind == PAR_TRIPS );
+	int l;
+	for( l = 0; l < pJ_par->trips.ntrips; l++ ) {
+	  assert( pJ_par->trips.trip_prof[l].kind == PAR_TRIP );
+	  int newone = -1;
+	  newone = cons_st_pltb_pair( st_pltb_ref, MAX_JOURNEY_TRIPS, timetbl_dataset.j.journeys[i].num_trips, &pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst, FALSE );
+	  if( newone > -1 ) {
+	    assert( timetbl_dataset.j.journeys[i].num_trips == newone );
+	    JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
+	    assert( pJ );
+	    // settings for pJ->dwell_time;
+	    // settings for pJ->time_arrdep;
+	    // settings for pJ->perfreg;
+	    // settings for pJ->is_revenue;
+	    timetbl_dataset.j.journeys[i].num_trips++;
+	  }
 	}
       }
+      timetbl_dataset.j.num_journeys++;
     }
-    timetbl_dataset.j.num_journeys++;
   }
 }
 
