@@ -402,6 +402,37 @@ void ttc_print_trips ( TRIP_DESC trips[], int ntrips ) {
   }
 }
 
+static void ttc_print_jtrip( JOURNEY_TRIP_PTR pjtrip ) {
+  assert( pjtrip );
+
+  TTC_DIAG_INDENT;
+  printf( "(" );
+  
+  printf( "(" );
+  print_st_pltb( &pjtrip->st_pltb_orgdst.org );
+  printf( ", " );
+  print_st_pltb( &pjtrip->st_pltb_orgdst.dst );
+  printf( "), " );
+  
+  printf( ");\n" );
+}
+
+void ttc_print_journeys( JOURNEY_DESC journeys[], int njourneys ) {
+  assert( journeys );
+  assert( njourneys > -1 );
+  int i;
+  
+  printf( "journeys:\n" );
+  for( i = 0; i < njourneys; i++ ) {
+    int j;
+    TTC_DIAG_INDENT;
+    printf( "J%03d", 1 );
+    for( j = 0; j < journeys[i].num_trips; j++ ) {
+      ttc_print_jtrip( &journeys[i].trips[j] );
+    }
+  }
+}
+
 static int cons_st_pltb_pair ( ST_PLTB_ORGDST_PTR st_pltb_ref[], const int reftbl_len, const int refs_lim, ATTR_ST_PLTB_ORGDST_PTR pattr_orgdst, const  BOOL ovwt ) {
   assert( st_pltb_ref );
   assert( reftbl_len > -1 );
@@ -587,6 +618,8 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
   ST_PLTB_ORGDST_PTR st_pltb_ref[MAX_JOURNEY_TRIPS] = {};
   
   int i;
+  printf( "nJourneys: %d\n", pjourneys->njourneys );
+  
   assert( timetbl_dataset.j.num_journeys == 0 );
   for( i = 0; i < pjourneys->njourneys; i++ ) {
     if( pjourneys->journey_prof[i].journey_id.jid > 0 ) {
@@ -626,6 +659,9 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
       timetbl_dataset.j.num_journeys++;
     }
   }
+  assert( timetbl_dataset.j.num_journeys == pjourneys->njourneys );
+  
+  printf( "njourneys: %d\n", timetbl_dataset.j.num_journeys );
 }
 
 int ttcreat ( void ) {
@@ -659,7 +695,8 @@ int ttcreat ( void ) {
     if( !err ) {
       cons_journeys( &timetable_symtbl->journeys_regtbl );
       printf( "!!!!! !!!!!\n" ); // *****
-      ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );
+      //ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );
+      ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
       assert( FALSE ); // *****
     }
   }
