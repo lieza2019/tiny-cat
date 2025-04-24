@@ -376,7 +376,7 @@ static void print_routes ( ROUTE_ASSOC routes[], int nroutes ) {
 }
 
 static const int nspc_indent = 2;
-#define TTC_DIAG_INDENT {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+#define TTC_DIAG_INDENT( n ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < nspc_indent; b++ ) printf(" "); }}
 
 void ttc_print_trips ( TRIP_DESC trips[], int ntrips ) {
   assert( trips );
@@ -385,7 +385,7 @@ void ttc_print_trips ( TRIP_DESC trips[], int ntrips ) {
   
   printf( "trips:\n" );
   for( i = 0; i < ntrips; i++ ) {
-    TTC_DIAG_INDENT;
+    TTC_DIAG_INDENT(1);
     printf( "(" );
     
     printf( "(" );
@@ -404,8 +404,6 @@ void ttc_print_trips ( TRIP_DESC trips[], int ntrips ) {
 
 static void ttc_print_jtrip( JOURNEY_TRIP_PTR pjtrip ) {
   assert( pjtrip );
-
-  TTC_DIAG_INDENT;
   printf( "(" );
   
   printf( "(" );
@@ -420,16 +418,24 @@ static void ttc_print_jtrip( JOURNEY_TRIP_PTR pjtrip ) {
 void ttc_print_journeys( JOURNEY_DESC journeys[], int njourneys ) {
   assert( journeys );
   assert( njourneys > -1 );
-  int i;
+  int cnt_j = 0;
   
+  int i = 0;
   printf( "journeys:\n" );
-  for( i = 0; i < njourneys; i++ ) {
-    int j;
-    TTC_DIAG_INDENT;
-    printf( "J%03d", 1 );
-    for( j = 0; j < journeys[i].num_trips; j++ ) {
-      ttc_print_jtrip( &journeys[i].trips[j] );
+  while( i < MAX_JOURNEYS ) {
+    if( cnt_j >= njourneys )
+      break;
+    if( journeys[i].jid > -1 ) {
+     int k;
+     TTC_DIAG_INDENT(1);
+      printf( "J%03d\n", journeys[i].jid );
+      for( k = 0; k < journeys[i].num_trips; k++ ) {
+	TTC_DIAG_INDENT(2);
+	ttc_print_jtrip( &journeys[i].trips[k] );
+      }
+      cnt_j++;
     }
+    i++;
   }
 }
 
@@ -617,12 +623,15 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
   assert( pjourneys->kind == PAR_JOURNEYS );
   ST_PLTB_ORGDST_PTR st_pltb_ref[MAX_JOURNEY_TRIPS] = {};
   
-  int i;
-  printf( "nJourneys: %d\n", pjourneys->njourneys );
-  
+  int i = 0;  
+  assert( pjourneys->njourneys >= 0 );
   assert( timetbl_dataset.j.num_journeys == 0 );
-  for( i = 0; i < pjourneys->njourneys; i++ ) {
+  while( i < MAX_JOURNEYS ) {
+    if( timetbl_dataset.j.num_journeys >= pjourneys->njourneys )
+      break;
+    timetbl_dataset.j.journeys[i].jid = -1;
     if( pjourneys->journey_prof[i].journey_id.jid > 0 ) {
+      timetbl_dataset.j.journeys[i].jid = pjourneys->journey_prof[i].journey_id.jid;
       assert( pjourneys->journey_prof[i].kind == PAR_JOURNEY );
       assert( timetbl_dataset.j.journeys[i].num_trips == 0 );
       {
@@ -658,10 +667,9 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
       }
       timetbl_dataset.j.num_journeys++;
     }
-  }
+    i++;
+  }  
   assert( timetbl_dataset.j.num_journeys == pjourneys->njourneys );
-  
-  printf( "njourneys: %d\n", timetbl_dataset.j.num_journeys );
 }
 
 int ttcreat ( void ) {
