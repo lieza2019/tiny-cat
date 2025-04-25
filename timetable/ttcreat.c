@@ -722,6 +722,12 @@ int main ( void ) {
   timetable_symtbl->trips_regtbl.kind = PAR_UNKNOWN;
   timetable_symtbl->rj_asgn_regtbl.kind = PAR_UNKNOWN;
   timetable_symtbl->journeys_regtbl.kind = PAR_UNKNOWN;
+  {
+    int i;
+    for( i = 0; i < MAX_JOURNEYS; i++ ) {
+      timetable_symtbl->journeys_regtbl.journey_prof[i].journey_id.jid = -1;
+    }
+  }
   
   r = ttcreat();
   return r;
