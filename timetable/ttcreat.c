@@ -621,8 +621,8 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
 	int j;
 	for( j = 0; j < i; j++ )
 	  if( ptrip_routes[j].pprof == pprof ) {
-	    printf( "FATAL: route redefinition in trip declaration at at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
-	    err_stat.sem.trips.route_redef = TRUE;
+	    printf( "FATAL: route redefinition in trip declaration at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
+	    err_stat.sem.route_redef = TRUE;
 	    err = TRUE;
 	    break;
 	  }
@@ -632,8 +632,8 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
 	  nroutes = (nroutes < 0) ? 1 : (assert( nroutes >= 1), nroutes + 1);
 	}
       } else {
-	printf( "FATAL: undefined route found in trip declaration at at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
-	err_stat.sem.trips.route_unknown = TRUE;
+	printf( "FATAL: undefined route found in trip declaration at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
+	err_stat.sem.route_unknown = TRUE;
 	err = TRUE;
       }
     }
@@ -762,7 +762,9 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	    if( pJ_par->trips.trip_prof[l].crew_id.cid < END_OF_CREWIDs ) {
 	      pJ->crew_id = (CREW_ID)pJ_par->trips.trip_prof[l].crew_id.cid;
 	    } else {
-	      ;
+	      printf( "FATAL: undefined route found in journey declaration at (LINE, COL) = (%d, %d).\n",
+		      pJ_par->trips.trip_prof[l].crew_id.pos.row, pJ_par->trips.trip_prof[l].crew_id.pos.col );
+	      err_stat.sem.invalid_crewid = TRUE;
 	      pJ->crew_id = CREW_NO_ID;
 	    }
 	    timetbl_dataset.j.journeys[i].num_trips++;
@@ -799,8 +801,8 @@ int ttcreat ( void ) {
   }
   if( !err ) {
     cons_trips( &timetable_symtbl->trips_regtbl );
-    if( err_stat.sem.trips.route_redef ||
-	err_stat.sem.trips.route_unknown ) {
+    if( err_stat.sem.route_redef ||
+	err_stat.sem.route_unknown ) {
       err = TRUE;
       r = 1;
     }

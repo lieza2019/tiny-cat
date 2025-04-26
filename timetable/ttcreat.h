@@ -35,10 +35,9 @@ typedef struct err_stat {
     BOOL err_rj_asgn;
   } par;
   struct {
-    struct {
-      BOOL route_redef;
-      BOOL route_unknown;
-    } trips;
+    BOOL route_redef;
+    BOOL route_unknown;
+    BOOL invalid_crewid;
   } sem;
 } ERR_STAT;
 extern ERR_STAT err_stat;
