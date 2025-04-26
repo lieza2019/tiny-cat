@@ -73,13 +73,25 @@ typedef struct trip_desc {
   ROUTE_ASSOC routes[MAX_TRIP_ROUTES];
 } TRIP_DESC, *TRIP_DESC_PTR;
 
+typedef enum ars_sp_cond {
+  DWELL = 1,
+  SKIP
+} ARS_SP_COND;
+extern char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen );
+
+typedef struct time_arrdep {
+  TINY_TIME_DESC time_arr;
+  TINY_TIME_DESC time_dep;
+} TIME_ARRDEP, *TIME_ARRDEP_PTR;
+
+typedef int DWELL_TIME;
 typedef struct journey_trip {
   ST_PLTB_ORGDST st_pltb_orgdst;
-  int dwell_time;
   struct {
-    TINY_TIME_DESC time_arr;
-    TINY_TIME_DESC time_dep;
-  } time_arrdep;
+    ARS_SP_COND stop_skip;
+    DWELL_TIME dwell_time;
+  } sp_cond;
+  TIME_ARRDEP time_arrdep;
   PERFREG_LEVEL perfreg;
   BOOL is_revenue;
   CREW_ID crew_id;

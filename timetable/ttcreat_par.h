@@ -20,12 +20,6 @@ typedef enum par_kind {
 } PAR_KIND;
 extern char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen );
 
-typedef enum ars_sp_cond {
-  DWELL = 1,
-  SKIP
-} ARS_SP_COND;
-extern char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen );
-
 typedef struct src_pos {
   int row;
   int col;
@@ -77,7 +71,6 @@ typedef struct attr_routes {
   ATTR_ROUTE route_prof[MAX_TRIP_ROUTES];
 } ATTR_ROUTES, *ATTR_ROUTES_PTR;
 
-typedef int DWELL_TIME;
 typedef struct attr_trip {
   PAR_KIND kind;
   ATTR_ST_PLTB_ORGDST attr_st_pltb_orgdst;

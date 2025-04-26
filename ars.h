@@ -59,6 +59,7 @@ typedef enum perfreg_level {
 extern const char *cnv2str_perf_regime[];
 
 typedef enum _crew_id {
+  CREW_ID0000,
   CREW_ID0001,
   CREW_ID0002,
   CREW_ID0003,

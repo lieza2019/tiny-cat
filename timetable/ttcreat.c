@@ -84,7 +84,7 @@ char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen ) {
   assert( pstr );
   assert( buflen > 0 );
   char *r = NULL;
-
+  
   switch( sp_cond ) {
   case DWELL:
     strncpy( pstr, "DWELL", (buflen - 1) );
@@ -342,6 +342,47 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
 }
 #endif
 
+static void print_perfreg ( PERFREG_LEVEL perfreg ) {
+  switch( perfreg ) {
+  case PERFREG_SLOW:
+    printf( "perfreg_slow" );
+    break;
+  case PERFREG_NORMAL:
+    printf( "perfreg_norm" );
+    break;
+  case PERFREG_FAST:
+    printf( "perfreg_fast" );
+    break;
+  case END_OF_PERFREG:
+    /* fall thru. */
+  default:
+    assert( FALSE );
+  }
+}
+
+static void print_revenue ( BOOL revenue ) {
+  if( revenue )
+    printf( "revenue" );
+  else
+    printf( "nonreve" );
+}
+
+static void print_dwell ( ARS_SP_COND spcond, DWELL_TIME dwell ) {
+  assert( dwell > -1 );
+  switch( spcond ) {
+  case DWELL:
+    assert( dwell > 0 );
+    printf( "%d", dwell );
+    break;
+  case SKIP:
+    assert( dwell == 0 );
+    printf( "SS" );
+    break;
+  default:
+    assert( FALSE );
+  }
+}
+
 static void print_sp_pair ( SP_ORGDST_PAIR_PTR psps ) {
   assert( psps );
   printf( "(%s, %s)", cnv2str_sp_code[psps->sp_org], cnv2str_sp_code[psps->sp_dst] );
@@ -373,6 +414,25 @@ static void print_routes ( ROUTE_ASSOC routes[], int nroutes ) {
       printf( ", " );
   }
   printf( "}" );
+}
+
+static void print_arrdep_time ( TIME_ARRDEP_PTR parrdep_time ) {
+  assert( parrdep_time );
+  
+  printf( "(" );
+  printf( "%02d", parrdep_time->time_arr.hour );
+  printf( ":" );
+  printf( "%02d", parrdep_time->time_arr.minute );
+  printf( ":" );
+  printf( "%02d", parrdep_time->time_arr.second );
+  printf( ", " );
+  
+  printf( "%02d", parrdep_time->time_dep.hour );
+  printf( ":" );
+  printf( "%02d", parrdep_time->time_dep.minute );
+  printf( ":" );
+  printf( "%02d", parrdep_time->time_dep.second );
+  printf( ")" );
 }
 
 static const int nspc_indent = 2;
@@ -411,6 +471,18 @@ static void ttc_print_jtrip( JOURNEY_TRIP_PTR pjtrip ) {
   printf( ", " );
   print_st_pltb( &pjtrip->st_pltb_orgdst.dst );
   printf( "), " );
+
+  print_dwell( pjtrip->sp_cond.stop_skip, pjtrip->sp_cond.dwell_time );
+  printf( ", " );
+  
+  print_arrdep_time( &pjtrip->time_arrdep );
+  printf( ", " );
+  
+  print_perfreg( pjtrip->perfreg );
+  printf( ", " );
+  
+  print_revenue( pjtrip->is_revenue );
+  printf( ", " );
   
   printf( ");\n" );
 }
@@ -618,6 +690,15 @@ static void cons_trips ( ATTR_TRIPS_PTR ptrips ) {
   }
 }
 
+static void jtrip_arrdep_time ( TIME_ARRDEP_PTR pjarrdep, TINY_TIME_DESC_PTR ppar_arrtime, TINY_TIME_DESC_PTR ppar_deptime ) {
+  assert( pjarrdep );
+  assert( ppar_arrtime );
+  assert( ppar_deptime );
+  
+  pjarrdep->time_arr = *ppar_arrtime;
+  pjarrdep->time_dep = *ppar_deptime; 
+}
+
 static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
   assert( pjourneys );
   assert( pjourneys->kind == PAR_JOURNEYS );
@@ -658,9 +739,26 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	    JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
 	    assert( pJ );
 	    // settings for pJ->dwell_time;
+	    pJ->sp_cond.dwell_time = pJ_par->trips.trip_prof[l].sp_cond.dwell_time;
+	    pJ->sp_cond.stop_skip = pJ_par->trips.trip_prof[l].sp_cond.stop_skip;
+	    assert( pJ->sp_cond.stop_skip == SKIP ? (pJ->sp_cond.dwell_time == 0) : ((pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time > 0)) );
+	    
 	    // settings for pJ->time_arrdep;
+	    jtrip_arrdep_time( &pJ->time_arrdep, &pJ_par->trips.trip_prof[l].arrdep_time.arriv.arr_time.t, &pJ_par->trips.trip_prof[l].arrdep_time.dept.dep_time.t );
+	    
 	    // settings for pJ->perfreg;
+	    pJ->perfreg = pJ_par->trips.trip_prof[l].perf_regime.perfreg_cmd;
+	    
 	    // settings for pJ->is_revenue;
+	    pJ->is_revenue = pJ_par->trips.trip_prof[l].revenue.stat;
+	    
+	    // settings for pJ->crew_id;
+	    if( pJ_par->trips.trip_prof[l].crew_id.cid < END_OF_CREWIDs ) {
+	      pJ->crew_id = (CREW_ID)pJ_par->trips.trip_prof[l].crew_id.cid;
+	    } else {
+	      ;
+	      pJ->crew_id = CREW_NO_ID;
+	    }
 	    timetbl_dataset.j.journeys[i].num_trips++;
 	  }
 	}
