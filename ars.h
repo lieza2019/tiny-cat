@@ -56,7 +56,7 @@ typedef enum perfreg_level {
   PERFREG_FAST,
   END_OF_PERFREG
 } PERFREG_LEVEL;
-extern const char *cnv2str_perf_regime[];
+extern const char *cnv2str_perfreg_level[];
 
 typedef enum _crew_id {
   CREW_ID0000,
@@ -66,6 +66,7 @@ typedef enum _crew_id {
   CREW_NO_ID,
   END_OF_CREWIDs
 } CREW_ID;
+extern const char *cnv2str_crew_id[];
 
 typedef enum ars_reasons {
   ARS_NO_RAKE_ASGNED,

@@ -72,7 +72,7 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
     printf( ", %s", cnv2str_perf_regime( buf, ptrip->perf_regime, PRINT_STRBUF_MAXLEN ) );
 #else
     buf[PRINT_STRBUF_MAXLEN - 1] = 0;
-    printf( ", %s", strncpy( buf, cnv2str_perf_regime[ptrip->perf_regime.perfreg_cmd], (PRINT_STRBUF_MAXLEN - 1) ) );
+    printf( ", %s", strncpy( buf, cnv2str_perfreg_level[ptrip->perf_regime.perfreg_cmd], (PRINT_STRBUF_MAXLEN - 1) ) );
 #endif
     printf( ", %s", (ptrip->revenue.stat ? "revenue" : "nonreve") );
 
@@ -121,7 +121,7 @@ static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   ptrip->perf_regime.perfreg_cmd = DEFAULT_PERFLEVEL;
   ptrip->revenue.stat = DEFAULT_REVENUE;
   
-  ptrip->crew_id.cid = DEFAULT_CREWID;
+  ptrip->crew_id.cid = (int)DEFAULT_CREWID;
   return ptrip;
 }
 

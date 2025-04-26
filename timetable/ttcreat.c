@@ -342,6 +342,18 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
 }
 #endif
 
+static void print_crewid ( CREW_ID crewid ) {
+  assert( ((int)crewid > -1) && ((int)crewid < (int)END_OF_CREWIDs) );
+  printf( "%s", cnv2str_crew_id[crewid] );
+}
+
+static void print_revenue ( BOOL revenue ) {
+  if( revenue )
+    printf( "revenue" );
+  else
+    printf( "nonreve" );
+}
+
 static void print_perfreg ( PERFREG_LEVEL perfreg ) {
   switch( perfreg ) {
   case PERFREG_SLOW:
@@ -358,13 +370,6 @@ static void print_perfreg ( PERFREG_LEVEL perfreg ) {
   default:
     assert( FALSE );
   }
-}
-
-static void print_revenue ( BOOL revenue ) {
-  if( revenue )
-    printf( "revenue" );
-  else
-    printf( "nonreve" );
 }
 
 static void print_dwell ( ARS_SP_COND spcond, DWELL_TIME dwell ) {
@@ -484,6 +489,7 @@ static void ttc_print_jtrip( JOURNEY_TRIP_PTR pjtrip ) {
   print_revenue( pjtrip->is_revenue );
   printf( ", " );
   
+  print_crewid( pjtrip->crew_id );
   printf( ");\n" );
 }
 

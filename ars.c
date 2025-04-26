@@ -10,11 +10,19 @@
 #include "surveill.h"
 #include "timetable.h"
 
-const char *cnv2str_perf_regime[] = {
+const char *cnv2str_crew_id[] = {
+  "CREW_ID0000",
+  "CREW_ID0001",
+  "CREW_ID0002",
+  "CREW_ID0003",
+  "CREW_NO_ID",
+  NULL
+};
+
+const char *cnv2str_perfreg_level[] = {
   "PERFREG_SLOW",
   "PERFREG_NORMAL",
   "PERFREG_FAST",
-  "END_OF_PERFREG",
   NULL
 };
 
