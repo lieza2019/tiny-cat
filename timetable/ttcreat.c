@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <assert.h>
 #include "../generic.h"
 #include "ttcreat.h"
@@ -303,44 +304,6 @@ ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, SRC
 void emit_ars_schcmds( void ) {
   ;
 }
-
-#if 0 // *****
-static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
-  assert( ptrip );
-  char buf[PRINT_STRBUF_MAXLEN + 1] = "";
-  
-  printf( "(%s, ", cnv2str_kind(buf, ptrip->kind, PRINT_STRBUF_MAXLEN) );
-  
-  
-  
-  
-  if( ext ) {
-    printf( ", %s, ", cnv2str_sp_cond(buf, ptrip->sp_cond.stop_skip, PRINT_STRBUF_MAXLEN) );
-    printf( "(%02d:%02d:%02d,", ptrip->arrdep_time.arriv.arr_time.t.hour, ptrip->arrdep_time.arriv.arr_time.t.minute, ptrip->arrdep_time.arriv.arr_time.t.second);
-    printf( " %02d:%02d:%02d)", ptrip->arrdep_time.dept.dep_time.t.hour, ptrip->arrdep_time.dept.dep_time.t.minute, ptrip->arrdep_time.dept.dep_time.t.second );
-    printf( ", %d", ptrip->sp_cond.dwell_time );
-#if 0 // *****
-    printf( ", %s", cnv2str_perf_regime( buf, ptrip->perf_regime, PRINT_STRBUF_MAXLEN ) );
-#else
-    buf[PRINT_STRBUF_MAXLEN - 1] = 0;
-    printf( ", %s", strncpy( buf, cnv2str_perf_regime[ptrip->perf_regime.perfreg_cmd], (PRINT_STRBUF_MAXLEN - 1) ) );
-#endif
-    printf( ", %s", (ptrip->revenue.stat ? "revenue" : "nonreve") );
-
-    if( ptrip->crew_id.cid > -1 ) {
-      int i;
-      strncpy( buf, "crew_", PRINT_STRBUF_MAXLEN );
-      i = strnlen( buf, PRINT_STRBUF_MAXLEN );
-      sprintf( &buf[i], "%04d", ptrip->crew_id.cid );
-    } else {
-      assert( ptrip->crew_id.cid < 0 );
-      strncpy( buf, "no_crew_id", PRINT_STRBUF_MAXLEN );
-    }
-    printf( ", %s", buf );
-  }
-  printf( ")" );
-}
-#endif
 
 static void print_crewid ( CREW_ID crewid ) {
   assert( ((int)crewid > -1) && ((int)crewid < (int)END_OF_CREWIDs) );
@@ -696,13 +659,170 @@ static void cons_trips ( ATTR_TRIPS_PTR ptrips ) {
   }
 }
 
-static void jtrip_arrdep_time ( TIME_ARRDEP_PTR pjarrdep, TINY_TIME_DESC_PTR ppar_arrtime, TINY_TIME_DESC_PTR ppar_deptime ) {
-  assert( pjarrdep );
-  assert( ppar_arrtime );
-  assert( ppar_deptime );
+#define JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE 1
+#define JOURNEY_DEFAULT_ARRTIME_HOUR 5
+#define JOURNEY_DEFAULT_ARRTIME_MINUTE 0
+#define JOURNEY_DEFAULT_ARRTIME_SECOND 0
+static void jtrip_add_dwell ( TINY_TIME_DESC_PTR ptime, DWELL_TIME dwell ) {
+  assert( ptime );
+  const time_t t_now = time( NULL );
   
-  pjarrdep->time_arr = *ppar_arrtime;
-  pjarrdep->time_dep = *ppar_deptime; 
+  struct tm *ptm_now = NULL;
+  ptm_now = localtime( &t_now );
+  assert( ptm_now );
+  ptm_now->tm_hour = ptime->hour;
+  ptm_now->tm_min = ptime->minute;
+  ptm_now->tm_sec = ptime->second;
+  {
+    struct tm *ptm_add = NULL;
+    time_t t_add;
+    t_add = mktime( ptm_now );
+    t_add += (time_t)dwell;
+    ptm_add = localtime( &t_add );
+    assert( ptm_add );
+    ptime->hour = ptm_add->tm_hour;
+    ptime->minute = ptm_add->tm_min;
+    ptime->second = ptm_add->tm_sec;
+  }
+}
+static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR pjtrip, ATTR_TRIP_PTR ppar_trip ) {
+  assert( pjtrip );
+  assert( ppar_trip );
+  
+  assert( pjtrip->sp_cond.dwell_time == ppar_trip->sp_cond.dwell_time );
+  assert( pjtrip->sp_cond.stop_skip == ppar_trip->sp_cond.stop_skip );
+  
+  struct {    
+    TINY_TIME_DESC a;
+    BOOL dep_ovrid;
+    TINY_TIME_DESC d;
+  } arr_dep = { {JOURNEY_DEFAULT_ARRTIME_HOUR, JOURNEY_DEFAULT_ARRTIME_MINUTE, JOURNEY_DEFAULT_ARRTIME_SECOND}, FALSE };
+  
+  const time_t t_now = time( NULL );
+  struct tm *ptm_now = NULL;
+  struct tm tm_arr = {};
+  struct tm tm_dep = {};
+  time_t t_arr;
+  time_t t_dep;
+  
+  ptm_now = localtime( &t_now );
+  assert( ptm_now );
+  tm_arr = *ptm_now;
+  tm_dep = *ptm_now;
+  if( !pjtrip_prev ) {
+    if( ppar_trip->arrdep_time.arriv.arr_time.t.hour > -1 ) {
+      assert( ppar_trip->arrdep_time.arriv.arr_time.t.minute >= 0 );
+      assert( ppar_trip->arrdep_time.arriv.arr_time.t.second >= 0 );      
+      tm_arr.tm_hour = ppar_trip->arrdep_time.arriv.arr_time.t.hour;
+      tm_arr.tm_min = ppar_trip->arrdep_time.arriv.arr_time.t.minute;
+      tm_arr.tm_sec = ppar_trip->arrdep_time.arriv.arr_time.t.second;
+      t_arr = mktime( &tm_arr );
+      if( ppar_trip->arrdep_time.dept.dep_time.t.hour > -1 ) {
+	assert( ppar_trip->arrdep_time.dept.dep_time.t.minute >= 0 );
+	assert( ppar_trip->arrdep_time.dept.dep_time.t.second >= 0 );
+	tm_dep.tm_hour = ppar_trip->arrdep_time.dept.dep_time.t.hour;
+	tm_dep.tm_min = ppar_trip->arrdep_time.dept.dep_time.t.minute;
+	tm_dep.tm_sec = ppar_trip->arrdep_time.dept.dep_time.t.second;
+	t_dep = mktime( &tm_dep );
+	switch( pjtrip->sp_cond.stop_skip ) {
+	case DWELL:
+	  {
+	    const int diff_dw = (int)(t_dep - (t_arr + (time_t)pjtrip->sp_cond.dwell_time));
+	    if( abs( diff_dw ) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE ) {
+	      printf( "NOTICE: mismatched departure time with its dwell at (LINE, COL) = (%d, %d).\n",
+		      ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
+	      if( diff_dw < 0 ) {
+		printf( "FATAL: deparure time overridden with its dwell time, at (LINE, COL) = (%d, %d).\n",
+			ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
+		t_dep = t_arr + (time_t)pjtrip->sp_cond.dwell_time;
+		arr_dep.dep_ovrid = TRUE;
+	      }
+	    }
+	  }	  
+	  break;
+	case SKIP:
+	  if( abs( (int)t_dep - (int)t_arr ) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE ) {
+	    t_dep = t_arr;
+	    arr_dep.dep_ovrid = TRUE;
+	  }
+	  break;
+	default:
+	  assert( FALSE );
+	}
+      } else {
+	assert( ppar_trip->arrdep_time.dept.dep_time.t.minute < 0 );
+	assert( ppar_trip->arrdep_time.dept.dep_time.t.second < 0 );
+	t_dep = t_arr + (time_t)pjtrip->sp_cond.dwell_time;
+	arr_dep.dep_ovrid = TRUE;
+      }
+      arr_dep.a = ppar_trip->arrdep_time.arriv.arr_time.t;
+      arr_dep.d = ppar_trip->arrdep_time.dept.dep_time.t;
+      if( arr_dep.dep_ovrid ) {
+	struct tm *ptm_d = NULL;
+	ptm_d = localtime( &t_dep );
+	assert( ptm_d );
+	arr_dep.d.hour = ptm_d->tm_hour;
+	arr_dep.d.minute = ptm_d->tm_min;
+	arr_dep.d.second = ptm_d->tm_sec;
+      }
+    } else {
+      assert( ppar_trip->arrdep_time.arriv.arr_time.t.minute < 0 );
+      assert( ppar_trip->arrdep_time.arriv.arr_time.t.second < 0 );
+      printf( "FATAL: The first trip of journey must have arrival time, at (LINE, COL) = (%d, %d).\n",
+	      ppar_trip->arrdep_time.arriv.pos.row, ppar_trip->arrdep_time.arriv.pos.col );
+      
+      assert( arr_dep.a.hour == JOURNEY_DEFAULT_ARRTIME_HOUR );
+      assert( arr_dep.a.minute == JOURNEY_DEFAULT_ARRTIME_MINUTE );
+      assert( arr_dep.a.second == JOURNEY_DEFAULT_ARRTIME_SECOND );
+      arr_dep.d.hour = arr_dep.a.hour;
+      arr_dep.d.minute = arr_dep.a.minute;
+      arr_dep.d.second = arr_dep.a.second;
+      jtrip_add_dwell( &arr_dep.d, pjtrip->sp_cond.dwell_time );
+      if( ppar_trip->arrdep_time.dept.dep_time.t.hour > -1 ) {
+	assert( ppar_trip->arrdep_time.dept.dep_time.t.minute >= 0 );
+	assert( ppar_trip->arrdep_time.dept.dep_time.t.second >= 0 );
+	tm_dep.tm_hour = ppar_trip->arrdep_time.dept.dep_time.t.hour;
+	tm_dep.tm_min = ppar_trip->arrdep_time.dept.dep_time.t.minute;
+	tm_dep.tm_sec = ppar_trip->arrdep_time.dept.dep_time.t.second;
+	t_dep = mktime( &tm_dep );
+	{
+	  struct tm tm_arr_dw = *ptm_now;
+	  time_t t_arr_dw;
+	  tm_arr_dw.tm_hour = arr_dep.d.hour;
+	  tm_arr_dw.tm_min = arr_dep.d.minute;
+	  tm_arr_dw.tm_sec = arr_dep.d.second;
+	  t_arr_dw = mktime( &tm_arr_dw );
+	  {
+	    const int d = (int)t_dep - (int)t_arr_dw;
+	    if( (abs( d ) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE) && (d < 0) ) {
+	      struct tm *ptm = NULL;
+	      printf( "FATAL: deparure time overridden with its dwell time, at (LINE, COL) = (%d, %d).\n",
+		      ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
+	      ptm = localtime( &t_arr_dw );
+	      arr_dep.d.hour = ptm->tm_hour;
+	      arr_dep.d.minute = ptm->tm_min;
+	      arr_dep.d.second = ptm->tm_sec;
+	    }
+	  }
+	}
+      } else {
+	assert( ppar_trip->arrdep_time.dept.dep_time.t.minute < 0 );
+	assert( ppar_trip->arrdep_time.dept.dep_time.t.second < 0 );
+      }
+    }
+  } else {
+    assert( pjtrip_prev );
+    assert( pjtrip_prev->time_arrdep.time_arr.hour >= 0 );
+    assert( pjtrip_prev->time_arrdep.time_arr.minute >= 0 );
+    assert( pjtrip_prev->time_arrdep.time_arr.second >= 0 );
+    
+    assert( pjtrip_prev->time_arrdep.time_dep.hour >= 0 );
+    assert( pjtrip_prev->time_arrdep.time_dep.minute >= 0 );
+    assert( pjtrip_prev->time_arrdep.time_dep.second >= 0 );
+    ;
+  }
+  pjtrip->time_arrdep.time_arr = arr_dep.a;
+  pjtrip->time_arrdep.time_dep = arr_dep.d;
 }
 
 static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
@@ -735,6 +855,7 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	assert( pJ_par );
 	assert( pJ_par->kind == PAR_JOURNEY );
 	assert( pJ_par->trips.kind == PAR_TRIPS );
+	JOURNEY_TRIP_PTR pJ_prev = NULL;
 	int l;
 	for( l = 0; l < pJ_par->trips.ntrips; l++ ) {
 	  assert( pJ_par->trips.trip_prof[l].kind == PAR_TRIP );
@@ -750,7 +871,7 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	    assert( pJ->sp_cond.stop_skip == SKIP ? (pJ->sp_cond.dwell_time == 0) : ((pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time > 0)) );
 	    
 	    // settings for pJ->time_arrdep;
-	    jtrip_arrdep_time( &pJ->time_arrdep, &pJ_par->trips.trip_prof[l].arrdep_time.arriv.arr_time.t, &pJ_par->trips.trip_prof[l].arrdep_time.dept.dep_time.t );
+	    jtrip_arrdep_time1( pJ_prev, pJ, &pJ_par->trips.trip_prof[l] );
 	    
 	    // settings for pJ->perfreg;
 	    pJ->perfreg = pJ_par->trips.trip_prof[l].perf_regime.perfreg_cmd;
@@ -768,6 +889,7 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	      pJ->crew_id = CREW_NO_ID;
 	    }
 	    timetbl_dataset.j.journeys[i].num_trips++;
+	    pJ_prev = pJ;
 	  }
 	}
       }

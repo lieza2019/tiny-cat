@@ -551,13 +551,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.arriv.arr_time.t.hour = -1;
   $$.arrdep_time.arriv.arr_time.t.minute = -1;
   $$.arrdep_time.arriv.arr_time.t.second = -1;
-  $$.arrdep_time.arriv.pos.row = @1.first_line;
-  $$.arrdep_time.arriv.pos.col = @1.first_column;
+  $$.arrdep_time.arriv.arr_time.pos.row = @1.first_line;
+  $$.arrdep_time.arriv.arr_time.pos.col = @1.first_column;
+  $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+  $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
   $$.arrdep_time.dept.dep_time.t.hour = -1;
   $$.arrdep_time.dept.dep_time.t.minute = -1;
   $$.arrdep_time.dept.dep_time.t.second = -1;
-  $$.arrdep_time.dept.pos.row = @1.first_line;
-  $$.arrdep_time.dept.pos.col = @1.first_column;
+  $$.arrdep_time.dept.dep_time.pos.row = @1.first_line;
+  $$.arrdep_time.dept.dep_time.pos.col = @1.first_column;
+  $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+  $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
   $$.kind = PAR_TRIP;
 #if 0 // ***** for debugging.
   {
@@ -588,13 +592,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = -1;
     $$.arrdep_time.arriv.arr_time.t.minute = -1;
     $$.arrdep_time.arriv.arr_time.t.second = -1;
-    $$.arrdep_time.arriv.pos.row = @1.first_line;
-    $$.arrdep_time.arriv.pos.col = @1.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @1.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @1.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = -1;
     $$.arrdep_time.dept.dep_time.t.minute = -1;
     $$.arrdep_time.dept.dep_time.t.second = -1;
-    $$.arrdep_time.dept.pos.row = @1.first_line;
-    $$.arrdep_time.dept.pos.col = @1.first_column;
+    $$.arrdep_time.dept.dep_time.pos.row = @1.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @1.first_column;    
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( $4.kind == PAR_UNKNOWN );
@@ -614,13 +622,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
   $$.arrdep_time.arriv.arr_time.t.hour = -1;
   $$.arrdep_time.arriv.arr_time.t.minute = -1;
   $$.arrdep_time.arriv.arr_time.t.second = -1;
-  $$.arrdep_time.arriv.pos.row = @1.first_line;
-  $$.arrdep_time.arriv.pos.col = @1.first_column;
+  $$.arrdep_time.arriv.arr_time.pos.row = @1.first_line;
+  $$.arrdep_time.arriv.arr_time.pos.col = @1.first_column;
+  $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+  $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
   $$.arrdep_time.dept.dep_time.t.hour = -1;
   $$.arrdep_time.dept.dep_time.t.minute = -1;
   $$.arrdep_time.dept.dep_time.t.second = -1;
-  $$.arrdep_time.dept.pos.row = @1.first_line;
-  $$.arrdep_time.dept.pos.col = @1.first_column;
+  $$.arrdep_time.dept.dep_time.pos.row = @1.first_line;
+  $$.arrdep_time.dept.dep_time.pos.col = @1.first_column;
+  $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+  $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
   $$.kind = PAR_TRIP;
 #if 0 // ***** for debugging.
   {
@@ -651,13 +663,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = -1;
     $$.arrdep_time.arriv.arr_time.t.minute = -1;
     $$.arrdep_time.arriv.arr_time.t.second = -1;
-    $$.arrdep_time.arriv.pos.row = @1.first_line;
-    $$.arrdep_time.arriv.pos.col = @1.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @1.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @1.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = -1;
     $$.arrdep_time.dept.dep_time.t.minute = -1;
     $$.arrdep_time.dept.dep_time.t.second = -1;
-    $$.arrdep_time.dept.pos.row = @1.first_line;
-    $$.arrdep_time.dept.pos.col = @1.first_column;
+    $$.arrdep_time.dept.dep_time.pos.row = @2.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @2.first_column;
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( $5.kind == PAR_UNKNOWN );
@@ -678,13 +694,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = -1;
     $$.arrdep_time.arriv.arr_time.t.minute = -1;
     $$.arrdep_time.arriv.arr_time.t.second = -1;
-    $$.arrdep_time.arriv.pos.row = @1.first_line;
-    $$.arrdep_time.arriv.pos.col = @1.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @1.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @1.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = -1;
     $$.arrdep_time.dept.dep_time.t.minute = -1;
     $$.arrdep_time.dept.dep_time.t.second = -1;
-    $$.arrdep_time.dept.pos.row = @1.first_line;
-    $$.arrdep_time.dept.pos.col = @1.first_column;
+    $$.arrdep_time.dept.dep_time.pos.row = @1.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @1.first_column;
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( $1.kind == PAR_UNKNOWN );
@@ -705,13 +725,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
     $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
     $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
-    $$.arrdep_time.arriv.pos.row = @2.first_line;
-    $$.arrdep_time.arriv.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @2.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = -1;
     $$.arrdep_time.dept.dep_time.t.minute = -1;
     $$.arrdep_time.dept.dep_time.t.second = -1;
-    $$.arrdep_time.dept.pos.row = @3.first_line;
-    $$.arrdep_time.dept.pos.col = @3.first_column;
+    $$.arrdep_time.dept.dep_time.pos.row = @3.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @3.first_column;
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( $2.kind == PAR_UNKNOWN );
@@ -739,13 +763,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
     $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
     $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
-    $$.arrdep_time.arriv.pos.row = @2.first_line;
-    $$.arrdep_time.arriv.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @2.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = -1;
     $$.arrdep_time.dept.dep_time.t.minute = -1;
     $$.arrdep_time.dept.dep_time.t.second = -1;
-    $$.arrdep_time.dept.pos.row = @3.first_line;
-    $$.arrdep_time.dept.pos.col = @3.first_column;
+    $$.arrdep_time.dept.dep_time.pos.row = @3.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @3.first_column;
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( ($2.kind == PAR_UNKNOWN) || ($5.kind == PAR_UNKNOWN) );
@@ -766,13 +794,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
     $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
     $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
-    $$.arrdep_time.arriv.pos.row = @2.first_line;
-    $$.arrdep_time.arriv.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @2.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = -1;
     $$.arrdep_time.dept.dep_time.t.minute = -1;
     $$.arrdep_time.dept.dep_time.t.second = -1;
-    $$.arrdep_time.dept.pos.row = @3.first_line;
-    $$.arrdep_time.dept.pos.col = @3.first_column;
+    $$.arrdep_time.dept.dep_time.pos.row = @3.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @3.first_column;
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( $2.kind == PAR_UNKNOWN );
@@ -807,13 +839,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
     $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
     $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
-    $$.arrdep_time.arriv.pos.row = @2.first_line;
-    $$.arrdep_time.arriv.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @2.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = -1;
     $$.arrdep_time.dept.dep_time.t.minute = -1;
     $$.arrdep_time.dept.dep_time.t.second = -1;
-    $$.arrdep_time.dept.pos.row = @3.first_line;
-    $$.arrdep_time.dept.pos.col = @3.first_column;
+    $$.arrdep_time.dept.dep_time.pos.row = @3.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @3.first_column;
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( ($2.kind == PAR_UNKNOWN) || ($6.kind == PAR_UNKNOWN) );
@@ -834,13 +870,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = -1;
     $$.arrdep_time.arriv.arr_time.t.minute = -1;
     $$.arrdep_time.arriv.arr_time.t.second = -1;
-    $$.arrdep_time.arriv.pos.row = @1.first_line;
-    $$.arrdep_time.arriv.pos.col = @1.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @1.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @1.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = $3.t.hour;
     $$.arrdep_time.dept.dep_time.t.minute = $3.t.minute;
     $$.arrdep_time.dept.dep_time.t.second = $3.t.second;
-    $$.arrdep_time.dept.pos.row = @3.first_line;
-    $$.arrdep_time.dept.pos.col = @3.first_column;   
+    $$.arrdep_time.dept.dep_time.pos.row = @3.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @3.first_column;
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( $3.kind == PAR_UNKNOWN );
@@ -868,13 +908,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = -1;
     $$.arrdep_time.arriv.arr_time.t.minute = -1;
     $$.arrdep_time.arriv.arr_time.t.second = -1;
-    $$.arrdep_time.arriv.pos.row = @1.first_line;
-    $$.arrdep_time.arriv.pos.col = @1.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @1.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @1.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = $3.t.hour;
     $$.arrdep_time.dept.dep_time.t.minute = $3.t.minute;
     $$.arrdep_time.dept.dep_time.t.second = $3.t.second;
-    $$.arrdep_time.dept.pos.row = @3.first_line;
-    $$.arrdep_time.dept.pos.col = @3.first_column;
+    $$.arrdep_time.dept.dep_time.pos.row = @3.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @3.first_column;
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( ($3.kind == PAR_UNKNOWN) || ($6.kind == PAR_UNKNOWN) );
@@ -895,13 +939,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
     $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
     $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
-    $$.arrdep_time.arriv.pos.row = @2.first_line;
-    $$.arrdep_time.arriv.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @2.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = $4.t.hour;
     $$.arrdep_time.dept.dep_time.t.minute = $4.t.minute;
     $$.arrdep_time.dept.dep_time.t.second = $4.t.second;
-    $$.arrdep_time.dept.pos.row = @4.first_line;
-    $$.arrdep_time.dept.pos.col = @4.first_column;
+    $$.arrdep_time.dept.dep_time.pos.row = @4.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @4.first_column;
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( ($2.kind == PAR_UNKNOWN) || ($4.kind == PAR_UNKNOWN) );
@@ -929,13 +977,17 @@ arrdep_time_journey : '(' ')' ')' { /* both omitted, form1 */
     $$.arrdep_time.arriv.arr_time.t.hour = $2.t.hour;
     $$.arrdep_time.arriv.arr_time.t.minute = $2.t.minute;
     $$.arrdep_time.arriv.arr_time.t.second = $2.t.second;
-    $$.arrdep_time.arriv.pos.row = @2.first_line;
-    $$.arrdep_time.arriv.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.arr_time.pos.row = @2.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @2.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
     $$.arrdep_time.dept.dep_time.t.hour = $4.t.hour;
     $$.arrdep_time.dept.dep_time.t.minute = $4.t.minute;
     $$.arrdep_time.dept.dep_time.t.second = $4.t.second;
-    $$.arrdep_time.dept.pos.row = @4.first_line;
-    $$.arrdep_time.dept.pos.col = @4.first_column;
+    $$.arrdep_time.dept.dep_time.pos.row = @4.first_line;
+    $$.arrdep_time.dept.dep_time.pos.col = @4.first_column;
+    $$.arrdep_time.dept.pos.row = $$.arrdep_time.dept.dep_time.pos.row;
+    $$.arrdep_time.dept.pos.col = $$.arrdep_time.dept.dep_time.pos.col;
     $$.kind = PAR_TRIP;
   } else {
     assert( ($2.kind == PAR_UNKNOWN) || ($4.kind == PAR_UNKNOWN) || ($7.kind == PAR_UNKNOWN) );
