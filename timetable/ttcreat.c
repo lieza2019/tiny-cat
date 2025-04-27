@@ -596,7 +596,7 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
 	}
       } else {
 	printf( "FATAL: undefined route found in trip declaration at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
-	err_stat.sem.route_unknown = TRUE;
+	err_stat.sem.unknown_route = TRUE;
 	err = TRUE;
       }
     }
@@ -681,29 +681,7 @@ TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst ) {
 #define JOURNEY_DEFAULT_ARRTIME_HOUR 5
 #define JOURNEY_DEFAULT_ARRTIME_MINUTE 0
 #define JOURNEY_DEFAULT_ARRTIME_SECOND 0
-static void jtrip_add_dwell ( TINY_TIME_DESC_PTR ptime, DWELL_TIME dwell ) {
-  assert( ptime );
-  const time_t t_now = time( NULL );
-  
-  struct tm *ptm_now = NULL;
-  ptm_now = localtime( &t_now );
-  assert( ptm_now );
-  ptm_now->tm_hour = ptime->hour;
-  ptm_now->tm_min = ptime->minute;
-  ptm_now->tm_sec = ptime->second;
-  {
-    struct tm *ptm_add = NULL;
-    time_t t_add;
-    t_add = mktime( ptm_now );
-    t_add += (time_t)dwell;
-    ptm_add = localtime( &t_add );
-    assert( ptm_add );
-    ptime->hour = ptm_add->tm_hour;
-    ptime->minute = ptm_add->tm_min;
-    ptime->second = ptm_add->tm_sec;
-  }
-}
-static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR pjtrip, ATTR_TRIP_PTR ppar_trip ) {
+static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR pjtrip, ATTR_TRIP_PTR ppar_trip ) {
   assert( pjtrip );
   assert( ppar_trip );
   
@@ -776,6 +754,8 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
 	  break;
 	case SKIP:
 	  if( abs( (int)t_dep - (int)t_arr ) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE ) {
+	    printf( "NOTICE: mismatched departure time for skipping, at (LINE, COL) = (%d, %d).\n",
+		    ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 	    t_dep = t_arr;
 	    arr_dep.dep_ovrid = TRUE;
 	  }
@@ -802,25 +782,20 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
     } else {
       assert( ppar_trip->arrdep_time.arriv.arr_time.t.minute < 0 );
       assert( ppar_trip->arrdep_time.arriv.arr_time.t.second < 0 );
+      time_t t_arr_dw;      
       if( pjtrip_prev ) {
 	assert( arr_dep.t_arr0 );
-	struct tm *ptm = NULL;	
-	ptm = localtime( &arr_dep.t_arr0 );
-	arr_dep.a.hour = ptm->tm_hour;
-	arr_dep.a.minute = ptm->tm_min;
-	arr_dep.a.second = ptm->tm_sec;
+	t_arr = arr_dep.t_arr0;
       } else {
 	assert( !arr_dep.t_arr0 );
 	printf( "FATAL: The first trip of journey must have arrival time, at (LINE, COL) = (%d, %d).\n",
-		ppar_trip->arrdep_time.arriv.pos.row, ppar_trip->arrdep_time.arriv.pos.col );      
-	arr_dep.a.hour = JOURNEY_DEFAULT_ARRTIME_HOUR;
-	arr_dep.a.minute = JOURNEY_DEFAULT_ARRTIME_MINUTE;
-	arr_dep.a.second = JOURNEY_DEFAULT_ARRTIME_SECOND;
+		ppar_trip->arrdep_time.arriv.pos.row, ppar_trip->arrdep_time.arriv.pos.col );
+	tm_arr.tm_hour = JOURNEY_DEFAULT_ARRTIME_HOUR;
+	tm_arr.tm_min = JOURNEY_DEFAULT_ARRTIME_MINUTE;
+	tm_arr.tm_sec = JOURNEY_DEFAULT_ARRTIME_SECOND;
+	t_arr = mktime( &tm_arr );
       }
-      arr_dep.d.hour = arr_dep.a.hour;
-      arr_dep.d.minute = arr_dep.a.minute;
-      arr_dep.d.second = arr_dep.a.second;
-      jtrip_add_dwell( &arr_dep.d, pjtrip->sp_cond.dwell_time );
+      t_arr_dw = t_arr + (time_t)pjtrip->sp_cond.dwell_time;
       if( ppar_trip->arrdep_time.dept.dep_time.t.hour > -1 ) {
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.minute >= 0 );
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.second >= 0 );
@@ -828,29 +803,39 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
 	tm_dep.tm_min = ppar_trip->arrdep_time.dept.dep_time.t.minute;
 	tm_dep.tm_sec = ppar_trip->arrdep_time.dept.dep_time.t.second;
 	t_dep = mktime( &tm_dep );
-	{
-	  struct tm tm_arr_dw = *ptm_now;
-	  time_t t_arr_dw;
-	  tm_arr_dw.tm_hour = arr_dep.d.hour;
-	  tm_arr_dw.tm_min = arr_dep.d.minute;
-	  tm_arr_dw.tm_sec = arr_dep.d.second;
-	  t_arr_dw = mktime( &tm_arr_dw );
+	switch( pjtrip->sp_cond.stop_skip ) {
+	case DWELL:
 	  {
 	    const int d = (int)t_dep - (int)t_arr_dw;
 	    if( (abs( d ) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE) && (d < 0) ) {
-	      struct tm *ptm = NULL;
 	      printf( "FATAL: deparure time overridden with its dwell time, at (LINE, COL) = (%d, %d).\n",
 		      ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
-	      ptm = localtime( &t_arr_dw );
-	      arr_dep.d.hour = ptm->tm_hour;
-	      arr_dep.d.minute = ptm->tm_min;
-	      arr_dep.d.second = ptm->tm_sec;
-	    }
+	      t_dep = t_arr_dw;
+	    }	    
 	  }
+	  break;
+	case SKIP:
+	  if( abs( (int)t_dep - (int)t_arr_dw ) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE ) {
+	    printf( "NOTICE: mismatched departure time for skipping, at (LINE, COL) = (%d, %d).\n",
+		    ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
+	    t_dep = t_arr_dw;
+	  }
+	  break;
+	default:
+	  assert( FALSE );
 	}
       } else {
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.minute < 0 );
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.second < 0 );
+	t_dep = t_arr_dw;
+      }
+      {
+	struct tm *ptm_dep = NULL;
+	ptm_dep = localtime( &t_dep );
+	assert( ptm_dep );
+	arr_dep.d.hour = ptm_dep->tm_hour;
+	arr_dep.d.minute = ptm_dep->tm_min;
+	arr_dep.d.second = ptm_dep->tm_sec;
       }
     }
   } else {
@@ -920,12 +905,26 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	    assert( timetbl_dataset.j.journeys[i].num_trips == newone );
 	    JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
 	    assert( pJ );
+	    TRIP_DESC_PTR parr_trip = NULL;
+	    parr_trip = lkup_trip( &pJ->st_pltb_orgdst.org, &pJ->st_pltb_orgdst.dst );
+	    if( !parr_trip ) {
+	      printf( "FATAL: unknwon trip found in journey, at (LINE, COL) = (%d, %d).\n",
+		      pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
+	      err_stat.sem.unknown_trip = TRUE;
+	    }
+	    if( pJ_prev ) {
+	      if( !((pJ_prev->st_pltb_orgdst.dst.st == pJ->st_pltb_orgdst.org.st) && (pJ_prev->st_pltb_orgdst.dst.pltb == pJ->st_pltb_orgdst.org.pltb)) ) {
+		printf( "FATAL: contiguous lost in journey trips, at (LINE, COL) = (%d, %d).\n",
+			pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
+		err_stat.sem.contiguless_trips = TRUE;
+	      }
+	    }
 	    // settings for pJ->dwell_time;
 	    pJ->sp_cond.dwell_time = pJ_par->trips.trip_prof[l].sp_cond.dwell_time;
 	    pJ->sp_cond.stop_skip = pJ_par->trips.trip_prof[l].sp_cond.stop_skip;
 	    assert( pJ->sp_cond.stop_skip == SKIP ? (pJ->sp_cond.dwell_time == 0) : ((pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time > 0)) );
 	    // settings for pJ->time_arrdep;
-	    jtrip_arrdep_time1( pJ_prev, pJ, &pJ_par->trips.trip_prof[l] );
+	    jtrip_arrdep_time( pJ_prev, pJ, &pJ_par->trips.trip_prof[l] );
 	    
 	    // settings for pJ->perfreg;
 	    pJ->perfreg = pJ_par->trips.trip_prof[l].perf_regime.perfreg_cmd;
@@ -976,7 +975,7 @@ int ttcreat ( void ) {
   if( !err ) {
     cons_trips( &timetable_symtbl->trips_regtbl );
     if( err_stat.sem.route_redef ||
-	err_stat.sem.route_unknown ) {
+	err_stat.sem.unknown_route ) {
       err = TRUE;
       r = 1;
     }

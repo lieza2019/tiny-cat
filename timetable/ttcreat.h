@@ -36,8 +36,11 @@ typedef struct err_stat {
   } par;
   struct {
     BOOL route_redef;
-    BOOL route_unknown;
+    //BOOL route_unknown;
+    BOOL unknown_route;
     BOOL invalid_crewid;
+    BOOL unknown_trip;
+    BOOL contiguless_trips;
   } sem;
 } ERR_STAT;
 extern ERR_STAT err_stat;
