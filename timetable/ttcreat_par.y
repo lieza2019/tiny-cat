@@ -52,22 +52,20 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
   char buf[PRINT_STRBUF_MAXLEN + 1] = "";
   
   printf( "(%s, ", cnv2str_kind(buf, ptrip->kind, PRINT_STRBUF_MAXLEN) );
-  
   printf( "(" );
   print_st_pltb( &ptrip->attr_st_pltb_orgdst.st_pltb_org );
   printf( ", " );
   print_st_pltb( &ptrip->attr_st_pltb_orgdst.st_pltb_dst );
   printf( "), " ); 
-  
-  print_sp_pair( &ptrip->attr_sp_orgdst );
-  printf( ", " );
-  print_routes( &ptrip->attr_route_ctrl );
-  
-  if( ext ) {
+  if( !ext ) {
+    print_sp_pair( &ptrip->attr_sp_orgdst );
+    printf( ", %d, ", ptrip->running_time );
+    print_routes( &ptrip->attr_route_ctrl );
+  } else {
+    printf( "%d", ptrip->sp_cond.dwell_time );
     printf( ", %s, ", cnv2str_sp_cond(buf, ptrip->sp_cond.stop_skip, PRINT_STRBUF_MAXLEN) );
     printf( "(%02d:%02d:%02d,", ptrip->arrdep_time.arriv.arr_time.t.hour, ptrip->arrdep_time.arriv.arr_time.t.minute, ptrip->arrdep_time.arriv.arr_time.t.second);
     printf( " %02d:%02d:%02d)", ptrip->arrdep_time.dept.dep_time.t.hour, ptrip->arrdep_time.dept.dep_time.t.minute, ptrip->arrdep_time.dept.dep_time.t.second );
-    printf( ", %d", ptrip->sp_cond.dwell_time );
     buf[PRINT_STRBUF_MAXLEN - 1] = 0;
     printf( ", %s", strncpy( buf, cnv2str_perfreg_level[ptrip->perf_regime.perfreg_cmd], (PRINT_STRBUF_MAXLEN - 1) ) );
     printf( ", %s", (ptrip->revenue.stat ? "revenue" : "nonreve") );
@@ -101,12 +99,33 @@ static void print_rjasgn ( ATTR_RJ_ASGN_PTR pasgn ) {
   printf( ")" );  
 }
 
-#if 1
+static void print_journey ( ATTR_JOURNEY_PTR pjourney ) {
+  assert( pjourney );
+  const int nspc_indent = 2;
+  
+  if( pjourney->journey_id.jid > 0 ) {
+    assert( pjourney->kind == PAR_JOURNEY );
+    int i;
+    {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+    printf( "J%02d: \n", pjourney->journey_id.jid );
+    for( i = 0; i < pjourney->trips.ntrips; i++ ) {
+      assert( pjourney->trips.kind == PAR_TRIPS );
+      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+      print_trip( &pjourney->trips.trip_prof[i], TRUE );
+      printf( "\n" );
+    }
+  }
+}
+
 static void print_timetable_decl ( ATTR_TRIPS_PTR ptrips, ATTR_RJ_ASGNS_PTR prjasgns, ATTR_JOURNEYS_PTR pjourneys ) {
+  assert( ptrips );
+  assert( prjasgns );
+  assert( pjourneys );
+  
   printf( "trips:\n" );
   {
     const int nspc_indent = 2;
-    assert( ptrips );
     ATTR_TRIP_PTR p = ptrips->trip_prof;
     assert( p );
     int i;
@@ -121,7 +140,6 @@ static void print_timetable_decl ( ATTR_TRIPS_PTR ptrips, ATTR_RJ_ASGNS_PTR prja
   printf( "assignments:\n" );
   {
     const int nspc_indent = 2;
-    assert( prjasgns );
     ATTR_RJ_ASGN_PTR p = prjasgns->rj_asgn;
     assert( p );      
     int i;
@@ -133,37 +151,21 @@ static void print_timetable_decl ( ATTR_TRIPS_PTR ptrips, ATTR_RJ_ASGNS_PTR prja
   }
   printf( "\n" );
   
-#if 1
   printf( "journeys:\n" );
   {
-    const int nspc_indent = 2;
-    assert( timetable_symtbl->journeys_regtbl.kind == PAR_JOURNEYS );
-    int i, j;
-    for( i = 0, j = 0;i < timetable_symtbl->journeys_regtbl.njourneys; i++, j++ ) {
-      while( j < MAX_JOURNEYS ) {
-	ATTR_JOURNEY_PTR p = &timetable_symtbl->journeys_regtbl.journey_prof[j];
-	assert( p );
-	if( p->journey_id.jid > 0 ) {
-	  assert( p->kind == PAR_JOURNEY );
-	  int k;
-	  {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-	  printf( "J%02d: \n", p->journey_id.jid );
-	  for( k = 0; k < p->trips.ntrips; k++ ) {
-	    assert( p->trips.kind == PAR_TRIPS );
-	    {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-	    {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-	    print_trip( &p->trips.trip_prof[k], TRUE );
-	    printf( "\n" );
-	  }
-	  break;
-	}
-	j++;
+    int cnt = 0;
+    int i;
+    for( i = 0; (i < MAX_JOURNEYS) && (cnt < pjourneys->njourneys); i++ ) {
+      ATTR_JOURNEY_PTR pj = &pjourneys->journey_prof[i];
+      assert( pj );
+      if( pj->journey_id.jid > 0 ) {
+	print_journey( pj );
+	cnt++;
       }
     }
+    assert( cnt == pjourneys->njourneys );
   }
-#endif
 }
-#endif
 
 static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   assert( ptrip );
@@ -299,64 +301,8 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
 %start timetable_decl
 %%
 timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
-#if 0 /* ***** for debugging. */
-  {
-    printf( "trips:\n" );
-    {
-      const int nspc_indent = 2;
-      assert( $1 );
-      ATTR_TRIP_PTR p = $1->trip_prof;
-      assert( p );
-      int i;
-      for( i = 0; i < $1->ntrips; i++ ) {
-	{int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-	print_trip( &p[i], FALSE );
-	printf( "\n" );
-      }
-    }
-    printf( "\n" );
-    printf( "assignments:\n" );
-    {
-      const int nspc_indent = 2;
-      assert( $2 );
-      ATTR_RJ_ASGN_PTR p = $2->rj_asgn;
-      assert( p );      
-      int i;
-      for( i = 0; i < $2->nasgns; i++ ) {
-	{int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-	print_rjasgn( &p[i] );
-	printf( "\n" );
-      }
-    }
-    printf( "\n" );
-    printf( "journeys:\n" );
-    {
-      const int nspc_indent = 2;
-      assert( timetable_symtbl->journeys_regtbl.kind == PAR_JOURNEYS );
-      int i, j;
-      for( i = 0, j = 0;i < timetable_symtbl->journeys_regtbl.njourneys; i++, j++ ) {
-	while( j < MAX_JOURNEYS ) {
-	  ATTR_JOURNEY_PTR p = &timetable_symtbl->journeys_regtbl.journey_prof[j];
-	  assert( p );
-	  if( p->journey_id.jid > 0 ) {
-	    assert( p->kind == PAR_JOURNEY );
-	    int k;
-	    {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-	    printf( "J%02d: \n", p->journey_id.jid );
-	    for( k = 0; k < p->trips.ntrips; k++ ) {
-	      assert( p->trips.kind == PAR_TRIPS );
-	      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-	      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-	      print_trip( &p->trips.trip_prof[k], TRUE );
-	      printf( "\n" );
-	    }
-	    break;
-	  }
-	  j++;
-	}
-      }
-    }
-  }
+#if 1 /* ***** for debugging. */
+  print_timetable_decl( $1, $2, $3 );
 #endif
   $$ = timetable_symtbl;
  }

@@ -223,44 +223,6 @@ static BOOL next2_pred ( ATTR_TRIP_PTR ppred, ATTR_TRIP_PTR psucc ) {
   return r;
 }
 
-#if 0
-ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, ATTR_TRIP_PTR ptrip ) {
-  assert( preg_tbl );
-  assert( preg_tbl->kind == JOURNEYS );
-  assert( (jid >= 1) && (jid <= MAX_JOURNEYS) );
-  assert( ptrip->kind == TRIP );
-  assert( ptrip );
-  assert( ptrip->kind == TRIP );
-  
-  ATTR_JOURNEY_PTR pJ = &preg_tbl->journey_prof[jid];
-  assert( pJ );
-  int nts = pJ->trips.ntrips;  
-  if( pJ->kind == JOURNEY ) {
-    assert( pJ->journey_id.jid == jid );
-    assert( pJ->trips.kind == TRIPS );
-    assert( nts > 0 );
-    if( nts < MAX_JOURNEY_TRIPS ) {
-      if( ! next2_pred( &pJ->trips.trip_prof[nts - 1], ptrip ) )
-	printf( "NOTICE: Undefined trip found on journey %d.\n", jid );
-      pJ->trips.trip_prof[nts] = *ptrip;
-      pJ->trips.ntrips++;
-    } else {
-      printf( "FATAL: trips of the journey %d has exhausted.\n", jid );
-      exit( 1 );
-    }
-  } else {
-    assert( ! pJ->kind );
-    assert( nts == 0 );
-    pJ->kind = JOURNEY;
-    pJ->journey_id.jid = jid;
-    pJ->trips.kind = TRIPS;
-    pJ->trips.trip_prof[nts] = *ptrip;
-    pJ->trips.ntrips = 1;
-    
-  }
-  return &pJ->trips.trip_prof[nts];
-}
-#else
 ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, SRC_POS_PTR ppos, ATTR_TRIP_PTR ptrip ) {
   assert( preg_tbl );
   assert( preg_tbl->kind == PAR_JOURNEYS );
@@ -299,7 +261,6 @@ ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, SRC
   }
   return &pJ->trips.trip_prof[nts];
 }
-#endif
 
 static void print_crewid ( CREW_ID crewid ) {
   assert( ((int)crewid > -1) && ((int)crewid < (int)END_OF_CREWIDs) );
