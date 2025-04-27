@@ -738,6 +738,19 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
       tm_arr.tm_min = ppar_trip->arrdep_time.arriv.arr_time.t.minute;
       tm_arr.tm_sec = ppar_trip->arrdep_time.arriv.arr_time.t.second;
       t_arr = mktime( &tm_arr );
+      if( arr_dep.t_arr0 ) {
+	const int diff_arr = (int)t_arr - (int)arr_dep.t_arr0;
+	if( abs( diff_arr ) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE ) {
+	  printf( "NOTICE: mismatched arrival time with the departure time from its previous station, at (LINE, COL) = (%d, %d).\n",
+		  ppar_trip->arrdep_time.arriv.arr_time.pos.row, ppar_trip->arrdep_time.arriv.arr_time.pos.col );
+	  if( diff_arr < 0 ) {
+	    printf( "FATAL: arrival time overridden with the departure time and running time from its previous station, at (LINE, COL) = (%d, %d).\n",
+		    ppar_trip->arrdep_time.arriv.arr_time.pos.row, ppar_trip->arrdep_time.arriv.arr_time.pos.col );
+	    assert( ((int)arr_dep.t_arr0 - (int)t_arr) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE );
+	    t_arr = arr_dep.t_arr0;
+	  }
+	}
+      }
       if( ppar_trip->arrdep_time.dept.dep_time.t.hour > -1 ) {
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.minute >= 0 );
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.second >= 0 );
