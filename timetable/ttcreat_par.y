@@ -68,12 +68,8 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
     printf( "(%02d:%02d:%02d,", ptrip->arrdep_time.arriv.arr_time.t.hour, ptrip->arrdep_time.arriv.arr_time.t.minute, ptrip->arrdep_time.arriv.arr_time.t.second);
     printf( " %02d:%02d:%02d)", ptrip->arrdep_time.dept.dep_time.t.hour, ptrip->arrdep_time.dept.dep_time.t.minute, ptrip->arrdep_time.dept.dep_time.t.second );
     printf( ", %d", ptrip->sp_cond.dwell_time );
-#if 0 // *****
-    printf( ", %s", cnv2str_perf_regime( buf, ptrip->perf_regime, PRINT_STRBUF_MAXLEN ) );
-#else
     buf[PRINT_STRBUF_MAXLEN - 1] = 0;
     printf( ", %s", strncpy( buf, cnv2str_perfreg_level[ptrip->perf_regime.perfreg_cmd], (PRINT_STRBUF_MAXLEN - 1) ) );
-#endif
     printf( ", %s", (ptrip->revenue.stat ? "revenue" : "nonreve") );
 
     if( ptrip->crew_id.cid > -1 ) {
@@ -104,6 +100,70 @@ static void print_rjasgn ( ATTR_RJ_ASGN_PTR pasgn ) {
   }
   printf( ")" );  
 }
+
+#if 1
+static void print_timetable_decl ( ATTR_TRIPS_PTR ptrips, ATTR_RJ_ASGNS_PTR prjasgns, ATTR_JOURNEYS_PTR pjourneys ) {
+  printf( "trips:\n" );
+  {
+    const int nspc_indent = 2;
+    assert( ptrips );
+    ATTR_TRIP_PTR p = ptrips->trip_prof;
+    assert( p );
+    int i;
+    for( i = 0; i < ptrips->ntrips; i++ ) {
+      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+      print_trip( &p[i], FALSE );
+      printf( "\n" );
+    }
+  }
+  printf( "\n" );
+  
+  printf( "assignments:\n" );
+  {
+    const int nspc_indent = 2;
+    assert( prjasgns );
+    ATTR_RJ_ASGN_PTR p = prjasgns->rj_asgn;
+    assert( p );      
+    int i;
+    for( i = 0; i < prjasgns->nasgns; i++ ) {
+      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+      print_rjasgn( &p[i] );
+      printf( "\n" );
+    }
+  }
+  printf( "\n" );
+  
+#if 1
+  printf( "journeys:\n" );
+  {
+    const int nspc_indent = 2;
+    assert( timetable_symtbl->journeys_regtbl.kind == PAR_JOURNEYS );
+    int i, j;
+    for( i = 0, j = 0;i < timetable_symtbl->journeys_regtbl.njourneys; i++, j++ ) {
+      while( j < MAX_JOURNEYS ) {
+	ATTR_JOURNEY_PTR p = &timetable_symtbl->journeys_regtbl.journey_prof[j];
+	assert( p );
+	if( p->journey_id.jid > 0 ) {
+	  assert( p->kind == PAR_JOURNEY );
+	  int k;
+	  {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+	  printf( "J%02d: \n", p->journey_id.jid );
+	  for( k = 0; k < p->trips.ntrips; k++ ) {
+	    assert( p->trips.kind == PAR_TRIPS );
+	    {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+	    {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+	    print_trip( &p->trips.trip_prof[k], TRUE );
+	    printf( "\n" );
+	  }
+	  break;
+	}
+	j++;
+      }
+    }
+  }
+#endif
+}
+#endif
 
 static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   assert( ptrip );
@@ -192,7 +252,7 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
   JOURNEY_ID journey_id;
   RAKE_ID rake_id;
   ATTR_RJ_ASGN attr_rj_asgn;
-  ATTR_RJ_ASGNS_PTR  pattr_rj_asgns;
+  ATTR_RJ_ASGNS_PTR pattr_rj_asgns;
   PERFREG_LEVEL perf_regime;
   BOOL revenue;
   int crew_id;
@@ -239,7 +299,7 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
 %start timetable_decl
 %%
 timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
-#if 1 /* ***** for debugging. */
+#if 0 /* ***** for debugging. */
   {
     printf( "trips:\n" );
     {
@@ -298,7 +358,7 @@ timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
     }
   }
 #endif
-  emit_ars_schcmds();
+  $$ = timetable_symtbl;
  }
 ;
 

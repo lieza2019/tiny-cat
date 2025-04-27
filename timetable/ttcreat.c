@@ -301,10 +301,6 @@ ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, SRC
 }
 #endif
 
-void emit_ars_schcmds( void ) {
-  ;
-}
-
 static void print_crewid ( CREW_ID crewid ) {
   assert( ((int)crewid > -1) && ((int)crewid < (int)END_OF_CREWIDs) );
   printf( "%s", cnv2str_crew_id[crewid] );
