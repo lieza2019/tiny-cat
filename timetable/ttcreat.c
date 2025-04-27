@@ -486,7 +486,7 @@ static int cons_st_pltb_pair ( ST_PLTB_ORGDST_PTR st_pltb_ref[], const int reftb
   assert( refs_lim > -1 );
   assert( pattr_orgdst );
   assert( pattr_orgdst->kind == PAR_ST_PLTB_ORGDST ); 
-  int r = -1; //TRIP_DESC_PTR r = NULL;
+  int r = -1;
   
   assert( pattr_orgdst->st_pltb_org.kind == PAR_ST_PLTB );
   assert( pattr_orgdst->st_pltb_dst.kind == PAR_ST_PLTB );
@@ -509,43 +509,37 @@ static int cons_st_pltb_pair ( ST_PLTB_ORGDST_PTR st_pltb_ref[], const int reftb
     int i;
     assert( timetbl_dataset.trips_decl.num_trips <= MAX_TRIPS_DECL );
     
-    for( i = 0; i < reftbl_len; i++ ) { // for( i = 0; i < MAX_TRIPS_DECL; i++ ) {
-      if( i >= refs_lim ) { // if( i >= timetbl_dataset.trips_decl.num_trips ) {	
-	assert( (int)(st_pltb_ref[i]->org.st) == 0 ); // assert( (int)(timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.org.st) == 0 );
+    for( i = 0; i < reftbl_len; i++ ) {
+      if( i >= refs_lim ) {
+	assert( (int)(st_pltb_ref[i]->org.st) == 0 );
 	break;
       } else {
-	assert( i < refs_lim ); // assert( i < timetbl_dataset.trips_decl.num_trips );
-	assert( (int)(st_pltb_ref[i]->org.st) > 0 ); // assert( (int)(timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.org.st) > 0 );
-	if( ((st_pltb_ref[i]->org.st == st_org) // (timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.org.st == st_org)
-	     && (st_pltb_ref[i]->org.pltb == pltb_org) // (timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.org.pltb == pltb_org)
-	     ) &&
-	    ((st_pltb_ref[i]->dst.st == st_dst) // (timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.dst.st == st_dst)
-	     && (st_pltb_ref[i]->dst.pltb == pltb_dst) // (timetbl_dataset.trips_decl.trips[i].st_pltb_orgdst.dst.pltb == pltb_dst)
-	     ) ) {
+	assert( i < refs_lim );
+	assert( (int)(st_pltb_ref[i]->org.st) > 0 );
+	if( ((st_pltb_ref[i]->org.st == st_org) && (st_pltb_ref[i]->org.pltb == pltb_org)) &&
+	    ((st_pltb_ref[i]->dst.st == st_dst) && (st_pltb_ref[i]->dst.pltb == pltb_dst)) ) {
 	  ovrid = TRUE;
 	  break;
 	}
       }
     }
-    if( i < reftbl_len ) { // if( i < MAX_TRIPS_DECL ) {
-      assert( refs_lim < reftbl_len); // assert( timetbl_dataset.trips_decl.num_trips < MAX_TRIPS_DECL );
-      r = i; // r = &timetbl_dataset.trips_decl.trips[i];      
+    if( i < reftbl_len ) {
+      assert( refs_lim < reftbl_len);
+      r = i;
       if( ovrid && ovwt ) {
-	assert( r < refs_lim ); // assert( i < timetbl_dataset.trips_decl.num_trips );
-	assert( (int)(st_pltb_ref[r]->org.st) > 0 ); // assert( (int)(r->st_pltb_orgdst.org.st) > 0 );
-	printf( "NOTICE: trip definition overridden at (LINE, COL) = (%d, %d).\n", pattr_orgdst->st_pltb_org.st.pos.row, pattr_orgdst->st_pltb_org.st.pos.col );
+	assert( r < refs_lim );
+	assert( (int)(st_pltb_ref[r]->org.st) > 0 );
+	printf( "NOTICE: trip definition overridden at (LINE, COL) = (%d, %d).\n", pattr_orgdst->st_pltb_org.st.pos.row, pattr_orgdst->st_pltb_org.st.pos.col );	
       } else {
-	assert( r == refs_lim ); // assert( i == timetbl_dataset.trips_decl.num_trips );
-	assert( (int)(st_pltb_ref[r]->org.st) == 0 ); // assert( (int)(r->st_pltb_orgdst.org.st) == 0 );
-	//timetbl_dataset.trips_decl.num_trips++;
+	assert( r == refs_lim );
+	assert( (int)(st_pltb_ref[r]->org.st) == 0 );
       }
       st_pltb_ref[r]->org.st = st_org;
       st_pltb_ref[r]->org.pltb = pltb_org;
       st_pltb_ref[r]->dst.st = st_dst;
       st_pltb_ref[r]->dst.pltb = pltb_dst;
-      // r->num_routes = -1;
     } else {
-      assert( refs_lim == reftbl_len ); // assert( timetbl_dataset.trips_decl.num_trips == MAX_TRIPS_DECL );
+      assert( refs_lim == reftbl_len );
       printf( "FATAL: memory exthausted on trip registration.\n" );
       exit( 1 );
     }
@@ -647,13 +641,16 @@ static void cons_trips ( ATTR_TRIPS_PTR ptrips ) {
     if( newone > -1 ) {
       assert( timetbl_dataset.trips_decl.num_trips == newone );
       TRIP_DESC_PTR pT = (TRIP_DESC_PTR)st_pltb_ref[newone];
-      assert( pT );
-      int nroutes = -1;     
+      assert( pT );      
       cons_orgdst_sp_pair( &pT->sp_orgdst, &ptrips->trip_prof[i].attr_sp_orgdst );
-      pT->num_routes = -1;
-      nroutes = cons_trip_routes( pT->routes, &ptrips->trip_prof[i].attr_route_ctrl );
-      if( nroutes > -1 )
-	pT->num_routes = nroutes;
+      pT->running_time = ptrips->trip_prof[i].running_time;
+      {
+	int nroutes = -1;
+	pT->num_routes = -1;
+	nroutes = cons_trip_routes( pT->routes, &ptrips->trip_prof[i].attr_route_ctrl );
+	if( nroutes > -1 )
+	  pT->num_routes = nroutes;
+      }
       timetbl_dataset.trips_decl.num_trips++;
     }
   }
@@ -677,10 +674,6 @@ TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst ) {
   return r;
 }
 
-#define JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE 1
-#define JOURNEY_DEFAULT_ARRTIME_HOUR 5
-#define JOURNEY_DEFAULT_ARRTIME_MINUTE 0
-#define JOURNEY_DEFAULT_ARRTIME_SECOND 0
 static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR pjtrip, ATTR_TRIP_PTR ppar_trip ) {
   assert( pjtrip );
   assert( ppar_trip );
@@ -708,6 +701,8 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
   tm_dep = *ptm_now;
   if( !pjtrip_prev ) {
     assert( !arr_dep.t_arr0 );
+    struct tm *ptm_arr = NULL;
+    struct tm *ptm_dep = NULL;    
   arrdep_time_calc:
     if( ppar_trip->arrdep_time.arriv.arr_time.t.hour > -1 ) {
       assert( ppar_trip->arrdep_time.arriv.arr_time.t.minute >= 0 );
@@ -722,10 +717,11 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	  printf( "NOTICE: mismatched arrival time with the departure time from its previous station, at (LINE, COL) = (%d, %d).\n",
 		  ppar_trip->arrdep_time.arriv.arr_time.pos.row, ppar_trip->arrdep_time.arriv.arr_time.pos.col );
 	  if( diff_arr < 0 ) {
-	    printf( "FATAL: arrival time overridden with the departure time and running time from its previous station, at (LINE, COL) = (%d, %d).\n",
+	    printf( "FATAL: arrival time overridden by previous stations departure and running time, at (LINE, COL) = (%d, %d).\n",
 		    ppar_trip->arrdep_time.arriv.arr_time.pos.row, ppar_trip->arrdep_time.arriv.arr_time.pos.col );
 	    assert( ((int)arr_dep.t_arr0 - (int)t_arr) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE );
 	    t_arr = arr_dep.t_arr0;
+	    err_stat.sem.inconsistent_arrtime_ovrdn = TRUE;
 	  }
 	}
       }
@@ -744,10 +740,10 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	      printf( "NOTICE: mismatched departure time with its dwell at (LINE, COL) = (%d, %d).\n",
 		      ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 	      if( diff_dw < 0 ) {
-		printf( "FATAL: deparure time overridden with its dwell time, at (LINE, COL) = (%d, %d).\n",
+		printf( "FATAL: deparure time overridden by its arrival and dwell time, at (LINE, COL) = (%d, %d).\n",
 			ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 		t_dep = t_arr + (time_t)pjtrip->sp_cond.dwell_time;
-		arr_dep.dep_ovrid = TRUE;
+		err_stat.sem.inconsistent_deptime_ovrdn = TRUE;
 	      }
 	    }
 	  }	  
@@ -757,7 +753,7 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	    printf( "NOTICE: mismatched departure time for skipping, at (LINE, COL) = (%d, %d).\n",
 		    ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 	    t_dep = t_arr;
-	    arr_dep.dep_ovrid = TRUE;
+	    err_stat.sem.inconsistent_deptime_ovrdn = TRUE;
 	  }
 	  break;
 	default:
@@ -767,33 +763,33 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.minute < 0 );
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.second < 0 );
 	t_dep = t_arr + (time_t)pjtrip->sp_cond.dwell_time;
-	arr_dep.dep_ovrid = TRUE;
       }
-      arr_dep.a = ppar_trip->arrdep_time.arriv.arr_time.t;
-      arr_dep.d = ppar_trip->arrdep_time.dept.dep_time.t;
-      if( arr_dep.dep_ovrid ) {
-	struct tm *ptm_d = NULL;
-	ptm_d = localtime( &t_dep );
-	assert( ptm_d );
-	arr_dep.d.hour = ptm_d->tm_hour;
-	arr_dep.d.minute = ptm_d->tm_min;
-	arr_dep.d.second = ptm_d->tm_sec;
-      }
+      ptm_arr = localtime( &t_arr );
+      assert( ptm_arr );
+      arr_dep.a.hour = ptm_arr->tm_hour;
+      arr_dep.a.minute = ptm_arr->tm_min;
+      arr_dep.a.second = ptm_arr->tm_sec;
+      ptm_dep = localtime( &t_dep );
+      assert( ptm_dep );
+      arr_dep.d.hour = ptm_dep->tm_hour;
+      arr_dep.d.minute = ptm_dep->tm_min;
+      arr_dep.d.second = ptm_dep->tm_sec;
     } else {
       assert( ppar_trip->arrdep_time.arriv.arr_time.t.minute < 0 );
       assert( ppar_trip->arrdep_time.arriv.arr_time.t.second < 0 );
       time_t t_arr_dw;      
       if( pjtrip_prev ) {
 	assert( arr_dep.t_arr0 );
-	t_arr = arr_dep.t_arr0;
+	t_arr = arr_dep.t_arr0;	
       } else {
 	assert( !arr_dep.t_arr0 );
-	printf( "FATAL: The first trip of journey must have arrival time, at (LINE, COL) = (%d, %d).\n",
-		ppar_trip->arrdep_time.arriv.pos.row, ppar_trip->arrdep_time.arriv.pos.col );
+	printf( "FATAL: The first trip of journey must have arrival time to specify journey starting time, at (LINE, COL) = (%d, %d).\n",
+		ppar_trip->attr_st_pltb_orgdst.st_pltb_dst.pltb.pos.row, ppar_trip->attr_st_pltb_orgdst.st_pltb_dst.pltb.pos.col );
 	tm_arr.tm_hour = JOURNEY_DEFAULT_ARRTIME_HOUR;
 	tm_arr.tm_min = JOURNEY_DEFAULT_ARRTIME_MINUTE;
 	tm_arr.tm_sec = JOURNEY_DEFAULT_ARRTIME_SECOND;
 	t_arr = mktime( &tm_arr );
+	err_stat.sem.inconsistent_arrtime_ovrdn = TRUE;
       }
       t_arr_dw = t_arr + (time_t)pjtrip->sp_cond.dwell_time;
       if( ppar_trip->arrdep_time.dept.dep_time.t.hour > -1 ) {
@@ -808,9 +804,10 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	  {
 	    const int d = (int)t_dep - (int)t_arr_dw;
 	    if( (abs( d ) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE) && (d < 0) ) {
-	      printf( "FATAL: deparure time overridden with its dwell time, at (LINE, COL) = (%d, %d).\n",
+	      printf( "FATAL: deparure time overridden with its arrival and dwell time, at (LINE, COL) = (%d, %d).\n",
 		      ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 	      t_dep = t_arr_dw;
+	      err_stat.sem.inconsistent_deptime_ovrdn = TRUE;
 	    }	    
 	  }
 	  break;
@@ -819,6 +816,7 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	    printf( "NOTICE: mismatched departure time for skipping, at (LINE, COL) = (%d, %d).\n",
 		    ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 	    t_dep = t_arr_dw;
+	    err_stat.sem.inconsistent_deptime_ovrdn = TRUE;
 	  }
 	  break;
 	default:
@@ -829,14 +827,16 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.second < 0 );
 	t_dep = t_arr_dw;
       }
-      {
-	struct tm *ptm_dep = NULL;
-	ptm_dep = localtime( &t_dep );
-	assert( ptm_dep );
-	arr_dep.d.hour = ptm_dep->tm_hour;
-	arr_dep.d.minute = ptm_dep->tm_min;
-	arr_dep.d.second = ptm_dep->tm_sec;
-      }
+      ptm_arr = localtime( &t_arr );
+      assert( ptm_arr );
+      arr_dep.a.hour = ptm_arr->tm_hour;
+      arr_dep.a.minute = ptm_arr->tm_min;
+      arr_dep.a.second = ptm_arr->tm_sec;
+      ptm_dep = localtime( &t_dep );
+      assert( ptm_dep );
+      arr_dep.d.hour = ptm_dep->tm_hour;
+      arr_dep.d.minute = ptm_dep->tm_min;
+      arr_dep.d.second = ptm_dep->tm_sec;
     }
   } else {
     assert( pjtrip_prev );
@@ -905,9 +905,8 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	    assert( timetbl_dataset.j.journeys[i].num_trips == newone );
 	    JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
 	    assert( pJ );
-	    TRIP_DESC_PTR parr_trip = NULL;
-	    parr_trip = lkup_trip( &pJ->st_pltb_orgdst.org, &pJ->st_pltb_orgdst.dst );
-	    if( !parr_trip ) {
+	    pJ->ptrip_prof = lkup_trip( &pJ->st_pltb_orgdst.org, &pJ->st_pltb_orgdst.dst );
+	    if( !pJ->ptrip_prof ) {
 	      printf( "FATAL: unknwon trip found in journey, at (LINE, COL) = (%d, %d).\n",
 		      pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
 	      err_stat.sem.unknown_trip = TRUE;

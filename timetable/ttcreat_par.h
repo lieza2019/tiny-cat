@@ -75,6 +75,7 @@ typedef struct attr_trip {
   PAR_KIND kind;
   ATTR_ST_PLTB_ORGDST attr_st_pltb_orgdst;
   ATTR_SP_PAIR attr_sp_orgdst;
+  RUNNING_TIME running_time;
   ATTR_ROUTES attr_route_ctrl;
   // belows are extends.
   struct {

@@ -1203,14 +1203,15 @@ trips_definition : /* empty journies */ {
  }
 ;
 /* e.g. (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B}) */
-trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' ')' {
+trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' TK_NAT ',' '{' routes '}' ')' {
   $$.kind = PAR_UNKNOWN;
-  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_SP_PAIR) && ($11.kind == PAR_ROUTES) ) {
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_SP_PAIR) && ($13.kind == PAR_ROUTES) ) {
     $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
     $$.attr_sp_orgdst = $8;
-    $$.attr_route_ctrl = $11;
+    $$.running_time = $10;
+    $$.attr_route_ctrl = $13;
     $$.kind = PAR_TRIP;
   }
   err_stat.par.err_trip_def = FALSE;
@@ -1222,14 +1223,14 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
  }
          | '(' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, ill-formed st. & pl/tb specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
          | '(' '(' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, ill-formed st. & pl/tb specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
@@ -1240,7 +1241,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    } */
          | '(' '('st_and_pltb ',' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
+    printf( "FATAL: syntax-error, ill-formed st. & pl/tb specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
@@ -1251,30 +1252,31 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    } */
          | '(' '('st_and_pltb ',' st_and_pltb')' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
+    printf( "FATAL: syntax-error, ill-formed org & dst stopping-point specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
          | '(' '('st_and_pltb ',' st_and_pltb')' ',' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @7.first_line, @7.first_column );
+    printf( "FATAL: syntax-error, ill-formed found org & dst stopping-point specifiers in trip definition at (LINE, COL) = (%d, %d).\n", @7.first_line, @7.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
-         | '(' '('st_and_pltb ',' st_and_pltb')' sp_orgdst_pair ',' '{' routes '}' ')' {
+         | '(' '('st_and_pltb ',' st_and_pltb')' sp_orgdst_pair ',' TK_NAT ',' '{' routes '}' ')' {
   if( !err_stat.par.err_trip_def ) {    
     printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
-  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($7.kind == PAR_SP_PAIR) && ($10.kind == PAR_ROUTES) ) {
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($7.kind == PAR_SP_PAIR) && ($12.kind == PAR_ROUTES) ) {
     $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
     $$.attr_sp_orgdst = $7;
-    $$.attr_route_ctrl = $10;
+    $$.running_time = $9;
+    $$.attr_route_ctrl = $12;
     $$.kind = PAR_TRIP;
   }
  }
@@ -1284,23 +1286,47 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    } */
          | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @9.first_line, @9.first_column );
+    printf( "FATAL: syntax-error, ill-formed running-time found in trip definition at (LINE, COL) = (%d, %d).\n", @9.first_line, @9.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
-         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair '{' routes '}' ')' {
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair TK_NAT ',' '{' routes '}' ')' {
   if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @8.first_line, @8.first_column );
     err_stat.par.err_trip_def = TRUE;    
   }
   $$.kind = PAR_UNKNOWN;  
-  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_SP_PAIR) && ($10.kind == PAR_ROUTES) ) {
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_SP_PAIR) && ($12.kind == PAR_ROUTES) ) {
     $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
     $$.attr_sp_orgdst = $8;
-    $$.attr_route_ctrl = $10;
+    $$.running_time = $9;
+    $$.attr_route_ctrl = $12;
+    $$.kind = PAR_TRIP;
+  }
+ }
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair TK_NAT ',' error {
+  if( !err_stat.par.err_trip_def ) {
+    printf( "FATAL: syntax-error, ill-formed controlled routes specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @10.first_line, @10.first_column );
+    err_stat.par.err_trip_def = TRUE;
+  }
+  $$.kind = PAR_UNKNOWN;
+ }
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' TK_NAT '{' routes '}' ')' {
+  if( !err_stat.par.err_trip_def ) {
+    printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @10.first_line, @10.first_column );
+    err_stat.par.err_trip_def = TRUE;    
+  }
+  $$.kind = PAR_UNKNOWN;  
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_SP_PAIR) && ($12.kind == PAR_ROUTES) ) {
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
+    $$.attr_st_pltb_orgdst.st_pltb_org = $3;
+    $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
+    $$.attr_sp_orgdst = $8;
+    $$.running_time = $10;
+    $$.attr_route_ctrl = $12;
     $$.kind = PAR_TRIP;
   }
  }
@@ -1311,9 +1337,9 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' rout
    | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes error {
      ;
    } */
-         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes '}' error {
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' TK_NAT ',' '{' routes '}' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, missing closing parenthesis in trip definition at (LINE, COL) = (%d, %d).\n", @12.first_line, @12.first_column );
+    printf( "FATAL: syntax-error, missing closing parenthesis in trip definition at (LINE, COL) = (%d, %d).\n", @14.first_line, @14.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;

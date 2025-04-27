@@ -4,11 +4,6 @@
 #include "../cbtc.h"
 #include "../interlock.h"
 
-#define DEFAULT_DWELL_TIME 17 // in sec.
-#define DEFAULT_PERFLEVEL PERFREG_NORMAL
-#define DEFAULT_REVENUE FALSE
-#define DEFAULT_CREWID CREW_NO_ID
-
 #define MAX_STNAME_LEN 8
 #define MAX_PLTB_NAMELEN 8
 #define MAX_ROUTENAME_LEN 16
@@ -23,6 +18,16 @@
 #error MAX_JOURNEY_TRIPS must be greater than/equal to MAX_TRIPS_DECL in ttcreat.h.
 #endif
 
+#define DEFAULT_DWELL_TIME 17 // in sec.
+#define DEFAULT_PERFLEVEL PERFREG_NORMAL
+#define DEFAULT_REVENUE FALSE
+#define DEFAULT_CREWID CREW_NO_ID
+
+#define JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE 1
+#define JOURNEY_DEFAULT_ARRTIME_HOUR 5
+#define JOURNEY_DEFAULT_ARRTIME_MINUTE 0
+#define JOURNEY_DEFAULT_ARRTIME_SECOND 0
+
 #include "ttcreat_def.h"
 
 typedef struct err_stat {
@@ -36,11 +41,12 @@ typedef struct err_stat {
   } par;
   struct {
     BOOL route_redef;
-    //BOOL route_unknown;
     BOOL unknown_route;
     BOOL invalid_crewid;
     BOOL unknown_trip;
     BOOL contiguless_trips;
+    BOOL inconsistent_arrtime_ovrdn;
+    BOOL inconsistent_deptime_ovrdn;
   } sem;
 } ERR_STAT;
 extern ERR_STAT err_stat;
@@ -92,6 +98,7 @@ typedef struct time_arrdep {
 typedef int DWELL_TIME;
 typedef struct journey_trip {
   ST_PLTB_ORGDST st_pltb_orgdst;
+  TRIP_DESC_PTR ptrip_prof;
   struct {
     ARS_SP_COND stop_skip;
     DWELL_TIME dwell_time;
