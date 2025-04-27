@@ -729,7 +729,7 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
   tm_arr = *ptm_now;
   tm_dep = *ptm_now;
   if( !pjtrip_prev ) {
-    assert( arr_dep.t_arr0 == 0 );
+    assert( !arr_dep.t_arr0 );
   arrdep_time_calc:
     if( ppar_trip->arrdep_time.arriv.arr_time.t.hour > -1 ) {
       assert( ppar_trip->arrdep_time.arriv.arr_time.t.minute >= 0 );
@@ -802,11 +802,21 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
     } else {
       assert( ppar_trip->arrdep_time.arriv.arr_time.t.minute < 0 );
       assert( ppar_trip->arrdep_time.arriv.arr_time.t.second < 0 );
-      printf( "FATAL: The first trip of journey must have arrival time, at (LINE, COL) = (%d, %d).\n",
-	      ppar_trip->arrdep_time.arriv.pos.row, ppar_trip->arrdep_time.arriv.pos.col );      
-      arr_dep.a.hour = JOURNEY_DEFAULT_ARRTIME_HOUR;
-      arr_dep.a.minute = JOURNEY_DEFAULT_ARRTIME_MINUTE;
-      arr_dep.a.second = JOURNEY_DEFAULT_ARRTIME_SECOND;
+      if( pjtrip_prev ) {
+	assert( arr_dep.t_arr0 );
+	struct tm *ptm = NULL;	
+	ptm = localtime( &arr_dep.t_arr0 );
+	arr_dep.a.hour = ptm->tm_hour;
+	arr_dep.a.minute = ptm->tm_min;
+	arr_dep.a.second = ptm->tm_sec;
+      } else {
+	assert( !arr_dep.t_arr0 );
+	printf( "FATAL: The first trip of journey must have arrival time, at (LINE, COL) = (%d, %d).\n",
+		ppar_trip->arrdep_time.arriv.pos.row, ppar_trip->arrdep_time.arriv.pos.col );      
+	arr_dep.a.hour = JOURNEY_DEFAULT_ARRTIME_HOUR;
+	arr_dep.a.minute = JOURNEY_DEFAULT_ARRTIME_MINUTE;
+	arr_dep.a.second = JOURNEY_DEFAULT_ARRTIME_SECOND;
+      }
       arr_dep.d.hour = arr_dep.a.hour;
       arr_dep.d.minute = arr_dep.a.minute;
       arr_dep.d.second = arr_dep.a.second;
@@ -863,6 +873,7 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
 	t_arr += (time_t)parr_trip->running_time;
     }
     arr_dep.t_arr0 = t_arr;
+    assert( arr_dep.t_arr0 );
     goto arrdep_time_calc;
   }
   pjtrip->time_arrdep.time_arr = arr_dep.a;
