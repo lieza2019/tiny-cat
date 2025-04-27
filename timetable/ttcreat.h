@@ -65,9 +65,12 @@ typedef struct routes_assoc {
   IL_SYM id;
   ROUTE_C_PTR pprof;
 } ROUTE_ASSOC, *ROUTE_ASSOC_PTR;
+
+typedef int RUNNING_TIME;
 typedef struct trip_desc {
   ST_PLTB_ORGDST st_pltb_orgdst;
   SP_ORGDST_PAIR sp_orgdst;
+  RUNNING_TIME running_time;
   int num_routes;
   ROUTE_ASSOC routes[MAX_TRIP_ROUTES];
 } TRIP_DESC, *TRIP_DESC_PTR;
@@ -104,7 +107,7 @@ typedef struct journey_desc {
 typedef struct timetable_dataset {
   struct {
     TRIP_DESC trips[MAX_TRIPS_DECL];
-    int num_trips;    
+    int num_trips;
   } trips_decl;
   RAKE_JOURNEY_ASGN rjasgns[MAX_RJ_ASGNMENTS];
   struct {
@@ -117,4 +120,8 @@ extern TIMETABLE_DATASET timetbl_dataset;
 #include "ttcreat_par.h"
 
 extern void ttc_print_trips ( TRIP_DESC trips[], int ntrips );
+extern void ttc_print_journeys( JOURNEY_DESC journeys[], int njourneys );
+
+extern TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst );
+
 extern int ttcreat ( void );
