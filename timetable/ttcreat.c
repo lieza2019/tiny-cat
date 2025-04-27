@@ -711,12 +711,11 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
   assert( pjtrip->sp_cond.stop_skip == ppar_trip->sp_cond.stop_skip );
   
   struct {
-    BOOL arr_invalid;    
-    BOOL dep_overrid;
-    //BOOL dep_ovrid;
+    BOOL dep_ovrid;
+    time_t t_arr0;
     TINY_TIME_DESC a;
     TINY_TIME_DESC d;
-  } arr_dep = { FALSE, FALSE };
+  } arr_dep = { FALSE };
   
   const time_t t_now = time( NULL );
   struct tm *ptm_now = NULL;
@@ -730,6 +729,7 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
   tm_arr = *ptm_now;
   tm_dep = *ptm_now;
   if( !pjtrip_prev ) {
+    assert( arr_dep.t_arr0 == 0 );
   arrdep_time_calc:
     if( ppar_trip->arrdep_time.arriv.arr_time.t.hour > -1 ) {
       assert( ppar_trip->arrdep_time.arriv.arr_time.t.minute >= 0 );
@@ -756,7 +756,7 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
 		printf( "FATAL: deparure time overridden with its dwell time, at (LINE, COL) = (%d, %d).\n",
 			ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 		t_dep = t_arr + (time_t)pjtrip->sp_cond.dwell_time;
-		arr_dep.dep_overrid = TRUE;
+		arr_dep.dep_ovrid = TRUE;
 	      }
 	    }
 	  }	  
@@ -764,7 +764,7 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
 	case SKIP:
 	  if( abs( (int)t_dep - (int)t_arr ) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE ) {
 	    t_dep = t_arr;
-	    arr_dep.dep_overrid = TRUE;
+	    arr_dep.dep_ovrid = TRUE;
 	  }
 	  break;
 	default:
@@ -774,11 +774,11 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.minute < 0 );
 	assert( ppar_trip->arrdep_time.dept.dep_time.t.second < 0 );
 	t_dep = t_arr + (time_t)pjtrip->sp_cond.dwell_time;
-	arr_dep.dep_overrid = TRUE;
+	arr_dep.dep_ovrid = TRUE;
       }
       arr_dep.a = ppar_trip->arrdep_time.arriv.arr_time.t;
       arr_dep.d = ppar_trip->arrdep_time.dept.dep_time.t;
-      if( arr_dep.dep_overrid ) {
+      if( arr_dep.dep_ovrid ) {
 	struct tm *ptm_d = NULL;
 	ptm_d = localtime( &t_dep );
 	assert( ptm_d );
@@ -839,31 +839,17 @@ static void jtrip_arrdep_time1 ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR 
     assert( pjtrip_prev->time_arrdep.time_dep.hour >= 0 );
     assert( pjtrip_prev->time_arrdep.time_dep.minute >= 0 );
     assert( pjtrip_prev->time_arrdep.time_dep.second >= 0 );
-    arr_dep.a.hour = pjtrip_prev->time_arrdep.time_dep.hour;
-    arr_dep.a.minute = pjtrip_prev->time_arrdep.time_dep.minute;
-    arr_dep.a.second = pjtrip_prev->time_arrdep.time_dep.second;
+    tm_arr.tm_hour = pjtrip_prev->time_arrdep.time_dep.hour;
+    tm_arr.tm_min = pjtrip_prev->time_arrdep.time_dep.minute;
+    tm_arr.tm_sec = pjtrip_prev->time_arrdep.time_dep.second;    
+    t_arr = mktime( &tm_arr );    
     if( (pjtrip_prev->st_pltb_orgdst.dst.st == pjtrip->st_pltb_orgdst.org.st) && (pjtrip_prev->st_pltb_orgdst.dst.pltb == pjtrip->st_pltb_orgdst.org.pltb) ) {
       TRIP_DESC_PTR parr_trip = NULL;
-      parr_trip = lkup_trip( &pjtrip_prev->st_pltb_orgdst.dst, &pjtrip->st_pltb_orgdst.org );
-      if( parr_trip ) {
-	tm_arr.tm_hour = pjtrip_prev->time_arrdep.time_dep.hour;
-	tm_arr.tm_min = pjtrip_prev->time_arrdep.time_dep.minute;
-	tm_arr.tm_sec = pjtrip_prev->time_arrdep.time_dep.second;
-	t_arr = mktime( &tm_arr );
+      parr_trip = lkup_trip( &pjtrip_prev->st_pltb_orgdst.org, &pjtrip_prev->st_pltb_orgdst.dst );
+      if( parr_trip )
 	t_arr += (time_t)parr_trip->running_time;
-	{
-	  struct tm *pt = NULL;	
-	  pt = localtime( &t_arr );
-	  assert( pt );
-	  arr_dep.a.hour = pt->tm_hour;
-	  arr_dep.a.minute = pt->tm_min;
-	  arr_dep.a.second = pt->tm_sec;
-	}
-	assert( !arr_dep.arr_invalid );
-      } else
-	arr_dep.arr_invalid = TRUE;
-    } else
-      arr_dep.arr_invalid = TRUE;
+    }
+    arr_dep.t_arr0 = t_arr;
     goto arrdep_time_calc;
   }
   pjtrip->time_arrdep.time_arr = arr_dep.a;
