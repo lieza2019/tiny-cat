@@ -60,13 +60,13 @@ char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen ) {
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case PAR_RJ_ASGN:
-    strncpy( pstr, "RJ_ASGN", (buflen - 1) );
+  case PAR_JR_ASGN:
+    strncpy( pstr, "JR_ASGN", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
-  case PAR_RJ_ASGNS:
-    strncpy( pstr, "RJ_ASGNS", (buflen - 1) );
+  case PAR_JR_ASGNS:
+    strncpy( pstr, "JR_ASGNS", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
@@ -178,23 +178,22 @@ ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, A
   return r;
 }
 
-ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev_asgn, ATTR_RJ_ASGN_PTR pasgn ) {
+ATTR_JR_ASGN_PTR reg_jrasgn ( ATTR_JR_ASGNS_PTR preg_tbl, ATTR_JR_ASGN_PTR pprev_asgn, ATTR_JR_ASGN_PTR pasgn ) {
   assert( preg_tbl );
   assert( pasgn );
-  assert( preg_tbl->kind == PAR_RJ_ASGNS );
-  assert( pasgn->kind == PAR_RJ_ASGN );
+  assert( preg_tbl->kind == PAR_JR_ASGNS );
+  assert( pasgn->kind == PAR_JR_ASGN );
   BOOL ovw = FALSE;
-  ATTR_RJ_ASGN_PTR r = NULL;
+  ATTR_JR_ASGN_PTR r = NULL;
   
   int i;
   for( i = 0; i < preg_tbl->nasgns; i++ ) {
-    assert( i < preg_tbl->nasgns );
-    assert( preg_tbl->rj_asgn[i].kind == PAR_RJ_ASGN );
-    if( preg_tbl->rj_asgn[i].journey_id.jid == pasgn->journey_id.jid ) {
+    assert( preg_tbl->jr_asgn[i].kind == PAR_JR_ASGN );
+    if( preg_tbl->jr_asgn[i].journey_id.jid == pasgn->journey_id.jid ) {
       if( pprev_asgn ) {
-	*pprev_asgn = preg_tbl->rj_asgn[i];
+	*pprev_asgn = preg_tbl->jr_asgn[i];
 	r = pprev_asgn;
-	preg_tbl->rj_asgn[i] = *pasgn;
+	preg_tbl->jr_asgn[i] = *pasgn;
       } else
 	printf( "NOTICE: failed in redefinition the rake-journey assignment of.\n" );
       ovw = TRUE;
@@ -202,8 +201,8 @@ ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev
   }
   if( !ovw ) {
     assert( i == preg_tbl->nasgns );
-    if( i < MAX_RJ_ASGNMENTS ) {
-      preg_tbl->rj_asgn[i] = *pasgn;
+    if( i < MAX_JR_ASGNMENTS ) {
+      preg_tbl->jr_asgn[i] = *pasgn;
       preg_tbl->nasgns++;
       r = pasgn;
     } else {
@@ -631,30 +630,26 @@ TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst ) {
   return r;
 }
 
-static void cons_rjasgn ( ATTR_RJ_ASGNS_PTR prjasgns ) {
-  assert( prjasgns );
-  assert( prjasgns->kind == PAR_RJ_ASGNS );
+static void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
+  assert( pjrasgns );
+  assert( pjrasgns->kind == PAR_JR_ASGNS );
   int cnt;
   
   int i, j;
-  for( cnt = 0, i = 0, j = 0; (i < MAX_RJ_ASGNMENTS) && (cnt < prjasgns->nasgns); i++ ) {
-    assert( j < MAX_RJ_ASGNMENTS );
-    ATTR_RJ_ASGN_C_PTR pa = NULL;
-    pa = &prjasgns->rj_asgn[i];
+  for( cnt = 0, i = 0, j = 0; (i < MAX_JR_ASGNMENTS) && (cnt < pjrasgns->nasgns); i++ ) {
+    assert( j < MAX_JR_ASGNMENTS );
+    ATTR_JR_ASGN_C_PTR pa = NULL;
+    pa = &pjrasgns->jr_asgn[i];
     assert( pa );
-    if( pa->kind == PAR_RJ_ASGN ) {
-      int k;
-      for( k = 0; k < j; k++ ) {
-	timetbl_dataset.rjasgns[j].rake_id
-      }
-      timetbl_dataset.rjasgns[j].rake_id = pa->rake_id.rid;
-      timetbl_dataset.rjasgns[j].jid = pa->journey_id.jid;
+    if( pa->kind == PAR_JR_ASGN ) {
+      timetbl_dataset.jrasgns[j].rake_id = pa->rake_id.rid;
+      timetbl_dataset.jrasgns[j].jid = pa->journey_id.jid;
       j++;
       cnt++;
     } else
       assert( pa->kind == PAR_UNKNOWN );
   }
-  assert( cnt == prjasgns->nasgns );
+  assert( cnt == pjrasgns->nasgns );
 }
 
 static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR pjtrip, ATTR_TRIP_PTR ppar_trip ) {
@@ -978,7 +973,7 @@ int main ( void ) {
     return r;
   }
   timetable_symtbl->trips_regtbl.kind = PAR_UNKNOWN;
-  timetable_symtbl->rj_asgn_regtbl.kind = PAR_UNKNOWN;
+  timetable_symtbl->jr_asgn_regtbl.kind = PAR_UNKNOWN;
   timetable_symtbl->journeys_regtbl.kind = PAR_UNKNOWN;
   {
     int i;

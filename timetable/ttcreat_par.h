@@ -13,8 +13,8 @@ typedef enum par_kind {
   PAR_PERF_REGIME,
   PAR_REVENUE_STAT,
   PAR_CREWID,
-  PAR_RJ_ASGN,
-  PAR_RJ_ASGNS,
+  PAR_JR_ASGN,
+  PAR_JR_ASGNS,
   PAR_JOURNEY,
   PAR_JOURNEYS,
   END_OF_PAR_KIND
@@ -130,7 +130,7 @@ typedef struct attr_journeys {
 } ATTR_JOURNEYS, *ATTR_JOURNEYS_PTR;
 
 typedef int RAKE_ID;
-typedef struct attr_rj_asgn {
+typedef struct attr_jr_asgn {
   PAR_KIND kind;
   struct {
     JOURNEY_ID jid;
@@ -140,18 +140,18 @@ typedef struct attr_rj_asgn {
     RAKE_ID rid;
     SRC_POS pos;
   } rake_id;
-} ATTR_RJ_ASGN, *ATTR_RJ_ASGN_PTR;
-typedef const struct attr_rj_asgn *ATTR_RJ_ASGN_C_PTR;
+} ATTR_JR_ASGN, *ATTR_JR_ASGN_PTR;
+typedef const struct attr_jr_asgn *ATTR_JR_ASGN_C_PTR;
 
-typedef struct attr_rj_asgns {
+typedef struct attr_jr_asgns {
   PAR_KIND kind;
   int nasgns;
-  ATTR_RJ_ASGN rj_asgn[MAX_RJ_ASGNMENTS];
-} ATTR_RJ_ASGNS, *ATTR_RJ_ASGNS_PTR;
+  ATTR_JR_ASGN jr_asgn[MAX_JR_ASGNMENTS];
+} ATTR_JR_ASGNS, *ATTR_JR_ASGNS_PTR;
 
 typedef struct attr_timetable {
   ATTR_TRIPS trips_regtbl;
-  ATTR_RJ_ASGNS rj_asgn_regtbl;
+  ATTR_JR_ASGNS jr_asgn_regtbl;
   ATTR_JOURNEYS journeys_regtbl;
 } ATTR_TIMETABLE, *ATTR_TIMETABLE_PTR;
 extern ATTR_TIMETABLE_PTR timetable_symtbl;
@@ -160,5 +160,5 @@ extern BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 );
 extern BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_ORGDST_PTR pp1, ATTR_ST_PLTB_ORGDST_PTR pp2 );
 
 extern ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip );
-extern ATTR_RJ_ASGN_PTR reg_rjasgn ( ATTR_RJ_ASGNS_PTR preg_tbl, ATTR_RJ_ASGN_PTR pprev_asgn, ATTR_RJ_ASGN_PTR pasgn );
+extern ATTR_JR_ASGN_PTR reg_jrasgn ( ATTR_JR_ASGNS_PTR preg_tbl, ATTR_JR_ASGN_PTR pprev_asgn, ATTR_JR_ASGN_PTR pasgn );
 extern ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, SRC_POS_PTR ppos, ATTR_TRIP_PTR ptrip );

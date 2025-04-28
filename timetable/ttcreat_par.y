@@ -84,17 +84,17 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL is_journey ) {
   printf( ")" );
 }
 
-static void print_rjasgn ( ATTR_RJ_ASGN_PTR pasgn ) {
+static void print_jrasgn ( ATTR_JR_ASGN_PTR pasgn ) {
   assert( pasgn );
   char buf[PRINT_STRBUF_MAXLEN + 1] = "";
   
   printf( "(%s, ", cnv2str_kind(buf, pasgn->kind, PRINT_STRBUF_MAXLEN) );
   {
-    char str[8];
-    sprintf( str, "%d", pasgn->rake_id.rid );
-    printf( "(rake_%s, ", str );
+    char str[8];    
     sprintf( str, "%d", pasgn->journey_id.jid );
-    printf( "J%s)", str );
+    printf( "(J%s, ", str );
+    sprintf( str, "%d", pasgn->rake_id.rid );
+    printf( "rake_%s)", str );
   }
   printf( ")" );  
 }
@@ -118,9 +118,9 @@ static void print_journey ( ATTR_JOURNEY_PTR pjourney ) {
   }
 }
 
-static void print_timetable_decl ( ATTR_TRIPS_PTR ptrips, ATTR_RJ_ASGNS_PTR prjasgns, ATTR_JOURNEYS_PTR pjourneys ) {
+static void print_timetable_decl ( ATTR_TRIPS_PTR ptrips, ATTR_JR_ASGNS_PTR pjrasgns, ATTR_JOURNEYS_PTR pjourneys ) {
   assert( ptrips );
-  assert( prjasgns );
+  assert( pjrasgns );
   assert( pjourneys );
   
   printf( "trips:\n" );
@@ -140,12 +140,12 @@ static void print_timetable_decl ( ATTR_TRIPS_PTR ptrips, ATTR_RJ_ASGNS_PTR prja
   printf( "assignments:\n" );
   {
     const int nspc_indent = 2;
-    ATTR_RJ_ASGN_PTR p = prjasgns->rj_asgn;
+    ATTR_JR_ASGN_PTR p = pjrasgns->jr_asgn;
     assert( p );      
     int i;
-    for( i = 0; i < prjasgns->nasgns; i++ ) {
+    for( i = 0; i < pjrasgns->nasgns; i++ ) {
       {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-      print_rjasgn( &p[i] );
+      print_jrasgn( &p[i] );
       printf( "\n" );
     }
   }
@@ -213,31 +213,29 @@ static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
   return r;
 }
 
-static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
-  assert( prj_asgn );
-  ATTR_RJ_ASGN_PTR r = NULL;
+static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
+  assert( pjr_asgn );
+  assert( pjr_asgn->kind == PAR_JR_ASGN );
+  ATTR_JR_ASGN_PTR r = NULL;
   
-  if( prj_asgn->kind == PAR_RJ_ASGN ) {
-    ATTR_RJ_ASGN_PTR p = NULL;
-    if( timetable_symtbl->rj_asgn_regtbl.nasgns == 0 ) {    
-      p = reg_rjasgn( &timetable_symtbl->rj_asgn_regtbl, NULL, prj_asgn );
-      if( p != prj_asgn ) {
-	printf( "INTERNAL-error: on rake-journey assignment registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
-	exit( 1 );
-      }
-    } else {
-      ATTR_RJ_ASGN drop = {};
-      p = reg_rjasgn( &timetable_symtbl->rj_asgn_regtbl, &drop, prj_asgn );
-      if( p != prj_asgn ) {
-	assert( p == &drop );
-	assert( p->kind == PAR_RJ_ASGN );
-	printf( "NOTICE: rake-journey assignment has been overridden with.\n" );
-      }
+  ATTR_JR_ASGN_PTR p = NULL;
+  if( timetable_symtbl->jr_asgn_regtbl.nasgns == 0 ) {    
+    p = reg_jrasgn( &timetable_symtbl->jr_asgn_regtbl, NULL, pjr_asgn );
+    if( p != pjr_asgn ) {
+      printf( "INTERNAL-error: on journey-rake assignment registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
+      exit( 1 );
     }
-    r = p;
+  } else {
+    ATTR_JR_ASGN drop = {};
+    p = reg_jrasgn( &timetable_symtbl->jr_asgn_regtbl, &drop, pjr_asgn );
+    if( p != pjr_asgn ) {
+      assert( p == &drop );
+      assert( p->kind == PAR_JR_ASGN );
+      printf( "NOTICE: journey-rake assignment has been overridden with.\n" );
+    }
   }
-  return r;
-}
+  r = p;
+  return r;}
 %}
 %union {
   int nat;
@@ -253,8 +251,8 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
   ATTR_TRIPS_PTR pattr_trips;
   JOURNEY_ID journey_id;
   RAKE_ID rake_id;
-  ATTR_RJ_ASGN attr_rj_asgn;
-  ATTR_RJ_ASGNS_PTR pattr_rj_asgns;
+  ATTR_JR_ASGN attr_jr_asgn;
+  ATTR_JR_ASGNS_PTR pattr_jr_asgns;
   PERFREG_LEVEL perf_regime;
   BOOL revenue;
   int crew_id;
@@ -285,9 +283,9 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
 %type <journey_id> journey_ident
 %token <rake_id> TK_RAKE_ID
 %token TK_ASGN
-%type <attr_rj_asgn> rj_asgn
+%type <attr_jr_asgn> jr_asgn
 %token TK_KEY_ASSIGNMENTS
-%type <pattr_rj_asgns> rake_journey_asgnmnts rake_journey_asgnmnts_decl
+%type <pattr_jr_asgns> journey_rake_asgnmnts journey_rake_asgnmnts_decl
 %type <attr_time> time
 %token <perf_regime> TK_PERFREG
 %token <revenue> TK_REVENUE
@@ -297,11 +295,11 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
 %type <pattr_journey> journey_definition
 %type <pattr_journeys> journeys_decl
 %type <ptimetable_symtbl> timetable_decl
- /* %start rake_journey_asgnmnts_decl */
+ /* %start journey_rake_asgnmnts_decl */
 %start timetable_decl
 %%
-timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
-#if 0 /* ***** for debugging. */
+timetable_decl : trips_decl journey_rake_asgnmnts_decl journeys_decl {
+#if 1 /* ***** for debugging. */
   print_timetable_decl( $1, $2, $3 );
 #endif
   $$ = timetable_symtbl;
@@ -1163,10 +1161,10 @@ trips_decl : TK_KEY_TRIPS ':' trips_definition {
   
   ttcreat.y: warning: 1 shift/reduce conflict [-Wconflicts-sr]
   ttcreat.y: warning: shift/reduce conflict on token error [-Wcounterexamples]
-  First example: rake_journey_asgnmnts_decl journeys_decl
+  First example: journey_rake_asgnmnts_decl journeys_decl
   Shift derivation
     timetable_decl
-    ↳ 1: rake_journey_asgnmnts_decl journeys_decl
+    ↳ 1: journey_rake_asgnmnts_decl journeys_decl
   Second example: error journeys_decl
   Reduce derivation
     timetable_decl
@@ -1593,134 +1591,134 @@ route : TK_ROUTE {
  }
 ;
 
-/* rake_journey_asgnmnts_decl := TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts
-   rake_journey_asgnmnts := (TK_RAKE_ID ":=" TK_JOURNEY_ID ';')*
+/* journey_rake_asgnmnts_decl := TK_KEY_ASSIGNMENTS ':' journey_rake_asgnmnts
+   journey_rake_asgnmnts := (TK_RAKE_ID ":=" TK_JOURNEY_ID ';')*
    e.g.
    assignments:
      rake_801 := J1; rake_802 := J2; rake_803 := J3; rake_804 := J4;
      rake_811 := J11; rake_812 := J12; rake_813 := J13; rake_814 := J14;
 */
-/* rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts { */
-rake_journey_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' rake_journey_asgnmnts {
+/* journey_rake_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' journey_rake_asgnmnts { */
+journey_rake_asgnmnts_decl : TK_KEY_ASSIGNMENTS ':' journey_rake_asgnmnts {
   assert( $3 );
-  assert( $3->kind == PAR_RJ_ASGNS );
+  assert( $3->kind == PAR_JR_ASGNS );
   $$ = $3;
 #if 0 /* ***** for debugging. */
   {
     assert( $$ );
-    ATTR_RJ_ASGN_PTR p = $$->rj_asgn;
+    ATTR_JR_ASGN_PTR p = $$->jr_asgn;
     int i;
     for( i = 0; i < $$->nasgns; i++ ) {
-      print_rjasgn( &p[i] );
+      print_jrasgn( &p[i] );
       printf( "\n" );
     }
   }
 #endif
  }
 /* reduce/reduce confliction arises with the rule of-> TK_KEY_ASSIGNMENTS error, as below.
-                           | TK_KEY_ASSIGNMENTS error rake_journey_asgnmnts {
-  if( !err_stat.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, missing delimiter in rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.err_rake_journey_asgnmnts_decl = TRUE;
+                           | TK_KEY_ASSIGNMENTS error journey_rake_asgnmnts {
+  if( !err_stat.err_journey_rake_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, missing delimiter in journey-rake assignment declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_stat.err_journey_rake_asgnmnts_decl = TRUE;
   }
   assert( $3 );
-  assert( $3->kind == RJ_ASGNS );
+  assert( $3->kind == JR_ASGNS );
   $$ = $3;
   yyerrok;
  } */
                            | error {
-  if( !err_stat.par.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, no rake-journey assignments declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.par.err_rake_journey_asgnmnts_decl = TRUE;
+  if( !err_stat.par.err_journey_rake_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, no journey-rake assignments declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_stat.par.err_journey_rake_asgnmnts_decl = TRUE;
   }
-  $$ = &timetable_symtbl->rj_asgn_regtbl;
+  $$ = &timetable_symtbl->jr_asgn_regtbl;
   /* yyclearin; */
  }
                            | TK_KEY_ASSIGNMENTS error {
-  if( !err_stat.par.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, incomplete rake-journey assignment declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.par.err_rake_journey_asgnmnts_decl = TRUE;
+  if( !err_stat.par.err_journey_rake_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, incomplete journey-rake assignment declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_stat.par.err_journey_rake_asgnmnts_decl = TRUE;
   }
-  $$ = &timetable_symtbl->rj_asgn_regtbl;
+  $$ = &timetable_symtbl->jr_asgn_regtbl;
   /* yyclearin; */
  }
-/* reduce/reduce confliction arises with the rule-> | error, of rj_asgn as below.
+/* reduce/reduce confliction arises with the rule-> | error, of jr_asgn as below.
                            | TK_KEY_ASSIGNMENTS ':' error {
-  if( !err_stat.err_rake_journey_asgnmnts_decl ) {
-    printf( "FATAL: syntax-error, ill-formed rake-journey assignments declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.err_rake_journey_asgnmnts_decl = TRUE;
+  if( !err_stat.err_journey_rake_asgnmnts_decl ) {
+    printf( "FATAL: syntax-error, ill-formed journey-rake assignments declaration at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_stat.err_journey_rake_asgnmnts_decl = TRUE;
   }
-  $$ = &timetable_symtbl.rj_asgn_regtbl;
+  $$ = &timetable_symtbl.jr_asgn_regtbl;
   // yyclearin;
  } */
 ;
-rake_journey_asgnmnts : /* empty journies */ {
-  timetable_symtbl->rj_asgn_regtbl.kind = PAR_RJ_ASGNS;
-  $$ = &timetable_symtbl->rj_asgn_regtbl;
+journey_rake_asgnmnts : /* empty journies */ {
+  timetable_symtbl->jr_asgn_regtbl.kind = PAR_JR_ASGNS;
+  $$ = &timetable_symtbl->jr_asgn_regtbl;
   assert( $$->nasgns == 0 );
  }
-                      | rake_journey_asgnmnts rj_asgn ';' {
-  assert( $1->kind == PAR_RJ_ASGNS );
-  if( $2.kind == PAR_RJ_ASGN ) {
-    reg_rake_journey_asgn( &$2 );
+                      | journey_rake_asgnmnts jr_asgn ';' {
+  assert( $1->kind == PAR_JR_ASGNS );
+  if( $2.kind == PAR_JR_ASGN ) {
+    reg_journey_rake_asgn( &$2 );
   }
-  $$ = &timetable_symtbl->rj_asgn_regtbl;
+  $$ = &timetable_symtbl->jr_asgn_regtbl;
  }
-                      | rake_journey_asgnmnts rj_asgn error ';' {
-  assert( $1->kind == PAR_RJ_ASGNS );
-  if( !err_stat.par.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, missing semicolon in end of rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.par.err_rj_asgn = TRUE;
+                      | journey_rake_asgnmnts jr_asgn error ';' {
+  assert( $1->kind == PAR_JR_ASGNS );
+  if( !err_stat.par.err_jr_asgn ) {
+    printf( "FATAL: syntax-error, missing semicolon in end of journey-rake assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_stat.par.err_jr_asgn = TRUE;
   }
-  if( $2.kind == PAR_RJ_ASGN ) {
-    reg_rake_journey_asgn( &$2 );
+  if( $2.kind == PAR_JR_ASGN ) {
+    reg_journey_rake_asgn( &$2 );
   }
-  $$ = &timetable_symtbl->rj_asgn_regtbl;
+  $$ = &timetable_symtbl->jr_asgn_regtbl;
  }
 ;
-rj_asgn : TK_RAKE_ID TK_ASGN TK_JOURNEY_ID {
-  $$.kind = PAR_RJ_ASGN;
-  $$.rake_id.rid = $1;
-  $$.rake_id.pos.row = @1.first_line;
-  $$.rake_id.pos.col = @1.first_column;;
-  $$.journey_id.jid = $3;
-  $$.journey_id.pos.row = @3.first_line;
-  $$.journey_id.pos.col = @3.first_column;;
-  /* print_rjasgn( &$$ ); // ***** for debugging. */
+jr_asgn : TK_JOURNEY_ID TK_ASGN TK_RAKE_ID {
+  $$.kind = PAR_JR_ASGN;
+  $$.journey_id.jid = $1;
+  $$.journey_id.pos.row = @1.first_line;
+  $$.journey_id.pos.col = @1.first_column;;
+  $$.rake_id.rid = $3;
+  $$.rake_id.pos.row = @3.first_line;
+  $$.rake_id.pos.col = @3.first_column;;
+  /* print_jrasgn( &$$ ); // ***** for debugging. */
  }
         | error {
-  if( !err_stat.par.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.par.err_rj_asgn = TRUE;
+  if( !err_stat.par.err_jr_asgn ) {
+    printf( "FATAL: syntax-error, in journey-rake assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_stat.par.err_jr_asgn = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
   // yyclearin;
  }
-        | TK_RAKE_ID TK_JOURNEY_ID {
-  if( !err_stat.par.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, missing operator in rake-journey assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.par.err_rj_asgn = TRUE;
+        | TK_JOURNEY_ID TK_RAKE_ID {
+  if( !err_stat.par.err_jr_asgn ) {
+    printf( "FATAL: syntax-error, missing operator in journey-rake assignments at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_stat.par.err_jr_asgn = TRUE;
   }
-  $$.kind = PAR_RJ_ASGN;
-  $$.rake_id.rid = $1;
-  $$.rake_id.pos.row = @1.first_line;
-  $$.rake_id.pos.col = @1.first_column;;
-  $$.journey_id.jid = $2;
-  $$.journey_id.pos.row = @2.first_line;
-  $$.journey_id.pos.col = @2.first_column;;
+  $$.kind = PAR_JR_ASGN;
+  $$.journey_id.jid = $1;
+  $$.journey_id.pos.row = @1.first_line;
+  $$.journey_id.pos.col = @1.first_column;;
+  $$.rake_id.rid = $2;
+  $$.rake_id.pos.row = @2.first_line;
+  $$.rake_id.pos.col = @2.first_column;;
  }
-        | TK_RAKE_ID error {
-  if( !err_stat.par.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, incomplete rake-journey assignment, at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
-    err_stat.par.err_rj_asgn = TRUE;
+        | TK_JOURNEY_ID error {
+  if( !err_stat.par.err_jr_asgn ) {
+    printf( "FATAL: syntax-error, incomplete journey-rake assignment, at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_stat.par.err_jr_asgn = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
   // yyclearin;
  }
-        | TK_RAKE_ID TK_ASGN error {
-  if( !err_stat.par.err_rj_asgn ) {
-    printf( "FATAL: syntax-error, ill-formed rake-journey assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-    err_stat.par.err_rj_asgn = TRUE;
+        | TK_JOURNEY_ID TK_ASGN error {
+  if( !err_stat.par.err_jr_asgn ) {
+    printf( "FATAL: syntax-error, ill-formed journey-rake assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    err_stat.par.err_jr_asgn = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
   // yyclearin;

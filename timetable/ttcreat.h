@@ -9,7 +9,7 @@
 #define MAX_ROUTENAME_LEN 16
 #define MAX_SPNAME_LEN 8
 #define MAX_TRIP_ROUTES 8
-#define MAX_RJ_ASGNMENTS 64
+#define MAX_JR_ASGNMENTS 64
 #define MAX_JOURNEYS 256
 
 #define MAX_TRIPS_DECL 256
@@ -36,8 +36,8 @@ typedef struct err_stat {
     BOOL err_routes;
     BOOL err_trips_decl;
     BOOL err_trip_def;
-    BOOL err_rake_journey_asgnmnts_decl;
-    BOOL err_rj_asgn;
+    BOOL err_journey_rake_asgnmnts_decl;
+    BOOL err_jr_asgn;
   } par;
   struct {
     BOOL route_redef;
@@ -55,8 +55,8 @@ extern ERR_STAT err_stat;
   (es).par.err_routes ||			\
   (es).par.err_trips_decl ||			\
   (es).par.err_trip_def ||			\
-  (es).par.err_rake_journey_asgnmnts_decl ||	\
-  (es).par.err_rj_asgn				\
+  (es).par.err_journey_rake_asgnmnts_decl ||	\
+  (es).par.err_jr_asgn				\
 )
 #define TTC_ERRSTAT_SEM( es ) (			\
   (es).sem.route_redef ||			\
@@ -68,10 +68,10 @@ extern ERR_STAT err_stat;
   (es).sem.invalid_crewid			\
 )
 
-typedef struct rake_journey_asgn {
+typedef struct journey_rake_asgn {
   int rake_id;
   JOURNEY_ID jid;
-} RAKE_JOURNEY_ASGN, *RAKE_JOURNEY_ASGN_PTR;
+} JOURNEY_RAKE_ASGN, *JOURNEY_RAKE_ASGN_PTR;
 
 typedef struct st_pltb_pair  {
   ST_ID st;
@@ -136,7 +136,7 @@ typedef struct timetable_dataset {
     TRIP_DESC trips[MAX_TRIPS_DECL];
     int num_trips;
   } trips_decl;
-  RAKE_JOURNEY_ASGN rjasgns[MAX_RJ_ASGNMENTS];
+  JOURNEY_RAKE_ASGN jrasgns[MAX_JR_ASGNMENTS];
   struct {
     int num_journeys;
     JOURNEY_DESC journeys[MAX_JOURNEYS];
