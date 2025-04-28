@@ -362,6 +362,17 @@ static void print_arrdep_time ( TIME_ARRDEP_PTR parrdep_time ) {
 static const int nspc_indent = 2;
 #define TTC_DIAG_INDENT( n ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < nspc_indent; b++ ) printf(" "); }}
 
+void ttc_print_jrasgns ( JOURNEY_RAKE_ASGN rjasgns[], int nasgns ) {
+  assert( rjasgns );
+  int i;
+  printf( "trips:\n" );
+  for( i = 0; i < nasgns; i++ ) {
+    TTC_DIAG_INDENT(1);
+    printf( "(J%03d, ", rjasgns[i].jid );
+    printf( "rake_%d)\n", rjasgns[i].rake_id );
+  }
+}
+
 void ttc_print_trips ( TRIP_DESC trips[], int ntrips ) {
   assert( trips );
   assert( ntrips > -1 ); 
@@ -635,21 +646,26 @@ static void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
   assert( pjrasgns->kind == PAR_JR_ASGNS );
   int cnt;
   
-  int i, j;
+  int i;
+  int j;
   for( cnt = 0, i = 0, j = 0; (i < MAX_JR_ASGNMENTS) && (cnt < pjrasgns->nasgns); i++ ) {
     assert( j < MAX_JR_ASGNMENTS );
     ATTR_JR_ASGN_C_PTR pa = NULL;
     pa = &pjrasgns->jr_asgn[i];
     assert( pa );
     if( pa->kind == PAR_JR_ASGN ) {
-      timetbl_dataset.jrasgns[j].rake_id = pa->rake_id.rid;
+      int k;
+      for( k = 0; k < j; k++ )
+	assert( timetbl_dataset.jrasgns[k].jid != pa->journey_id.jid );
       timetbl_dataset.jrasgns[j].jid = pa->journey_id.jid;
+      timetbl_dataset.jrasgns[j].rake_id = pa->rake_id.rid;
       j++;
       cnt++;
     } else
       assert( pa->kind == PAR_UNKNOWN );
   }
-  assert( cnt == pjrasgns->nasgns );
+  assert( (pjrasgns->nasgns == cnt) && (cnt == j) );
+  timetbl_dataset.num_jrasgns = cnt;
 }
 
 static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR pjtrip, ATTR_TRIP_PTR ppar_trip ) {
@@ -699,7 +715,7 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 		    ppar_trip->arrdep_time.arriv.arr_time.pos.row, ppar_trip->arrdep_time.arriv.arr_time.pos.col );
 	    assert( ((int)arr_dep.t_arr0 - (int)t_arr) > JOURNEY_ARRDEP_TIME_ERR_NEGLECTABLE );
 	    t_arr = arr_dep.t_arr0;
-	    err_stat.sem.inconsistent_arrtime_ovrdn = TRUE;
+	    err_stat.sem.inconsistent_arrtime_overdn = TRUE;
 	  }
 	}
       }
@@ -721,7 +737,7 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 		printf( "FATAL: deparure time overridden by its arrival and dwell time, at (LINE, COL) = (%d, %d).\n",
 			ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 		t_dep = t_arr + (time_t)pjtrip->sp_cond.dwell_time;
-		err_stat.sem.inconsistent_deptime_ovrdn = TRUE;
+		err_stat.sem.inconsistent_deptime_overdn = TRUE;
 	      }
 	    }
 	  }	  
@@ -731,7 +747,7 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	    printf( "NOTICE: mismatched departure time for skipping, at (LINE, COL) = (%d, %d).\n",
 		    ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 	    t_dep = t_arr;
-	    err_stat.sem.inconsistent_deptime_ovrdn = TRUE;
+	    err_stat.sem.inconsistent_deptime_overdn = TRUE;
 	  }
 	  break;
 	default:
@@ -767,7 +783,7 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	tm_arr.tm_min = JOURNEY_DEFAULT_ARRTIME_MINUTE;
 	tm_arr.tm_sec = JOURNEY_DEFAULT_ARRTIME_SECOND;
 	t_arr = mktime( &tm_arr );
-	err_stat.sem.inconsistent_arrtime_ovrdn = TRUE;
+	err_stat.sem.inconsistent_arrtime_overdn = TRUE;
       }
       t_arr_dw = t_arr + (time_t)pjtrip->sp_cond.dwell_time;
       if( ppar_trip->arrdep_time.dept.dep_time.t.hour > -1 ) {
@@ -785,7 +801,7 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	      printf( "FATAL: deparure time overridden with its arrival and dwell time, at (LINE, COL) = (%d, %d).\n",
 		      ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 	      t_dep = t_arr_dw;
-	      err_stat.sem.inconsistent_deptime_ovrdn = TRUE;
+	      err_stat.sem.inconsistent_deptime_overdn = TRUE;
 	    }	    
 	  }
 	  break;
@@ -794,7 +810,7 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
 	    printf( "NOTICE: mismatched departure time for skipping, at (LINE, COL) = (%d, %d).\n",
 		    ppar_trip->arrdep_time.dept.dep_time.pos.row, ppar_trip->arrdep_time.dept.dep_time.pos.col );
 	    t_dep = t_arr_dw;
-	    err_stat.sem.inconsistent_deptime_ovrdn = TRUE;
+	    err_stat.sem.inconsistent_deptime_overdn = TRUE;
 	  }
 	  break;
 	default:
@@ -954,11 +970,13 @@ int ttcreat ( void ) {
       r = 1;
     }
     if( !err ) {
+      cons_jrasgn( &timetable_symtbl->jr_asgn_regtbl );
       cons_journeys( &timetable_symtbl->journeys_regtbl );
-      printf( "!!!!! !!!!!\n" ); // *****
       ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );
+      printf( "\n" );
+      ttc_print_jrasgns( timetbl_dataset.jrasgns, timetbl_dataset.num_jrasgns );
+      printf( "\n" );
       ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
-      //assert( FALSE ); // *****
     }
   }
   return r;

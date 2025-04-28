@@ -44,8 +44,8 @@ typedef struct err_stat {
     BOOL unknown_route;
     BOOL unknown_trip;
     BOOL contiguless_trips;
-    BOOL inconsistent_arrtime_ovrdn;
-    BOOL inconsistent_deptime_ovrdn;
+    BOOL inconsistent_arrtime_overdn;
+    BOOL inconsistent_deptime_overdn;
     BOOL invalid_crewid;
   } sem;
 } ERR_STAT;
@@ -63,8 +63,8 @@ extern ERR_STAT err_stat;
   (es).sem.unknown_route ||			\
   (es).sem.unknown_trip ||			\
   (es).sem.contiguless_trips ||			\
-  (es).sem.inconsistent_arrtime_ovrdn ||	\
-  (es).sem.inconsistent_deptime_ovrdn ||	\
+  (es).sem.inconsistent_arrtime_overdn ||	\
+  (es).sem.inconsistent_deptime_overdn ||	\
   (es).sem.invalid_crewid			\
 )
 
@@ -136,6 +136,7 @@ typedef struct timetable_dataset {
     TRIP_DESC trips[MAX_TRIPS_DECL];
     int num_trips;
   } trips_decl;
+  int num_jrasgns;
   JOURNEY_RAKE_ASGN jrasgns[MAX_JR_ASGNMENTS];
   struct {
     int num_journeys;

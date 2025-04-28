@@ -231,11 +231,13 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
     if( p != pjr_asgn ) {
       assert( p == &drop );
       assert( p->kind == PAR_JR_ASGN );
-      printf( "NOTICE: journey-rake assignment has been overridden with.\n" );
+      printf( "NOTICE: journey-rake assignment J%03d at (LINE, COL) = (%d, %d), has been overridden with (LINE, COL) = (%d, %d).\n", p->journey_id.jid,
+	      p->journey_id.pos.row, p->journey_id.pos.col, pjr_asgn->journey_id.pos.row, pjr_asgn->journey_id.pos.col );
     }
   }
   r = p;
-  return r;}
+  return r;
+}
 %}
 %union {
   int nat;
@@ -299,7 +301,7 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
 %start timetable_decl
 %%
 timetable_decl : trips_decl journey_rake_asgnmnts_decl journeys_decl {
-#if 1 /* ***** for debugging. */
+#if 0 /* ***** for debugging. */
   print_timetable_decl( $1, $2, $3 );
 #endif
   $$ = timetable_symtbl;
