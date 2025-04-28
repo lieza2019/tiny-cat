@@ -47,7 +47,7 @@ static void print_routes ( ATTR_ROUTES_PTR proutes ) {
   printf( "}" );
 }
 
-static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
+static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL is_journey ) {
   assert( ptrip );
   char buf[PRINT_STRBUF_MAXLEN + 1] = "";
   
@@ -57,7 +57,7 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL ext ) {
   printf( ", " );
   print_st_pltb( &ptrip->attr_st_pltb_orgdst.st_pltb_dst );
   printf( "), " ); 
-  if( !ext ) {
+  if( !is_journey ) {
     print_sp_pair( &ptrip->attr_sp_orgdst );
     printf( ", %d, ", ptrip->running_time );
     print_routes( &ptrip->attr_route_ctrl );
@@ -301,7 +301,7 @@ static ATTR_RJ_ASGN_PTR reg_rake_journey_asgn ( ATTR_RJ_ASGN_PTR prj_asgn ) {
 %start timetable_decl
 %%
 timetable_decl : trips_decl rake_journey_asgnmnts_decl journeys_decl {
-#if 1 /* ***** for debugging. */
+#if 0 /* ***** for debugging. */
   print_timetable_decl( $1, $2, $3 );
 #endif
   $$ = timetable_symtbl;

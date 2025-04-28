@@ -15,6 +15,11 @@ char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen ) {
   char *r = NULL;
   
   switch( kind ) {
+  case PAR_UNKNOWN:
+    strncpy( pstr, "UNKNOWN", (buflen - 1) );
+    pstr[buflen - 1] = 0;
+    r = pstr;
+    break;
   case PAR_ST_PLTB:
     strncpy( pstr, "ST_PLTB", (buflen - 1) );
     pstr[buflen - 1] = 0;
@@ -67,11 +72,6 @@ char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen ) {
     break;
   case PAR_JOURNEY:
     strncpy( pstr, "JOURNEY", (buflen - 1) );
-    pstr[buflen - 1] = 0;
-    r = pstr;
-    break;
-  case PAR_UNKNOWN:
-    strncpy( pstr, "UNKNOWN", (buflen - 1) );
     pstr[buflen - 1] = 0;
     r = pstr;
     break;
@@ -426,7 +426,7 @@ void ttc_print_journeys( JOURNEY_DESC journeys[], int njourneys ) {
     if( journeys[i].jid > -1 ) {
      int k;
      TTC_DIAG_INDENT(1);
-      printf( "J%03d\n", journeys[i].jid );
+      printf( "J%03d:\n", journeys[i].jid );
       for( k = 0; k < journeys[i].num_trips; k++ ) {
 	TTC_DIAG_INDENT(2);
 	ttc_print_jtrip( &journeys[i].trips[k] );
@@ -629,6 +629,32 @@ TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst ) {
     }
   }
   return r;
+}
+
+static void cons_rjasgn ( ATTR_RJ_ASGNS_PTR prjasgns ) {
+  assert( prjasgns );
+  assert( prjasgns->kind == PAR_RJ_ASGNS );
+  int cnt;
+  
+  int i, j;
+  for( cnt = 0, i = 0, j = 0; (i < MAX_RJ_ASGNMENTS) && (cnt < prjasgns->nasgns); i++ ) {
+    assert( j < MAX_RJ_ASGNMENTS );
+    ATTR_RJ_ASGN_C_PTR pa = NULL;
+    pa = &prjasgns->rj_asgn[i];
+    assert( pa );
+    if( pa->kind == PAR_RJ_ASGN ) {
+      int k;
+      for( k = 0; k < j; k++ ) {
+	timetbl_dataset.rjasgns[j].rake_id
+      }
+      timetbl_dataset.rjasgns[j].rake_id = pa->rake_id.rid;
+      timetbl_dataset.rjasgns[j].jid = pa->journey_id.jid;
+      j++;
+      cnt++;
+    } else
+      assert( pa->kind == PAR_UNKNOWN );
+  }
+  assert( cnt == prjasgns->nasgns );
 }
 
 static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR pjtrip, ATTR_TRIP_PTR ppar_trip ) {
@@ -913,22 +939,19 @@ int ttcreat ( void ) {
   
   int r = 0;
   BOOL err = FALSE;
+  assert( !TTC_ERRSTAT_PAR( err_stat ) );
   yyin = stdin;
   if( yyparse() ) {
     err = TRUE;
     r = 1;
   } else {
-    if( err_stat.par.err_trip_journey ||
-	err_stat.par.err_routes ||
-	err_stat.par.err_trips_decl ||
-	err_stat.par.err_trip_def ||
-	err_stat.par.err_rake_journey_asgnmnts_decl ||
-	err_stat.par.err_rj_asgn ) {
+    if( TTC_ERRSTAT_PAR( err_stat ) ) {
       err = TRUE;
       r = 1;
     }
   }
   if( !err ) {
+    assert( !TTC_ERRSTAT_SEM( err_stat ) );
     cons_trips( &timetable_symtbl->trips_regtbl );
     if( err_stat.sem.route_redef ||
 	err_stat.sem.unknown_route ) {
@@ -938,9 +961,9 @@ int ttcreat ( void ) {
     if( !err ) {
       cons_journeys( &timetable_symtbl->journeys_regtbl );
       printf( "!!!!! !!!!!\n" ); // *****
-      //ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );
+      ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );
       ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
-      assert( FALSE ); // *****
+      //assert( FALSE ); // *****
     }
   }
   return r;

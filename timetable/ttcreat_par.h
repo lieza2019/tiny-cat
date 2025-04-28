@@ -1,4 +1,5 @@
 typedef enum par_kind {
+  PAR_UNKNOWN = 0,
   PAR_DATE_SPEC = 1,
   PAR_TIME_SPEC,
   PAR_ST_PLTB,
@@ -16,7 +17,7 @@ typedef enum par_kind {
   PAR_RJ_ASGNS,
   PAR_JOURNEY,
   PAR_JOURNEYS,
-  PAR_UNKNOWN
+  END_OF_PAR_KIND
 } PAR_KIND;
 extern char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen );
 
@@ -140,6 +141,7 @@ typedef struct attr_rj_asgn {
     SRC_POS pos;
   } rake_id;
 } ATTR_RJ_ASGN, *ATTR_RJ_ASGN_PTR;
+typedef const struct attr_rj_asgn *ATTR_RJ_ASGN_C_PTR;
 
 typedef struct attr_rj_asgns {
   PAR_KIND kind;

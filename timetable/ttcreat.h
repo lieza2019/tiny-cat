@@ -42,14 +42,31 @@ typedef struct err_stat {
   struct {
     BOOL route_redef;
     BOOL unknown_route;
-    BOOL invalid_crewid;
     BOOL unknown_trip;
     BOOL contiguless_trips;
     BOOL inconsistent_arrtime_ovrdn;
     BOOL inconsistent_deptime_ovrdn;
+    BOOL invalid_crewid;
   } sem;
 } ERR_STAT;
 extern ERR_STAT err_stat;
+#define TTC_ERRSTAT_PAR( es ) (			\
+  (es).par.err_trip_journey ||			\
+  (es).par.err_routes ||			\
+  (es).par.err_trips_decl ||			\
+  (es).par.err_trip_def ||			\
+  (es).par.err_rake_journey_asgnmnts_decl ||	\
+  (es).par.err_rj_asgn				\
+)
+#define TTC_ERRSTAT_SEM( es ) (			\
+  (es).sem.route_redef ||			\
+  (es).sem.unknown_route ||			\
+  (es).sem.unknown_trip ||			\
+  (es).sem.contiguless_trips ||			\
+  (es).sem.inconsistent_arrtime_ovrdn ||	\
+  (es).sem.inconsistent_deptime_ovrdn ||	\
+  (es).sem.invalid_crewid			\
+)
 
 typedef struct rake_journey_asgn {
   int rake_id;
