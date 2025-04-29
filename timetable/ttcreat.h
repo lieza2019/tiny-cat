@@ -3,6 +3,7 @@
 #include "../generic.h"
 #include "../cbtc.h"
 #include "../interlock.h"
+#include "../timetable.h"
 
 #define MAX_STNAME_LEN 8
 #define MAX_PLTB_NAMELEN 8
@@ -112,19 +113,19 @@ typedef struct time_arrdep {
   TINY_TIME_DESC time_dep;
 } TIME_ARRDEP, *TIME_ARRDEP_PTR;
 
-typedef int DWELL_TIME;
 typedef struct journey_trip {
   ST_PLTB_ORGDST st_pltb_orgdst;
   TRIP_DESC_PTR ptrip_prof;
   struct {
     ARS_SP_COND stop_skip;
-    DWELL_TIME dwell_time;
+    TIME_DIFF dwell_time;
   } sp_cond;
   TIME_ARRDEP time_arrdep;
   PERFREG_LEVEL perfreg;
   BOOL is_revenue;
   CREW_ID crew_id;
 } JOURNEY_TRIP, *JOURNEY_TRIP_PTR;
+
 typedef struct journey_desc {
   JOURNEY_TRIP trips[MAX_JOURNEY_TRIPS];
   JOURNEY_ID jid;
@@ -136,8 +137,10 @@ typedef struct timetable_dataset {
     TRIP_DESC trips[MAX_TRIPS_DECL];
     int num_trips;
   } trips_decl;
-  int num_jrasgns;
-  JOURNEY_RAKE_ASGN jrasgns[MAX_JR_ASGNMENTS];
+  struct {    
+    int num_asgns;
+    JOURNEY_RAKE_ASGN jrasgns[MAX_JR_ASGNMENTS];    
+  } jr_asgns;
   struct {
     int num_journeys;
     JOURNEY_DESC journeys[MAX_JOURNEYS];
@@ -151,5 +154,4 @@ extern void ttc_print_trips ( TRIP_DESC trips[], int ntrips );
 extern void ttc_print_journeys( JOURNEY_DESC journeys[], int njourneys );
 
 extern TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst );
-
 extern int ttcreat ( void );

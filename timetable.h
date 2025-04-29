@@ -20,7 +20,7 @@ typedef struct scheduled_command {
       IL_SYM route_id;
       BOOL is_dept_route;
       ARS_ASSOC_TIME dept_time;
-      ROUTE_PTR proute_prof;
+      ROUTE_C_PTR proute_prof;
     } sch_roset;
     struct { // for ARS_SCHEDULED_ROUTEREL
       int nth_routerel;
@@ -75,6 +75,13 @@ typedef struct scheduled_command {
 } SCHEDULED_COMMAND, *SCHEDULED_COMMAND_PTR;
 typedef const struct scheduled_command *SCHEDULED_COMMAND_C_PTR;
 
+struct scheduled_cmds_nodebuf {
+  int avail;
+  SCHEDULED_COMMAND_PTR nodes;
+  SCHEDULED_COMMAND_PTR plim;
+};
+extern struct scheduled_cmds_nodebuf scheduled_cmds;
+
 typedef int JOURNEY_ID;
 typedef struct journey {
   BOOL valid;
@@ -112,6 +119,8 @@ typedef struct timetable {
 #include "timetable_def.h"
 
 extern ONLINE_TIMETABLE online_timetbl;;
+
+extern SCHEDULED_COMMAND_PTR newnode_schedulecmd ( void );
 
 extern void cons_sp_schedule ( void );
 extern void makeup_online_timetable ( void );

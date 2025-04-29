@@ -10,6 +10,18 @@
 
 ONLINE_TIMETABLE online_timetbl;
 
+struct scheduled_cmds_nodebuf scheduled_cmds;
+SCHEDULED_COMMAND_PTR newnode_schedulecmd ( void ) {
+  assert( scheduled_cmds.nodes );
+  assert( scheduled_cmds.plim );  
+  SCHEDULED_COMMAND_PTR r = &scheduled_cmds.nodes[scheduled_cmds.avail];
+  if( r >= scheduled_cmds.plim ) {
+    exit( 1 );
+  }
+  scheduled_cmds.avail++;
+  return r;
+}
+
 static SCHEDULED_COMMAND_PTR sortbuf_at_sp[SCHEDULED_COMMANDS_NODEBUF_SIZE];
 static struct {
   int num_cmds;

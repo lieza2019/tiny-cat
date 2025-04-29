@@ -291,7 +291,7 @@ static void print_perfreg ( PERFREG_LEVEL perfreg ) {
   }
 }
 
-static void print_dwell ( ARS_SP_COND spcond, DWELL_TIME dwell ) {
+static void print_dwell ( ARS_SP_COND spcond, TIME_DIFF dwell ) {
   assert( dwell > -1 );
   switch( spcond ) {
   case DWELL:
@@ -650,22 +650,22 @@ static void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
   int j;
   for( cnt = 0, i = 0, j = 0; (i < MAX_JR_ASGNMENTS) && (cnt < pjrasgns->nasgns); i++ ) {
     assert( j < MAX_JR_ASGNMENTS );
-    ATTR_JR_ASGN_C_PTR pa = NULL;
+    ATTR_JR_ASGN_PTR pa = NULL;
     pa = &pjrasgns->jr_asgn[i];
     assert( pa );
     if( pa->kind == PAR_JR_ASGN ) {
       int k;
       for( k = 0; k < j; k++ )
-	assert( timetbl_dataset.jrasgns[k].jid != pa->journey_id.jid );
-      timetbl_dataset.jrasgns[j].jid = pa->journey_id.jid;
-      timetbl_dataset.jrasgns[j].rake_id = pa->rake_id.rid;
+	assert( timetbl_dataset.jr_asgns.jrasgns[k].jid != pa->journey_id.jid );
+      timetbl_dataset.jr_asgns.jrasgns[j].jid = pa->journey_id.jid;
+      timetbl_dataset.jr_asgns.jrasgns[j].rake_id = pa->rake_id.rid;
       j++;
       cnt++;
     } else
       assert( pa->kind == PAR_UNKNOWN );
   }
   assert( (pjrasgns->nasgns == cnt) && (cnt == j) );
-  timetbl_dataset.num_jrasgns = cnt;
+  timetbl_dataset.jr_asgns.num_asgns = cnt;
 }
 
 static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR pjtrip, ATTR_TRIP_PTR ppar_trip ) {
@@ -944,6 +944,105 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
   assert( timetbl_dataset.j.num_journeys == pjourneys->njourneys );
 }
 
+static DWELL_ID dwell_seq( STOPPING_POINT_CODE sp ) {
+  DWELL_ID r = 0;
+  return r;
+}
+
+static SCHEDULED_COMMAND_PTR cons_rosetrel_cmds ( JOURNEY_TRIP_PTR pjprof, TRIP_DESC_PTR pjtrip, SCHEDULED_COMMAND_PTR cmd_org, DWELL_ID org_dwid ) {
+  assert( pjprof );
+  assert( cmd_org );
+  assert( pjtrip == lkup_trip( &pjprof->st_pltb_orgdst.org, &pjprof->st_pltb_orgdst.dst ) );
+  
+  SCHEDULED_COMMAND_PTR psc1 = NULL;
+  psc1 = newnode_schedulecmd();
+  assert( psc1 );
+  
+  psc1->cmd = ARS_SCHEDULED_ROUTESET;
+  {
+    int i;
+    assert( pjtrip->num_routes <= MAX_TRIP_ROUTES );
+    for( i = 0; i < pjtrip->num_routes; i++ ) {
+      assert( pjtrip->routes[i].id == pjtrip->routes[i].pprof->id );
+      psc1->attr.sch_roset.route_id = pjtrip->routes[i].pprof->id;
+      psc1->attr.sch_roset.is_dept_route = (pjtrip->routes[i].pprof->route_kind == DEP_ROUTE);
+      if( psc1->attr.sch_roset.is_dept_route ) {
+	SCHEDULED_COMMAND_PTR psc2 = NULL;
+	psc2 = newnode_schedulecmd();
+	assert( psc2 );
+	psc1->attr.sch_roset.dept_time = pjprof->time_arrdep.time_arr;
+	psc1->attr.sch_roset.proute_prof = pjtrip->routes[i].pprof;
+	psc2->cmd = ARS_SCHEDULED_DEPT;
+	psc2->attr.sch_dept.dw_seq = org_dwid;
+	psc2->attr.sch_dept.dwell = pjprof->sp_cond.dwell_time;
+      }
+      {
+	SCHEDULED_COMMAND_PTR psc3 = NULL;
+	psc3 = newnode_schedulecmd();
+	assert( psc3 );
+	psc3->cmd = ARS_SCHEDULED_ROUTEREL;
+	psc3->attr.sch_rorel.dept_time = pjprof->time_arrdep.time_dep;
+      }
+    }
+  }
+  switch( cmd_org->cmd ) {
+  case ARS_SCHEDULED_ARRIVAL:
+    break;
+  case ARS_SCHEDULED_SKIP:
+    break;
+  default:
+    assert( FALSE );
+  }
+  return psc1;
+}
+
+static void cons_scheduled_cmds ( void ) {
+  assert( scheduled_cmds.nodes );
+  assert( scheduled_cmds.plim );
+  
+  int cnt = 0;
+  int i;
+  for( i = 0; (i < MAX_JOURNEYS) && (cnt < timetbl_dataset.j.num_journeys); i++ ) {
+    JOURNEY_DESC_PTR pjd = &timetbl_dataset.j.journeys[i];
+    assert( pjd );
+    if( pjd->jid > -1 ) {
+      int k;
+      for( k = 0; (k < MAX_JOURNEY_TRIPS) && (k < pjd->num_trips); k++ ) {
+	JOURNEY_TRIP_PTR pjt = &pjd->trips[k];
+	DWELL_ID wid;
+	SCHEDULED_COMMAND_PTR psc1 = NULL;
+	psc1 = newnode_schedulecmd();
+	assert( psc1 );
+	psc1->jid = pjd->jid;
+	if( pjt->sp_cond.stop_skip == DWELL ) {
+	  psc1->cmd = ARS_SCHEDULED_ARRIVAL;
+	  wid = dwell_seq( 0 );	  
+	  psc1->attr.sch_arriv.dw_seq = wid;
+	  {
+	    TRIP_DESC_PTR pt = lkup_trip( &pjt->st_pltb_orgdst.org, &pjt->st_pltb_orgdst.dst );
+	    assert( pt );
+	    psc1->attr.sch_arriv.arr_sp = pt->sp_orgdst.sp_org;
+	    psc1->attr.sch_arriv.arr_time = pjt->time_arrdep.time_arr;
+	    {
+	      SCHEDULED_COMMAND_PTR psc2 = NULL;
+	      assert( psc2 );
+	      psc2->jid = pjd->jid;
+	      psc2->cmd = ARS_SCHEDULED_ROUTESET;
+	    }
+	  }
+	} else {
+	  assert( pjt->sp_cond.stop_skip == SKIP );
+	  psc1->cmd = ARS_SCHEDULED_SKIP;
+	}
+	;
+      }
+      assert( k == pjd->num_trips );
+      cnt++;
+    }
+  }
+  assert( cnt == timetbl_dataset.j.num_journeys );
+}
+
 int ttcreat ( void ) {
   extern int yyparse( void );
   extern FILE *yyin;
@@ -973,33 +1072,45 @@ int ttcreat ( void ) {
       cons_jrasgn( &timetable_symtbl->jr_asgn_regtbl );
       cons_journeys( &timetable_symtbl->journeys_regtbl );
       ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );
+      
       printf( "\n" );
-      ttc_print_jrasgns( timetbl_dataset.jrasgns, timetbl_dataset.num_jrasgns );
+      ttc_print_jrasgns( timetbl_dataset.jr_asgns.jrasgns, timetbl_dataset.jr_asgns.num_asgns );
       printf( "\n" );
       ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
+      
+      cons_scheduled_cmds();
     }
   }
   return r;
 }
 
+#define SCHEDULED_CMDS_NODEBUFSIZ 1024
 int main ( void ) {
   int r = -1;
-  
-  timetable_symtbl = (ATTR_TIMETABLE_PTR)calloc( sizeof(ATTR_TIMETABLE), 1 );
-  if( !timetable_symtbl ) {
+  BOOL alloc = FALSE;
+ 
+  scheduled_cmds.nodes = (SCHEDULED_COMMAND_PTR)calloc( (sizeof(SCHEDULED_COMMAND) * SCHEDULED_CMDS_NODEBUFSIZ), 1 );
+  if( scheduled_cmds.nodes ) {
+    scheduled_cmds.plim = &scheduled_cmds.nodes[SCHEDULED_CMDS_NODEBUFSIZ];
+    timetable_symtbl = (ATTR_TIMETABLE_PTR)calloc( sizeof(ATTR_TIMETABLE), 1 );
+    if( timetable_symtbl ) {
+      timetable_symtbl->trips_regtbl.kind = PAR_UNKNOWN;
+      timetable_symtbl->jr_asgn_regtbl.kind = PAR_UNKNOWN;
+      timetable_symtbl->journeys_regtbl.kind = PAR_UNKNOWN;
+      alloc = TRUE;
+    }
+  }
+  if( !alloc ) {
     printf( "memory allocation failed.\n" );
     return r;
   }
-  timetable_symtbl->trips_regtbl.kind = PAR_UNKNOWN;
-  timetable_symtbl->jr_asgn_regtbl.kind = PAR_UNKNOWN;
-  timetable_symtbl->journeys_regtbl.kind = PAR_UNKNOWN;
+  
   {
     int i;
     for( i = 0; i < MAX_JOURNEYS; i++ ) {
       timetable_symtbl->journeys_regtbl.journey_prof[i].journey_id.jid = -1;
     }
   }
-  
   r = ttcreat();
   return r;
 }
