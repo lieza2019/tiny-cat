@@ -81,7 +81,7 @@ typedef struct attr_trip {
   // belows are extends.
   struct {
     ARS_SP_COND stop_skip;
-    DWELL_TIME dwell_time;
+    TIME_DIFF dwell_time;
     SRC_POS pos;
   } sp_cond;
   struct {

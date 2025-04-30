@@ -951,49 +951,65 @@ static DWELL_ID dwell_seq( STOPPING_POINT_CODE sp ) {
 
 static SCHEDULED_COMMAND_PTR cons_rosetrel_cmds ( JOURNEY_TRIP_PTR pjprof, TRIP_DESC_PTR pjtrip, SCHEDULED_COMMAND_PTR cmd_org, DWELL_ID org_dwid ) {
   assert( pjprof );
-  assert( cmd_org );
+  assert( pjtrip );
   assert( pjtrip == lkup_trip( &pjprof->st_pltb_orgdst.org, &pjprof->st_pltb_orgdst.dst ) );
+  assert( cmd_org );
+  SCHEDULED_COMMAND_PTR r = NULL;
   
-  SCHEDULED_COMMAND_PTR psc1 = NULL;
-  psc1 = newnode_schedulecmd();
-  assert( psc1 );
+  SCHEDULED_COMMAND_PTR psc_roset = NULL;
+  SCHEDULED_COMMAND_PTR psc_dep = NULL;
+  SCHEDULED_COMMAND_PTR psc_rorel = NULL;
   
-  psc1->cmd = ARS_SCHEDULED_ROUTESET;
+  SCHEDULED_COMMAND_PTR rorel_org = NULL;
   {
     int i;
     assert( pjtrip->num_routes <= MAX_TRIP_ROUTES );
     for( i = 0; i < pjtrip->num_routes; i++ ) {
+      psc_roset = newnode_schedulecmd();
+      assert( psc_roset );
+      psc_roset->cmd = ARS_SCHEDULED_ROUTESET;
+      psc_roset->ln.journey.planned.pNext = NULL;
       assert( pjtrip->routes[i].id == pjtrip->routes[i].pprof->id );
-      psc1->attr.sch_roset.route_id = pjtrip->routes[i].pprof->id;
-      psc1->attr.sch_roset.is_dept_route = (pjtrip->routes[i].pprof->route_kind == DEP_ROUTE);
-      if( psc1->attr.sch_roset.is_dept_route ) {
-	SCHEDULED_COMMAND_PTR psc2 = NULL;
-	psc2 = newnode_schedulecmd();
-	assert( psc2 );
-	psc1->attr.sch_roset.dept_time = pjprof->time_arrdep.time_arr;
-	psc1->attr.sch_roset.proute_prof = pjtrip->routes[i].pprof;
-	psc2->cmd = ARS_SCHEDULED_DEPT;
-	psc2->attr.sch_dept.dw_seq = org_dwid;
-	psc2->attr.sch_dept.dwell = pjprof->sp_cond.dwell_time;
+      psc_roset->attr.sch_roset.route_id = pjtrip->routes[i].pprof->id;
+      psc_roset->attr.sch_roset.is_dept_route = (pjtrip->routes[i].pprof->route_kind == DEP_ROUTE);
+      if( psc_roset->attr.sch_roset.is_dept_route ) {
+	psc_dep = newnode_schedulecmd();
+	assert( psc_dep );
+	psc_dep->ln.journey.planned.pNext = NULL;
+	psc_roset->attr.sch_roset.dept_time = pjprof->time_arrdep.time_arr;
+	psc_roset->attr.sch_roset.proute_prof = pjtrip->routes[i].pprof;
+	psc_dep->cmd = ARS_SCHEDULED_DEPT;
+	psc_dep->attr.sch_dept.dw_seq = org_dwid;
+	psc_dep->attr.sch_dept.dwell = pjprof->sp_cond.dwell_time;
       }
-      {
-	SCHEDULED_COMMAND_PTR psc3 = NULL;
-	psc3 = newnode_schedulecmd();
-	assert( psc3 );
-	psc3->cmd = ARS_SCHEDULED_ROUTEREL;
-	psc3->attr.sch_rorel.dept_time = pjprof->time_arrdep.time_dep;
-      }
+      psc_rorel = newnode_schedulecmd();
+      assert( psc_rorel );
+      psc_rorel->ln.journey.planned.pNext = NULL;
+      psc_rorel->cmd = ARS_SCHEDULED_ROUTEREL;
+      psc_rorel->attr.sch_rorel.dept_time = pjprof->time_arrdep.time_dep;
+      psc_rorel->ln.journey.planned.pNext = NULL;
+      if( !rorel_org )
+	rorel_org = psc_rorel;
     }
   }
   switch( cmd_org->cmd ) {
   case ARS_SCHEDULED_ARRIVAL:
+    assert( cmd_org->attr.sch_arriv.dw_seq == org_dwid );
+    cmd_org->ln.journey.planned.pNext = psc_roset;
+    psc_roset->ln.journey.planned.pNext = psc_dep;
+    psc_dep->ln.journey.planned.pNext = rorel_org;
+    r = psc_rorel;
     break;
   case ARS_SCHEDULED_SKIP:
+    assert( cmd_org->attr.sch_skip.dw_seq == org_dwid );
+    psc_roset->ln.journey.planned.pNext = cmd_org;
+    cmd_org->ln.journey.planned.pNext = rorel_org;
+    r = psc_rorel;
     break;
   default:
     assert( FALSE );
   }
-  return psc1;
+  return r;
 }
 
 static void cons_scheduled_cmds ( void ) {
