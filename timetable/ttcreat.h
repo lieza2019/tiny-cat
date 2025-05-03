@@ -124,12 +124,17 @@ typedef struct journey_trip {
   PERFREG_LEVEL perfreg;
   BOOL is_revenue;
   CREW_ID crew_id;
+  struct {
+    SCHEDULED_COMMAND_PTR top;
+    SCHEDULED_COMMAND_PTR last;
+  } pschcmds_trip;
 } JOURNEY_TRIP, *JOURNEY_TRIP_PTR;
 
 typedef struct journey_desc {
   JOURNEY_TRIP trips[MAX_JOURNEY_TRIPS];
   JOURNEY_ID jid;
   int num_trips;
+  SCHEDULED_COMMAND_PTR pschcmds_journey;
 } JOURNEY_DESC, *JOURNEY_DESC_PTR;
 
 typedef struct timetable_dataset {

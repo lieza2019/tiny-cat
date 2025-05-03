@@ -44,7 +44,7 @@ typedef struct scheduled_command {
 	BOOL L, R;
       } dep_dir;
       IL_SYM dep_route;
-      ROUTE_PTR proute_prof;
+      ROUTE_C_PTR proute_prof;
     } sch_dept;
     struct { // ARS_SCHEDULED_SKIP
       DWELL_ID dw_seq;

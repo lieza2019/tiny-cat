@@ -10,7 +10,6 @@
 
 ONLINE_TIMETABLE online_timetbl;
 
-struct scheduled_cmds_nodebuf scheduled_cmds;
 SCHEDULED_COMMAND_PTR newnode_schedulecmd ( void ) {
   assert( scheduled_cmds.nodes );
   assert( scheduled_cmds.plim );  
