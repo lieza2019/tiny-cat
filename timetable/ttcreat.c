@@ -265,7 +265,8 @@ ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, SRC
 
 static void print_crewid ( CREW_ID crewid ) {
   assert( ((int)crewid > -1) && ((int)crewid < (int)END_OF_CREWIDs) );
-  printf( "%s", cnv2str_crew_id[crewid] );
+  const char *str = cnv2str_crew_id[crewid];
+  printf( "%s", (str ? str : "unknown") );
 }
 
 static void print_revenue ( BOOL revenue ) {
@@ -311,17 +312,26 @@ static void print_dwell ( ARS_SP_COND spcond, TIME_DIFF dwell ) {
 
 static void print_sp_pair ( SP_ORGDST_PAIR_PTR psps ) {
   assert( psps );
-  printf( "(%s, %s)", cnv2str_sp_code[psps->sp_org], cnv2str_sp_code[psps->sp_dst] );
+  const char *sp_o = cnv2str_sp_code[psps->sp_org];
+  const char *sp_d = cnv2str_sp_code[psps->sp_dst];
+  printf( "(%s, %s)", (sp_o ? sp_o : "unknown"), (sp_d ? sp_d : "unknown") );
+  
 }
 
 static void print_st_pltb ( ST_PLTB_PAIR_PTR pst_pltb ) {
   assert( pst_pltb );
   
   char st_pltb_strbuf[(MAX_STNAME_LEN + 1 + MAX_PLTB_NAMELEN) + 1] = "";
-  strncat( st_pltb_strbuf, cnv2str_st_id[pst_pltb->st], MAX_STNAME_LEN );
-  strncat( st_pltb_strbuf, "_", 2 );
-  strncat( st_pltb_strbuf, cnv2str_pltb_id[pst_pltb->pltb], MAX_PLTB_NAMELEN );
+  {
+    const char *str = cnv2str_st_id[pst_pltb->st];
+    strncat( st_pltb_strbuf, (str ? str : "unknown"), MAX_STNAME_LEN );
+  }
   
+  strncat( st_pltb_strbuf, "_", 2 );
+  {
+    const char *str = cnv2str_pltb_id[pst_pltb->pltb];
+    strncat( st_pltb_strbuf, (str ? str : "unknown"), MAX_PLTB_NAMELEN );
+  }
   printf( "%s", st_pltb_strbuf );
 }
 
@@ -342,27 +352,23 @@ static void print_routes ( ROUTE_ASSOC routes[], int nroutes ) {
   printf( "}" );
 }
 
+void print_time_desc ( TINY_TIME_DESC_PTR ptd ) {
+  assert( ptd );
+  printf( "%02d", ptd->hour );
+  printf( ":" );
+  printf( "%02d", ptd->minute );
+  printf( ":" );
+  printf( "%02d", ptd->second );
+}
 static void print_arrdep_time ( TIME_ARRDEP_PTR parrdep_time ) {
   assert( parrdep_time );
   
   printf( "(" );
-  printf( "%02d", parrdep_time->time_arr.hour );
-  printf( ":" );
-  printf( "%02d", parrdep_time->time_arr.minute );
-  printf( ":" );
-  printf( "%02d", parrdep_time->time_arr.second );
+  print_time_desc ( &parrdep_time->time_arr );
   printf( ", " );
-  
-  printf( "%02d", parrdep_time->time_dep.hour );
-  printf( ":" );
-  printf( "%02d", parrdep_time->time_dep.minute );
-  printf( ":" );
-  printf( "%02d", parrdep_time->time_dep.second );
+  print_time_desc ( &parrdep_time->time_dep );
   printf( ")" );
 }
-
-static const int nspc_indent = 2;
-#define TTC_DIAG_INDENT( n ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < nspc_indent; b++ ) printf(" "); }}
 
 void ttc_print_jrasgns ( JOURNEY_RAKE_ASGN rjasgns[], int nasgns ) {
   assert( rjasgns );
@@ -443,6 +449,9 @@ void ttc_print_journeys( JOURNEY_DESC journeys[], int njourneys ) {
 	TTC_DIAG_INDENT(2);
 	ttc_print_jtrip( &journeys[i].trips[k] );
       }
+      TTC_DIAG_INDENT(1);
+      printf( "scheduled commands of J%03d:\n", journeys[i].jid );
+      ttc_print_schcmds( journeys[i].pschcmds_journey, 2 );
       cnt_j++;
     }
     i++;
@@ -946,186 +955,6 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
   assert( timetbl_dataset.j.num_journeys == pjourneys->njourneys );
 }
 
-static DWELL_ID dwell_seq( STOPPING_POINT_CODE sp ) {
-  DWELL_ID r = 0;
-  return r;
-}
-
-static SCHEDULED_COMMAND_PTR cons_rosetrel_cmds ( JOURNEY_ID jid, JOURNEY_TRIP_PTR pjprof, TRIP_DESC_PTR pjtrip, SCHEDULED_COMMAND_PTR cmd_org, DWELL_ID org_dwid ) {
-  assert( pjprof );
-  assert( pjtrip );
-  assert( pjtrip == lkup_trip( &pjprof->st_pltb_orgdst.org, &pjprof->st_pltb_orgdst.dst ) );
-  assert( cmd_org );
-  SCHEDULED_COMMAND_PTR r = NULL;
-  
-  SCHEDULED_COMMAND_PTR psc_roset = NULL;
-  SCHEDULED_COMMAND_PTR psc_dep = NULL;
-  SCHEDULED_COMMAND_PTR psc_rorel = NULL;
-  
-  SCHEDULED_COMMAND_PTR roset_org = NULL;
-  SCHEDULED_COMMAND_PTR rorel_org = NULL;
-  {
-    int i;
-    assert( pjtrip->num_routes <= MAX_TRIP_ROUTES );
-    for( i = 0; i < pjtrip->num_routes; i++ ) {
-      psc_roset = newnode_schedulecmd();
-      assert( psc_roset );
-      psc_roset->ln.journey.planned.pNext = NULL;
-      psc_roset->jid = jid;
-      psc_roset->cmd = ARS_SCHEDULED_ROUTESET;
-      psc_roset->attr.sch_roset.nth_routeset = i + 1;
-      assert( pjtrip->routes[i].id == pjtrip->routes[i].pprof->id );
-      psc_roset->attr.sch_roset.route_id = pjtrip->routes[i].pprof->id;
-      psc_roset->attr.sch_roset.proute_prof = pjtrip->routes[i].pprof;
-      psc_roset->attr.sch_roset.is_dept_route = (pjtrip->routes[i].pprof->route_kind == DEP_ROUTE);
-      psc_roset->attr.sch_roset.dept_time = pjprof->time_arrdep.time_dep;
-      if( psc_rorel )
-	psc_rorel->ln.journey.planned.pNext = psc_roset;
-      if( !roset_org )
-	roset_org = psc_roset;
-      if( !psc_dep ) {
-	psc_dep = newnode_schedulecmd();
-	assert( psc_dep );
-	psc_dep->ln.journey.planned.pNext = NULL;
-	psc_dep->jid = jid;
-	switch( cmd_org->cmd ) {
-	case ARS_SCHEDULED_ARRIVAL:
-	  psc_dep->cmd = ARS_SCHEDULED_DEPT;
-	  psc_dep->attr.sch_dept.dw_seq = org_dwid;
-	  psc_dep->attr.sch_dept.dwell = pjprof->sp_cond.dwell_time;
-	  assert( pjprof->ptrip_prof );
-	  psc_dep->attr.sch_dept.dep_sp = pjprof->ptrip_prof->sp_orgdst.sp_org;
-	  psc_dep->attr.sch_dept.dep_time = pjprof->time_arrdep.time_dep;
-	  psc_dep->attr.sch_dept.is_revenue = pjprof->is_revenue;
-	  psc_dep->attr.sch_dept.perf_lev = pjprof->perfreg;
-	  psc_dep->attr.sch_dept.crew_id = pjprof->crew_id;
-	  psc_dep->attr.sch_dept.dep_route = psc_roset->attr.sch_roset.route_id;
-	  psc_dep->attr.sch_dept.proute_prof = psc_roset->attr.sch_roset.proute_prof;
-	  // psc_dep->attr.sch_dept.depdir = ;
-	  break;
-	case ARS_SCHEDULED_SKIP:
-	  psc_dep = cmd_org;
-	  break;
-	default:
-	  assert( FALSE );
-	}
-      }
-      psc_rorel = newnode_schedulecmd();
-      assert( psc_rorel );
-      psc_rorel->ln.journey.planned.pNext = NULL;
-      psc_rorel->jid = jid;
-      psc_rorel->cmd = ARS_SCHEDULED_ROUTEREL;
-      psc_rorel->attr.sch_rorel.nth_routerel = i + 1;
-      psc_rorel->attr.sch_rorel.dept_time = pjprof->time_arrdep.time_dep;
-      assert( psc_roset );
-      psc_roset->ln.journey.planned.pNext = psc_rorel;
-      if( !rorel_org )
-	rorel_org = psc_rorel;
-    }
-    assert( rorel_org );
-  }
-  switch( cmd_org->cmd ) {
-  case ARS_SCHEDULED_ARRIVAL:
-    assert( cmd_org->attr.sch_arriv.dw_seq == org_dwid );
-    cmd_org->ln.journey.planned.pNext = roset_org;
-    roset_org->ln.journey.planned.pNext = psc_dep;
-    psc_dep->ln.journey.planned.pNext = rorel_org;
-    r = cmd_org;
-    break;
-  case ARS_SCHEDULED_SKIP:
-    assert( cmd_org->attr.sch_skip.dw_seq == org_dwid );
-    assert( psc_dep == cmd_org );
-    roset_org->ln.journey.planned.pNext = psc_dep;
-    psc_dep->ln.journey.planned.pNext = rorel_org;
-    r = roset_org;
-    break;
-  default:
-    assert( FALSE );
-  }
-  return r;
-}
-
-static void cons_scheduled_cmds ( void ) {
-  assert( scheduled_cmds.nodes );
-  assert( scheduled_cmds.plim );
-  
-  int jcnt = 0;
-  int i;
-  for( i = 0; (i < MAX_JOURNEYS) && (jcnt < timetbl_dataset.j.num_journeys); i++ ) {
-    JOURNEY_DESC_PTR pjd = &timetbl_dataset.j.journeys[i];
-    assert( pjd );
-    if( pjd->jid > -1 ) {
-      struct {
-	SCHEDULED_COMMAND_PTR phead;
-	SCHEDULED_COMMAND_PTR ptail;
-      } sch_cmds = { NULL, NULL };
-      int k;
-      for( k = 0; (k < MAX_JOURNEY_TRIPS) && (k < pjd->num_trips); k++ ) {
-	JOURNEY_TRIP_PTR pjt = &pjd->trips[k];
-	TRIP_DESC_PTR pt = NULL;
-	SCHEDULED_COMMAND_PTR psc_org = NULL;
-	DWELL_ID wid = -1;
-	assert( pjt );
-	pt = lkup_trip( &pjt->st_pltb_orgdst.org, &pjt->st_pltb_orgdst.dst );
-	assert( pt );
-	psc_org = newnode_schedulecmd();
-	assert( psc_org );
-	psc_org->ln.journey.planned.pNext = NULL;
-	psc_org->jid = pjd->jid;
-	wid = dwell_seq( 0 );
-	assert( wid > -1 );
-	if( pjt->sp_cond.stop_skip == DWELL ) {
-	  psc_org->cmd = ARS_SCHEDULED_ARRIVAL;
-	  psc_org->attr.sch_arriv.dw_seq = wid;
-	  psc_org->attr.sch_arriv.arr_sp = pt->sp_orgdst.sp_org;
-	  psc_org->attr.sch_arriv.arr_time = pjt->time_arrdep.time_arr;
-	} else {
-	  assert( pjt->sp_cond.stop_skip == SKIP );  
-	  psc_org->cmd = ARS_SCHEDULED_SKIP;
-	  psc_org->attr.sch_skip.dw_seq = wid;
-	  psc_org->attr.sch_skip.pass_sp = pt->sp_orgdst.sp_org;
-	  assert( CMP_TINYTIME( pjt->time_arrdep.time_arr, pjt->time_arrdep.time_dep ) );
-	  psc_org->attr.sch_skip.pass_time = pjt->time_arrdep.time_arr;
-	  psc_org->attr.sch_skip.is_revenue = pjt->is_revenue;
-	  psc_org->attr.sch_skip.perf_lev = pjt->perfreg;
-	  psc_org->attr.sch_skip.crew_id = pjt->crew_id;
-	}
-	{
-	  assert( pjt );
-	  assert( pt );
-	  assert( psc_org );
-	  assert( wid > -1 );
-	  SCHEDULED_COMMAND_PTR pcmds = NULL;
-	  pcmds = cons_rosetrel_cmds( pjd->jid, pjt, pt, psc_org, wid );
-	  assert( pcmds );	  
-	  pjt->pschcmds_trip.top = pcmds;
-	  {
-	    SCHEDULED_COMMAND_PTR p = pcmds;
-	    while( p->ln.journey.planned.pNext ) {
-	      assert( p );
-	      p = p->ln.journey.planned.pNext;
-	    }
-	    assert( !p->ln.journey.planned.pNext );
-	    pjt->pschcmds_trip.last = p;
-	  }
-	  assert( !(pjt->pschcmds_trip.last)->ln.journey.planned.pNext );
-	  if( sch_cmds.ptail ) {
-	    assert( sch_cmds.phead );
-	    sch_cmds.ptail->ln.journey.planned.pNext = pcmds;
-	  } else {
-	    assert( !sch_cmds.phead );
-	    sch_cmds.phead = pcmds;
-	  }
-	  sch_cmds.ptail = pcmds;
-	}
-      }
-      assert( k == pjd->num_trips );
-      pjd->pschcmds_journey = sch_cmds.phead;
-      jcnt++;
-    }
-  }
-  assert( jcnt == timetbl_dataset.j.num_journeys );
-}
 
 int ttcreat ( void ) {
   extern int yyparse( void );
@@ -1155,14 +984,15 @@ int ttcreat ( void ) {
     if( !err ) {
       cons_jrasgn( &timetable_symtbl->jr_asgn_regtbl );
       cons_journeys( &timetable_symtbl->journeys_regtbl );
-#if 0
+      cons_scheduled_cmds();
+#if 1
       ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );      
       printf( "\n" );
       ttc_print_jrasgns( timetbl_dataset.jr_asgns.jrasgns, timetbl_dataset.jr_asgns.num_asgns );
       printf( "\n" );
       ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
 #endif
-      cons_scheduled_cmds();
+      assert( FALSE );
     }
   }
   return r;

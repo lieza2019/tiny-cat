@@ -19,13 +19,14 @@ typedef struct scheduled_command {
       int nth_routeset;
       IL_SYM route_id;
       BOOL is_dept_route;
-      ARS_ASSOC_TIME dept_time;
+      ARS_ASSOC_TIME dep_time;
       ROUTE_C_PTR proute_prof;
     } sch_roset;
     struct { // for ARS_SCHEDULED_ROUTEREL
       int nth_routerel;
       IL_SYM route_id;
-      ARS_ASSOC_TIME dept_time;
+      ARS_ASSOC_TIME dep_time;
+      ROUTE_C_PTR proute_prof;
     } sch_rorel;
     struct { // for ARS_SCHEDULED_ARRIVAL
       DWELL_ID dw_seq;

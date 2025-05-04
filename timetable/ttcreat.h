@@ -155,8 +155,16 @@ extern TIMETABLE_DATASET timetbl_dataset;
 
 #include "ttcreat_par.h"
 
+static const int nspc_indent = 2;
+#define TTC_DIAG_INDENT( n ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < nspc_indent; b++ ) printf(" "); }}
+
+extern void print_time_desc ( TINY_TIME_DESC_PTR ptd );
 extern void ttc_print_trips ( TRIP_DESC trips[], int ntrips );
 extern void ttc_print_journeys( JOURNEY_DESC journeys[], int njourneys );
+extern int load_online_timetbl ( void );
+
+extern void ttc_print_schcmds ( SCHEDULED_COMMAND_PTR pschcmds, const int nindents );
+extern void cons_scheduled_cmds ( void );
 
 extern TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst );
 extern int ttcreat ( void );

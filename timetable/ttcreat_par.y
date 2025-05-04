@@ -67,7 +67,10 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL is_journey ) {
     printf( "(%02d:%02d:%02d,", ptrip->arrdep_time.arriv.arr_time.t.hour, ptrip->arrdep_time.arriv.arr_time.t.minute, ptrip->arrdep_time.arriv.arr_time.t.second);
     printf( " %02d:%02d:%02d)", ptrip->arrdep_time.dept.dep_time.t.hour, ptrip->arrdep_time.dept.dep_time.t.minute, ptrip->arrdep_time.dept.dep_time.t.second );
     buf[PRINT_STRBUF_MAXLEN - 1] = 0;
-    printf( ", %s", strncpy( buf, cnv2str_perfreg_level[ptrip->perf_regime.perfreg_cmd], (PRINT_STRBUF_MAXLEN - 1) ) );
+    {
+      const char *str = cnv2str_perfreg_level[ptrip->perf_regime.perfreg_cmd];      
+      printf( ", %s", strncpy( buf, (str ? str : ""), (PRINT_STRBUF_MAXLEN - 1) ) );
+    }
     printf( ", %s", (ptrip->revenue.stat ? "revenue" : "nonreve") );
 
     if( ptrip->crew_id.cid > -1 ) {

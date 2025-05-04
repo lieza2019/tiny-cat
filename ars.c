@@ -1197,9 +1197,9 @@ ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ )
 		  } else {
 		    assert( cond > 0 );
 		    assert( pC );
-		    const int hour_to_set = pC->attr.sch_roset.dept_time.hour;
-		    const int minute_to_set = pC->attr.sch_roset.dept_time.minute;
-		    const int second_to_set = pC->attr.sch_roset.dept_time.second;
+		    const int hour_to_set = pC->attr.sch_roset.dep_time.hour;
+		    const int minute_to_set = pC->attr.sch_roset.dep_time.minute;
+		    const int second_to_set = pC->attr.sch_roset.dep_time.second;
 		    assert( (hour_to_set >= 0) && (hour_to_set < 24) );
 		    assert( (minute_to_set >= 0) && (minute_to_set < 60) );
 		    assert( (second_to_set >= 0) && (second_to_set < 60) );
@@ -1393,7 +1393,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 	      int stat = -1;
 	      stat = conslt_il_state( &oc_id, &kind, cnv2str_il_sym(pahead_trk->id) );
 	      if( stat == 0 ) {
-		timestamp( &pC->attr.sch_rorel.dept_time );
+		timestamp( &pC->attr.sch_rorel.dep_time );
 	      acc_and_chk_rorel:
 		pC->checked = TRUE;
 		make_it_past( pJ, pC );
