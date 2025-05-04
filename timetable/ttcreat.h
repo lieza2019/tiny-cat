@@ -144,7 +144,7 @@ typedef struct timetable_dataset {
   } trips_decl;
   struct {    
     int num_asgns;
-    JOURNEY_RAKE_ASGN jrasgns[MAX_JR_ASGNMENTS];    
+    JOURNEY_RAKE_ASGN jrasgns[MAX_JR_ASGNMENTS];
   } jr_asgns;
   struct {
     int num_journeys;

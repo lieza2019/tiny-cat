@@ -992,6 +992,7 @@ int ttcreat ( void ) {
       printf( "\n" );
       ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
 #endif
+      load_online_timetbl();
       assert( FALSE );
     }
   }

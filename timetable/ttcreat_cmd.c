@@ -359,6 +359,32 @@ static ARS_ASSOC_TIME_PTR journey_start_time ( SCHEDULED_COMMAND_PTR pcmd ) {
   return r;
 }
 
+static int rake_journey_asgn ( JOURNEY_ID jid ) {
+  assert( jid > -1 );
+  int r = -1;  
+  
+  int cnt;
+  int i;
+  for( i = 0, cnt = 0; i < MAX_JR_ASGNMENTS; i++ ) {
+    JOURNEY_RAKE_ASGN_PTR pa = &timetbl_dataset.jr_asgns.jrasgns[i];
+    assert( pa );
+    if( cnt >= timetbl_dataset.jr_asgns.num_asgns ) {
+      assert( r < 0 );
+      break;
+    }
+    if( pa->jid > -1 ) {
+      if( pa->jid == jid) {
+	r = pa->rake_id;
+	break;
+      }
+      cnt++;
+    }
+  }
+  if( r < 0 )
+    assert( cnt == timetbl_dataset.jr_asgns.num_asgns );
+  return r;
+}
+
 int load_online_timetbl ( void ) {
   int r = 0;
   
@@ -411,11 +437,17 @@ int load_online_timetbl ( void ) {
       }
       pj->scheduled_commands.pcmds = pjd->pschcmds_journey;
       pj->scheduled_commands.pNext = pj->scheduled_commands.pcmds;
-      online_timetbl.num_journeys++;
+      {
+	int r = -1;
+	r = rake_journey_asgn( pj->jid );
+	online_timetbl.journeys[k].rake_id = (r > -1 ? r : 0);
+      }
+      k++;
       jcnt++;
     }
   }
   assert( jcnt == timetbl_dataset.j.num_journeys );
+  assert( k == jcnt );
   r = jcnt;
   online_timetbl.num_journeys = r;
   return r;
