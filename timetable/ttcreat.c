@@ -955,7 +955,6 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
   assert( timetbl_dataset.j.num_journeys == pjourneys->njourneys );
 }
 
-
 int ttcreat ( void ) {
   extern int yyparse( void );
   extern FILE *yyin;

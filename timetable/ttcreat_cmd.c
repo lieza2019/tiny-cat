@@ -344,7 +344,7 @@ static ARS_ASSOC_TIME_PTR journey_start_time ( SCHEDULED_COMMAND_PTR pcmd ) {
     r = &pcmd->attr.sch_dept.dep_time;
     break;
   case ARS_SCHEDULED_ROUTEREL:
-    assert( FALSE );
+    //assert( FALSE );
     r = &pcmd->attr.sch_rorel.dep_time;
     break;
   case ARS_SCHEDULED_SKIP:
@@ -421,11 +421,17 @@ int load_online_timetbl ( void ) {
 	    SCHEDULED_COMMAND_PTR p = pjd->pschcmds_journey;
 	    assert( p );
 	    while( p->ln.journey.planned.pNext ) {
+	      SCHEDULED_COMMAND_PTR w = p->ln.journey.planned.pNext;
+	      assert( w );
+	      if( w->cmd == END_OF_SCHEDULED_CMDS )
+		break;
+	      else
+		p = w;
 	      assert( p );
-	      p = p->ln.journey.planned.pNext;
 	    }
 	    assert( p );
-	    assert( !p->ln.journey.planned.pNext );
+	    assert( p->ln.journey.planned.pNext );
+	    assert( (p->ln.journey.planned.pNext)->cmd == END_OF_SCHEDULED_CMDS );
 	    pfin = journey_start_time( p );
 	    if( pfin )
 	      pj->finish_time = *pfin;
