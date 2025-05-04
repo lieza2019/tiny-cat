@@ -119,7 +119,7 @@ typedef struct timetable {
 
 #include "timetable_def.h"
 
-extern ONLINE_TIMETABLE online_timetbl;;
+extern ONLINE_TIMETABLE online_timetbl;
 
 extern SCHEDULED_COMMAND_PTR newnode_schedulecmd ( void );
 

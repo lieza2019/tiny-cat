@@ -22,3 +22,7 @@ journeys:
     ( ((JLA,PL1), (KIKJ, PL1)) );
     ( ((KIKJ,PL1), (OKBS, PL1)) );
     ( ((OKBS,PL1), (BTGD, PL1)) );
+  J03:
+    ( ((JLA,PL1), (KIKJ, PL1)) );
+    ( ((KIKJ,PL1), (OKBS, PL1)) );
+    ( ((OKBS,PL1), (BTGD, PL1)) );

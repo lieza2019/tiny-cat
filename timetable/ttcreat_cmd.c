@@ -235,16 +235,15 @@ static SCHEDULED_COMMAND_PTR cons_rosetrel_cmds ( JOURNEY_ID jid, JOURNEY_TRIP_P
 void cons_scheduled_cmds ( void ) {
   assert( scheduled_cmds.nodes );
   assert( scheduled_cmds.plim );
-  struct {
-    SCHEDULED_COMMAND_PTR phead;
-    SCHEDULED_COMMAND_PTR ptail;
-  } sch_cmds = { NULL, NULL };
-  JOURNEY_DESC_PTR pjd = NULL;
-  
-  int jcnt = 0;
+  int jcnt;
   int i;
-  for( i = 0; (i < MAX_JOURNEYS) && (jcnt < timetbl_dataset.j.num_journeys); i++ ) {
-    pjd = &timetbl_dataset.j.journeys[i];
+  
+  for( i = 0, jcnt = 0; (i < MAX_JOURNEYS) && (jcnt < timetbl_dataset.j.num_journeys); i++ ) {
+    struct {
+      SCHEDULED_COMMAND_PTR phead;
+      SCHEDULED_COMMAND_PTR ptail;
+    } sch_cmds = { NULL, NULL };
+    JOURNEY_DESC_PTR pjd = &timetbl_dataset.j.journeys[i];
     assert( pjd );
     if( pjd->jid > -1 ) {
       int k;
@@ -309,22 +308,21 @@ void cons_scheduled_cmds ( void ) {
       }
       assert( k == pjd->num_trips );
       pjd->pschcmds_journey = sch_cmds.phead;
+      if( pjd ) {
+	assert( sch_cmds.phead && sch_cmds.ptail );
+	SCHEDULED_COMMAND_PTR psc_fin = NULL;
+	psc_fin = newnode_schedulecmd();
+	assert( psc_fin );
+	psc_fin->ln.journey.planned.pNext = NULL;
+	psc_fin->jid = pjd->jid;
+	psc_fin->cmd = END_OF_SCHEDULED_CMDS;
+	sch_cmds.ptail->ln.journey.planned.pNext = psc_fin;
+	assert( (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_ARRIVAL) || (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_SKIP) );
+      }
       jcnt++;
     }
   }
   assert( jcnt == timetbl_dataset.j.num_journeys );
-  if( pjd ) {
-    assert( timetbl_dataset.j.num_journeys > 0 );
-    assert( sch_cmds.phead && sch_cmds.ptail );
-    SCHEDULED_COMMAND_PTR psc_fin = NULL;
-    psc_fin = newnode_schedulecmd();
-    assert( psc_fin );
-    psc_fin->ln.journey.planned.pNext = NULL;
-    psc_fin->jid = pjd->jid;
-    psc_fin->cmd = END_OF_SCHEDULED_CMDS;
-    sch_cmds.ptail->ln.journey.planned.pNext = psc_fin;
-    assert( (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_ARRIVAL) || (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_SKIP) );
-  }
 }
 
 static ARS_ASSOC_TIME_PTR journey_start_time ( SCHEDULED_COMMAND_PTR pcmd ) {
