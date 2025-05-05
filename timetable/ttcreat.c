@@ -1,3 +1,9 @@
+/*
+ * consistency accounting the dead-end trip, in journey decl.
+ * needness for lkup_trip().
+ * arrival SP-code on dead-end trip, in journey decl.
+ * and, correct inplementation of dwell_id.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -298,12 +304,14 @@ static void print_dwell ( ARS_SP_COND spcond, TIME_DIFF dwell ) {
   assert( dwell > -1 );
   switch( spcond ) {
   case DWELL:
-    assert( dwell > 0 );
+    //assert( dwell > 0 );
+    printf( "dwel:" );
     printf( "%d", dwell );
     break;
   case SKIP:
-    assert( dwell == 0 );
-    printf( "SS" );
+    //assert( dwell == 0 );
+    printf( "skip:" );
+    printf( "%d", dwell );
     break;
   default:
     assert( FALSE );
@@ -414,7 +422,7 @@ static void ttc_print_jtrip( JOURNEY_TRIP_PTR pjtrip ) {
   printf( ", " );
   print_st_pltb( &pjtrip->st_pltb_orgdst.dst );
   printf( "), " );
-
+  
   print_dwell( pjtrip->sp_cond.stop_skip, pjtrip->sp_cond.dwell_time );
   printf( ", " );
   

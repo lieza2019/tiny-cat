@@ -249,28 +249,38 @@ void cons_scheduled_cmds ( void ) {
       int k;
       for( k = 0; (k < MAX_JOURNEY_TRIPS) && (k < pjd->num_trips); k++ ) {
 	JOURNEY_TRIP_PTR pjt = &pjd->trips[k];
+	assert( pjt );
 	TRIP_DESC_PTR pt = NULL;
 	SCHEDULED_COMMAND_PTR psc_org = NULL;
-	DWELL_ID wid = -1;
-	assert( pjt );
-	pt = lkup_trip( &pjt->st_pltb_orgdst.org, &pjt->st_pltb_orgdst.dst );
-	assert( pt );
+	DWELL_ID wid = -1;	
 	psc_org = newnode_schedulecmd();
 	assert( psc_org );
 	psc_org->ln.journey.planned.pNext = NULL;
 	psc_org->jid = pjd->jid;
 	wid = dwell_seq( 0 );
 	assert( wid > -1 );
+	if( !pjt->deadend ) {
+	  pt = lkup_trip( &pjt->st_pltb_orgdst.org, &pjt->st_pltb_orgdst.dst );
+	  assert( pt );
+	}
 	if( pjt->sp_cond.stop_skip == DWELL ) {
 	  psc_org->cmd = ARS_SCHEDULED_ARRIVAL;
 	  psc_org->attr.sch_arriv.dw_seq = wid;
-	  psc_org->attr.sch_arriv.arr_sp = pt->sp_orgdst.sp_org;
+	  if( pjt->deadend ) {
+	    psc_org->attr.sch_arriv.arr_sp = SP_NONSENS;
+	  } else {
+	    psc_org->attr.sch_arriv.arr_sp = pt->sp_orgdst.sp_org;
+	  }
 	  psc_org->attr.sch_arriv.arr_time = pjt->time_arrdep.time_arr;
 	} else {
 	  assert( pjt->sp_cond.stop_skip == SKIP );  
 	  psc_org->cmd = ARS_SCHEDULED_SKIP;
 	  psc_org->attr.sch_skip.dw_seq = wid;
-	  psc_org->attr.sch_skip.pass_sp = pt->sp_orgdst.sp_org;
+	  if( pjt->deadend ) {
+	    psc_org->attr.sch_skip.pass_sp = SP_NONSENS;
+	  } else {
+	    psc_org->attr.sch_skip.pass_sp = pt->sp_orgdst.sp_org;
+	  }
 	  assert( CMP_TINYTIME( pjt->time_arrdep.time_arr, pjt->time_arrdep.time_dep ) );
 	  psc_org->attr.sch_skip.pass_time = pjt->time_arrdep.time_arr;
 	  psc_org->attr.sch_skip.is_revenue = pjt->is_revenue;
@@ -279,23 +289,31 @@ void cons_scheduled_cmds ( void ) {
 	}
 	{
 	  assert( pjt );
-	  assert( pt );
 	  assert( psc_org );
 	  assert( wid > -1 );
 	  SCHEDULED_COMMAND_PTR pcmds = NULL;
-	  pcmds = cons_rosetrel_cmds( pjd->jid, pjt, pt, psc_org, wid );
-	  assert( pcmds );	  
-	  pjt->pschcmds_trip.top = pcmds;
-	  {
-	    SCHEDULED_COMMAND_PTR p = pcmds;
-	    while( p->ln.journey.planned.pNext ) {
-	      assert( p );
-	      p = p->ln.journey.planned.pNext;
+	  if( !pjt->deadend ) {
+	    assert( pt );
+	    pcmds = cons_rosetrel_cmds( pjd->jid, pjt, pt, psc_org, wid );
+	    assert( pcmds );	  
+	    pjt->pschcmds_trip.top = pcmds;
+	    {
+	      SCHEDULED_COMMAND_PTR p = pcmds;
+	      while( p->ln.journey.planned.pNext ) {
+		assert( p );
+		p = p->ln.journey.planned.pNext;
+	      }
+	      assert( !p->ln.journey.planned.pNext );
+	      pjt->pschcmds_trip.last = p;
 	    }
-	    assert( !p->ln.journey.planned.pNext );
-	    pjt->pschcmds_trip.last = p;
+	  } else {
+	    assert( psc_org );
+	    assert( !psc_org->ln.journey.planned.pNext );
+	    pjt->pschcmds_trip.top = psc_org;
+	    pjt->pschcmds_trip.last = pjt->pschcmds_trip.top;
+	    pcmds = psc_org;
 	  }
-	  assert( !(pjt->pschcmds_trip.last)->ln.journey.planned.pNext );
+	  assert( ! (pjt->pschcmds_trip.last)->ln.journey.planned.pNext );       
 	  if( sch_cmds.ptail ) {
 	    assert( sch_cmds.phead );
 	    sch_cmds.ptail->ln.journey.planned.pNext = pcmds;
