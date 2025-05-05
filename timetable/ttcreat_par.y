@@ -472,7 +472,7 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
   if( $2.kind == PAR_ST_PLTB ) {
     $$.deadend = TRUE;
     $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
-    $$.attr_st_pltb_orgdst.st_pltb_dst = $2;
+    $$.attr_st_pltb_orgdst.st_pltb_org = $2;
     $$.sp_cond.dwell_time = 0;
     $$.kind = PAR_TRIP;
   } else {
@@ -486,7 +486,7 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
   if( ($2.kind == PAR_ST_PLTB) && ($4.kind == PAR_TIME_SPEC) ) {
     $$.deadend = TRUE;
     $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
-    $$.attr_st_pltb_orgdst.st_pltb_dst = $2;
+    $$.attr_st_pltb_orgdst.st_pltb_org = $2;
     $$.arrdep_time.arriv.arr_time.t.hour = $4.t.hour;
     $$.arrdep_time.arriv.arr_time.t.minute = $4.t.minute;
     $$.arrdep_time.arriv.arr_time.t.second = $4.t.second;
@@ -510,7 +510,7 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
   if( ($2.kind == PAR_ST_PLTB) && ($3.kind == PAR_TIME_SPEC) ) {
     $$.deadend = TRUE;
     $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
-    $$.attr_st_pltb_orgdst.st_pltb_dst = $2;
+    $$.attr_st_pltb_orgdst.st_pltb_org = $2;
     $$.arrdep_time.arriv.arr_time.t.hour = $3.t.hour;
     $$.arrdep_time.arriv.arr_time.t.minute = $3.t.minute;
     $$.arrdep_time.arriv.arr_time.t.second = $3.t.second;

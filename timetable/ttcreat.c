@@ -904,35 +904,56 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	int l;
 	for( l = 0; l < pJ_par->trips.ntrips; l++ ) {
 	  assert( pJ_par->trips.trip_prof[l].kind == PAR_TRIP );
-	  int newone = -1;
-	  newone = cons_st_pltb_pair( st_pltb_ref, MAX_JOURNEY_TRIPS, timetbl_dataset.j.journeys[i].num_trips, &pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst, FALSE );
-	  if( newone > -1 ) {
-	    assert( timetbl_dataset.j.journeys[i].num_trips == newone );
-	    JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
-	    assert( pJ );
-	    pJ->ptrip_prof = lkup_trip( &pJ->st_pltb_orgdst.org, &pJ->st_pltb_orgdst.dst );
-	    if( !pJ_par->trips.trip_prof[l].deadend ) {
+	  if( pJ_par->trips.trip_prof[l].deadend ) {
+	    const int newone = timetbl_dataset.j.journeys[i].num_trips;
+	    if( newone < MAX_JOURNEY_TRIPS ) {
+	      JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
+	      assert( pJ );
+	      pJ->st_pltb_orgdst.org.st = str2_st_id( pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.name );
+	      pJ->st_pltb_orgdst.org.pltb = str2_pltb_id( pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.pltb.id );
+	      if( pJ_prev ) {
+		if( !((pJ_prev->st_pltb_orgdst.dst.st == pJ->st_pltb_orgdst.org.st) && (pJ_prev->st_pltb_orgdst.dst.pltb == pJ->st_pltb_orgdst.org.pltb)) ) {
+		  printf( "FATAL: contiguous lost in journey trips, at (LINE, COL) = (%d, %d).\n",
+			  pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
+		  err_stat.sem.contiguless_trips = TRUE;
+		}
+	      }
+	      pJ->sp_cond.stop_skip = pJ_par->trips.trip_prof[l].sp_cond.stop_skip;
+	      pJ->sp_cond.dwell_time = pJ_par->trips.trip_prof[l].sp_cond.dwell_time;  // settings for pJ->dwell_time;
+	      assert( (pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time == 0) );
+	      jtrip_arrdep_time( pJ_prev, pJ, &pJ_par->trips.trip_prof[l] ); // settings for pJ->time_arrdep;
+	      pJ->deadend = TRUE;
+	      timetbl_dataset.j.journeys[i].num_trips++;
+	      pJ_prev = pJ;
+	    } else {
+	      assert( newone == MAX_JOURNEY_TRIPS );
+	      printf( "FATAL: memory exthausted on trip registration.\n" );
+	      exit( 1 );
+	    }
+	  } else {
+	    int newone = -1;
+	    newone = cons_st_pltb_pair( st_pltb_ref, MAX_JOURNEY_TRIPS, timetbl_dataset.j.journeys[i].num_trips, &pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst, FALSE );
+	    if( newone > -1 ) {
+	      assert( timetbl_dataset.j.journeys[i].num_trips == newone );
+	      JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
+	      assert( pJ );
+	      pJ->ptrip_prof = lkup_trip( &pJ->st_pltb_orgdst.org, &pJ->st_pltb_orgdst.dst );
 	      if( !pJ->ptrip_prof ) {
 		printf( "FATAL: unknwon trip found in journey, at (LINE, COL) = (%d, %d).\n",
 			pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
 		err_stat.sem.unknown_trip = TRUE;
 	      }
-	    }
-	    if( pJ_prev ) {
-	      if( !((pJ_prev->st_pltb_orgdst.dst.st == pJ->st_pltb_orgdst.org.st) && (pJ_prev->st_pltb_orgdst.dst.pltb == pJ->st_pltb_orgdst.org.pltb)) ) {
-		printf( "FATAL: contiguous lost in journey trips, at (LINE, COL) = (%d, %d).\n",
-			pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
-		err_stat.sem.contiguless_trips = TRUE;
+	      if( pJ_prev ) {
+		if( !((pJ_prev->st_pltb_orgdst.dst.st == pJ->st_pltb_orgdst.org.st) && (pJ_prev->st_pltb_orgdst.dst.pltb == pJ->st_pltb_orgdst.org.pltb)) ) {
+		  printf( "FATAL: contiguous lost in journey trips, at (LINE, COL) = (%d, %d).\n",
+			  pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
+		  err_stat.sem.contiguless_trips = TRUE;
+		}
 	      }
-	    }
-	    pJ->sp_cond.stop_skip = pJ_par->trips.trip_prof[l].sp_cond.stop_skip;
-	    pJ->sp_cond.dwell_time = pJ_par->trips.trip_prof[l].sp_cond.dwell_time;  // settings for pJ->dwell_time;
-	    if( pJ_par->trips.trip_prof[l].deadend )
-	      assert( (pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time == 0) );
-	    else
+	      pJ->sp_cond.stop_skip = pJ_par->trips.trip_prof[l].sp_cond.stop_skip;
+	      pJ->sp_cond.dwell_time = pJ_par->trips.trip_prof[l].sp_cond.dwell_time;  // settings for pJ->dwell_time;
 	      assert( pJ->sp_cond.stop_skip == SKIP ? (pJ->sp_cond.dwell_time == 0) : ((pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time > 0)) );
-	    jtrip_arrdep_time( pJ_prev, pJ, &pJ_par->trips.trip_prof[l] ); // settings for pJ->time_arrdep;
-	    if( !pJ_par->trips.trip_prof[l].deadend ) {	      
+	      jtrip_arrdep_time( pJ_prev, pJ, &pJ_par->trips.trip_prof[l] ); // settings for pJ->time_arrdep;
 	      pJ->perfreg = pJ_par->trips.trip_prof[l].perf_regime.perfreg_cmd; // settings for pJ->perfreg;
 	      pJ->is_revenue = pJ_par->trips.trip_prof[l].revenue.stat; // settings for pJ->is_revenue;
 	      // settings for pJ->crew_id;
@@ -944,9 +965,9 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 		err_stat.sem.invalid_crewid = TRUE;
 		pJ->crew_id = CREW_NO_ID;
 	      }
+	      timetbl_dataset.j.journeys[i].num_trips++;
+	      pJ_prev = pJ;
 	    }
-	    timetbl_dataset.j.journeys[i].num_trips++;
-	    pJ_prev = pJ;
 	  }
 	}
       }

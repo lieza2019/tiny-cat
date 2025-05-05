@@ -115,6 +115,7 @@ typedef struct time_arrdep {
 
 typedef struct journey_trip {
   ST_PLTB_ORGDST st_pltb_orgdst;
+  BOOL deadend;
   TRIP_DESC_PTR ptrip_prof;
   struct {
     ARS_SP_COND stop_skip;
