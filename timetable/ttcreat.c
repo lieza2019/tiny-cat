@@ -215,7 +215,7 @@ ATTR_JR_ASGN_PTR reg_jrasgn ( ATTR_JR_ASGNS_PTR preg_tbl, ATTR_JR_ASGN_PTR pprev
   return r;
 }
 
-static BOOL next2_pred ( ATTR_TRIP_PTR ppred, ATTR_TRIP_PTR psucc ) {
+static BOOL next2_pred( ATTR_TRIP_PTR ppred, ATTR_TRIP_PTR psucc ) {
   assert( ppred );
   assert( psucc );
   BOOL r = FALSE;
@@ -458,7 +458,7 @@ void ttc_print_journeys( JOURNEY_DESC journeys[], int njourneys ) {
   }
 }
 
-static int cons_st_pltb_pair ( ST_PLTB_ORGDST_PTR st_pltb_ref[], const int reftbl_len, const int refs_lim, ATTR_ST_PLTB_ORGDST_PTR pattr_orgdst, const  BOOL ovwt ) {
+static int cons_st_pltb_pair ( ST_PLTB_ORGDST_PTR st_pltb_ref[], const int reftbl_len, const int refs_lim, ATTR_ST_PLTB_ORGDST_PTR pattr_orgdst, const BOOL ovwt ) {
   assert( st_pltb_ref );
   assert( reftbl_len > -1 );
   assert( refs_lim > -1 );
@@ -911,10 +911,12 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	    JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
 	    assert( pJ );
 	    pJ->ptrip_prof = lkup_trip( &pJ->st_pltb_orgdst.org, &pJ->st_pltb_orgdst.dst );
-	    if( !pJ->ptrip_prof ) {
-	      printf( "FATAL: unknwon trip found in journey, at (LINE, COL) = (%d, %d).\n",
-		      pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
-	      err_stat.sem.unknown_trip = TRUE;
+	    if( !pJ_par->trips.trip_prof[l].deadend ) {
+	      if( !pJ->ptrip_prof ) {
+		printf( "FATAL: unknwon trip found in journey, at (LINE, COL) = (%d, %d).\n",
+			pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
+		err_stat.sem.unknown_trip = TRUE;
+	      }
 	    }
 	    if( pJ_prev ) {
 	      if( !((pJ_prev->st_pltb_orgdst.dst.st == pJ->st_pltb_orgdst.org.st) && (pJ_prev->st_pltb_orgdst.dst.pltb == pJ->st_pltb_orgdst.org.pltb)) ) {
@@ -923,25 +925,25 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 		err_stat.sem.contiguless_trips = TRUE;
 	      }
 	    }
-	    // settings for pJ->dwell_time;
-	    pJ->sp_cond.dwell_time = pJ_par->trips.trip_prof[l].sp_cond.dwell_time;
 	    pJ->sp_cond.stop_skip = pJ_par->trips.trip_prof[l].sp_cond.stop_skip;
-	    assert( pJ->sp_cond.stop_skip == SKIP ? (pJ->sp_cond.dwell_time == 0) : ((pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time > 0)) );
-	    // settings for pJ->time_arrdep;
-	    jtrip_arrdep_time( pJ_prev, pJ, &pJ_par->trips.trip_prof[l] );
-	    
-	    // settings for pJ->perfreg;
-	    pJ->perfreg = pJ_par->trips.trip_prof[l].perf_regime.perfreg_cmd;
-	    // settings for pJ->is_revenue;
-	    pJ->is_revenue = pJ_par->trips.trip_prof[l].revenue.stat;
-	    // settings for pJ->crew_id;
-	    if( pJ_par->trips.trip_prof[l].crew_id.cid < END_OF_CREWIDs ) {
-	      pJ->crew_id = (CREW_ID)pJ_par->trips.trip_prof[l].crew_id.cid;
-	    } else {
-	      printf( "FATAL: undefined route found in journey declaration at (LINE, COL) = (%d, %d).\n",
-		      pJ_par->trips.trip_prof[l].crew_id.pos.row, pJ_par->trips.trip_prof[l].crew_id.pos.col );
-	      err_stat.sem.invalid_crewid = TRUE;
-	      pJ->crew_id = CREW_NO_ID;
+	    pJ->sp_cond.dwell_time = pJ_par->trips.trip_prof[l].sp_cond.dwell_time;  // settings for pJ->dwell_time;
+	    if( pJ_par->trips.trip_prof[l].deadend )
+	      assert( (pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time == 0) );
+	    else
+	      assert( pJ->sp_cond.stop_skip == SKIP ? (pJ->sp_cond.dwell_time == 0) : ((pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time > 0)) );
+	    jtrip_arrdep_time( pJ_prev, pJ, &pJ_par->trips.trip_prof[l] ); // settings for pJ->time_arrdep;
+	    if( !pJ_par->trips.trip_prof[l].deadend ) {	      
+	      pJ->perfreg = pJ_par->trips.trip_prof[l].perf_regime.perfreg_cmd; // settings for pJ->perfreg;
+	      pJ->is_revenue = pJ_par->trips.trip_prof[l].revenue.stat; // settings for pJ->is_revenue;
+	      // settings for pJ->crew_id;
+	      if( pJ_par->trips.trip_prof[l].crew_id.cid < END_OF_CREWIDs ) {
+		pJ->crew_id = (CREW_ID)pJ_par->trips.trip_prof[l].crew_id.cid;
+	      } else {
+		printf( "FATAL: undefined route found in journey declaration at (LINE, COL) = (%d, %d).\n",
+			pJ_par->trips.trip_prof[l].crew_id.pos.row, pJ_par->trips.trip_prof[l].crew_id.pos.col );
+		err_stat.sem.invalid_crewid = TRUE;
+		pJ->crew_id = CREW_NO_ID;
+	      }
 	    }
 	    timetbl_dataset.j.journeys[i].num_trips++;
 	    pJ_prev = pJ;

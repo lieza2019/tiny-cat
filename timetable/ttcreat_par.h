@@ -74,6 +74,7 @@ typedef struct attr_routes {
 
 typedef struct attr_trip {
   PAR_KIND kind;
+  BOOL deadend;
   ATTR_ST_PLTB_ORGDST attr_st_pltb_orgdst;
   ATTR_SP_PAIR attr_sp_orgdst;
   RUNNING_TIME running_time;

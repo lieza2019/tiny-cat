@@ -12,6 +12,7 @@ static struct {
   JOURNEY_ID jid_w;
   SRC_POS pos;
 } journey_id_w = {-1};
+static BOOL journey_trip_deadend_acc = FALSE;
 ATTR_TIMETABLE_PTR timetable_symtbl = NULL;
 
 static void print_time ( ATTR_TIME_PTR ptime ) {
@@ -173,6 +174,7 @@ static void print_timetable_decl ( ATTR_TRIPS_PTR ptrips, ATTR_JR_ASGNS_PTR pjra
 static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   assert( ptrip );
   ptrip->kind = PAR_UNKNOWN;
+  ptrip->deadend = FALSE;
   
   ptrip->sp_cond.stop_skip = DWELL;
   ptrip->arrdep_time.arriv.arr_time.t.hour = -1;
@@ -378,9 +380,29 @@ trips_journey : /* empty trips */ {
     assert( $1 == &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips );
     ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
     ATTR_TRIP_PTR preg = NULL;
-    $2.kind = PAR_TRIP;
-    preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
-    assert( pnxt == preg );    
+    $2.kind = PAR_TRIP;    
+    if( $2.deadend ) {
+      if( journey_trip_deadend_acc ) {
+	if( !err_stat.par.err_trip_journey ) {
+	  printf( "FATAL: syntax-error, multiple dead-end trips found in journey definition, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+	  err_stat.par.err_trip_journey = TRUE;
+	}
+      } else {
+	assert( $2.sp_cond.stop_skip == DWELL );
+	assert( $2.sp_cond.dwell_time == 0 );
+	preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
+	assert( pnxt == preg );
+	journey_trip_deadend_acc = TRUE;
+      }
+    } else {
+      if( journey_trip_deadend_acc ) {
+	printf( "FATAL: syntax-error, successive trip over the dead-end in journey definition, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+	err_stat.par.err_trip_journey = TRUE;
+      } else {
+	preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
+	assert( pnxt == preg );
+      }
+    }
   }
   $$ = &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
  }
@@ -391,8 +413,15 @@ trips_journey : /* empty trips */ {
     ATTR_TRIP_PTR pnxt = &$1->trip_prof[$1->ntrips];  
     ATTR_TRIP_PTR preg = NULL;
     $2.kind = PAR_TRIP;
-    preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
-    assert( pnxt == preg );
+    if( journey_trip_deadend_acc ) {
+      if( !err_stat.par.err_trip_journey ) {
+	printf( "FATAL: syntax-error, successive trip over the dead-end in journey definition, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+	err_stat.par.err_trip_journey = TRUE;
+      }
+    } else {
+      preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
+      assert( pnxt == preg );
+    }
   }
   $$ = &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips;
  }
@@ -438,9 +467,74 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
   }
   $$.kind = PAR_UNKNOWN;
  }
+| '[' st_and_pltb ']' { /* omitted arrival time on dead-end. */
+  raw_journey_trip( &$$ );
+  if( $2.kind == PAR_ST_PLTB ) {
+    $$.deadend = TRUE;
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
+    $$.attr_st_pltb_orgdst.st_pltb_dst = $2;
+    $$.sp_cond.dwell_time = 0;
+    $$.kind = PAR_TRIP;
+  } else {
+    assert( $2.kind == PAR_UNKNOWN );
+    $$.kind = PAR_UNKNOWN;
+  }
+ }
+;
+| '[' st_and_pltb ',' time ']' {
+  raw_journey_trip( &$$ );
+  if( ($2.kind == PAR_ST_PLTB) && ($4.kind == PAR_TIME_SPEC) ) {
+    $$.deadend = TRUE;
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
+    $$.attr_st_pltb_orgdst.st_pltb_dst = $2;
+    $$.arrdep_time.arriv.arr_time.t.hour = $4.t.hour;
+    $$.arrdep_time.arriv.arr_time.t.minute = $4.t.minute;
+    $$.arrdep_time.arriv.arr_time.t.second = $4.t.second;
+    $$.arrdep_time.arriv.arr_time.pos.row = @4.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @4.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
+    $$.sp_cond.dwell_time = 0;
+    $$.kind = PAR_TRIP;
+  } else {
+    assert( ($2.kind != PAR_ST_PLTB) || ($4.kind != PAR_TIME_SPEC) );
+    $$.kind = PAR_UNKNOWN;
+  }
+ }
+| '[' st_and_pltb time ']' {
+  if( !err_stat.par.err_trip_journey ) {
+    printf( "FATAL: syntax-error, missing delimiter in terminal platform/turnback section and its arrival time, in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_stat.par.err_trip_journey = TRUE;
+  }
+  raw_journey_trip( &$$ );
+  if( ($2.kind == PAR_ST_PLTB) && ($3.kind == PAR_TIME_SPEC) ) {
+    $$.deadend = TRUE;
+    $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
+    $$.attr_st_pltb_orgdst.st_pltb_dst = $2;
+    $$.arrdep_time.arriv.arr_time.t.hour = $3.t.hour;
+    $$.arrdep_time.arriv.arr_time.t.minute = $3.t.minute;
+    $$.arrdep_time.arriv.arr_time.t.second = $3.t.second;
+    $$.arrdep_time.arriv.arr_time.pos.row = @3.first_line;
+    $$.arrdep_time.arriv.arr_time.pos.col = @3.first_column;
+    $$.arrdep_time.arriv.pos.row = $$.arrdep_time.arriv.arr_time.pos.row;
+    $$.arrdep_time.arriv.pos.col = $$.arrdep_time.arriv.arr_time.pos.col;
+    $$.sp_cond.dwell_time = 0;
+    $$.kind = PAR_TRIP;
+  } else {
+    assert( ($2.kind != PAR_ST_PLTB) || ($3.kind != PAR_TIME_SPEC) );
+    $$.kind = PAR_UNKNOWN;
+  }
+ }
              | '(' error {
   if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_stat.par.err_trip_journey = TRUE;
+  }
+  $$.kind = PAR_UNKNOWN;
+ }
+             | '(' '('st_and_pltb ',' error {
+  if( !err_stat.par.err_trip_journey ) {
+    printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
     err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
@@ -461,13 +555,6 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
     assert( ($3.kind == PAR_UNKNOWN) || ($4.kind == PAR_UNKNOWN) );
     $$.kind = PAR_UNKNOWN;
   }
- }
-             | '(' '('st_and_pltb ',' error {
-  if( !err_stat.par.err_trip_journey ) {
-    printf( "FATAL: syntax-error, ill-formed trip description found in journey definition at (LINE, COL) = (%d, %d).\n", @4.first_line, @4.first_column );
-    err_stat.par.err_trip_journey = TRUE;
-  }
-  $$.kind = PAR_UNKNOWN;
  }
              | '(' '('st_and_pltb ',' st_and_pltb ')' error {
   if( !err_stat.par.err_trip_journey ) {
@@ -1098,7 +1185,6 @@ crewid_journey : TK_CREWID ')' {
   $$.kind = PAR_UNKNOWN;
  }
 ;
-
 time : TK_TIME {
   $$ = $1;
   $$.kind = PAR_TIME_SPEC;
