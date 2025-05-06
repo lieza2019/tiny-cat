@@ -14,7 +14,9 @@ assignments:
 
 journeys:
   J01:
+  
+     [ (BTGD, PL1) ];  
     ( ((JLA,PL1), (KIKJ, PL1)) );
     ( ((KIKJ,PL1), (OKBS, PL1)) );
+
     ( ((OKBS,PL1), (BTGD, PL1)) );
-    [ (BTGD, PL1) ];

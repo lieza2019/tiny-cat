@@ -305,12 +305,12 @@ static void print_dwell ( ARS_SP_COND spcond, TIME_DIFF dwell ) {
   switch( spcond ) {
   case DWELL:
     //assert( dwell > 0 );
-    printf( "dwel:" );
+    printf( "dw:" );
     printf( "%d", dwell );
     break;
   case SKIP:
     //assert( dwell == 0 );
-    printf( "skip:" );
+    printf( "ss:" );
     printf( "%d", dwell );
     break;
   default:
@@ -909,9 +909,16 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	assert( pJ_par->kind == PAR_JOURNEY );
 	assert( pJ_par->trips.kind == PAR_TRIPS );
 	JOURNEY_TRIP_PTR pJ_prev = NULL;
+	BOOL deadend_detected = FALSE;
 	int l;
 	for( l = 0; l < pJ_par->trips.ntrips; l++ ) {
 	  assert( pJ_par->trips.trip_prof[l].kind == PAR_TRIP );
+	  if( deadend_detected ) {
+	    printf( "FATAL: invalid dead-end trip detected at (LINE, COL) = (%d, %d).\n",
+		    pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
+	    err_stat.sem.contiguless_trips = TRUE;
+	    deadend_detected = FALSE;
+	  }
 	  if( pJ_par->trips.trip_prof[l].deadend ) {
 	    const int newone = timetbl_dataset.j.journeys[i].num_trips;
 	    if( newone < MAX_JOURNEY_TRIPS ) {
@@ -933,6 +940,7 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	      pJ->deadend = TRUE;
 	      timetbl_dataset.j.journeys[i].num_trips++;
 	      pJ_prev = pJ;
+	      deadend_detected = TRUE;
 	    } else {
 	      assert( newone == MAX_JOURNEY_TRIPS );
 	      printf( "FATAL: memory exthausted on trip registration.\n" );
@@ -982,7 +990,7 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
       timetbl_dataset.j.num_journeys++;
     }
     i++;
-  }  
+  }
   assert( timetbl_dataset.j.num_journeys == pjourneys->njourneys );
 }
 

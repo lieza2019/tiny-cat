@@ -396,8 +396,10 @@ trips_journey : /* empty trips */ {
       }
     } else {
       if( journey_trip_deadend_acc ) {
-	printf( "FATAL: syntax-error, successive trip over the dead-end in journey definition, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-	err_stat.par.err_trip_journey = TRUE;
+	if( !err_stat.par.err_trip_journey ) {
+	  printf( "FATAL: syntax-error, successive trip over the dead-end in journey definition, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+	  err_stat.par.err_trip_journey = TRUE;
+	}
       } else {
 	preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
 	assert( pnxt == preg );
