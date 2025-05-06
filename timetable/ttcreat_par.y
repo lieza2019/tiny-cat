@@ -382,25 +382,25 @@ trips_journey : /* empty trips */ {
     ATTR_TRIP_PTR preg = NULL;
     $2.kind = PAR_TRIP;    
     if( $2.deadend ) {
+      assert( $2.sp_cond.stop_skip == DWELL );
+      assert( $2.sp_cond.dwell_time == 0 );
       if( journey_trip_deadend_acc ) {
 	if( !err_stat.par.err_trip_journey ) {
 	  printf( "FATAL: syntax-error, multiple dead-end trips found in journey definition, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
-	  err_stat.par.err_trip_journey = TRUE;
+	  err_stat.par.err_trip_journey = TRUE;	  
 	}
-      } else {
-	assert( $2.sp_cond.stop_skip == DWELL );
-	assert( $2.sp_cond.dwell_time == 0 );
-	preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
-	assert( pnxt == preg );
+      } else
 	journey_trip_deadend_acc = TRUE;
-      }
+      goto trips_journey_regtrip;
     } else {
       if( journey_trip_deadend_acc ) {
 	if( !err_stat.par.err_trip_journey ) {
 	  printf( "FATAL: syntax-error, successive trip over the dead-end in journey definition, at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
 	  err_stat.par.err_trip_journey = TRUE;
 	}
+	goto trips_journey_regtrip;
       } else {
+      trips_journey_regtrip:
 	preg = reg_trip_journey( &timetable_symtbl->journeys_regtbl, journey_id_w.jid_w, &journey_id_w.pos, &$2 );
 	assert( pnxt == preg );
       }

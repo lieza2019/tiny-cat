@@ -1,5 +1,4 @@
 /*
- * consistency accounting the dead-end trip, in journey decl.
  * needness for lkup_trip().
  * arrival SP-code on dead-end trip, in journey decl.
  * and, correct inplementation of dwell_id.
@@ -797,7 +796,7 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
       } else {
 	assert( !arr_dep.t_arr0 );
 	printf( "FATAL: The first trip of journey must have arrival time to specify journey starting time, at (LINE, COL) = (%d, %d).\n",
-		ppar_trip->attr_st_pltb_orgdst.st_pltb_dst.pltb.pos.row, ppar_trip->attr_st_pltb_orgdst.st_pltb_dst.pltb.pos.col );
+		ppar_trip->attr_st_pltb_orgdst.st_pltb_org.pltb.pos.row, ppar_trip->attr_st_pltb_orgdst.st_pltb_org.pltb.pos.col );
 	tm_arr.tm_hour = JOURNEY_DEFAULT_ARRTIME_HOUR;
 	tm_arr.tm_min = JOURNEY_DEFAULT_ARRTIME_MINUTE;
 	tm_arr.tm_sec = JOURNEY_DEFAULT_ARRTIME_SECOND;
@@ -908,16 +907,19 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	assert( pJ_par );
 	assert( pJ_par->kind == PAR_JOURNEY );
 	assert( pJ_par->trips.kind == PAR_TRIPS );
+	struct {
+	  BOOL deadend_found;;
+	  SRC_POS prev_pos;
+	} deadend_trip = {};
 	JOURNEY_TRIP_PTR pJ_prev = NULL;
-	BOOL deadend_detected = FALSE;
 	int l;
+	assert( !deadend_trip.deadend_found );
 	for( l = 0; l < pJ_par->trips.ntrips; l++ ) {
 	  assert( pJ_par->trips.trip_prof[l].kind == PAR_TRIP );
-	  if( deadend_detected ) {
-	    printf( "FATAL: invalid dead-end trip detected at (LINE, COL) = (%d, %d).\n",
-		    pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
+	  if( deadend_trip.deadend_found ) {
+	    printf( "FATAL: invalid dead-end trip detected at (LINE, COL) = (%d, %d).\n", deadend_trip.prev_pos.row, deadend_trip.prev_pos.col );
 	    err_stat.sem.contiguless_trips = TRUE;
-	    deadend_detected = FALSE;
+	    deadend_trip.deadend_found = FALSE;
 	  }
 	  if( pJ_par->trips.trip_prof[l].deadend ) {
 	    const int newone = timetbl_dataset.j.journeys[i].num_trips;
@@ -940,7 +942,8 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	      pJ->deadend = TRUE;
 	      timetbl_dataset.j.journeys[i].num_trips++;
 	      pJ_prev = pJ;
-	      deadend_detected = TRUE;
+	      deadend_trip.deadend_found = TRUE;
+	      deadend_trip.prev_pos = pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos;
 	    } else {
 	      assert( newone == MAX_JOURNEY_TRIPS );
 	      printf( "FATAL: memory exthausted on trip registration.\n" );
@@ -998,42 +1001,38 @@ int ttcreat ( void ) {
   extern int yyparse( void );
   extern FILE *yyin;
   
+  const int err_result = 1;
   int r = 0;
-  BOOL err = FALSE;
+  
   assert( !TTC_ERRSTAT_PAR( err_stat ) );
   yyin = stdin;
   if( yyparse() ) {
-    err = TRUE;
-    r = 1;
+    r = err_result;
   } else {
     if( TTC_ERRSTAT_PAR( err_stat ) ) {
-      err = TRUE;
-      r = 1;
+      r = err_result;
     }
   }
-  if( !err ) {
-    assert( !TTC_ERRSTAT_SEM( err_stat ) );
-    cons_trips( &timetable_symtbl->trips_regtbl );
-    if( err_stat.sem.route_redef ||
-	err_stat.sem.unknown_route ) {
-      err = TRUE;
-      r = 1;
-    }
-    if( !err ) {
-      cons_jrasgn( &timetable_symtbl->jr_asgn_regtbl );
-      cons_journeys( &timetable_symtbl->journeys_regtbl );
-      cons_scheduled_cmds();
+
+  assert( !TTC_ERRSTAT_SEM( err_stat ) );
+  cons_trips( &timetable_symtbl->trips_regtbl );
+  if( err_stat.sem.route_redef ||
+      err_stat.sem.unknown_route ) {
+    r = err_result;
+  }
+  cons_jrasgn( &timetable_symtbl->jr_asgn_regtbl );
+  cons_journeys( &timetable_symtbl->journeys_regtbl );
+  cons_scheduled_cmds();
 #if 1
-      ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );      
-      printf( "\n" );
-      ttc_print_jrasgns( timetbl_dataset.jr_asgns.jrasgns, timetbl_dataset.jr_asgns.num_asgns );
-      printf( "\n" );
-      ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
+  printf( "\n" );
+  ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );      
+  printf( "\n" );
+  ttc_print_jrasgns( timetbl_dataset.jr_asgns.jrasgns, timetbl_dataset.jr_asgns.num_asgns );
+  printf( "\n" );
+  ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
 #endif
-      load_online_timetbl();
-      assert( FALSE );
-    }
-  }
+  load_online_timetbl();
+  
   return r;
 }
 

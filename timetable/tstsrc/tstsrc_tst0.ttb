@@ -18,5 +18,5 @@ journeys:
      [ (BTGD, PL1) ];  
     ( ((JLA,PL1), (KIKJ, PL1)) );
     ( ((KIKJ,PL1), (OKBS, PL1)) );
-
+[ (JLA, PL1) ];  
     ( ((OKBS,PL1), (BTGD, PL1)) );
