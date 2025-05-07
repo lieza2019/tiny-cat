@@ -6,8 +6,17 @@
 #include "../generic.h"
 #include "ttcreat.h"
 
+
 static DWELL_ID dwell_seq( STOPPING_POINT_CODE sp ) {
+  static DWELL_ID book[END_OF_SPs];
+  assert( sp < END_OF_SPs );
   DWELL_ID r = 0;
+  
+  assert( book[sp] > -1 );
+  if( book[sp] == 0 )
+    book[sp] = 1;
+  r = book[sp];
+  book[sp]++;
   return r;
 }
 

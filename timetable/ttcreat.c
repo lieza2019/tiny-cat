@@ -1,6 +1,6 @@
 /*
  * arrival SP-code on dead-end trip, in journey decl.
- * and, correct inplementation of dwell_id.
+ * handling the setting value for psc_dep->attr.sch_dept.depdir.
  */
 #include <stdio.h>
 #include <stdlib.h>
