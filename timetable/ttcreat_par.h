@@ -6,6 +6,7 @@ typedef enum par_kind {
   PAR_ST_PLTB_ORGDST,
   PAR_SP,
   PAR_SP_ASGN,
+  PAR_SP_ASGNS,
   PAR_SP_PAIR,
   PAR_ROUTE,
   PAR_ROUTES,
@@ -46,6 +47,7 @@ typedef struct attr_st_pltb {
 } ATTR_ST_PLTB, *ATTR_ST_PLTB_PTR;
 
 typedef struct attr_sp_asgn {
+  PAR_KIND kind;
   ATTR_ST_PLTB st_pltb;
   struct {
     PAR_KIND kind;
@@ -54,6 +56,11 @@ typedef struct attr_sp_asgn {
   } sp;
   SRC_POS pos;
 } ATTR_SP_ASGN, *ATTR_SP_ASGN_PTR;
+typedef struct attr_sp_asgns {
+  PAR_KIND kind;
+  int nasgns;
+  ATTR_SP_ASGN pltb_sp_asgns[MAX_SP_ASGNMENTS];
+} ATTR_SP_ASGNS, *ATTR_SP_ASGNS_PTR;
 
 typedef struct attr_sp_pair {
   PAR_KIND kind;
@@ -163,6 +170,7 @@ typedef struct attr_jr_asgns {
 } ATTR_JR_ASGNS, *ATTR_JR_ASGNS_PTR;
 
 typedef struct attr_timetable {
+  ATTR_SP_ASGNS sp_asgns;
   ATTR_TRIPS trips_regtbl;
   ATTR_JR_ASGNS jr_asgn_regtbl;
   ATTR_JOURNEYS journeys_regtbl;

@@ -143,7 +143,10 @@ static BOOL chk_time ( TINY_TIME_DESC_PTR ptime, const char *phour, const char *
   yylval.revenue = FALSE;
   return TK_REVENUE;
 }
-
+"sp_assignments" {
+  yylloc.first_column += strlen( yytext );
+  return TK_SP_ASGNS;
+}
 "trips" {
   yylloc.first_column += strlen( yytext );
   return TK_KEY_TRIPS;

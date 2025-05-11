@@ -268,28 +268,24 @@ void cons_scheduled_cmds ( void ) {
 	psc_org->jid = pjd->jid;
 	wid = dwell_seq( 0 );
 	assert( wid > -1 );
-	if( !pjt->deadend ) {
+	if( !pjt->deadend )
 	  pt = lkup_trip( &pjt->st_pltb_orgdst.org, &pjt->st_pltb_orgdst.dst );
-	  assert( pt );
-	}
 	if( pjt->sp_cond.stop_skip == DWELL ) {
 	  psc_org->cmd = ARS_SCHEDULED_ARRIVAL;
 	  psc_org->attr.sch_arriv.dw_seq = wid;
-	  if( pjt->deadend ) {
+	  if( pjt->deadend )
 	    psc_org->attr.sch_arriv.arr_sp = SP_NONSENS;
-	  } else {
-	    psc_org->attr.sch_arriv.arr_sp = pt->sp_orgdst.sp_org;
-	  }
+	  else
+	    psc_org->attr.sch_arriv.arr_sp = (pt ? pt->sp_orgdst.sp_org : SP_NONSENS);;
 	  psc_org->attr.sch_arriv.arr_time = pjt->time_arrdep.time_arr;
 	} else {
 	  assert( pjt->sp_cond.stop_skip == SKIP );  
 	  psc_org->cmd = ARS_SCHEDULED_SKIP;
 	  psc_org->attr.sch_skip.dw_seq = wid;
-	  if( pjt->deadend ) {
+	  if( pjt->deadend )
 	    psc_org->attr.sch_skip.pass_sp = SP_NONSENS;
-	  } else {
-	    psc_org->attr.sch_skip.pass_sp = pt->sp_orgdst.sp_org;
-	  }
+	  else
+	    psc_org->attr.sch_skip.pass_sp = (pt ? pt->sp_orgdst.sp_org : SP_NONSENS);
 	  assert( CMP_TINYTIME( pjt->time_arrdep.time_arr, pjt->time_arrdep.time_dep ) );
 	  psc_org->attr.sch_skip.pass_time = pjt->time_arrdep.time_arr;
 	  psc_org->attr.sch_skip.is_revenue = pjt->is_revenue;
@@ -301,8 +297,7 @@ void cons_scheduled_cmds ( void ) {
 	  assert( psc_org );
 	  assert( wid > -1 );
 	  SCHEDULED_COMMAND_PTR pcmds = NULL;
-	  if( !pjt->deadend ) {
-	    assert( pt );
+	  if( !pjt->deadend && pt) {
 	    pcmds = cons_rosetrel_cmds( pjd->jid, pjt, pt, psc_org, wid );
 	    assert( pcmds );	  
 	    pjt->pschcmds_trip.top = pcmds;

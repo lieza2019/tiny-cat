@@ -863,9 +863,9 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
     tm_arr.tm_sec = pjtrip_prev->time_arrdep.time_dep.second;    
     t_arr = mktime( &tm_arr );
     if( !pjtrip_prev->deadend ) {
-      assert( pjtrip_prev->ptrip_prof );
-      if( (pjtrip_prev->st_pltb_orgdst.dst.st == pjtrip->st_pltb_orgdst.org.st) && (pjtrip_prev->st_pltb_orgdst.dst.pltb == pjtrip->st_pltb_orgdst.org.pltb) )
-	t_arr += (time_t)(pjtrip_prev->ptrip_prof->running_time);
+      if( pjtrip_prev->ptrip_prof )
+	if( (pjtrip_prev->st_pltb_orgdst.dst.st == pjtrip->st_pltb_orgdst.org.st) && (pjtrip_prev->st_pltb_orgdst.dst.pltb == pjtrip->st_pltb_orgdst.org.pltb) )
+	  t_arr += (time_t)(pjtrip_prev->ptrip_prof->running_time);
     }
     arr_dep.t_arr0 = t_arr;
     assert( arr_dep.t_arr0 );

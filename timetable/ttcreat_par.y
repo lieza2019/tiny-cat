@@ -122,10 +122,35 @@ static void print_journey ( ATTR_JOURNEY_PTR pjourney ) {
   }
 }
 
-static void print_timetable_decl ( ATTR_TRIPS_PTR ptrips, ATTR_JR_ASGNS_PTR pjrasgns, ATTR_JOURNEYS_PTR pjourneys ) {
+static void print_spasgns ( ATTR_SP_ASGN_PTR pasgn ) {
+  assert( pasgn );
+  printf( "(" );
+  print_st_pltb( &pasgn->st_pltb );
+  printf( ", %s", pasgn->sp.sp_id );
+  printf( ")\n" );
+  ;
+}
+
+static void print_timetable_decl ( ATTR_SP_ASGNS_PTR pspasgns, ATTR_TRIPS_PTR ptrips, ATTR_JR_ASGNS_PTR pjrasgns, ATTR_JOURNEYS_PTR pjourneys ) {
+  assert( pspasgns );
   assert( ptrips );
   assert( pjrasgns );
   assert( pjourneys );
+
+  printf( "sp_asgnments:\n" );
+  {
+    const int nspc_indent = 2;
+    ATTR_SP_ASGN_PTR p = pspasgns->pltb_sp_asgns;
+    assert( p );
+    int i;
+    printf( "pspasgns->nasgns: %d\n", pspasgns->nasgns ); // *****
+    for( i = 0; i < pspasgns->nasgns; i++ ) {
+      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+      print_spasgns( &p[i] );
+      printf( "\n" );
+    }
+  }
+  printf( "\n" );
   
   printf( "trips:\n" );
   {
@@ -252,6 +277,7 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
   ATTR_ST_PLTB attr_st_pltb;
   char sp[MAX_SPNAME_LEN];
   ATTR_SP_ASGN attr_sp_asgn;
+  ATTR_SP_ASGNS attr_sp_asgns;
   ATTR_SP_PAIR attr_sp_pair;
   ATTR_ROUTE attr_route;
   ATTR_ROUTES attr_routes;  
@@ -278,7 +304,9 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
 %token <pltb_name> TK_PLTB_NAME
 %type <attr_st_pltb> st_and_pltb
 %token <sp> TK_SP
-%type <attr_sp_pair> stpl_sp_asgn
+%token TK_SP_ASGNS
+%type <attr_sp_asgn> stpl_sp_asgn
+%type <attr_sp_asgns> sp_asgns_decl
 %type <attr_sp_pair> sp_orgdst_pair
 %token <attr_route> TK_ROUTE
 %type <attr_route> route
@@ -307,9 +335,9 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
  /* %start journey_rake_asgnmnts_decl */
 %start timetable_decl
 %%
-timetable_decl : trips_decl journey_rake_asgnmnts_decl journeys_decl {
-#if 0 /* ***** for debugging. */
-  print_timetable_decl( $1, $2, $3 );
+timetable_decl : sp_asgns_decl trips_decl journey_rake_asgnmnts_decl journeys_decl {
+#if 1 /* ***** for debugging. */
+  print_timetable_decl( &$1, $2, $3, $4 );
 #endif
   $$ = timetable_symtbl;
  }
@@ -1204,13 +1232,28 @@ time : TK_TIME {
  }
 ;
 
+sp_asgns_decl : TK_SP_ASGNS ':' /* empty pltb_sp_asgnments */ {
+  $$.kind = PAR_SP_ASGNS;
+  $$.nasgns = 0;
+ }
+| sp_asgns_decl stpl_sp_asgn ';' {
+  assert( $1.kind == PAR_SP_ASGNS ); 
+  if( $2.kind == PAR_SP_ASGN ) {
+    print_spasgns( &$2 ); // *****
+    $$.pltb_sp_asgns[$1.nasgns] = $2;
+    $1.nasgns++;
+  } else
+    assert( $1.kind == PAR_UNKNOWN );
+  ;
+ }
+;
 /* ((JLA,PL1), SP_73);
  */
 stpl_sp_asgn : '(' st_and_pltb ',' TK_SP ')' {
   $$.kind = PAR_SP_ASGN;
   $$.st_pltb = $2;
   $$.sp.kind = PAR_SP;
-  strncpy( SS.sp.sp_id, $4, MAX_SPNAME_LEN );
+  strncpy( $$.sp.sp_id, $4, MAX_SPNAME_LEN );
   $$.sp.pos.row = @4.first_line;
   $$.sp.pos.col = @4.first_column;
   $$.pos = $$.st_pltb.st.pos;
