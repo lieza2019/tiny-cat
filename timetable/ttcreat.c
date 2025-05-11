@@ -658,6 +658,42 @@ TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst ) {
   return r;
 }
 
+static void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
+  assert( pspasgns );
+  assert( pjrasgns->kind == PAR_SP_ASGNS );
+  int cnt;
+  
+  int i;
+  int j;
+  for( cnt = 0, i = 0, j = 0; (i < MAX_SP_ASGNMENTS) && (cnt < pspasgns->nasgns); i++ ) {
+    assert( j < MAX_SP_ASGNMENTS );
+    ATTR_SP_ASGN_PTR pa = NULL;
+    pa = &pspasgns->pltb_sp_asgns[i];
+    assert( pa );
+    if( pa->kind == PAR_SP_ASGNS ) {
+      int k;
+      for( k = 0; k < j; k++ ) {
+	const char *st = cnv2str_st_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st );
+	assert( st );
+	if( strncmp( st, pa->st_pltb.st.name, MAX_STNAME_LEN ) ) {
+	  const char *pltb = cnv2str_pltb_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb );
+	  assert( pltb );
+	  int c = -1;
+	  c = strncmp( pltb, pa->st_pltb.pltb.id, MAX_PLTB_NAMELEN );
+	  assert( c == 0 );
+	}
+      }
+      timetbl_dataset.jr_asgns.jrasgns[j].jid = pa->journey_id.jid;
+      timetbl_dataset.jr_asgns.jrasgns[j].rake_id = pa->rake_id.rid;
+      j++;
+      cnt++;
+    } else
+      assert( pa->kind == PAR_UNKNOWN );
+  }
+  assert( (pjrasgns->nasgns == cnt) && (cnt == j) );
+  timetbl_dataset.jr_asgns.num_asgns = cnt;
+}
+
 static void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
   assert( pjrasgns );
   assert( pjrasgns->kind == PAR_JR_ASGNS );

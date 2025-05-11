@@ -148,6 +148,10 @@ typedef struct journey_desc {
 
 typedef struct timetable_dataset {
   struct {
+    int num_asgns;
+    SP_ASGN spasgns[MAX_SP_ASGNMENTS];    
+  } sp_asgns;
+  struct {
     TRIP_DESC trips[MAX_TRIPS_DECL];
     int num_trips;
   } trips_decl;
