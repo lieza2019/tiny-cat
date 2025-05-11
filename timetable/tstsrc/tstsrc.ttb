@@ -1,5 +1,5 @@
 sp_assignments:
-  ((JLA,PL1), SP_73);
+  ((JLA,PL1), SP_73)
 
 trips:
   (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), 30, {S803B_S831B});

@@ -37,6 +37,7 @@ typedef struct err_stat {
     BOOL err_trip_journey;
     BOOL err_routes;
     BOOL err_trips_decl;
+    BOOL err_sp_def;
     BOOL err_trip_def;
     BOOL err_journey_rake_asgnmnts_decl;
     BOOL err_jr_asgn;

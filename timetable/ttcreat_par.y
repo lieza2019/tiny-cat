@@ -88,6 +88,15 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL is_journey ) {
   printf( ")" );
 }
 
+static void print_spasgns ( ATTR_SP_ASGN_PTR pasgn ) {
+  assert( pasgn );
+  printf( "(" );
+  print_st_pltb( &pasgn->st_pltb );
+  printf( ", %s", pasgn->sp.sp_id );
+  printf( ")\n" );
+  ;
+}
+
 static void print_jrasgn ( ATTR_JR_ASGN_PTR pasgn ) {
   assert( pasgn );
   char buf[PRINT_STRBUF_MAXLEN + 1] = "";
@@ -105,7 +114,7 @@ static void print_jrasgn ( ATTR_JR_ASGN_PTR pasgn ) {
 
 static void print_journey ( ATTR_JOURNEY_PTR pjourney ) {
   assert( pjourney );
-  const int nspc_indent = 2;
+  //const int nspc_indent = 2;
   
   if( pjourney->journey_id.jid > 0 ) {
     assert( pjourney->kind == PAR_JOURNEY );
@@ -114,38 +123,34 @@ static void print_journey ( ATTR_JOURNEY_PTR pjourney ) {
     printf( "J%02d: \n", pjourney->journey_id.jid );
     for( i = 0; i < pjourney->trips.ntrips; i++ ) {
       assert( pjourney->trips.kind == PAR_TRIPS );
+#if 0 // *****
       {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
       {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+#else
+      TTC_DIAG_INDENT( 1 );
+      TTC_DIAG_INDENT( 1 );
+#endif
       print_trip( &pjourney->trips.trip_prof[i], TRUE );
       printf( "\n" );
     }
   }
 }
 
-static void print_spasgns ( ATTR_SP_ASGN_PTR pasgn ) {
-  assert( pasgn );
-  printf( "(" );
-  print_st_pltb( &pasgn->st_pltb );
-  printf( ", %s", pasgn->sp.sp_id );
-  printf( ")\n" );
-  ;
-}
-
 static void print_timetable_decl ( ATTR_SP_ASGNS_PTR pspasgns, ATTR_TRIPS_PTR ptrips, ATTR_JR_ASGNS_PTR pjrasgns, ATTR_JOURNEYS_PTR pjourneys ) {
-  assert( pspasgns );
-  assert( ptrips );
-  assert( pjrasgns );
-  assert( pjourneys );
-
+  //const int nspc_indent = 2;
+  
   printf( "sp_asgnments:\n" );
-  {
-    const int nspc_indent = 2;
+  if( pspasgns ) {    
     ATTR_SP_ASGN_PTR p = pspasgns->pltb_sp_asgns;
     assert( p );
     int i;
     printf( "pspasgns->nasgns: %d\n", pspasgns->nasgns ); // *****
     for( i = 0; i < pspasgns->nasgns; i++ ) {
+#if 0 // *****
       {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+#else
+      TTC_DIAG_INDENT( 1 );
+#endif
       print_spasgns( &p[i] );
       printf( "\n" );
     }
@@ -153,13 +158,16 @@ static void print_timetable_decl ( ATTR_SP_ASGNS_PTR pspasgns, ATTR_TRIPS_PTR pt
   printf( "\n" );
   
   printf( "trips:\n" );
-  {
-    const int nspc_indent = 2;
+  if( ptrips ) {
     ATTR_TRIP_PTR p = ptrips->trip_prof;
     assert( p );
     int i;
     for( i = 0; i < ptrips->ntrips; i++ ) {
+#if 0 // *****
       {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
+#else
+      TTC_DIAG_INDENT( 1 );
+#endif 
       print_trip( &p[i], FALSE );
       printf( "\n" );
     }
@@ -167,8 +175,7 @@ static void print_timetable_decl ( ATTR_SP_ASGNS_PTR pspasgns, ATTR_TRIPS_PTR pt
   printf( "\n" );
   
   printf( "assignments:\n" );
-  {
-    const int nspc_indent = 2;
+  if( pjrasgns ) {
     ATTR_JR_ASGN_PTR p = pjrasgns->jr_asgn;
     assert( p );      
     int i;
@@ -181,7 +188,7 @@ static void print_timetable_decl ( ATTR_SP_ASGNS_PTR pspasgns, ATTR_TRIPS_PTR pt
   printf( "\n" );
   
   printf( "journeys:\n" );
-  {
+  if( pjourneys ) {
     int cnt = 0;
     int i;
     for( i = 0; (i < MAX_JOURNEYS) && (cnt < pjourneys->njourneys); i++ ) {
@@ -277,10 +284,10 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
   ATTR_ST_PLTB attr_st_pltb;
   char sp[MAX_SPNAME_LEN];
   ATTR_SP_ASGN attr_sp_asgn;
-  ATTR_SP_ASGNS attr_sp_asgns;
+  ATTR_SP_ASGNS_PTR attr_sp_asgns;
   ATTR_SP_PAIR attr_sp_pair;
   ATTR_ROUTE attr_route;
-  ATTR_ROUTES attr_routes;  
+  ATTR_ROUTES attr_routes;
   ATTR_TRIP attr_trip;
   ATTR_TRIPS_PTR pattr_trips;
   JOURNEY_ID journey_id;
@@ -337,7 +344,7 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
 %%
 timetable_decl : sp_asgns_decl trips_decl journey_rake_asgnmnts_decl journeys_decl {
 #if 1 /* ***** for debugging. */
-  print_timetable_decl( &$1, $2, $3, $4 );
+  print_timetable_decl( $1, $2, $3, $4 );
 #endif
   $$ = timetable_symtbl;
  }
@@ -1232,24 +1239,33 @@ time : TK_TIME {
  }
 ;
 
-sp_asgns_decl : TK_SP_ASGNS ':' /* empty pltb_sp_asgnments */ {
-  $$.kind = PAR_SP_ASGNS;
-  $$.nasgns = 0;
- }
-| sp_asgns_decl stpl_sp_asgn ';' {
-  assert( $1.kind == PAR_SP_ASGNS ); 
-  if( $2.kind == PAR_SP_ASGN ) {
-    print_spasgns( &$2 ); // *****
-    $$.pltb_sp_asgns[$1.nasgns] = $2;
-    $1.nasgns++;
-  } else
-    assert( $1.kind == PAR_UNKNOWN );
-  ;
- }
-;
 /* ((JLA,PL1), SP_73);
  */
-stpl_sp_asgn : '(' st_and_pltb ',' TK_SP ')' {
+sp_asgns_decl : TK_SP_ASGNS ':' /* empty pltb_sp_asgnments */ {
+  timetable_symtbl->sp_asgns.kind = PAR_SP_ASGNS;
+  timetable_symtbl->sp_asgns.nasgns = 0;
+  $$ = &timetable_symtbl->sp_asgns;
+ }
+| sp_asgns_decl stpl_sp_asgn {
+  assert( $1->kind == PAR_SP_ASGNS ); 
+  if( $2.kind == PAR_SP_ASGN ) {
+    const int i = $1->nasgns;
+    $$->pltb_sp_asgns[i] = $2;
+    $$->nasgns++;
+  } else
+    assert( $2.kind == PAR_UNKNOWN );
+  ;
+ }
+              | error {
+  if( !err_stat.par.err_sp_def ) {
+    printf( "FATAL: syntax-error, no stopping-point definition section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_stat.par.err_sp_def = TRUE;
+  }
+  $$ = NULL;
+ }
+;
+
+stpl_sp_asgn : '(' st_and_pltb ',' TK_SP ')' ';' {
   $$.kind = PAR_SP_ASGN;
   $$.st_pltb = $2;
   $$.sp.kind = PAR_SP;
@@ -1257,6 +1273,34 @@ stpl_sp_asgn : '(' st_and_pltb ',' TK_SP ')' {
   $$.sp.pos.row = @4.first_line;
   $$.sp.pos.col = @4.first_column;
   $$.pos = $$.st_pltb.st.pos;
+ }
+             | '(' error {
+  if( !err_stat.par.err_sp_def ) {
+    printf( "FATAL: syntax-error, ill-formed st/pl & stopping-point declaration found in sp definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
+    err_stat.par.err_sp_def = TRUE;
+  }
+  $$.kind = PAR_UNKNOWN;
+ }
+             | '(' st_and_pltb ',' error {
+  if( !err_stat.par.err_sp_def ) {
+    printf( "FATAL: syntax-error, ill-formed stopping-point specifier found in sp definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_stat.par.err_sp_def = TRUE;
+  }
+  $$.kind = PAR_UNKNOWN;
+ }
+             | '(' st_and_pltb ',' TK_SP error {
+  if( !err_stat.par.err_sp_def ) {
+    printf( "FATAL: syntax-error, ill-formed stopping-point specifier found in sp definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
+    err_stat.par.err_sp_def = TRUE;
+  }
+  $$.kind = PAR_UNKNOWN;
+ }
+             | '(' st_and_pltb ',' TK_SP ')' error {
+  if( !err_stat.par.err_sp_def ) {
+    printf( "FATAL: syntax-error, missing semicolon in end of sp definition at (LINE, COL) = (%d, %d).\n", @5.first_line, @5.first_column );
+    err_stat.par.err_sp_def = TRUE;
+  }
+  $$.kind = PAR_UNKNOWN;
  }
 ;
 
@@ -1378,7 +1422,7 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' TK_NAT '
  }
          | '(' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed st. & pl/tb specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
+    printf( "FATAL: syntax-error, ill-formed st. & pl/tb specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
