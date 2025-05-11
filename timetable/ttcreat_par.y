@@ -93,7 +93,7 @@ static void print_spasgns ( ATTR_SP_ASGN_PTR pasgn ) {
   printf( "(" );
   print_st_pltb( &pasgn->st_pltb );
   printf( ", %s", pasgn->sp.sp_id );
-  printf( ")\n" );
+  printf( ")" );
   ;
 }
 
@@ -114,7 +114,6 @@ static void print_jrasgn ( ATTR_JR_ASGN_PTR pasgn ) {
 
 static void print_journey ( ATTR_JOURNEY_PTR pjourney ) {
   assert( pjourney );
-  //const int nspc_indent = 2;
   
   if( pjourney->journey_id.jid > 0 ) {
     assert( pjourney->kind == PAR_JOURNEY );
@@ -123,13 +122,8 @@ static void print_journey ( ATTR_JOURNEY_PTR pjourney ) {
     printf( "J%02d: \n", pjourney->journey_id.jid );
     for( i = 0; i < pjourney->trips.ntrips; i++ ) {
       assert( pjourney->trips.kind == PAR_TRIPS );
-#if 0 // *****
-      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-#else
       TTC_DIAG_INDENT( 1 );
       TTC_DIAG_INDENT( 1 );
-#endif
       print_trip( &pjourney->trips.trip_prof[i], TRUE );
       printf( "\n" );
     }
@@ -137,20 +131,13 @@ static void print_journey ( ATTR_JOURNEY_PTR pjourney ) {
 }
 
 static void print_timetable_decl ( ATTR_SP_ASGNS_PTR pspasgns, ATTR_TRIPS_PTR ptrips, ATTR_JR_ASGNS_PTR pjrasgns, ATTR_JOURNEYS_PTR pjourneys ) {
-  //const int nspc_indent = 2;
-  
   printf( "sp_asgnments:\n" );
   if( pspasgns ) {    
     ATTR_SP_ASGN_PTR p = pspasgns->pltb_sp_asgns;
     assert( p );
     int i;
-    printf( "pspasgns->nasgns: %d\n", pspasgns->nasgns ); // *****
     for( i = 0; i < pspasgns->nasgns; i++ ) {
-#if 0 // *****
-      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-#else
       TTC_DIAG_INDENT( 1 );
-#endif
       print_spasgns( &p[i] );
       printf( "\n" );
     }
@@ -163,11 +150,7 @@ static void print_timetable_decl ( ATTR_SP_ASGNS_PTR pspasgns, ATTR_TRIPS_PTR pt
     assert( p );
     int i;
     for( i = 0; i < ptrips->ntrips; i++ ) {
-#if 0 // *****
-      {int b; for(b = 0; b < nspc_indent; b++ ) printf(" ");}
-#else
       TTC_DIAG_INDENT( 1 );
-#endif 
       print_trip( &p[i], FALSE );
       printf( "\n" );
     }

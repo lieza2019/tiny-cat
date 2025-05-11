@@ -276,7 +276,7 @@ void cons_scheduled_cmds ( void ) {
 	  if( pjt->deadend )
 	    psc_org->attr.sch_arriv.arr_sp = SP_NONSENS;
 	  else
-	    psc_org->attr.sch_arriv.arr_sp = (pt ? pt->sp_orgdst.sp_org : SP_NONSENS);;
+	    psc_org->attr.sch_arriv.arr_sp = (pt ? pt->sp_orgdst.sp_org : SP_NONSENS);
 	  psc_org->attr.sch_arriv.arr_time = pjt->time_arrdep.time_arr;
 	} else {
 	  assert( pjt->sp_cond.stop_skip == SKIP );  

@@ -960,13 +960,12 @@ static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 			pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
 		err_stat.sem.unknown_trip = TRUE;
 	      }
-	      if( pJ_prev ) {
+	      if( pJ_prev )
 		if( !((pJ_prev->st_pltb_orgdst.dst.st == pJ->st_pltb_orgdst.org.st) && (pJ_prev->st_pltb_orgdst.dst.pltb == pJ->st_pltb_orgdst.org.pltb)) ) {
 		  printf( "FATAL: contiguous lost in journey trips, at (LINE, COL) = (%d, %d).\n",
 			  pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
 		  err_stat.sem.contiguless_trips = TRUE;
 		}
-	      }
 	      pJ->sp_cond.stop_skip = pJ_par->trips.trip_prof[l].sp_cond.stop_skip;
 	      pJ->sp_cond.dwell_time = pJ_par->trips.trip_prof[l].sp_cond.dwell_time;  // settings for pJ->dwell_time;
 	      assert( pJ->sp_cond.stop_skip == SKIP ? (pJ->sp_cond.dwell_time == 0) : ((pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time > 0)) );
