@@ -78,6 +78,12 @@ typedef struct st_pltb_pair  {
   ST_ID st;
   PLTB_ID pltb;
 } ST_PLTB_PAIR, *ST_PLTB_PAIR_PTR;
+
+typedef struct sp_asgn {
+  ST_PLTB_PAIR st_pltb;
+  STOPPING_POINT_CODE sp;
+} SP_ASGN, *SP_ASGN_PTR;
+
 typedef struct st_pltb_orgdst {
   ST_PLTB_PAIR org;
   ST_PLTB_PAIR dst;

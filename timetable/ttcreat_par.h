@@ -5,6 +5,7 @@ typedef enum par_kind {
   PAR_ST_PLTB,
   PAR_ST_PLTB_ORGDST,
   PAR_SP,
+  PAR_SP_ASGN,
   PAR_SP_PAIR,
   PAR_ROUTE,
   PAR_ROUTES,
@@ -32,6 +33,28 @@ typedef struct {
   SRC_POS pos;
 } ATTR_TIME, *ATTR_TIME_PTR;
 
+typedef struct attr_st_pltb {
+  PAR_KIND kind;
+  struct {
+    char name[MAX_STNAME_LEN];
+    SRC_POS pos;
+  } st;
+  struct {
+    char id[MAX_PLTB_NAMELEN];
+    SRC_POS pos;
+  } pltb;
+} ATTR_ST_PLTB, *ATTR_ST_PLTB_PTR;
+
+typedef struct attr_sp_asgn {
+  ATTR_ST_PLTB st_pltb;
+  struct {
+    PAR_KIND kind;
+    char sp_id[MAX_SPNAME_LEN];
+    SRC_POS pos;
+  } sp;
+  SRC_POS pos;
+} ATTR_SP_ASGN, *ATTR_SP_ASGN_PTR;
+
 typedef struct attr_sp_pair {
   PAR_KIND kind;
   struct {
@@ -44,17 +67,6 @@ typedef struct attr_sp_pair {
   } dst;
 } ATTR_SP_PAIR, *ATTR_SP_PAIR_PTR;
 
-typedef struct attr_st_pltb {
-  PAR_KIND kind;
-  struct {
-    char name[MAX_STNAME_LEN];
-    SRC_POS pos;
-  } st;
-  struct {
-    char id[MAX_PLTB_NAMELEN];
-    SRC_POS pos;
-  } pltb;
-} ATTR_ST_PLTB, *ATTR_ST_PLTB_PTR;
 typedef struct attr_st_pltb_pair {
   PAR_KIND kind;
   ATTR_ST_PLTB st_pltb_org;

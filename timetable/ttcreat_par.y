@@ -251,6 +251,7 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
   char pltb_name[MAX_PLTB_NAMELEN];
   ATTR_ST_PLTB attr_st_pltb;
   char sp[MAX_SPNAME_LEN];
+  ATTR_SP_ASGN attr_sp_asgn;
   ATTR_SP_PAIR attr_sp_pair;
   ATTR_ROUTE attr_route;
   ATTR_ROUTES attr_routes;  
@@ -277,6 +278,7 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
 %token <pltb_name> TK_PLTB_NAME
 %type <attr_st_pltb> st_and_pltb
 %token <sp> TK_SP
+%type <attr_sp_pair> stpl_sp_asgn
 %type <attr_sp_pair> sp_orgdst_pair
 %token <attr_route> TK_ROUTE
 %type <attr_route> route
@@ -1199,6 +1201,19 @@ time : TK_TIME {
     err_stat.par.err_trip_journey = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
+ }
+;
+
+/* ((JLA,PL1), SP_73);
+ */
+stpl_sp_asgn : '(' st_and_pltb ',' TK_SP ')' {
+  $$.kind = PAR_SP_ASGN;
+  $$.st_pltb = $2;
+  $$.sp.kind = PAR_SP;
+  strncpy( SS.sp.sp_id, $4, MAX_SPNAME_LEN );
+  $$.sp.pos.row = @4.first_line;
+  $$.sp.pos.col = @4.first_column;
+  $$.pos = $$.st_pltb.st.pos;
  }
 ;
 
