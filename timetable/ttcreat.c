@@ -660,7 +660,7 @@ TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst ) {
 
 static void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
   assert( pspasgns );
-  assert( pjrasgns->kind == PAR_SP_ASGNS );
+  assert( pspasgns->kind == PAR_SP_ASGNS );
   int cnt;
   
   int i;
@@ -683,15 +683,15 @@ static void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
 	  assert( c == 0 );
 	}
       }
-      timetbl_dataset.jr_asgns.jrasgns[j].jid = pa->journey_id.jid;
-      timetbl_dataset.jr_asgns.jrasgns[j].rake_id = pa->rake_id.rid;
+      timetbl_dataset.sp_asgns.spasgns[j].st_pltb.st = str2_st_id ( pa->st_pltb.st.name );
+      timetbl_dataset.sp_asgns.spasgns[j].st_pltb.pltb = str2_pltb_id( pa->st_pltb.pltb.id );
       j++;
       cnt++;
     } else
       assert( pa->kind == PAR_UNKNOWN );
   }
-  assert( (pjrasgns->nasgns == cnt) && (cnt == j) );
-  timetbl_dataset.jr_asgns.num_asgns = cnt;
+  assert( (pspasgns->nasgns == cnt) && (cnt == j) );
+  timetbl_dataset.sp_asgns.num_asgns = cnt;
 }
 
 static void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
