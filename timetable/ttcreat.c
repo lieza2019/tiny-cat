@@ -673,10 +673,10 @@ static void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
     if( pa->kind == PAR_SP_ASGNS ) {
       int k;
       for( k = 0; k < j; k++ ) {
-	const char *st = cnv2str_st_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st );
+	const char *st = cnv2str_st_id[timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st];
 	assert( st );
 	if( strncmp( st, pa->st_pltb.st.name, MAX_STNAME_LEN ) ) {
-	  const char *pltb = cnv2str_pltb_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb );
+	  const char *pltb = cnv2str_pltb_id[timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb];
 	  assert( pltb );
 	  int c = -1;
 	  c = strncmp( pltb, pa->st_pltb.pltb.id, MAX_PLTB_NAMELEN );
