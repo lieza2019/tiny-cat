@@ -1,6 +1,6 @@
 #include "ttcreat.h"
 
-const char *cnv2str_pltb_id[] = {
+const char *pltb_2_id[] = {
   "", // see below line.
   "PL1", // PL1 = 1
   "PL2",
@@ -11,6 +11,17 @@ const char *cnv2str_pltb_id[] = {
   "TB4",
   NULL
 };
+const char *cnv2str_pltb_id ( PLTB_ID pltb_id ) {
+  assert( (int)pltb_id > -1 );
+  int i;
+  
+  for( i = 0; i <= (int)pltb_id; i++ ) {
+    if( !pltb_2_id[i] )
+      return NULL;
+  }
+  return pltb_2_id[pltb_id];
+}
+
 PLTB_ID str2_pltb_id ( const char *pltb_str ) {
   assert( pltb_str );
   PLTB_ID r = END_OF_PLTB_ID;
@@ -36,7 +47,7 @@ PLTB_ID str2_pltb_id ( const char *pltb_str ) {
   return r;
 }
 
-const char *cnv2str_st_id[] = {
+const char *_cnv2str_st_id[] = {
   "", // see below line.
   "JLA", // JLA = 1
   "KIKJ",
@@ -44,6 +55,16 @@ const char *cnv2str_st_id[] = {
   "BTGD",
   NULL
 };
+const char *cnv2str_st_id ( ST_ID st_id ) {
+  assert( (int)st_id > -1 );
+  int i;
+  
+  for( i = 0; i <= (int)pltb_id; i++ ) {
+    if( !pltb_2_id[i] )
+      return NULL;
+  }
+  return pltb_2_id[pltb_id];
+}
 ST_ID str2_st_id ( const char *st_str ) {
   assert( st_str );
   ST_ID r = END_OF_ST_ID;

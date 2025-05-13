@@ -8,7 +8,7 @@ typedef enum {
   TB4,
   END_OF_PLTB_ID
 } PLTB_ID;
-extern const char *cnv2str_pltb_id[];
+extern const char *cnv2str_pltb_id ( PLTB_ID pltb_id );
 extern PLTB_ID str2_pltb_id ( const char *pltb_str );
 
 typedef enum {
