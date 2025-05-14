@@ -26,7 +26,7 @@ static void print_ARS_SCHEDULED_ARRIVAL ( SCHEDULED_COMMAND_PTR pcmd ) {
   printf( "%s", "ARS_SCHEDULED_ARRIVAL, " );
   printf( "dwell_id: %d, ", pcmd->attr.sch_arriv.dw_seq ); // for DWELL_ID dw_seq;
   {
-    const char *str = cnv2str_sp_code[pcmd->attr.sch_arriv.arr_sp];
+    const char *str = cnv2str_sp_code( pcmd->attr.sch_arriv.arr_sp );
     printf( "arr_sp: %s, ", (str ? str : "unknown") ); // for STOPPING_POINT_CODE arr_sp;
   }
   printf( "arr_time: " );
@@ -58,7 +58,7 @@ static void print_ARS_SCHEDULED_DEPT ( SCHEDULED_COMMAND_PTR pcmd ) {
   printf( "dwell_id: %d, ", pcmd->attr.sch_dept.dw_seq ); // for DWELL_ID dw_seq;
   printf( "dwell: %d, ", pcmd->attr.sch_dept.dwell ); // for TIME_DIFF dwell;
   {
-    const char *str = cnv2str_sp_code[pcmd->attr.sch_dept.dep_sp];
+    const char *str = cnv2str_sp_code( pcmd->attr.sch_dept.dep_sp );
     printf( "dep_sp: %s, ", (str ? str : "unknown") ); // for STOPPING_POINT_CODE dep_sp;
   }
   printf( "dep_time: " );
@@ -90,7 +90,7 @@ static void print_ARS_SCHEDULED_SKIP ( SCHEDULED_COMMAND_PTR pcmd ) {
   printf( "%s", "ARS_SCHEDULED_SKIP, " );
   printf( "dwell_id: %d, ", pcmd->attr.sch_skip.dw_seq ); // for DWELL_ID dw_seq;
   {
-    const char *str = cnv2str_sp_code[pcmd->attr.sch_skip.pass_sp];   
+    const char *str = cnv2str_sp_code( pcmd->attr.sch_skip.pass_sp );
     printf( "pass_sp: %s, ", (str ? str : "unknown") ); // for STOPPING_POINT_CODE pass_sp;
   }
   printf( "pass_time: " );

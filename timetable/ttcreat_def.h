@@ -18,8 +18,8 @@ typedef enum {
   BTGD,
   END_OF_ST_ID
 } ST_ID;
-extern const char *cnv2str_st_id[];
+const char *cnv2str_st_id ( ST_ID st_id );
 extern ST_ID str2_st_id ( const char *st_str );
 
-extern const char *cnv2str_sp_code[];
+const char *cnv2str_sp_code ( STOPPING_POINT_CODE sp_code );
 extern STOPPING_POINT_CODE str2_sp_code ( const char *sp_str );

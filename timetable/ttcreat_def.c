@@ -1,6 +1,23 @@
 #include "ttcreat.h"
 
-const char *pltb_2_id[] = {
+const char *cnv2str_lkup ( const char *id2str_tbl[], int id ) {
+  assert( id2str_tbl );
+  assert( id > -1 );
+  const char *r = NULL;
+  
+  int i = 0;
+  while( id2str_tbl[i] ) {
+    assert( id2str_tbl[i] );
+    if( i == id ) {
+      r = id2str_tbl[id];
+      break;
+    }
+    i++;
+  }
+  return r;
+}
+
+static const char *pltb_2_str[] = {
   "", // see below line.
   "PL1", // PL1 = 1
   "PL2",
@@ -12,14 +29,7 @@ const char *pltb_2_id[] = {
   NULL
 };
 const char *cnv2str_pltb_id ( PLTB_ID pltb_id ) {
-  assert( (int)pltb_id > -1 );
-  int i;
-  
-  for( i = 0; i <= (int)pltb_id; i++ ) {
-    if( !pltb_2_id[i] )
-      return NULL;
-  }
-  return pltb_2_id[pltb_id];
+  return cnv2str_lkup( pltb_2_str, pltb_id );
 }
 
 PLTB_ID str2_pltb_id ( const char *pltb_str ) {
@@ -47,7 +57,7 @@ PLTB_ID str2_pltb_id ( const char *pltb_str ) {
   return r;
 }
 
-const char *_cnv2str_st_id[] = {
+static const char *stid_2_str[] = {
   "", // see below line.
   "JLA", // JLA = 1
   "KIKJ",
@@ -56,15 +66,9 @@ const char *_cnv2str_st_id[] = {
   NULL
 };
 const char *cnv2str_st_id ( ST_ID st_id ) {
-  assert( (int)st_id > -1 );
-  int i;
-  
-  for( i = 0; i <= (int)pltb_id; i++ ) {
-    if( !pltb_2_id[i] )
-      return NULL;
-  }
-  return pltb_2_id[pltb_id];
+  return cnv2str_lkup( stid_2_str, st_id );
 }
+
 ST_ID str2_st_id ( const char *st_str ) {
   assert( st_str );
   ST_ID r = END_OF_ST_ID;
@@ -84,7 +88,7 @@ ST_ID str2_st_id ( const char *st_str ) {
   return r;
 }
 
-const char *cnv2str_sp_code[] = {
+static const char *spcode_2_str[] = {
   "SP_NONSENS",
   "SP_73", // JLA_PL1
   "SP_74", // JLA_PL2
@@ -101,6 +105,10 @@ const char *cnv2str_sp_code[] = {
   "SP_D0", // BTGD_TB2
   NULL
 };
+const char *cnv2str_sp_code ( STOPPING_POINT_CODE sp_code ) {
+  return cnv2str_lkup( spcode_2_str, sp_code );
+}
+
 STOPPING_POINT_CODE str2_sp_code ( const char *sp_str ) {
   assert( sp_str );
   STOPPING_POINT_CODE r = END_OF_SPs;

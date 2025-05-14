@@ -318,8 +318,8 @@ static void print_dwell ( ARS_SP_COND spcond, TIME_DIFF dwell ) {
 
 static void print_sp_pair ( SP_ORGDST_PAIR_PTR psps ) {
   assert( psps );
-  const char *sp_o = cnv2str_sp_code[psps->sp_org];
-  const char *sp_d = cnv2str_sp_code[psps->sp_dst];
+  const char *sp_o = cnv2str_sp_code( psps->sp_org );
+  const char *sp_d = cnv2str_sp_code( psps->sp_dst );
   printf( "(%s, %s)", (sp_o ? sp_o : "unknown"), (sp_d ? sp_d : "unknown") );
   
 }
@@ -329,7 +329,7 @@ static void print_st_pltb ( ST_PLTB_PAIR_PTR pst_pltb ) {
   
   char st_pltb_strbuf[(MAX_STNAME_LEN + 1 + MAX_PLTB_NAMELEN) + 1] = "";
   {
-    const char *str = cnv2str_st_id[pst_pltb->st];
+    const char *str = cnv2str_st_id( pst_pltb->st );
     strncat( st_pltb_strbuf, (str ? str : "unknown"), MAX_STNAME_LEN );
   }
   
@@ -673,7 +673,7 @@ static void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
     if( pa->kind == PAR_SP_ASGNS ) {
       int k;
       for( k = 0; k < j; k++ ) {
-	const char *st = cnv2str_st_id[timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st];
+	const char *st = cnv2str_st_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st );
 	assert( st );
 	if( strncmp( st, pa->st_pltb.st.name, MAX_STNAME_LEN ) ) {
 	  const char *pltb = cnv2str_pltb_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb );
