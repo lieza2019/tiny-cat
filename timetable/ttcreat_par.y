@@ -503,7 +503,7 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
   }
  }
 ;
-| '[' st_and_pltb ',' time ']' {
+             | '[' st_and_pltb ',' time ']' {
   raw_journey_trip( &$$ );
   if( ($2.kind == PAR_ST_PLTB) && ($4.kind == PAR_TIME_SPEC) ) {
     $$.deadend = TRUE;
