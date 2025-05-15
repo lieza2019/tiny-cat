@@ -14,6 +14,7 @@ const char *cnv2str_lkup ( const char *id2str_tbl[], int id ) {
     }
     i++;
   }
+  assert( id <= i );
   return r;
 }
 

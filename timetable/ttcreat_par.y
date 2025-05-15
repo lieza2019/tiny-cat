@@ -523,7 +523,7 @@ trip_journey : '(' '('st_and_pltb ',' st_and_pltb')' ')' { /* omitted all elemen
     $$.kind = PAR_UNKNOWN;
   }
  }
-| '[' st_and_pltb time ']' {
+             | '[' st_and_pltb time ']' {
   if( !err_stat.par.err_trip_journey ) {
     printf( "FATAL: syntax-error, missing delimiter in terminal platform/turnback section and its arrival time, in journey definition at (LINE, COL) = (%d, %d).\n", @3.first_line, @3.first_column );
     err_stat.par.err_trip_journey = TRUE;
