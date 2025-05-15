@@ -513,7 +513,7 @@ static int cons_st_pltb_pair ( ST_PLTB_ORGDST_PTR st_pltb_ref[], const int reftb
       if( ovrid && ovwt ) {
 	assert( r < refs_lim );
 	assert( (int)(st_pltb_ref[r]->org.st) > 0 );
-	printf( "NOTICE: trip definition overridden at (LINE, COL) = (%d, %d).\n", pattr_orgdst->st_pltb_org.st.pos.row, pattr_orgdst->st_pltb_org.st.pos.col );	
+	printf( "NOTICE: trip definition overridden at (LINE, COL) = (%d, %d).\n", pattr_orgdst->st_pltb_org.st.pos.row, pattr_orgdst->st_pltb_org.st.pos.col );
       } else {
 	assert( r == refs_lim );
 	assert( (int)(st_pltb_ref[r]->org.st) == 0 );
@@ -664,33 +664,38 @@ static void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
   int cnt;
   
   int i;
-  int j;
-  for( cnt = 0, i = 0, j = 0; (i < MAX_SP_ASGNMENTS) && (cnt < pspasgns->nasgns); i++ ) {
-    assert( j < MAX_SP_ASGNMENTS );
+  for( cnt = 0, i = 0; (i < MAX_SP_ASGNMENTS) && (cnt < pspasgns->nasgns); i++ ) {
+    assert( cnt < MAX_SP_ASGNMENTS );
     ATTR_SP_ASGN_PTR pa = NULL;
     pa = &pspasgns->pltb_sp_asgns[i];
     assert( pa );
     if( pa->kind == PAR_SP_ASGNS ) {
       int k;
-      for( k = 0; k < j; k++ ) {
+      for( k = 0; k < cnt; k++ ) {
 	const char *st = cnv2str_st_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st );
 	assert( st );
-	if( strncmp( st, pa->st_pltb.st.name, MAX_STNAME_LEN ) ) {
+	if( ! strncmp( st, pa->st_pltb.st.name, MAX_STNAME_LEN ) ) {
 	  const char *pltb = cnv2str_pltb_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb );
 	  assert( pltb );
+#if 1
 	  int c = -1;
 	  c = strncmp( pltb, pa->st_pltb.pltb.id, MAX_PLTB_NAMELEN );
 	  assert( c == 0 );
+#else
+	  if( ! strncmp( pltb, pa->st_pltb.pltb.id, MAX_PLTB_NAMELEN ) ) {
+	    printf( "NOTICE: trip definition overridden at (LINE, COL) = (%d, %d).\n", pattr_orgdst->st_pltb_org.st.pos.row, pattr_orgdst->st_pltb_org.st.pos.col );
+	    break;
+	  }
+#endif
 	}
       }
-      timetbl_dataset.sp_asgns.spasgns[j].st_pltb.st = str2_st_id ( pa->st_pltb.st.name );
-      timetbl_dataset.sp_asgns.spasgns[j].st_pltb.pltb = str2_pltb_id( pa->st_pltb.pltb.id );
-      j++;
+      timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st = str2_st_id ( pa->st_pltb.st.name );
+      timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb = str2_pltb_id( pa->st_pltb.pltb.id );
       cnt++;
     } else
       assert( pa->kind == PAR_UNKNOWN );
   }
-  assert( (pspasgns->nasgns == cnt) && (cnt == j) );
+  assert( pspasgns->nasgns == cnt );
   timetbl_dataset.sp_asgns.num_asgns = cnt;
 }
 
