@@ -1,5 +1,8 @@
 sp_assignments:
   ((JLA,PL1), SP_73);
+  ((KIKJ, PL1), SP_77);
+((JLA,PL1), SP_D5);
+  ((BTGD, PL1), SP_81);
 
 trips:
   (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), 30, {S803B_S831B});
@@ -12,8 +15,8 @@ trips:
   (((KIKJ,PL2), (JLA, PL1)), (SP_76, SP_73), 55, {S832B_S802B, S802B_S810B});
 
 assignments:
-  rake_801 := J1; rake_802 := J2; rake_803 := J3; rake_804 := J4;
-  rake_811 := J11; rake_812 := J12; rake_813 := J13; rake_814 := J14;
+  J1 := rake_801; J2 := rake_802; J3 := rake_803; J4 := rake_804;
+  J1 := rake_811; J12 := rake_812; J13 := rake_813; J14 := rake_814;
 
 journeys:
   J01:

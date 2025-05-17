@@ -1,6 +1,8 @@
 /*
  * arrival SP-code on dead-end trip, in journey decl.
  * handling the setting value for psc_dep->attr.sch_dept.depdir.
+ * redundant variable j has no meanings in the iteration in cons_jrasgn.
+ * semantic error of re-definitions in jr asgnments, shall be moved from parser phase toward semantic analysis in jr_asgn.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -376,10 +378,27 @@ static void print_arrdep_time ( TIME_ARRDEP_PTR parrdep_time ) {
   printf( ")" );
 }
 
+void ttc_print_spasgns ( SP_ASGN spasgns[], int spasngs ) {
+  assert( spasgns );
+  int i;
+  printf( "spasgns:\n" );
+  for( i = 0; i < spasngs; i++ ) {
+    TTC_DIAG_INDENT(1);
+    printf( "(" );
+    print_st_pltb( &spasgns[i].st_pltb );
+    {
+      const char *sp = cnv2str_sp_code( spasgns[i].sp );
+      assert( sp );
+      printf( ", %s", sp );
+    }
+    printf( ")\n" );
+  }
+}
+
 void ttc_print_jrasgns ( JOURNEY_RAKE_ASGN rjasgns[], int nasgns ) {
   assert( rjasgns );
   int i;
-  printf( "trips:\n" );
+  printf( "jrasgns:\n" );
   for( i = 0; i < nasgns; i++ ) {
     TTC_DIAG_INDENT(1);
     printf( "(J%03d, ", rjasgns[i].jid );
@@ -669,7 +688,8 @@ static void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
     ATTR_SP_ASGN_PTR pa = NULL;
     pa = &pspasgns->pltb_sp_asgns[i];
     assert( pa );
-    if( pa->kind == PAR_SP_ASGNS ) {
+    assert( pa->sp.sp_id );
+    if( pa->kind == PAR_SP_ASGN ) {
       int k;
       for( k = 0; k < cnt; k++ ) {
 	const char *st = cnv2str_st_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st );
@@ -677,25 +697,20 @@ static void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
 	if( ! strncmp( st, pa->st_pltb.st.name, MAX_STNAME_LEN ) ) {
 	  const char *pltb = cnv2str_pltb_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb );
 	  assert( pltb );
-#if 1
-	  int c = -1;
-	  c = strncmp( pltb, pa->st_pltb.pltb.id, MAX_PLTB_NAMELEN );
-	  assert( c == 0 );
-#else
 	  if( ! strncmp( pltb, pa->st_pltb.pltb.id, MAX_PLTB_NAMELEN ) ) {
-	    printf( "NOTICE: trip definition overridden at (LINE, COL) = (%d, %d).\n", pattr_orgdst->st_pltb_org.st.pos.row, pattr_orgdst->st_pltb_org.st.pos.col );
+	    printf( "NOTICE: sp definition overridden at (LINE, COL) = (%d, %d).\n", pa->pos.row, pa->pos.col );
 	    break;
 	  }
-#endif
 	}
       }
       timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st = str2_st_id ( pa->st_pltb.st.name );
       timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb = str2_pltb_id( pa->st_pltb.pltb.id );
-      cnt++;
+      timetbl_dataset.sp_asgns.spasgns[k].sp = str2_sp_code( pa->sp.sp_id );
+      if( k >= cnt )
+	cnt++;
     } else
       assert( pa->kind == PAR_UNKNOWN );
   }
-  assert( pspasgns->nasgns == cnt );
   timetbl_dataset.sp_asgns.num_asgns = cnt;
 }
 
@@ -1051,8 +1066,9 @@ int ttcreat ( void ) {
       r = err_result;
     }
   }
-
+  
   assert( !TTC_ERRSTAT_SEM( err_stat ) );
+  cons_spasgn( &timetable_symtbl->sp_asgns );
   cons_trips( &timetable_symtbl->trips_regtbl );
   if( err_stat.sem.route_redef ||
       err_stat.sem.unknown_route ) {
@@ -1061,14 +1077,16 @@ int ttcreat ( void ) {
   cons_jrasgn( &timetable_symtbl->jr_asgn_regtbl );
   cons_journeys( &timetable_symtbl->journeys_regtbl );
   cons_scheduled_cmds();
-#if 1
+  
   printf( "\n" );
-  ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );      
+  ttc_print_spasgns( timetbl_dataset.sp_asgns.spasgns, timetbl_dataset.sp_asgns.num_asgns );
+  printf( "\n" );
+  ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );
   printf( "\n" );
   ttc_print_jrasgns( timetbl_dataset.jr_asgns.jrasgns, timetbl_dataset.jr_asgns.num_asgns );
   printf( "\n" );
   ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
-#endif
+  
   load_online_timetbl();
   
   return r;

@@ -1229,7 +1229,7 @@ sp_asgns_decl : TK_SP_ASGNS ':' /* empty pltb_sp_asgnments */ {
   timetable_symtbl->sp_asgns.nasgns = 0;
   $$ = &timetable_symtbl->sp_asgns;
  }
-| sp_asgns_decl stpl_sp_asgn {
+              | sp_asgns_decl stpl_sp_asgn {
   assert( $1->kind == PAR_SP_ASGNS ); 
   if( $2.kind == PAR_SP_ASGN ) {
     const int i = $1->nasgns;
@@ -1237,7 +1237,7 @@ sp_asgns_decl : TK_SP_ASGNS ':' /* empty pltb_sp_asgnments */ {
     $$->nasgns++;
   } else
     assert( $2.kind == PAR_UNKNOWN );
-  ;
+  $$ = $1;
  }
               | error {
   if( !err_stat.par.err_sp_def ) {
