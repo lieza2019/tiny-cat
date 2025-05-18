@@ -179,5 +179,7 @@ extern int load_online_timetbl ( void );
 extern void ttc_print_schcmds ( SCHEDULED_COMMAND_PTR pschcmds, const int nindents );
 extern void cons_scheduled_cmds ( void );
 
+extern STOPPING_POINT_CODE lkup_spcode ( ST_PLTB_PAIR_PTR pst_pl );
 extern TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst );
+
 extern int ttcreat ( void );

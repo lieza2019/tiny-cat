@@ -273,8 +273,8 @@ void cons_scheduled_cmds ( void ) {
 	if( pjt->sp_cond.stop_skip == DWELL ) {
 	  psc_org->cmd = ARS_SCHEDULED_ARRIVAL;
 	  psc_org->attr.sch_arriv.dw_seq = wid;
-	  if( pjt->deadend )
-	    psc_org->attr.sch_arriv.arr_sp = SP_NONSENS;
+	  if( pjt->deadend )	    
+	    psc_org->attr.sch_arriv.arr_sp = lkup_spcode( &pjt->st_pltb_orgdst.org );
 	  else
 	    psc_org->attr.sch_arriv.arr_sp = (pt ? pt->sp_orgdst.sp_org : SP_NONSENS);
 	  psc_org->attr.sch_arriv.arr_time = pjt->time_arrdep.time_arr;
@@ -283,7 +283,7 @@ void cons_scheduled_cmds ( void ) {
 	  psc_org->cmd = ARS_SCHEDULED_SKIP;
 	  psc_org->attr.sch_skip.dw_seq = wid;
 	  if( pjt->deadend )
-	    psc_org->attr.sch_skip.pass_sp = SP_NONSENS;
+	    psc_org->attr.sch_skip.pass_sp = lkup_spcode( &pjt->st_pltb_orgdst.org );
 	  else
 	    psc_org->attr.sch_skip.pass_sp = (pt ? pt->sp_orgdst.sp_org : SP_NONSENS);
 	  assert( CMP_TINYTIME( pjt->time_arrdep.time_arr, pjt->time_arrdep.time_dep ) );

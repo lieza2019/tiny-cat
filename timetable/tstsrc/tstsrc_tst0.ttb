@@ -1,3 +1,9 @@
+sp_assignments:
+  ((JLA,PL1), SP_73);
+  ((KIKJ, PL1), SP_77);
+((JLA,PL1), SP_D5);
+  ((BTGD, PL1), SP_81);
+
 trips:
   (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77) ,30, {S803B_S831B});
   (((KIKJ,PL1), (OKBS, PL1)), (SP_77, SP_79), 30, {S831B_S821A});

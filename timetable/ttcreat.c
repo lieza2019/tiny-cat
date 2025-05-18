@@ -1,7 +1,5 @@
 /*
- * arrival SP-code on dead-end trip, in journey decl.
  * handling the setting value for psc_dep->attr.sch_dept.depdir.
- * redundant variable j has no meanings in the iteration in cons_jrasgn.
  * semantic error of re-definitions in jr asgnments, shall be moved from parser phase toward semantic analysis in jr_asgn.
  */
 #include <stdio.h>
@@ -659,6 +657,20 @@ static void cons_trips ( ATTR_TRIPS_PTR ptrips ) {
   }
 }
 
+STOPPING_POINT_CODE lkup_spcode ( ST_PLTB_PAIR_PTR pst_pl ) {
+  assert( pst_pl );
+  STOPPING_POINT_CODE r = SP_NONSENS;
+  
+  int i;
+  for( i = 0; i < timetbl_dataset.sp_asgns.num_asgns; i++ ) {
+    if( (timetbl_dataset.sp_asgns.spasgns[i].st_pltb.st == pst_pl->st) && (timetbl_dataset.sp_asgns.spasgns[i].st_pltb.pltb == pst_pl->pltb ) ) {
+      r = timetbl_dataset.sp_asgns.spasgns[i].sp;
+      break;
+    }
+  }
+  return r;
+}
+
 TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst ) {  
   assert( porg );
   assert( pdst );
@@ -720,24 +732,21 @@ static void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
   int cnt;
   
   int i;
-  int j;
-  for( cnt = 0, i = 0, j = 0; (i < MAX_JR_ASGNMENTS) && (cnt < pjrasgns->nasgns); i++ ) {
-    assert( j < MAX_JR_ASGNMENTS );
+  for( cnt = 0, i = 0; (i < MAX_JR_ASGNMENTS) && (cnt < pjrasgns->nasgns); i++ ) {
+    assert( cnt < MAX_JR_ASGNMENTS );
     ATTR_JR_ASGN_PTR pa = NULL;
     pa = &pjrasgns->jr_asgn[i];
     assert( pa );
     if( pa->kind == PAR_JR_ASGN ) {
       int k;
-      for( k = 0; k < j; k++ )
+      for( k = 0; k < cnt; k++ )
 	assert( timetbl_dataset.jr_asgns.jrasgns[k].jid != pa->journey_id.jid );
-      timetbl_dataset.jr_asgns.jrasgns[j].jid = pa->journey_id.jid;
-      timetbl_dataset.jr_asgns.jrasgns[j].rake_id = pa->rake_id.rid;
-      j++;
+      timetbl_dataset.jr_asgns.jrasgns[cnt].jid = pa->journey_id.jid;
+      timetbl_dataset.jr_asgns.jrasgns[cnt].rake_id = pa->rake_id.rid;
       cnt++;
     } else
       assert( pa->kind == PAR_UNKNOWN );
   }
-  assert( (pjrasgns->nasgns == cnt) && (cnt == j) );
   timetbl_dataset.jr_asgns.num_asgns = cnt;
 }
 
