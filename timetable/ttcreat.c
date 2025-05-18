@@ -1136,19 +1136,7 @@ void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
   assert( timetbl_dataset.j.num_journeys == pjourneys->njourneys );
 }
 
-int ttcreat ( void ) {
-  extern int yyparse( void );
-  extern FILE *yyin;
-  int r = 0;
-  
-  assert( !TTC_ERRSTAT_PAR( err_stat ) );
-  assert( !TTC_ERRSTAT_SEM( err_stat ) );
-  yyin = stdin;
-  r = yyparse();
-  return r;
-}
-
-static void dump_ttc_symtbl ( void ) {
+static void print_ttc_symtbl ( void ) {
   ttc_print_spasgns( timetbl_dataset.sp_asgns.spasgns, timetbl_dataset.sp_asgns.num_asgns );
   printf( "\n" );
   ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );
@@ -1158,11 +1146,11 @@ static void dump_ttc_symtbl ( void ) {
   ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
 }
 
-int main ( void ) {
-  int r = -1;
+static void ttc_init ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   BOOL alloc = FALSE;
 
-  ttc_ctrl_flgs.dump_ttc_symtbl = TRUE;
+  ttc_ctrl_flgs.dump_par_symtbl = dump_par_symtbl;
+  ttc_ctrl_flgs.dump_ttc_symtbl = dump_ttc_symtbl;  
   
   scheduled_cmds.nodes = (SCHEDULED_COMMAND_PTR)calloc( (sizeof(SCHEDULED_COMMAND) * SCHEDULED_CMDS_NODEBUFSIZ), 1 );
   if( scheduled_cmds.nodes ) {
@@ -1182,16 +1170,33 @@ int main ( void ) {
   }
   if( !alloc ) {
     printf( "memory allocation failed.\n" );
-    return r;
+    exit( 1 );
   }
-  r = ttcreat();
-  cons_scheduled_cmds();
+}
+
+int ttcreat ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
+  extern int yyparse( void );
+  extern FILE *yyin;
+  int r = 0;
+  
+  ttc_init( dump_par_symtbl, dump_ttc_symtbl );  
+  assert( !TTC_ERRSTAT_PAR( err_stat ) );
+  assert( !TTC_ERRSTAT_SEM( err_stat ) );
+  yyin = stdin;
+  r = yyparse();
   
   if( ttc_ctrl_flgs.dump_ttc_symtbl ) {
     printf( "\n" );
-    dump_ttc_symtbl();
+    print_ttc_symtbl();
   }
-  
+  cons_scheduled_cmds();
   load_online_timetbl();
+  return r;
+}
+
+int main ( void ) {
+  int r = -1;
+  
+  r = ttcreat( FALSE, TRUE );
   return r;
 }

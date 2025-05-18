@@ -196,4 +196,4 @@ extern void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns );
 extern void cons_trips ( ATTR_TRIPS_PTR ptrips );
 extern void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys );
 
-extern int ttcreat ( void );
+extern int ttcreat ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl );
