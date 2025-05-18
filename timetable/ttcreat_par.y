@@ -237,37 +237,6 @@ static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
   return r;
 }
 
-static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
-  assert( pjr_asgn );
-  assert( pjr_asgn->kind == PAR_JR_ASGN );
-  ATTR_JR_ASGN_PTR r = NULL;
-  
-  ATTR_JR_ASGN_PTR p = NULL;
-  if( timetable_symtbl->jr_asgn_regtbl.nasgns == 0 ) {
-    p = reg_jrasgn( &timetable_symtbl->jr_asgn_regtbl, NULL, pjr_asgn );
-    if( p != pjr_asgn ) {
-      printf( "INTERNAL-error: on journey-rake assignment registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
-      exit( 1 );
-    }
-  } else {
-    ATTR_JR_ASGN drop = {};
-    p = reg_jrasgn( &timetable_symtbl->jr_asgn_regtbl, &drop, pjr_asgn );
-    if( p != pjr_asgn ) {
-      if( p == &drop ) {
-	assert( p->kind == PAR_JR_ASGN );
-	printf( "NOTICE: journey-rake assignment J%03d at (LINE, COL) = (%d, %d), has been overridden with (LINE, COL) = (%d, %d).\n", p->journey_id.jid,
-		p->journey_id.pos.row, p->journey_id.pos.col, pjr_asgn->journey_id.pos.row, pjr_asgn->journey_id.pos.col );
-      } else {
-	assert( !p );
-	printf( "INTERNAL-error: on journey-rake assignment registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
-	exit( 1 );
-      }
-    }
-  }
-  r = p;
-  return r;
-}
-
 static ATTR_SP_ASGN_PTR reg_sp_asgn ( ATTR_SP_ASGN_PTR psp_asgn ) {
   assert( psp_asgn );
   assert( psp_asgn->kind == PAR_SP_ASGN );
@@ -292,6 +261,37 @@ static ATTR_SP_ASGN_PTR reg_sp_asgn ( ATTR_SP_ASGN_PTR psp_asgn ) {
       } else {
 	assert( !p );
 	printf( "INTERNAL-error: on sp/pl & stopping-point assignment registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
+	exit( 1 );
+      }
+    }
+  }
+  r = p;
+  return r;
+}
+
+static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
+  assert( pjr_asgn );
+  assert( pjr_asgn->kind == PAR_JR_ASGN );
+  ATTR_JR_ASGN_PTR r = NULL;
+  
+  ATTR_JR_ASGN_PTR p = NULL;
+  if( timetable_symtbl->jr_asgn_regtbl.nasgns == 0 ) {
+    p = reg_jrasgn( &timetable_symtbl->jr_asgn_regtbl, NULL, pjr_asgn );
+    if( p != pjr_asgn ) {
+      printf( "INTERNAL-error: on journey-rake assignment registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
+      exit( 1 );
+    }
+  } else {
+    ATTR_JR_ASGN drop = {};
+    p = reg_jrasgn( &timetable_symtbl->jr_asgn_regtbl, &drop, pjr_asgn );
+    if( p != pjr_asgn ) {
+      if( p == &drop ) {
+	assert( p->kind == PAR_JR_ASGN );
+	printf( "NOTICE: journey-rake assignment J%03d at (LINE, COL) = (%d, %d), has been overridden with (LINE, COL) = (%d, %d).\n", p->journey_id.jid,
+		p->journey_id.pos.row, p->journey_id.pos.col, pjr_asgn->journey_id.pos.row, pjr_asgn->journey_id.pos.col );
+      } else {
+	assert( !p );
+	printf( "INTERNAL-error: on journey-rake assignment registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
 	exit( 1 );
       }
     }

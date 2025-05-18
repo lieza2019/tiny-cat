@@ -1,6 +1,5 @@
 /*
  * handling the setting value for psc_dep->attr.sch_dept.depdir.
- * semantic error of re-definitions in jr asgnments, shall be moved from parser phase toward semantic analysis in jr_asgn.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -739,13 +738,14 @@ static void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
     if( pa->kind == PAR_SP_ASGN ) {
       int k;
       for( k = 0; k < cnt; k++ ) {
+	assert( k < cnt );
 	const char *st = cnv2str_st_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st );
 	assert( st );
 	if( ! strncmp( st, pa->st_pltb.st.name, MAX_STNAME_LEN ) ) {
 	  const char *pltb = cnv2str_pltb_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb );
 	  assert( pltb );
 	  if( ! strncmp( pltb, pa->st_pltb.pltb.id, MAX_PLTB_NAMELEN ) ) {
-	    printf( "NOTICE: sp definition overridden at (LINE, COL) = (%d, %d).\n", pa->pos.row, pa->pos.col );
+	    printf( "NOTICE: st/pl & sp assignment overridden at (LINE, COL) = (%d, %d).\n", pa->pos.row, pa->pos.col );
 	    break;
 	  }
 	}
@@ -774,11 +774,17 @@ static void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
     assert( pa );
     if( pa->kind == PAR_JR_ASGN ) {
       int k;
-      for( k = 0; k < cnt; k++ )
-	assert( timetbl_dataset.jr_asgns.jrasgns[k].jid != pa->journey_id.jid );
-      timetbl_dataset.jr_asgns.jrasgns[cnt].jid = pa->journey_id.jid;
-      timetbl_dataset.jr_asgns.jrasgns[cnt].rake_id = pa->rake_id.rid;
-      cnt++;
+      for( k = 0; k < cnt; k++ ) {
+	assert( k < cnt );
+	if( timetbl_dataset.jr_asgns.jrasgns[k].jid == pa->journey_id.jid ) {
+	  printf( "NOTICE: journey-rake assignment overridden at (LINE, COL) = (%d, %d).\n", pa->journey_id.pos.row, pa->journey_id.pos.col );
+	  break;
+	}
+      }
+      timetbl_dataset.jr_asgns.jrasgns[k].jid = pa->journey_id.jid;
+      timetbl_dataset.jr_asgns.jrasgns[k].rake_id = pa->rake_id.rid;
+      if( k >= cnt )
+	cnt++;
     } else
       assert( pa->kind == PAR_UNKNOWN );
   }
