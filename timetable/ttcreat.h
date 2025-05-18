@@ -43,6 +43,7 @@ typedef struct err_stat {
     BOOL err_jr_asgn;
   } par;
   struct {
+    BOOL sp_undefined;
     BOOL route_redef;
     BOOL unknown_route;
     BOOL unknown_trip;
@@ -181,5 +182,8 @@ extern void cons_scheduled_cmds ( void );
 
 extern STOPPING_POINT_CODE lkup_spcode ( ST_PLTB_PAIR_PTR pst_pl );
 extern TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst );
+
+extern void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns );
+extern void cons_trips ( ATTR_TRIPS_PTR ptrips );
 
 extern int ttcreat ( void );

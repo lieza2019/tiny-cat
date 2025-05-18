@@ -157,13 +157,44 @@ ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, A
   int i;  
   for( i = 0; i < preg_tbl->ntrips; i++ ) {
     assert( i < preg_tbl->ntrips );
-    assert( preg_tbl->trip_prof[i].attr_st_pltb_orgdst.kind == PAR_ST_PLTB_ORGDST );
-    if( ! ident_trips( &preg_tbl->trip_prof[i].attr_st_pltb_orgdst, &ptrip->attr_st_pltb_orgdst ) ) {
+    ATTR_TRIP_PTR pprof = &preg_tbl->trip_prof[i];
+    assert( pprof );
+    assert( pprof->attr_st_pltb_orgdst.kind == PAR_ST_PLTB_ORGDST );
+    if( ! ident_trips( &pprof->attr_st_pltb_orgdst, &ptrip->attr_st_pltb_orgdst ) ) {
       if( pobsolete ) {
-	*pobsolete = preg_tbl->trip_prof[i];
+	*pobsolete = *pprof;	
 	r = pobsolete;
+#if 1 // *****	
 	preg_tbl->trip_prof[i].attr_sp_orgdst = ptrip->attr_sp_orgdst;
-	preg_tbl->trip_prof[i].attr_route_ctrl = ptrip->attr_route_ctrl;
+#else	
+	{
+	  assert( pprof->attr_st_pltb_orgdst.st_pltb_org.st.name );
+	  assert( pprof->attr_st_pltb_orgdst.st_pltb_org.pltb.id );
+	  ST_PLTB_PAIR stpl_org = { str2_st_id(pprof->attr_st_pltb_orgdst.st_pltb_org.st.name), str2_pltb_id(pprof->attr_st_pltb_orgdst.st_pltb_org.pltb.id) };
+	  assert( pprof->attr_st_pltb_orgdst.st_pltb_dst.st.name );
+	  assert( pprof->attr_st_pltb_orgdst.st_pltb_dst.pltb.id );
+	  ST_PLTB_PAIR stpl_dst = { str2_st_id(pprof->attr_st_pltb_orgdst.st_pltb_dst.st.name), str2_pltb_id(pprof->attr_st_pltb_orgdst.st_pltb_dst.pltb.id) };
+	  {
+	    const STOPPING_POINT_CODE sp_org = lkup_spcode( &stpl_org );
+	    const STOPPING_POINT_CODE sp_dst = lkup_spcode( &stpl_dst );
+	    if( sp_org == SP_NONSENS ) {
+	      printf( "FATAL: undefined origin st/pl:(%s, %s) stopping-point claimed in trip definition at (LINE, COL) = (%d, %d).\n",
+		      pprof->attr_st_pltb_orgdst.st_pltb_org.st.name, pprof->attr_st_pltb_orgdst.st_pltb_org.pltb.id,
+		      pprof->attr_st_pltb_orgdst.st_pltb_org.st.pos.row, pprof->attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
+	      err_stat.sem.sp_undefined = TRUE;
+	    }
+	    preg_tbl->trip_prof[i].attr_sp_orgdst.sp_org = sp_org;
+	    if( sp_dst == SP_NONSENS ) {
+	      printf( "FATAL: undefined destination st/pl:(%s, %s) stopping-point claimed in trip definition at (LINE, COL) = (%d, %d).\n",
+		      pprof->attr_st_pltb_orgdst.st_pltb_dst.st.name, pprof->attr_st_pltb_orgdst.st_pltb_dst.pltb.id,
+		      pprof->attr_st_pltb_orgdst.st_pltb_dst.st.pos.row, pprof->attr_st_pltb_orgdst.st_pltb_dst.st.pos.col );
+	      err_stat.sem.sp_undefined = TRUE;
+	    }
+	    preg_tbl->trip_prof[i].attr_sp_orgdst.sp_dst = sp_dst;
+	  }
+	}
+#endif
+	pprof->attr_route_ctrl = ptrip->attr_route_ctrl;
       } else
 	printf( "NOTICE: failed in redefinition the trip of.\n" );
       ovw = TRUE;
@@ -613,7 +644,7 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
 	int j;
 	for( j = 0; j < i; j++ )
 	  if( ptrip_routes[j].pprof == pprof ) {
-	    printf( "FATAL: route redefinition in trip declaration at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
+	    printf( "FATAL: route redefinition in trip definition at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
 	    err_stat.sem.route_redef = TRUE;
 	    err = TRUE;
 	    break;
@@ -624,7 +655,7 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
 	  nroutes = (nroutes < 0) ? 1 : (assert( nroutes >= 1), nroutes + 1);
 	}
       } else {
-	printf( "FATAL: undefined route found in trip declaration at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
+	printf( "FATAL: undefined route found in trip definition at (LINE, COL) = (%d, %d).\n", pattr_routes->route_prof[i].pos.row, pattr_routes->route_prof[i].pos.col );
 	err_stat.sem.unknown_route = TRUE;
 	err = TRUE;
       }
@@ -652,7 +683,7 @@ static SP_ORGDST_PAIR_PTR cons_orgdst_sp_pair ( SP_ORGDST_PAIR_PTR ptrip_sps, AT
   return ptrip_sps;
 }
 
-static void cons_trips ( ATTR_TRIPS_PTR ptrips ) {
+void cons_trips ( ATTR_TRIPS_PTR ptrips ) {
   assert( ptrips );
   assert( ptrips->kind == PAR_TRIPS );
   ST_PLTB_ORGDST_PTR st_pltb_ref[MAX_TRIPS_DECL] = {};
@@ -723,7 +754,7 @@ TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst ) {
   return r;
 }
 
-static void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
+void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
   assert( pspasgns );
   assert( pspasgns->kind == PAR_SP_ASGNS );
   int cnt;
@@ -1118,8 +1149,8 @@ int ttcreat ( void ) {
   }
   
   assert( !TTC_ERRSTAT_SEM( err_stat ) );
-  cons_spasgn( &timetable_symtbl->sp_asgns );
-  cons_trips( &timetable_symtbl->trips_regtbl );
+  //cons_spasgn( &timetable_symtbl->sp_asgns );
+  //cons_trips( &timetable_symtbl->trips_regtbl );
   if( err_stat.sem.route_redef ||
       err_stat.sem.unknown_route ) {
     r = err_result;

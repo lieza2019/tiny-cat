@@ -336,7 +336,7 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
 %token <sp> TK_SP
 %token TK_SP_ASGNS
 %type <attr_sp_asgn> stpl_sp_asgn
-%type <attr_sp_asgns> sp_asgns_decl
+%type <attr_sp_asgns> stpl_sp_asgns sp_asgns_decl
 %type <attr_sp_pair> sp_orgdst_pair
 %token <attr_route> TK_ROUTE
 %type <attr_route> route
@@ -344,7 +344,7 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
  /* %type <attr_routes> routes0 // for debugging. */
 %type <attr_trip> trip_def
 %token TK_KEY_TRIPS
-%type <pattr_trips> trips_definition trips_decl
+%type <pattr_trips> trips_definition trips_defs trips_decl
 %token TK_JOURNEYS
 %token <journey_id> TK_JOURNEY_ID
 %type <journey_id> journey_ident
@@ -1264,12 +1264,17 @@ time : TK_TIME {
 
 /* ((JLA,PL1), SP_73);
  */
-sp_asgns_decl : TK_SP_ASGNS ':' /* empty pltb_sp_asgnments */ {
+sp_asgns_decl : stpl_sp_asgns {
+  cons_spasgn( $1 );
+  $$ = $1;
+ }
+;
+stpl_sp_asgns : TK_SP_ASGNS ':' /* empty pltb_sp_asgnments */ {
   timetable_symtbl->sp_asgns.kind = PAR_SP_ASGNS;
   timetable_symtbl->sp_asgns.nasgns = 0;
   $$ = &timetable_symtbl->sp_asgns;
  }
-              | sp_asgns_decl stpl_sp_asgn {
+              | stpl_sp_asgns stpl_sp_asgn {
   assert( $1->kind == PAR_SP_ASGNS ); 
   if( $2.kind == PAR_SP_ASGN )
     reg_sp_asgn( &$2 );
@@ -1285,7 +1290,6 @@ sp_asgns_decl : TK_SP_ASGNS ':' /* empty pltb_sp_asgnments */ {
   $$ = NULL;
  }
 ;
-
 stpl_sp_asgn : '(' st_and_pltb ',' TK_SP ')' ';' {
   $$.kind = PAR_SP_ASGN;
   $$.st_pltb = $2;
@@ -1336,7 +1340,12 @@ stpl_sp_asgn : '(' st_and_pltb ',' TK_SP ')' ';' {
      (((OKBS,PL2), (KIKJ, PL2)), (SP_78, TB_76), {S822A_S832B});
      (((KIKJ,PL2), (JLA, PL1)), (SP_76, TB_73), {S832B_S802B, S802B_S810B});
 */
-trips_decl : TK_KEY_TRIPS ':' trips_definition {
+trips_decl : trips_defs {
+  cons_trips( $1 );
+  $$ = $1;
+}
+;
+trips_defs : TK_KEY_TRIPS ':' trips_definition {
   assert( $3 );
   assert( $3->kind == PAR_TRIPS );
   $$ = $3;
