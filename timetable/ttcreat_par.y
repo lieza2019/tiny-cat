@@ -94,7 +94,6 @@ static void print_spasgns ( ATTR_SP_ASGN_PTR pasgn ) {
   print_st_pltb( &pasgn->st_pltb );
   printf( ", %s", pasgn->sp.sp_id );
   printf( ")" );
-  ;
 }
 
 static void print_jrasgn ( ATTR_JR_ASGN_PTR pasgn ) {
@@ -1424,20 +1423,19 @@ trips_definition : /* empty journies */ {
  }
 ;
 /* e.g. (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B}) */
-trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' TK_NAT ',' '{' routes '}' ')' {
+trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' TK_NAT ',' '{' routes '}' ')' {
   $$.kind = PAR_UNKNOWN;
-  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_SP_PAIR) && ($13.kind == PAR_ROUTES) ) {
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($11.kind == PAR_ROUTES) ) {
     $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
-    $$.attr_sp_orgdst = $8;
-    $$.running_time = $10;
-    $$.attr_route_ctrl = $13;
+    $$.running_time = $8;
+    $$.attr_route_ctrl = $11;
     $$.kind = PAR_TRIP;
   }
   err_stat.par.err_trip_def = FALSE;
 #if 0 /* ***** for debugging. */
-  printf( "(kind, st_pltb_pair, sp_orgdst_pair, trip_routes): " );
+  printf( "(kind, st_pltb_pair, trip_routes): " );
   print_trip( &$$, FALSE );
   printf( "\n" );
 #endif
@@ -1485,33 +1483,35 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' TK_NAT '
   }
   $$.kind = PAR_UNKNOWN;
  }
-         | '(' '('st_and_pltb ',' st_and_pltb')' sp_orgdst_pair ',' TK_NAT ',' '{' routes '}' ')' {
+         | '(' '('st_and_pltb ',' st_and_pltb')' TK_NAT ',' '{' routes '}' ')' {
   if( !err_stat.par.err_trip_def ) {    
     printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @6.first_line, @6.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
-  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($7.kind == PAR_SP_PAIR) && ($12.kind == PAR_ROUTES) ) {
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($10.kind == PAR_ROUTES) ) {
     $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
-    $$.attr_sp_orgdst = $7;
-    $$.running_time = $9;
-    $$.attr_route_ctrl = $12;
+    $$.running_time = $7;
+    $$.attr_route_ctrl = $10;
     $$.kind = PAR_TRIP;
   }
  }
 /* the follow reduction rule arises reduce/reduce conflicts.
-   | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair error {
+   | '(' '('st_and_pltb ',' st_and_pltb')' error {
      ;
    } */
-         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' error {
+/*
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed running-time found in trip definition at (LINE, COL) = (%d, %d).\n", @9.first_line, @9.first_column );
+    printf( "FATAL: syntax-error, ill-formed running-time found in trip definition at (LINE, COL) = (%d, %d).\n", @7.first_line, @7.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
+*/
+/*
          | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair TK_NAT ',' '{' routes '}' ')' {
   if( !err_stat.par.err_trip_def ) {
     printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @8.first_line, @8.first_column );
@@ -1528,39 +1528,39 @@ trip_def : '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' TK_NAT '
     $$.kind = PAR_TRIP;
   }
  }
-         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair TK_NAT ',' error {
+*/
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' TK_NAT ',' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, ill-formed controlled routes specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @10.first_line, @10.first_column );
+    printf( "FATAL: syntax-error, ill-formed controlled routes specifiers found in trip definition at (LINE, COL) = (%d, %d).\n", @9.first_line, @9.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
  }
-         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' TK_NAT '{' routes '}' ')' {
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' TK_NAT '{' routes '}' ')' {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @10.first_line, @10.first_column );
+    printf( "FATAL: syntax-error, missing delimiter in trip definition at (LINE, COL) = (%d, %d).\n", @8.first_line, @8.first_column );
     err_stat.par.err_trip_def = TRUE;    
   }
   $$.kind = PAR_UNKNOWN;  
-  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($8.kind == PAR_SP_PAIR) && ($12.kind == PAR_ROUTES) ) {
+  if( ($3.kind == PAR_ST_PLTB) && ($5.kind == PAR_ST_PLTB) && ($10.kind == PAR_ROUTES) ) {
     $$.attr_st_pltb_orgdst.kind = PAR_ST_PLTB_ORGDST;
     $$.attr_st_pltb_orgdst.st_pltb_org = $3;
     $$.attr_st_pltb_orgdst.st_pltb_dst = $5;
-    $$.attr_sp_orgdst = $8;
-    $$.running_time = $10;
-    $$.attr_route_ctrl = $12;
+    $$.running_time = $8;
+    $$.attr_route_ctrl = $10;
     $$.kind = PAR_TRIP;
   }
  }
 /* the follow reduction rules arise reduce/reduce conflicts.
-   | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' error {
+   | '(' '('st_and_pltb ',' st_and_pltb')' ',' '{' error {
      ;
    }
-   | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' '{' routes error {
+   | '(' '('st_and_pltb ',' st_and_pltb')' ',' '{' routes error {
      ;
    } */
-         | '(' '('st_and_pltb ',' st_and_pltb')' ',' sp_orgdst_pair ',' TK_NAT ',' '{' routes '}' error {
+         | '(' '('st_and_pltb ',' st_and_pltb')' ',' TK_NAT ',' '{' routes '}' error {
   if( !err_stat.par.err_trip_def ) {
-    printf( "FATAL: syntax-error, missing closing parenthesis in trip definition at (LINE, COL) = (%d, %d).\n", @14.first_line, @14.first_column );
+    printf( "FATAL: syntax-error, missing closing parenthesis in trip definition at (LINE, COL) = (%d, %d).\n", @12.first_line, @12.first_column );
     err_stat.par.err_trip_def = TRUE;
   }
   $$.kind = PAR_UNKNOWN;
