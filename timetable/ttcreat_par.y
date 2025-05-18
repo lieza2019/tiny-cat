@@ -134,7 +134,7 @@ static void print_journey ( ATTR_JOURNEY_PTR pjourney ) {
   }
 }
 
-static void print_timetable_decl ( ATTR_SP_ASGNS_PTR pspasgns, ATTR_TRIPS_PTR ptrips, ATTR_JR_ASGNS_PTR pjrasgns, ATTR_JOURNEYS_PTR pjourneys ) {
+static void print_par_symtbl ( ATTR_SP_ASGNS_PTR pspasgns, ATTR_TRIPS_PTR ptrips, ATTR_JR_ASGNS_PTR pjrasgns, ATTR_JOURNEYS_PTR pjourneys ) {
   printf( "sp_asgnments:\n" );
   if( pspasgns ) {    
     ATTR_SP_ASGN_PTR p = pspasgns->pltb_sp_asgns;
@@ -249,15 +249,15 @@ static ATTR_SP_ASGN_PTR reg_sp_asgn ( ATTR_SP_ASGN_PTR psp_asgn ) {
   ATTR_SP_ASGN_PTR r = NULL;
   
   ATTR_SP_ASGN_PTR p = NULL;
-  if( timetable_symtbl->sp_asgns.nasgns == 0 ) {
-    p = reg_spasgn( &timetable_symtbl->sp_asgns, NULL, psp_asgn );
+  if( timetable_symtbl->sp_asgn_regtbl.nasgns == 0 ) {
+    p = reg_spasgn( &timetable_symtbl->sp_asgn_regtbl, NULL, psp_asgn );
     if( p != psp_asgn ) {
       printf( "INTERNAL-error: on sp/pl & stopping-point assignment registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
       exit( 1 );
     }
   } else {
     ATTR_SP_ASGN drop = {};
-    p = reg_spasgn( &timetable_symtbl->sp_asgns, &drop, psp_asgn );
+    p = reg_spasgn( &timetable_symtbl->sp_asgn_regtbl, &drop, psp_asgn );
     if( p != psp_asgn ) {
       if( p == &drop ) {
 	assert( p->kind == PAR_SP_ASGN );
@@ -371,9 +371,9 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
 %start timetable_decl
 %%
 timetable_decl : sp_asgns_decl trips_decl journey_rake_asgnmnts_decl journeys_declaration {
-#if 1 /* ***** for debugging. */
-  print_timetable_decl( $1, $2, $3, $4 );
-#endif
+  if( ttc_ctrl_flgs.dump_par_symtbl ) {
+    print_par_symtbl( $1, $2, $3, $4 );
+  }
   $$ = timetable_symtbl;
  }
 ;
@@ -1279,9 +1279,9 @@ sp_asgns_decl : stpl_sp_asgns {
  }
 ;
 stpl_sp_asgns : TK_SP_ASGNS ':' /* empty pltb_sp_asgnments */ {
-  timetable_symtbl->sp_asgns.kind = PAR_SP_ASGNS;
-  timetable_symtbl->sp_asgns.nasgns = 0;
-  $$ = &timetable_symtbl->sp_asgns;
+  timetable_symtbl->sp_asgn_regtbl.kind = PAR_SP_ASGNS;
+  timetable_symtbl->sp_asgn_regtbl.nasgns = 0;
+  $$ = &timetable_symtbl->sp_asgn_regtbl;
  }
               | stpl_sp_asgns stpl_sp_asgn {
   assert( $1->kind == PAR_SP_ASGNS ); 

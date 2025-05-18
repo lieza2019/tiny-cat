@@ -164,7 +164,7 @@ typedef struct attr_jr_asgns {
 } ATTR_JR_ASGNS, *ATTR_JR_ASGNS_PTR;
 
 typedef struct attr_timetable {
-  ATTR_SP_ASGNS sp_asgns;
+  ATTR_SP_ASGNS sp_asgn_regtbl;
   ATTR_TRIPS trips_regtbl;
   ATTR_JR_ASGNS jr_asgn_regtbl;
   ATTR_JOURNEYS journeys_regtbl;

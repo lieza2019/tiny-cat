@@ -20,6 +20,8 @@
 #error MAX_JOURNEY_TRIPS must be greater than/equal to MAX_TRIPS_DECL in ttcreat.h.
 #endif
 
+#define SCHEDULED_CMDS_NODEBUFSIZ 1024
+
 #define DEFAULT_DWELL_TIME 17 // in sec.
 #define DEFAULT_PERFLEVEL PERFREG_NORMAL
 #define DEFAULT_REVENUE FALSE
@@ -31,6 +33,12 @@
 #define JOURNEY_DEFAULT_ARRTIME_SECOND 0
 
 #include "ttcreat_def.h"
+
+typedef struct ttc_ctrl {
+  BOOL dump_par_symtbl;
+  BOOL dump_ttc_symtbl;
+} TTC_CTRL, *TTC_CTRL_PTR;
+extern TTC_CTRL ttc_ctrl_flgs;
 
 typedef struct err_stat {
   struct {

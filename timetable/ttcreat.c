@@ -11,6 +11,7 @@
 
 struct scheduled_cmds_nodebuf scheduled_cmds;
 
+TTC_CTRL ttc_ctrl_flgs;
 ERR_STAT err_stat;
 TIMETABLE_DATASET timetbl_dataset;
 
@@ -1138,34 +1139,16 @@ void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 int ttcreat ( void ) {
   extern int yyparse( void );
   extern FILE *yyin;
-  
-  const int err_result = 1;
   int r = 0;
   
   assert( !TTC_ERRSTAT_PAR( err_stat ) );
-  yyin = stdin;
-  if( yyparse() ) {
-    r = err_result;
-  } else {
-    if( TTC_ERRSTAT_PAR( err_stat ) ) {
-      r = err_result;
-    }
-  }
-
-#if 0 // *****
   assert( !TTC_ERRSTAT_SEM( err_stat ) );
-#endif
-  //cons_spasgn( &timetable_symtbl->sp_asgns );
-  //cons_trips( &timetable_symtbl->trips_regtbl );
-  if( err_stat.sem.route_redef ||
-      err_stat.sem.unknown_route ) {
-    r = err_result;
-  }
-  //cons_jrasgn( &timetable_symtbl->jr_asgn_regtbl );
-  //cons_journeys( &timetable_symtbl->journeys_regtbl );
-  cons_scheduled_cmds();
-  
-  printf( "\n" );
+  yyin = stdin;
+  r = yyparse();
+  return r;
+}
+
+static void dump_ttc_symtbl ( void ) {
   ttc_print_spasgns( timetbl_dataset.sp_asgns.spasgns, timetbl_dataset.sp_asgns.num_asgns );
   printf( "\n" );
   ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );
@@ -1173,16 +1156,13 @@ int ttcreat ( void ) {
   ttc_print_jrasgns( timetbl_dataset.jr_asgns.jrasgns, timetbl_dataset.jr_asgns.num_asgns );
   printf( "\n" );
   ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
-  
-  load_online_timetbl();
-  
-  return r;
 }
 
-#define SCHEDULED_CMDS_NODEBUFSIZ 1024
 int main ( void ) {
   int r = -1;
   BOOL alloc = FALSE;
+
+  ttc_ctrl_flgs.dump_ttc_symtbl = TRUE;
   
   scheduled_cmds.nodes = (SCHEDULED_COMMAND_PTR)calloc( (sizeof(SCHEDULED_COMMAND) * SCHEDULED_CMDS_NODEBUFSIZ), 1 );
   if( scheduled_cmds.nodes ) {
@@ -1192,6 +1172,11 @@ int main ( void ) {
       timetable_symtbl->trips_regtbl.kind = PAR_UNKNOWN;
       timetable_symtbl->jr_asgn_regtbl.kind = PAR_UNKNOWN;
       timetable_symtbl->journeys_regtbl.kind = PAR_UNKNOWN;
+      {
+	int i;
+	for( i = 0; i < MAX_JOURNEYS; i++ )
+	  timetable_symtbl->journeys_regtbl.journey_prof[i].journey_id.jid = -1;
+      }
       alloc = TRUE;
     }
   }
@@ -1199,13 +1184,14 @@ int main ( void ) {
     printf( "memory allocation failed.\n" );
     return r;
   }
-  
-  {
-    int i;
-    for( i = 0; i < MAX_JOURNEYS; i++ ) {
-      timetable_symtbl->journeys_regtbl.journey_prof[i].journey_id.jid = -1;
-    }
-  }
   r = ttcreat();
+  cons_scheduled_cmds();
+  
+  if( ttc_ctrl_flgs.dump_ttc_symtbl ) {
+    printf( "\n" );
+    dump_ttc_symtbl();
+  }
+  
+  load_online_timetbl();
   return r;
 }
