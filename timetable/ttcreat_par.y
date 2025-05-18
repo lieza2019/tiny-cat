@@ -1272,11 +1272,9 @@ sp_asgns_decl : TK_SP_ASGNS ':' /* empty pltb_sp_asgnments */ {
  }
               | sp_asgns_decl stpl_sp_asgn {
   assert( $1->kind == PAR_SP_ASGNS ); 
-  if( $2.kind == PAR_SP_ASGN ) {
-    const int i = $1->nasgns;
-    $$->pltb_sp_asgns[i] = $2;
-    $$->nasgns++;
-  } else
+  if( $2.kind == PAR_SP_ASGN )
+    reg_sp_asgn( &$2 );
+  else
     assert( $2.kind == PAR_UNKNOWN );
   $$ = $1;
  }
@@ -1878,9 +1876,8 @@ journey_rake_asgnmnts : /* empty journies */ {
  }
                       | journey_rake_asgnmnts jr_asgn ';' {
   assert( $1->kind == PAR_JR_ASGNS );
-  if( $2.kind == PAR_JR_ASGN ) {
+  if( $2.kind == PAR_JR_ASGN )
     reg_journey_rake_asgn( &$2 );
-  }
   $$ = &timetable_symtbl->jr_asgn_regtbl;
  }
                       | journey_rake_asgnmnts jr_asgn error ';' {
@@ -1889,9 +1886,8 @@ journey_rake_asgnmnts : /* empty journies */ {
     printf( "FATAL: syntax-error, missing semicolon in end of journey-rake assignments at (LINE, COL) = (%d, %d).\n", @2.first_line, @2.first_column );
     err_stat.par.err_jr_asgn = TRUE;
   }
-  if( $2.kind == PAR_JR_ASGN ) {
+  if( $2.kind == PAR_JR_ASGN )
     reg_journey_rake_asgn( &$2 );
-  }
   $$ = &timetable_symtbl->jr_asgn_regtbl;
  }
 ;
