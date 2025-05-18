@@ -39,7 +39,7 @@ typedef struct err_stat {
     BOOL err_trips_decl;
     BOOL err_sp_def;
     BOOL err_trip_def;
-    BOOL err_journey_rake_asgnmnts_decl;
+    BOOL err_journey_rake_asgnmnts;
     BOOL err_jr_asgn;
   } par;
   struct {
@@ -59,7 +59,7 @@ extern ERR_STAT err_stat;
   (es).par.err_routes ||			\
   (es).par.err_trips_decl ||			\
   (es).par.err_trip_def ||			\
-  (es).par.err_journey_rake_asgnmnts_decl ||	\
+  (es).par.err_journey_rake_asgnmnts ||		\
   (es).par.err_jr_asgn				\
 )
 #define TTC_ERRSTAT_SEM( es ) (			\
@@ -184,6 +184,7 @@ extern STOPPING_POINT_CODE lkup_spcode ( ST_PLTB_PAIR_PTR pst_pl );
 extern TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst );
 
 extern void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns );
+extern void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns );
 extern void cons_trips ( ATTR_TRIPS_PTR ptrips );
 
 extern int ttcreat ( void );

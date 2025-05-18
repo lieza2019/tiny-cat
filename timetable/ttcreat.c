@@ -796,7 +796,7 @@ void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
   timetbl_dataset.sp_asgns.num_asgns = cnt;
 }
 
-static void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
+void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
   assert( pjrasgns );
   assert( pjrasgns->kind == PAR_JR_ASGNS );
   int cnt;
@@ -1159,7 +1159,7 @@ int ttcreat ( void ) {
       err_stat.sem.unknown_route ) {
     r = err_result;
   }
-  cons_jrasgn( &timetable_symtbl->jr_asgn_regtbl );
+  //cons_jrasgn( &timetable_symtbl->jr_asgn_regtbl );
   cons_journeys( &timetable_symtbl->journeys_regtbl );
   cons_scheduled_cmds();
   
