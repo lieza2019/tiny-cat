@@ -1,18 +1,23 @@
 sp_assignments:
   ((JLA,PL1), SP_73);
   ((KIKJ, PL1), SP_77);
-((JLA,PL1), SP_D5);
+  ((OKBS, PL1), SP_79);
   ((BTGD, PL1), SP_81);
+  ((BTGD, TB1), SP_D5);
+  ((BTGD, PL2), SP_80);
+  ((OKBS, PL2), SP_78);
+  ((KIKJ, PL2), SP_76);
+ ((JLA,PL1), SP_D5);
 
 trips:
-  (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77) ,30, {S803B_S831B});
-  (((KIKJ,PL1), (OKBS, PL1)), (SP_77, SP_79), 30, {S831B_S821A});
-  (((OKBS,PL1), (BTGD, PL1)), (SP_79, SP_81), 30, {S821A_S801A, S801A_S803A});
-  (((BTGD,PL1), (BTGD, TB1)), (SP_81, SP_D5), 45, {S803A_S809A});
-  (((BTGD,TB1), (BTGD, PL2)), (SP_D5, SP_80), 45, {S806A_S804A});
-  (((BTGD,PL2), (OKBS, PL2)), (SP_80, SP_78), 45, {S804A_S822A});
-  (((OKBS,PL2), (KIKJ, PL2)), (SP_78, SP_76), 55, {S822A_S832B});
-  (((KIKJ,PL2), (JLA, PL1)), (SP_76, SP_73), 55, {S832B_S802B, S802B_S810B});
+  (((JLA,PL1), (KIKJ, PL1)), 30, {S803B_S831B});
+  (((KIKJ,PL1), (OKBS, PL1)), 30, {S831B_S821A});
+  (((OKBS,PL1), (BTGD, PL1)), 30, {S821A_S801A, S801A_S803A});
+  (((BTGD,PL1), (BTGD, TB1)), 45, {S803A_S809A});
+  (((BTGD,TB1), (BTGD, PL2)), 45, {S806A_S804A});
+  (((BTGD,PL2), (OKBS, PL2)), 45, {S804A_S822A});
+  (((OKBS,PL2), (KIKJ, PL2)), 55, {S822A_S832B});
+  (((KIKJ,PL2), (JLA, PL1)), 55, {S832B_S802B, S802B_S810B});
 
 assignments:
   J1 := rake_801; J2 := rake_802; J3 := rake_803; J4 := rake_804;

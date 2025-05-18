@@ -30,10 +30,22 @@ static void print_st_pltb ( ATTR_ST_PLTB_PTR pst_pltb ) {
   printf( "%s", st_pltb_strbuf );
 }
 
+#if 0 // *****
 static void print_sp_pair ( ATTR_SP_PAIR_PTR psps ) {
   assert( psps );
   printf( "(%s, %s)", psps->org.sp_id, psps->dst.sp_id );
 }
+#else
+static void print_sp_pair ( ATTR_SP_PAIR_PTR psps ) {
+  assert( psps );
+  const char *sp_org = cnv2str_sp_code( psps->sp_org );
+  assert( sp_org );
+  const char *sp_dst = cnv2str_sp_code( psps->sp_dst );
+  assert( sp_dst );
+  
+  printf( "(%s, %s)", sp_org, sp_dst );
+}
+#endif
 
 static void print_routes ( ATTR_ROUTES_PTR proutes ) {
   assert( proutes );
@@ -212,6 +224,8 @@ static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
   
   if( ptrip->kind == PAR_TRIP ) {
     ATTR_TRIP_PTR p = NULL;
+    ptrip->attr_sp_orgdst.sp_org = SP_NONSENS;
+    ptrip->attr_sp_orgdst.sp_dst = SP_NONSENS;
     if( timetable_symtbl->trips_regtbl.ntrips == 0 ) {
       p = reg_trip_def( &timetable_symtbl->trips_regtbl, NULL, ptrip );
       if( p != ptrip ) {

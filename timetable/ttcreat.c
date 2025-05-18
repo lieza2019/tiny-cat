@@ -146,6 +146,7 @@ static BOOL ident_trips ( ATTR_ST_PLTB_ORGDST_PTR pt1, ATTR_ST_PLTB_ORGDST_PTR p
   return r;
 }
 
+#if 0 // *****
 ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip ) {
   assert( preg_tbl );
   assert( ptrip );
@@ -164,7 +165,7 @@ ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, A
       if( pobsolete ) {
 	*pobsolete = *pprof;	
 	r = pobsolete;
-#if 1 // *****	
+#if 0 // *****	
 	preg_tbl->trip_prof[i].attr_sp_orgdst = ptrip->attr_sp_orgdst;
 #else	
 	{
@@ -213,6 +214,92 @@ ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, A
   }
   return r;
 }
+#else
+static void trip_orgdst_spcodes ( ATTR_SP_PAIR_PTR psps_orgdst, ATTR_ST_PLTB_ORGDST_PTR pst_pltb_orgdst ) {
+  assert( psps_orgdst );
+  assert( pst_pltb_orgdst );
+  
+  const char *st_org = pst_pltb_orgdst->st_pltb_org.st.name;
+  const char *pltb_org = pst_pltb_orgdst->st_pltb_org.pltb.id;
+  assert( st_org );
+  assert( pltb_org );
+  const char *st_dst = pst_pltb_orgdst->st_pltb_dst.st.name;
+  const char *pltb_dst = pst_pltb_orgdst->st_pltb_dst.pltb.id;
+  assert( st_dst );
+  assert( pltb_dst );
+  {
+    ST_PLTB_PAIR stpl_org = { str2_st_id(st_org), str2_pltb_id(pltb_org) };
+    ST_PLTB_PAIR stpl_dst = { str2_st_id(st_dst), str2_pltb_id(pltb_dst) };
+    const STOPPING_POINT_CODE sp_org = lkup_spcode( &stpl_org );
+    const STOPPING_POINT_CODE sp_dst = lkup_spcode( &stpl_dst );
+    if( sp_org == SP_NONSENS ) {
+      printf( "FATAL: undefined origin st/pl:(%s, %s) stopping-point claimed in trip definition at (LINE, COL) = (%d, %d).\n",
+	      pst_pltb_orgdst->st_pltb_org.st.name, pst_pltb_orgdst->st_pltb_org.pltb.id,
+	      pst_pltb_orgdst->st_pltb_org.st.pos.row, pst_pltb_orgdst->st_pltb_org.st.pos.col );
+      err_stat.sem.sp_undefined = TRUE;
+    }
+    psps_orgdst->sp_org = sp_org;
+    if( sp_dst == SP_NONSENS ) {
+      printf( "FATAL: undefined destination st/pl:(%s, %s) stopping-point claimed in trip definition at (LINE, COL) = (%d, %d).\n",
+	      pst_pltb_orgdst->st_pltb_dst.st.name, pst_pltb_orgdst->st_pltb_dst.pltb.id,
+	      pst_pltb_orgdst->st_pltb_dst.st.pos.row, pst_pltb_orgdst->st_pltb_dst.st.pos.col );
+      err_stat.sem.sp_undefined = TRUE;
+    }
+    psps_orgdst->sp_dst = sp_dst;
+  }
+  assert( psps_orgdst->sp_org != END_OF_SPs );
+  assert( psps_orgdst->sp_dst != END_OF_SPs );
+}
+
+ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip ) {
+  assert( preg_tbl );
+  assert( ptrip );
+  assert( preg_tbl->kind == PAR_TRIPS );
+  assert( ptrip->attr_st_pltb_orgdst.kind == PAR_ST_PLTB_ORGDST );
+  BOOL ovw = FALSE;
+  ATTR_TRIP_PTR r = NULL;
+  
+  int i;  
+  for( i = 0; i < preg_tbl->ntrips; i++ ) {
+    assert( i < preg_tbl->ntrips );
+    ATTR_TRIP_PTR pprof = &preg_tbl->trip_prof[i];
+    assert( pprof->attr_st_pltb_orgdst.kind == PAR_ST_PLTB_ORGDST );
+    if( ! ident_trips( &pprof->attr_st_pltb_orgdst, &ptrip->attr_st_pltb_orgdst ) ) {
+      if( pobsolete ) {
+	*pobsolete = *pprof;	
+	r = pobsolete;
+#if 0 // *****	
+	preg_tbl->trip_prof[i].attr_sp_orgdst = ptrip->attr_sp_orgdst;
+#endif
+	pprof->running_time = ptrip->running_time;
+	pprof->attr_route_ctrl = ptrip->attr_route_ctrl;
+      } else
+	printf( "NOTICE: failed in redefinition the trip of.\n" );
+      ovw = TRUE;
+    }
+  }
+  if( !ovw ) {
+    assert( i == preg_tbl->ntrips );
+    if( i < MAX_TRIPS_DECL ) {
+#if 0 // *****
+      preg_tbl->trip_prof[i] = *ptrip;
+#else
+      ATTR_TRIP_PTR pprof = &preg_tbl->trip_prof[i];
+      *pprof = *ptrip;
+      assert( pprof->attr_sp_orgdst.sp_org == SP_NONSENS );
+      assert( pprof->attr_sp_orgdst.sp_dst == SP_NONSENS );
+      trip_orgdst_spcodes( &pprof->attr_sp_orgdst, &ptrip->attr_st_pltb_orgdst );
+#endif
+      preg_tbl->ntrips++;
+      r = ptrip;
+    } else {
+      printf( "FATAL: trip definition has exhausted.\n" );
+      exit( 1 );
+    }
+  }
+  return r;
+}
+#endif
 
 ATTR_SP_ASGN_PTR reg_spasgn ( ATTR_SP_ASGNS_PTR preg_tbl, ATTR_SP_ASGN_PTR pprev_asgn, ATTR_SP_ASGN_PTR pasgn ) {
   assert( preg_tbl );
@@ -669,17 +756,23 @@ static int cons_trip_routes ( ROUTE_ASSOC_PTR ptrip_routes, ATTR_ROUTES_PTR patt
 static SP_ORGDST_PAIR_PTR cons_orgdst_sp_pair ( SP_ORGDST_PAIR_PTR ptrip_sps, ATTR_SP_PAIR_PTR pattr_sps ) {
   assert( ptrip_sps );
   assert( pattr_sps );
+#if 0 // *****
   assert( pattr_sps->kind == PAR_SP_PAIR );
   STOPPING_POINT_CODE sp_org = END_OF_SPs;
   STOPPING_POINT_CODE sp_dst = END_OF_SPs;
-  
   sp_org = str2_sp_code( pattr_sps->org.sp_id );
   sp_dst = str2_sp_code( pattr_sps->dst.sp_id );
   assert( sp_org != END_OF_SPs );
   assert( sp_dst != END_OF_SPs );
+  
   ptrip_sps->sp_org = sp_org;
   ptrip_sps->sp_dst = sp_dst;
-  
+#else
+  ptrip_sps->sp_org = pattr_sps->sp_org;
+  ptrip_sps->sp_dst = pattr_sps->sp_dst;
+  assert( ptrip_sps->sp_org != END_OF_SPs );
+  assert( ptrip_sps->sp_dst != END_OF_SPs );
+#endif
   return ptrip_sps;
 }
 

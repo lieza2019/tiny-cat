@@ -64,6 +64,7 @@ typedef struct attr_sp_asgns {
 
 typedef struct attr_sp_pair {
   PAR_KIND kind;
+#if 0 // *****
   struct {
     char sp_id[MAX_SPNAME_LEN];
     SRC_POS pos;
@@ -72,8 +73,10 @@ typedef struct attr_sp_pair {
     char sp_id[MAX_SPNAME_LEN];
     SRC_POS pos;
   } dst;
+#else
   STOPPING_POINT_CODE sp_org;
   STOPPING_POINT_CODE sp_dst;
+#endif
 } ATTR_SP_PAIR, *ATTR_SP_PAIR_PTR;
 
 typedef struct attr_st_pltb_pair {
