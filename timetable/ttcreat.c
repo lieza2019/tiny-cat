@@ -184,6 +184,41 @@ ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, A
   return r;
 }
 
+ATTR_SP_ASGN_PTR reg_spasgn ( ATTR_SP_ASGNS_PTR preg_tbl, ATTR_SP_ASGN_PTR pprev_asgn, ATTR_SP_ASGN_PTR pasgn ) {
+  assert( preg_tbl );
+  assert( pasgn );
+  assert( preg_tbl->kind == PAR_SP_ASGNS );
+  assert( pasgn->kind == PAR_SP_ASGN );
+  BOOL ovw = FALSE;
+  ATTR_SP_ASGN_PTR r = NULL;
+  
+  int i;
+  for( i = 0; i < preg_tbl->nasgns; i++ ) {
+    assert( preg_tbl->pltb_sp_asgns[i].kind == PAR_SP_ASGN );
+    if( eq_st_pltb( &preg_tbl->pltb_sp_asgns[i].st_pltb, &pasgn->st_pltb ) ) {      
+      if( pprev_asgn ) {
+	*pprev_asgn = preg_tbl->pltb_sp_asgns[i];
+	r = pprev_asgn;
+	preg_tbl->pltb_sp_asgns[i] = *pasgn;
+      } else
+	printf( "NOTICE: failed in redefinition the st/pl & stopping-point assignment of.\n" );
+      ovw = TRUE;
+    }
+  }
+  if( !ovw ) {
+    assert( i == preg_tbl->nasgns );
+    if( i < MAX_SP_ASGNMENTS ) {
+      preg_tbl->pltb_sp_asgns[i] = *pasgn;
+      preg_tbl->nasgns++;
+      r = pasgn;
+    } else {
+      printf( "FATAL: st/pl & stopping-point assignments has exhausted.\n" );
+      exit( 1 );
+    }
+  }
+  return r;
+}
+
 ATTR_JR_ASGN_PTR reg_jrasgn ( ATTR_JR_ASGNS_PTR preg_tbl, ATTR_JR_ASGN_PTR pprev_asgn, ATTR_JR_ASGN_PTR pasgn ) {
   assert( preg_tbl );
   assert( pasgn );

@@ -181,5 +181,6 @@ extern BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 );
 extern BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_ORGDST_PTR pp1, ATTR_ST_PLTB_ORGDST_PTR pp2 );
 
 extern ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, ATTR_TRIP_PTR ptrip );
+extern ATTR_SP_ASGN_PTR reg_spasgn ( ATTR_SP_ASGNS_PTR preg_tbl, ATTR_SP_ASGN_PTR pprev_asgn, ATTR_SP_ASGN_PTR pasgn );
 extern ATTR_JR_ASGN_PTR reg_jrasgn ( ATTR_JR_ASGNS_PTR preg_tbl, ATTR_JR_ASGN_PTR pprev_asgn, ATTR_JR_ASGN_PTR pasgn );
 extern ATTR_TRIP_PTR reg_trip_journey ( ATTR_JOURNEYS_PTR preg_tbl, JOURNEY_ID jid, SRC_POS_PTR ppos, ATTR_TRIP_PTR ptrip );
