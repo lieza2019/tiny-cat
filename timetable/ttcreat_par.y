@@ -364,13 +364,13 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
 %token <crew_id> TK_CREWID
 %type <attr_trip_journey> trip_journey dwell_journey arrdep_time_journey perf_journey revenue_journey crewid_journey
 %type <pattr_trips_journey> trips_journey
-%type <pattr_journey> journey_definition
-%type <pattr_journeys> journeys_decl
+%type <pattr_journey> journey_def
+%type <pattr_journeys> journey_definitions journeys_declaration
 %type <ptimetable_symtbl> timetable_decl
  /* %start journey_rake_asgnmnts */
 %start timetable_decl
 %%
-timetable_decl : sp_asgns_decl trips_decl journey_rake_asgnmnts_decl journeys_decl {
+timetable_decl : sp_asgns_decl trips_decl journey_rake_asgnmnts_decl journeys_declaration {
 #if 1 /* ***** for debugging. */
   print_timetable_decl( $1, $2, $3, $4 );
 #endif
@@ -378,8 +378,12 @@ timetable_decl : sp_asgns_decl trips_decl journey_rake_asgnmnts_decl journeys_de
  }
 ;
 
-/* Journeys_decl : TK_JOURNEYS : journey_definition*
-   journey_definition : TK_JOURNEY_ID : trips_journey
+journeys_declaration : journey_definitions {
+  cons_journeys( $1 );
+  $$ = $1;
+}
+/* journey_definitions : TK_JOURNEYS : journey_def*
+   journey_def : TK_JOURNEY_ID : trips_journey
    trips_journey : (trips_journey (';' trip_journey)*)?
    e.g.
    journeys:
@@ -387,14 +391,14 @@ timetable_decl : sp_asgns_decl trips_decl journey_rake_asgnmnts_decl journeys_de
        ( ((JLA,PL1), (KIKJ, PL1)), 37, (11:22:33, 23:59:59), perfslow, revenue, crew_021 );
        ( ((BTGD,PL2), (OKBS, PL2)), 15, (00:13:51, 21:57:13), perffast, revenue, crew_007 );
 */
-journeys_decl : TK_JOURNEYS ':' /* empty journies */ {
+journey_definitions : TK_JOURNEYS ':' /* empty journies */ {
   assert( journey_id_w.jid_w < 0 );
   assert( timetable_symtbl->journeys_regtbl.kind == PAR_UNKNOWN );
   assert( timetable_symtbl->journeys_regtbl.njourneys == 0 );
   timetable_symtbl->journeys_regtbl.kind = PAR_JOURNEYS;
   $$ = &timetable_symtbl->journeys_regtbl;
-}
-              | journeys_decl journey_definition {
+ }
+              | journey_definitions journey_def {
   assert( journey_id_w.jid_w > 0 );
   assert( timetable_symtbl->journeys_regtbl.kind == PAR_JOURNEYS );
   timetable_symtbl->journeys_regtbl.njourneys++;
@@ -415,7 +419,7 @@ journeys_decl : TK_JOURNEYS ':' /* empty journies */ {
   $$ = &timetable_symtbl->journeys_regtbl;  
  }
 ;
-journey_definition : journey_ident ':' trips_journey {
+journey_def : journey_ident ':' trips_journey {
   assert( journey_id_w.jid_w == $1 );
   assert( &timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].trips == $3 );
   if( timetable_symtbl->journeys_regtbl.journey_prof[journey_id_w.jid_w].journey_id.jid == journey_id_w.jid_w )
@@ -1391,14 +1395,14 @@ trips_defs : TK_KEY_TRIPS ':' trips_definition {
   
   ttcreat.y: warning: 1 shift/reduce conflict [-Wconflicts-sr]
   ttcreat.y: warning: shift/reduce conflict on token error [-Wcounterexamples]
-  First example: journey_rake_asgnmnts journeys_decl
+  First example: journey_rake_asgnmnts journey_definitions
   Shift derivation
     timetable_decl
-    ↳ 1: journey_rake_asgnmnts journeys_decl
-  Second example: error journeys_decl
+    ↳ 1: journey_rake_asgnmnts journey_definitions
+  Second example: error journey_definitions
   Reduce derivation
     timetable_decl
-    ↳ 1: error journeys_decl
+    ↳ 1: error journey_definitions
     
            | TK_KEY_TRIPS ':' error {
   if( !err_stat.err_trips_decl ) {

@@ -186,5 +186,6 @@ extern TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst );
 extern void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns );
 extern void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns );
 extern void cons_trips ( ATTR_TRIPS_PTR ptrips );
+extern void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys );
 
 extern int ttcreat ( void );

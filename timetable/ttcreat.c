@@ -1016,7 +1016,7 @@ static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR p
   pjtrip->time_arrdep.time_dep = arr_dep.d;
 }
 
-static void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
+void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
   assert( pjourneys );
   assert( pjourneys->kind == PAR_JOURNEYS );
   ST_PLTB_ORGDST_PTR st_pltb_ref[MAX_JOURNEY_TRIPS] = {};
@@ -1151,8 +1151,10 @@ int ttcreat ( void ) {
       r = err_result;
     }
   }
-  
+
+#if 0 // *****
   assert( !TTC_ERRSTAT_SEM( err_stat ) );
+#endif
   //cons_spasgn( &timetable_symtbl->sp_asgns );
   //cons_trips( &timetable_symtbl->trips_regtbl );
   if( err_stat.sem.route_redef ||
@@ -1160,7 +1162,7 @@ int ttcreat ( void ) {
     r = err_result;
   }
   //cons_jrasgn( &timetable_symtbl->jr_asgn_regtbl );
-  cons_journeys( &timetable_symtbl->journeys_regtbl );
+  //cons_journeys( &timetable_symtbl->journeys_regtbl );
   cons_scheduled_cmds();
   
   printf( "\n" );
