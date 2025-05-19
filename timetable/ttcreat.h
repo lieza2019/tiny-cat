@@ -173,7 +173,11 @@ typedef struct timetable_dataset {
     JOURNEY_DESC journeys[MAX_JOURNEYS];
   } j;
 } TIMETABLE_DATASET, *TIMETABLE_DATASET_PTR;
+#if 0 // *****
 extern TIMETABLE_DATASET timetbl_dataset;
+#else
+extern TIMETABLE_DATASET_PTR timetbl_dataset;
+#endif
 
 #include "ttcreat_par.h"
 

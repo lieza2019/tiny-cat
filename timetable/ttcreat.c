@@ -13,7 +13,11 @@ struct scheduled_cmds_nodebuf scheduled_cmds;
 
 TTC_CTRL ttc_ctrl_flgs;
 ERR_STAT err_stat;
+#if 0 // *****
 TIMETABLE_DATASET timetbl_dataset;
+#else
+TIMETABLE_DATASET_PTR timetbl_dataset = NULL;
+#endif
 
 char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen ) {
   assert( pstr );
@@ -584,7 +588,7 @@ static int cons_st_pltb_pair ( ST_PLTB_ORGDST_PTR st_pltb_ref[], const int reftb
   {
     BOOL ovrid = FALSE;
     int i;
-    assert( timetbl_dataset.trips_decl.num_trips <= MAX_TRIPS_DECL );
+    assert( timetbl_dataset->trips_decl.num_trips <= MAX_TRIPS_DECL );
     
     for( i = 0; i < reftbl_len; i++ ) {
       if( i >= refs_lim ) {
@@ -694,12 +698,12 @@ void cons_trips ( ATTR_TRIPS_PTR ptrips ) {
   ST_PLTB_ORGDST_PTR st_pltb_ref[MAX_TRIPS_DECL] = {};
   
   int i;
-  assert( timetbl_dataset.trips_decl.num_trips == 0 );
+  assert( timetbl_dataset->trips_decl.num_trips == 0 );
   {
     int j = 0;
     while( j < MAX_TRIPS_DECL ) {
-      st_pltb_ref[j] = &timetbl_dataset.trips_decl.trips[j].st_pltb_orgdst;
-      assert( (TRIP_DESC_PTR)st_pltb_ref[j] == &timetbl_dataset.trips_decl.trips[j] );
+      st_pltb_ref[j] = &timetbl_dataset->trips_decl.trips[j].st_pltb_orgdst;
+      assert( (TRIP_DESC_PTR)st_pltb_ref[j] == &timetbl_dataset->trips_decl.trips[j] );
       j++;
     }
     assert( j == MAX_TRIPS_DECL );
@@ -708,9 +712,9 @@ void cons_trips ( ATTR_TRIPS_PTR ptrips ) {
   for( i = 0; i < ptrips->ntrips; i++ ) {
     assert( ptrips->trip_prof[i].kind == PAR_TRIP );
     int newone = -1;
-    newone = cons_st_pltb_pair( st_pltb_ref, MAX_TRIPS_DECL, timetbl_dataset.trips_decl.num_trips, &ptrips->trip_prof[i].attr_st_pltb_orgdst, TRUE );
+    newone = cons_st_pltb_pair( st_pltb_ref, MAX_TRIPS_DECL, timetbl_dataset->trips_decl.num_trips, &ptrips->trip_prof[i].attr_st_pltb_orgdst, TRUE );
     if( newone > -1 ) {
-      assert( timetbl_dataset.trips_decl.num_trips == newone );
+      assert( timetbl_dataset->trips_decl.num_trips == newone );
       TRIP_DESC_PTR pT = (TRIP_DESC_PTR)st_pltb_ref[newone];
       assert( pT );      
       cons_orgdst_sp_pair( &pT->sp_orgdst, &ptrips->trip_prof[i].attr_sp_orgdst );
@@ -722,7 +726,7 @@ void cons_trips ( ATTR_TRIPS_PTR ptrips ) {
 	if( nroutes > -1 )
 	  pT->num_routes = nroutes;
       }
-      timetbl_dataset.trips_decl.num_trips++;
+      timetbl_dataset->trips_decl.num_trips++;
     }
   }
 }
@@ -732,9 +736,9 @@ STOPPING_POINT_CODE lkup_spcode ( ST_PLTB_PAIR_PTR pst_pl ) {
   STOPPING_POINT_CODE r = SP_NONSENS;
   
   int i;
-  for( i = 0; i < timetbl_dataset.sp_asgns.num_asgns; i++ ) {
-    if( (timetbl_dataset.sp_asgns.spasgns[i].st_pltb.st == pst_pl->st) && (timetbl_dataset.sp_asgns.spasgns[i].st_pltb.pltb == pst_pl->pltb ) ) {
-      r = timetbl_dataset.sp_asgns.spasgns[i].sp;
+  for( i = 0; i < timetbl_dataset->sp_asgns.num_asgns; i++ ) {
+    if( (timetbl_dataset->sp_asgns.spasgns[i].st_pltb.st == pst_pl->st) && (timetbl_dataset->sp_asgns.spasgns[i].st_pltb.pltb == pst_pl->pltb ) ) {
+      r = timetbl_dataset->sp_asgns.spasgns[i].sp;
       break;
     }
   }
@@ -747,8 +751,8 @@ TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst ) {
   TRIP_DESC_PTR r = NULL;
   
   int i;  
-  for( i = 0; i< timetbl_dataset.trips_decl.num_trips; i++ ) {
-    TRIP_DESC_PTR pT = &timetbl_dataset.trips_decl.trips[i];
+  for( i = 0; i< timetbl_dataset->trips_decl.num_trips; i++ ) {
+    TRIP_DESC_PTR pT = &timetbl_dataset->trips_decl.trips[i];
     assert( pT );
     if( ((pT->st_pltb_orgdst.org.st == porg->st) && (pT->st_pltb_orgdst.org.pltb == porg->pltb)) &&
 	((pT->st_pltb_orgdst.dst.st == pdst->st) && (pT->st_pltb_orgdst.dst.pltb == pdst->pltb)) ) {
@@ -775,10 +779,10 @@ void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
       int k;
       for( k = 0; k < cnt; k++ ) {
 	assert( k < cnt );
-	const char *st = cnv2str_st_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st );
+	const char *st = cnv2str_st_id( timetbl_dataset->sp_asgns.spasgns[k].st_pltb.st );
 	assert( st );
 	if( ! strncmp( st, pa->st_pltb.st.name, MAX_STNAME_LEN ) ) {
-	  const char *pltb = cnv2str_pltb_id( timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb );
+	  const char *pltb = cnv2str_pltb_id( timetbl_dataset->sp_asgns.spasgns[k].st_pltb.pltb );
 	  assert( pltb );
 	  if( ! strncmp( pltb, pa->st_pltb.pltb.id, MAX_PLTB_NAMELEN ) ) {
 	    printf( "NOTICE: st/pl & sp assignment overridden at (LINE, COL) = (%d, %d).\n", pa->pos.row, pa->pos.col );
@@ -786,15 +790,15 @@ void cons_spasgn ( ATTR_SP_ASGNS_PTR pspasgns ) {
 	  }
 	}
       }
-      timetbl_dataset.sp_asgns.spasgns[k].st_pltb.st = str2_st_id ( pa->st_pltb.st.name );
-      timetbl_dataset.sp_asgns.spasgns[k].st_pltb.pltb = str2_pltb_id( pa->st_pltb.pltb.id );
-      timetbl_dataset.sp_asgns.spasgns[k].sp = str2_sp_code( pa->sp.sp_id );
+      timetbl_dataset->sp_asgns.spasgns[k].st_pltb.st = str2_st_id ( pa->st_pltb.st.name );
+      timetbl_dataset->sp_asgns.spasgns[k].st_pltb.pltb = str2_pltb_id( pa->st_pltb.pltb.id );
+      timetbl_dataset->sp_asgns.spasgns[k].sp = str2_sp_code( pa->sp.sp_id );
       if( k >= cnt )
 	cnt++;
     } else
       assert( pa->kind == PAR_UNKNOWN );
   }
-  timetbl_dataset.sp_asgns.num_asgns = cnt;
+  timetbl_dataset->sp_asgns.num_asgns = cnt;
 }
 
 void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
@@ -812,19 +816,19 @@ void cons_jrasgn ( ATTR_JR_ASGNS_PTR pjrasgns ) {
       int k;
       for( k = 0; k < cnt; k++ ) {
 	assert( k < cnt );
-	if( timetbl_dataset.jr_asgns.jrasgns[k].jid == pa->journey_id.jid ) {
+	if( timetbl_dataset->jr_asgns.jrasgns[k].jid == pa->journey_id.jid ) {
 	  printf( "NOTICE: journey-rake assignment overridden at (LINE, COL) = (%d, %d).\n", pa->journey_id.pos.row, pa->journey_id.pos.col );
 	  break;
 	}
       }
-      timetbl_dataset.jr_asgns.jrasgns[k].jid = pa->journey_id.jid;
-      timetbl_dataset.jr_asgns.jrasgns[k].rake_id = pa->rake_id.rid;
+      timetbl_dataset->jr_asgns.jrasgns[k].jid = pa->journey_id.jid;
+      timetbl_dataset->jr_asgns.jrasgns[k].rake_id = pa->rake_id.rid;
       if( k >= cnt )
 	cnt++;
     } else
       assert( pa->kind == PAR_UNKNOWN );
   }
-  timetbl_dataset.jr_asgns.num_asgns = cnt;
+  timetbl_dataset->jr_asgns.num_asgns = cnt;
 }
 
 static void jtrip_arrdep_time ( JOURNEY_TRIP_PTR pjtrip_prev, JOURNEY_TRIP_PTR pjtrip, ATTR_TRIP_PTR ppar_trip ) {
@@ -1024,20 +1028,20 @@ void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
   
   int i = 0;  
   assert( pjourneys->njourneys >= 0 );
-  assert( timetbl_dataset.j.num_journeys == 0 );
+  assert( timetbl_dataset->j.num_journeys == 0 );
   while( i < MAX_JOURNEYS ) {
-    if( timetbl_dataset.j.num_journeys >= pjourneys->njourneys )
+    if( timetbl_dataset->j.num_journeys >= pjourneys->njourneys )
       break;
-    timetbl_dataset.j.journeys[i].jid = -1;
+    timetbl_dataset->j.journeys[i].jid = -1;
     if( pjourneys->journey_prof[i].journey_id.jid > 0 ) {
-      timetbl_dataset.j.journeys[i].jid = pjourneys->journey_prof[i].journey_id.jid;
+      timetbl_dataset->j.journeys[i].jid = pjourneys->journey_prof[i].journey_id.jid;
       assert( pjourneys->journey_prof[i].kind == PAR_JOURNEY );
-      assert( timetbl_dataset.j.journeys[i].num_trips == 0 );
+      assert( timetbl_dataset->j.journeys[i].num_trips == 0 );
       {
 	int k = 0;
 	while( k < MAX_JOURNEY_TRIPS ) {
-	  st_pltb_ref[k] = &timetbl_dataset.j.journeys[i].trips[k].st_pltb_orgdst;
-	  assert( (JOURNEY_TRIP_PTR)st_pltb_ref[k] == &timetbl_dataset.j.journeys[i].trips[k] );
+	  st_pltb_ref[k] = &timetbl_dataset->j.journeys[i].trips[k].st_pltb_orgdst;
+	  assert( (JOURNEY_TRIP_PTR)st_pltb_ref[k] == &timetbl_dataset->j.journeys[i].trips[k] );
 	  k++;
 	}
 	assert( k == MAX_JOURNEY_TRIPS );
@@ -1062,7 +1066,7 @@ void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	    deadend_trip.deadend_found = FALSE;
 	  }
 	  if( pJ_par->trips.trip_prof[l].deadend ) {
-	    const int newone = timetbl_dataset.j.journeys[i].num_trips;
+	    const int newone = timetbl_dataset->j.journeys[i].num_trips;
 	    if( newone < MAX_JOURNEY_TRIPS ) {
 	      JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
 	      assert( pJ );
@@ -1080,7 +1084,7 @@ void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	      assert( (pJ->sp_cond.stop_skip == DWELL) && (pJ->sp_cond.dwell_time == 0) );
 	      pJ->deadend = TRUE;
 	      jtrip_arrdep_time( pJ_prev, pJ, &pJ_par->trips.trip_prof[l] ); // settings for pJ->time_arrdep;
-	      timetbl_dataset.j.journeys[i].num_trips++;
+	      timetbl_dataset->j.journeys[i].num_trips++;
 	      pJ_prev = pJ;
 	      deadend_trip.deadend_found = TRUE;
 	      deadend_trip.prev_pos = pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst.st_pltb_org.st.pos;
@@ -1091,9 +1095,9 @@ void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	    }
 	  } else {
 	    int newone = -1;
-	    newone = cons_st_pltb_pair( st_pltb_ref, MAX_JOURNEY_TRIPS, timetbl_dataset.j.journeys[i].num_trips, &pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst, FALSE );
+	    newone = cons_st_pltb_pair( st_pltb_ref, MAX_JOURNEY_TRIPS, timetbl_dataset->j.journeys[i].num_trips, &pJ_par->trips.trip_prof[l].attr_st_pltb_orgdst, FALSE );
 	    if( newone > -1 ) {
-	      assert( timetbl_dataset.j.journeys[i].num_trips == newone );
+	      assert( timetbl_dataset->j.journeys[i].num_trips == newone );
 	      JOURNEY_TRIP_PTR pJ = (JOURNEY_TRIP_PTR)st_pltb_ref[newone];
 	      assert( pJ );
 	      pJ->ptrip_prof = lkup_trip( &pJ->st_pltb_orgdst.org, &pJ->st_pltb_orgdst.dst );
@@ -1123,49 +1127,52 @@ void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 		err_stat.sem.invalid_crewid = TRUE;
 		pJ->crew_id = CREW_NO_ID;
 	      }
-	      timetbl_dataset.j.journeys[i].num_trips++;
+	      timetbl_dataset->j.journeys[i].num_trips++;
 	      pJ_prev = pJ;
 	    }
 	  }
 	}
       }
-      timetbl_dataset.j.num_journeys++;
+      timetbl_dataset->j.num_journeys++;
     }
     i++;
   }
-  assert( timetbl_dataset.j.num_journeys == pjourneys->njourneys );
+  assert( timetbl_dataset->j.num_journeys == pjourneys->njourneys );
 }
 
 static void print_ttc_symtbl ( void ) {
-  ttc_print_spasgns( timetbl_dataset.sp_asgns.spasgns, timetbl_dataset.sp_asgns.num_asgns );
+  ttc_print_spasgns( timetbl_dataset->sp_asgns.spasgns, timetbl_dataset->sp_asgns.num_asgns );
   printf( "\n" );
-  ttc_print_trips( timetbl_dataset.trips_decl.trips, timetbl_dataset.trips_decl.num_trips );
+  ttc_print_trips( timetbl_dataset->trips_decl.trips, timetbl_dataset->trips_decl.num_trips );
   printf( "\n" );
-  ttc_print_jrasgns( timetbl_dataset.jr_asgns.jrasgns, timetbl_dataset.jr_asgns.num_asgns );
+  ttc_print_jrasgns( timetbl_dataset->jr_asgns.jrasgns, timetbl_dataset->jr_asgns.num_asgns );
   printf( "\n" );
-  ttc_print_journeys( timetbl_dataset.j.journeys, timetbl_dataset.j.num_journeys );
+  ttc_print_journeys( timetbl_dataset->j.journeys, timetbl_dataset->j.num_journeys );
 }
 
 static void ttc_init ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   BOOL alloc = FALSE;
 
   ttc_ctrl_flgs.dump_par_symtbl = dump_par_symtbl;
-  ttc_ctrl_flgs.dump_ttc_symtbl = dump_ttc_symtbl;  
+  ttc_ctrl_flgs.dump_ttc_symtbl = dump_ttc_symtbl;
   
   scheduled_cmds.nodes = (SCHEDULED_COMMAND_PTR)calloc( (sizeof(SCHEDULED_COMMAND) * SCHEDULED_CMDS_NODEBUFSIZ), 1 );
   if( scheduled_cmds.nodes ) {
     scheduled_cmds.plim = &scheduled_cmds.nodes[SCHEDULED_CMDS_NODEBUFSIZ];
-    timetable_symtbl = (ATTR_TIMETABLE_PTR)calloc( sizeof(ATTR_TIMETABLE), 1 );
-    if( timetable_symtbl ) {
-      timetable_symtbl->trips_regtbl.kind = PAR_UNKNOWN;
-      timetable_symtbl->jr_asgn_regtbl.kind = PAR_UNKNOWN;
-      timetable_symtbl->journeys_regtbl.kind = PAR_UNKNOWN;
-      {
-	int i;
-	for( i = 0; i < MAX_JOURNEYS; i++ )
-	  timetable_symtbl->journeys_regtbl.journey_prof[i].journey_id.jid = -1;
+    timetbl_dataset = (TIMETABLE_DATASET_PTR)calloc( sizeof(TIMETABLE_DATASET), 1 );
+    if( timetbl_dataset ) {
+      timetable_symtbl = (ATTR_TIMETABLE_PTR)calloc( sizeof(ATTR_TIMETABLE), 1 );
+      if( timetable_symtbl ) {
+	timetable_symtbl->trips_regtbl.kind = PAR_UNKNOWN;
+	timetable_symtbl->jr_asgn_regtbl.kind = PAR_UNKNOWN;
+	timetable_symtbl->journeys_regtbl.kind = PAR_UNKNOWN;
+	{
+	  int i;
+	  for( i = 0; i < MAX_JOURNEYS; i++ )
+	    timetable_symtbl->journeys_regtbl.journey_prof[i].journey_id.jid = -1;
+	}
+	alloc = TRUE;
       }
-      alloc = TRUE;
     }
   }
   if( !alloc ) {
@@ -1179,7 +1186,10 @@ int ttcreat ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   extern FILE *yyin;
   int r = 0;
   
-  ttc_init( dump_par_symtbl, dump_ttc_symtbl );  
+  ttc_init( dump_par_symtbl, dump_ttc_symtbl );
+  assert( timetable_symtbl );
+  assert( timetbl_dataset );
+  assert( scheduled_cmds.nodes && scheduled_cmds.plim );
   assert( !TTC_ERRSTAT_PAR( err_stat ) );
   assert( !TTC_ERRSTAT_SEM( err_stat ) );
   yyin = stdin;

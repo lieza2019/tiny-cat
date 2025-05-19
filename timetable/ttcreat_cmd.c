@@ -247,12 +247,12 @@ void cons_scheduled_cmds ( void ) {
   int jcnt;
   int i;
   
-  for( i = 0, jcnt = 0; (i < MAX_JOURNEYS) && (jcnt < timetbl_dataset.j.num_journeys); i++ ) {
+  for( i = 0, jcnt = 0; (i < MAX_JOURNEYS) && (jcnt < timetbl_dataset->j.num_journeys); i++ ) {
     struct {
       SCHEDULED_COMMAND_PTR phead;
       SCHEDULED_COMMAND_PTR ptail;
     } sch_cmds = { NULL, NULL };
-    JOURNEY_DESC_PTR pjd = &timetbl_dataset.j.journeys[i];
+    JOURNEY_DESC_PTR pjd = &timetbl_dataset->j.journeys[i];
     assert( pjd );
     if( pjd->jid > -1 ) {
       int k;
@@ -344,7 +344,7 @@ void cons_scheduled_cmds ( void ) {
       jcnt++;
     }
   }
-  assert( jcnt == timetbl_dataset.j.num_journeys );
+  assert( jcnt == timetbl_dataset->j.num_journeys );
 }
 
 static ARS_ASSOC_TIME_PTR journey_start_time ( SCHEDULED_COMMAND_PTR pcmd ) {
@@ -386,9 +386,9 @@ static int rake_journey_asgn ( JOURNEY_ID jid ) {
   int cnt;
   int i;
   for( i = 0, cnt = 0; i < MAX_JR_ASGNMENTS; i++ ) {
-    JOURNEY_RAKE_ASGN_PTR pa = &timetbl_dataset.jr_asgns.jrasgns[i];
+    JOURNEY_RAKE_ASGN_PTR pa = &timetbl_dataset->jr_asgns.jrasgns[i];
     assert( pa );
-    if( cnt >= timetbl_dataset.jr_asgns.num_asgns ) {
+    if( cnt >= timetbl_dataset->jr_asgns.num_asgns ) {
       assert( r < 0 );
       break;
     }
@@ -401,7 +401,7 @@ static int rake_journey_asgn ( JOURNEY_ID jid ) {
     }
   }
   if( r < 0 )
-    assert( cnt == timetbl_dataset.jr_asgns.num_asgns );
+    assert( cnt == timetbl_dataset->jr_asgns.num_asgns );
   return r;
 }
 
@@ -411,8 +411,8 @@ int load_online_timetbl ( void ) {
   int jcnt = 0;
   int i;
   int k;
-  for( i = 0, k = 0; (i < MAX_JOURNEYS) && (jcnt < timetbl_dataset.j.num_journeys); i++ ) {
-    JOURNEY_DESC_PTR pjd = &timetbl_dataset.j.journeys[i];
+  for( i = 0, k = 0; (i < MAX_JOURNEYS) && (jcnt < timetbl_dataset->j.num_journeys); i++ ) {
+    JOURNEY_DESC_PTR pjd = &timetbl_dataset->j.journeys[i];
     assert( pjd );
     if( pjd->jid > -1 ) {
       assert( pjd->pschcmds_journey );
@@ -472,7 +472,7 @@ int load_online_timetbl ( void ) {
       jcnt++;
     }
   }
-  assert( jcnt == timetbl_dataset.j.num_journeys );
+  assert( jcnt == timetbl_dataset->j.num_journeys );
   assert( k == jcnt );
   r = jcnt;
   online_timetbl.num_journeys = r;
