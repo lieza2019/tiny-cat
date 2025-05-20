@@ -1194,12 +1194,13 @@ int ttcreat ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   assert( !TTC_ERRSTAT_SEM( err_stat ) );
   yyin = stdin;
   r = yyparse();
+  cons_scheduled_cmds();
   
   if( ttc_ctrl_flgs.dump_ttc_symtbl ) {
     printf( "\n" );
     print_ttc_symtbl();
   }
-  cons_scheduled_cmds();
+  
   load_online_timetbl();
   return r;
 }
