@@ -173,11 +173,7 @@ typedef struct timetable_dataset {
     JOURNEY_DESC journeys[MAX_JOURNEYS];
   } j;
 } TIMETABLE_DATASET, *TIMETABLE_DATASET_PTR;
-#if 0 // *****
-extern TIMETABLE_DATASET timetbl_dataset;
-#else
 extern TIMETABLE_DATASET_PTR timetbl_dataset;
-#endif
 
 #include "ttcreat_par.h"
 
@@ -190,7 +186,7 @@ extern void ttc_print_journeys( JOURNEY_DESC journeys[], int njourneys );
 extern int load_online_timetbl ( void );
 
 extern void ttc_print_schcmds ( SCHEDULED_COMMAND_PTR pschcmds, const int nindents );
-extern void cons_scheduled_cmds ( void );
+extern void emit_scheduled_cmds ( void );
 
 extern STOPPING_POINT_CODE lkup_spcode ( ST_PLTB_PAIR_PTR pst_pl );
 extern TRIP_DESC_PTR lkup_trip ( ST_PLTB_PAIR_PTR porg, ST_PLTB_PAIR_PTR pdst );

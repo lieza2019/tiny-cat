@@ -13,11 +13,7 @@ struct scheduled_cmds_nodebuf scheduled_cmds;
 
 TTC_CTRL ttc_ctrl_flgs;
 ERR_STAT err_stat;
-#if 0 // *****
-TIMETABLE_DATASET timetbl_dataset;
-#else
 TIMETABLE_DATASET_PTR timetbl_dataset = NULL;
-#endif
 
 char *cnv2str_kind ( char *pstr, PAR_KIND kind, const int buflen ) {
   assert( pstr );
@@ -1194,7 +1190,7 @@ int ttcreat ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   assert( !TTC_ERRSTAT_SEM( err_stat ) );
   yyin = stdin;
   r = yyparse();
-  cons_scheduled_cmds();
+  emit_scheduled_cmds();
   
   if( ttc_ctrl_flgs.dump_ttc_symtbl ) {
     printf( "\n" );

@@ -241,7 +241,7 @@ static SCHEDULED_COMMAND_PTR cons_rosetrel_cmds ( JOURNEY_ID jid, JOURNEY_TRIP_P
   return r;
 }
 
-void cons_scheduled_cmds ( void ) {
+void emit_scheduled_cmds ( void ) {
   assert( scheduled_cmds.nodes );
   assert( scheduled_cmds.plim );
   int jcnt;
