@@ -20,8 +20,6 @@
 #error MAX_JOURNEY_TRIPS must be greater than/equal to MAX_TRIPS_DECL in ttcreat.h.
 #endif
 
-#define SCHEDULED_CMDS_NODEBUFSIZ 1024
-
 #define DEFAULT_DWELL_TIME 17 // in sec.
 #define DEFAULT_PERFLEVEL PERFREG_NORMAL
 #define DEFAULT_REVENUE FALSE

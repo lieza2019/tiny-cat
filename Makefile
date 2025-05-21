@@ -49,7 +49,6 @@ surveill.h : generic.h misc.h
 	$(TOUCH) $@
 ars.h : generic.h misc.h cbi.h
 	$(TOUCH) $@
-#timetable.h : generic.h misc.h sparcs.h cbtc.h timetable_def.h
 timetable.h : generic.h misc.h sparcs.h cbtc.h interlock.h timetable_def.h
 	$(TOUCH) $@
 network.h : generic.h

@@ -76,6 +76,7 @@ typedef struct scheduled_command {
 } SCHEDULED_COMMAND, *SCHEDULED_COMMAND_PTR;
 typedef const struct scheduled_command *SCHEDULED_COMMAND_C_PTR;
 
+#define SCHEDULED_CMDS_NODEBUFSIZ 1024
 struct scheduled_cmds_nodebuf {
   int avail;
   SCHEDULED_COMMAND_PTR nodes;
