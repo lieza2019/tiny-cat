@@ -9,8 +9,6 @@
 #include "../generic.h"
 #include "ttcreat.h"
 
-struct scheduled_cmds_nodebuf scheduled_cmds;
-
 TTC_CTRL ttc_ctrl_flgs;
 ERR_STAT err_stat;
 TIMETABLE_DATASET_PTR timetbl_dataset = NULL;
