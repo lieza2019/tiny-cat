@@ -9,13 +9,14 @@
 #undef TIMETABLE_C
 
 ONLINE_TIMETABLE online_timetbl;
-
 struct scheduled_cmds_nodebuf scheduled_cmds;
+
 SCHEDULED_COMMAND_PTR newnode_schedulecmd ( void ) {
   assert( scheduled_cmds.nodes );
   assert( scheduled_cmds.plim );  
   SCHEDULED_COMMAND_PTR r = &scheduled_cmds.nodes[scheduled_cmds.avail];
   if( r >= scheduled_cmds.plim ) {
+    errorF( "%s", "nodes exhausted, to create a scheduled command.\n" );
     exit( 1 );
   }
   scheduled_cmds.avail++;

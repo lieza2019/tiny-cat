@@ -10,7 +10,9 @@
 
 #define MAX_JOURNEYS_IN_TIMETABLE 1024
 #define SCHEDULED_CMDS_SORTBUF_SIZE 65536
+#if 0 // *****
 #define SCHEDULED_CMDS_NODEBUF_SIZE SCHEDULED_CMDS_SORTBUF_SIZE
+#endif
 
 typedef struct scheduled_command {
   JOURNEY_ID jid;
