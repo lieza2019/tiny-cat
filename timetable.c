@@ -22,7 +22,7 @@ SCHEDULED_COMMAND_PTR newnode_schedulecmd ( void ) {
   return r;
 }
 
-static SCHEDULED_COMMAND_PTR sortbuf_at_sp[SCHEDULED_COMMANDS_NODEBUF_SIZE];
+static SCHEDULED_COMMAND_PTR sortbuf_at_sp[SCHEDULED_CMDS_SORTBUF_SIZE];
 static struct {
   int num_cmds;
   SCHEDULED_COMMAND_PTR pcmds;
@@ -252,19 +252,19 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
     int cnt = 0;
     SCHEDULED_COMMAND_PTR pC_sp = events_at_sp[i].pcmds;
     while( pC_sp ) {
-      assert( cnt < SCHEDULED_COMMANDS_NODEBUF_SIZE );
+      assert( cnt < SCHEDULED_CMDS_SORTBUF_SIZE );
       sortbuf_at_sp[cnt++] = pC_sp;
       pC_sp = pC_sp->ln.sp_sch.pNext;
     }
-    assert( (cnt >= 0) && (cnt < SCHEDULED_COMMANDS_NODEBUF_SIZE) );
+    assert( (cnt >= 0) && (cnt < SCHEDULED_CMDS_SORTBUF_SIZE) );
 #ifdef CHK_STRICT_CONSISTENCY
     {
       int k = cnt;
-      while( k < SCHEDULED_COMMANDS_NODEBUF_SIZE ) {
+      while( k < SCHEDULED_CMDS_SORTBUF_SIZE ) {
 	sortbuf_at_sp[k] = NULL;
 	k++;
       }
-      assert( k == SCHEDULED_COMMANDS_NODEBUF_SIZE );
+      assert( k == SCHEDULED_CMDS_SORTBUF_SIZE );
     }
 #endif // CHK_STRICT_CONSISTENCY
     
@@ -277,7 +277,7 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
 	k++;
       }
       assert( k == cnt );
-      while( k < SCHEDULED_COMMANDS_NODEBUF_SIZE ) {
+      while( k < SCHEDULED_CMDS_SORTBUF_SIZE ) {
 	assert( ! sortbuf_at_sp[k] );
 	k++;
       }

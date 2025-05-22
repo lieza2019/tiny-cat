@@ -90,12 +90,11 @@ SYSTEM_PARAMS tiny_system_params = {
   DEFAULT_DEPARTURE_OFFSET
 };
 
-static SCHEDULED_COMMAND sch_cmd_nodes[SCHEDULED_COMMANDS_NODEBUF_SIZE];
+static SCHEDULED_COMMAND sch_cmd_nodes[SCHEDULED_CMDS_NODEBUF_SIZE];
 static int frontier;
-
 SCHEDULED_COMMAND_PTR sch_cmd_newnode ( void ) {
   SCHEDULED_COMMAND_PTR r = NULL;
-  if( frontier < SCHEDULED_COMMANDS_NODEBUF_SIZE )
+  if( frontier < SCHEDULED_CMDS_NODEBUF_SIZE )
     r = &sch_cmd_nodes[++frontier];
   else
     errorF( "%s", "nodes exhausted, to create a scheduled command.\n" );
