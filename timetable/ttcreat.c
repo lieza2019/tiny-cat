@@ -1150,9 +1150,9 @@ static void ttc_init ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   ttc_ctrl_flgs.dump_par_symtbl = dump_par_symtbl;
   ttc_ctrl_flgs.dump_ttc_symtbl = dump_ttc_symtbl;
   
-  scheduled_cmds.nodes = (SCHEDULED_COMMAND_PTR)calloc( (sizeof(SCHEDULED_COMMAND) * SCHEDULED_CMDS_NODEBUFSIZ), 1 );
+  scheduled_cmds.nodes = (SCHEDULED_COMMAND_PTR)calloc( (sizeof(SCHEDULED_COMMAND) * SCHEDULED_CMDS_NODEBUF_SIZE), 1 );
   if( scheduled_cmds.nodes ) {
-    scheduled_cmds.plim = &scheduled_cmds.nodes[SCHEDULED_CMDS_NODEBUFSIZ];
+    scheduled_cmds.plim = &scheduled_cmds.nodes[SCHEDULED_CMDS_NODEBUF_SIZE];
     timetbl_dataset = (TIMETABLE_DATASET_PTR)calloc( sizeof(TIMETABLE_DATASET), 1 );
     if( timetbl_dataset ) {
       timetable_symtbl = (ATTR_TIMETABLE_PTR)calloc( sizeof(ATTR_TIMETABLE), 1 );

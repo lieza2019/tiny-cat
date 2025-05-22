@@ -90,19 +90,6 @@ SYSTEM_PARAMS tiny_system_params = {
   DEFAULT_DEPARTURE_OFFSET
 };
 
-#if 0 // *****
-static SCHEDULED_COMMAND sch_cmd_nodes[SCHEDULED_CMDS_NODEBUF_SIZE];
-static int frontier;
-SCHEDULED_COMMAND_PTR sch_cmd_newnode ( void ) {
-  SCHEDULED_COMMAND_PTR r = NULL;
-  if( frontier < SCHEDULED_CMDS_NODEBUF_SIZE )
-    r = &sch_cmd_nodes[++frontier];
-  else
-    errorF( "%s", "nodes exhausted, to create a scheduled command.\n" );
-  return r;
-};
-#endif
-
 time_t mktime_of_cmd ( struct tm *pT, ARS_ASSOC_TIME_C_PTR ptime_cmd ) {
   assert( pT );
   assert( ptime_cmd );
