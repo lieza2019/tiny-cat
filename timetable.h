@@ -134,4 +134,5 @@ extern ARS_REASONS ars_atodept_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PT
 extern ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ );
 extern SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp );
 
+#include "./timetable/ttcreat.h"
 #endif // TIMETABLE_H
