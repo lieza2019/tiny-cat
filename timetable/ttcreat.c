@@ -1199,9 +1199,11 @@ int ttcreat ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   return r;
 }
 
+#ifndef NO_EXEC_BINARY
 int main ( void ) {
   int r = -1;
   
   r = ttcreat( FALSE, TRUE );
   return r;
 }
+#endif // NO_EXEC_BINARY

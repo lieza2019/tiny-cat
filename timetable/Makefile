@@ -12,7 +12,7 @@ LFLAGS = -l
 AR = ar
 ARFLAGS =
 CC = /usr/bin/gcc
-CFLAGS = -c -Wall -g
+override CFLAGS += -c -Wall -g
 LD = /usr/bin/gcc
 LDFLAGS = -L../
 
