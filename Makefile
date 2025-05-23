@@ -15,6 +15,7 @@ TINY_EXE_NAME = tiny-cat
 GEN_IL_DEF_NAME = gen_il_def
 GEN_IL_DEF_BIN = $(GEN_IL_DEF_NAME)
 
+#$(TINY_EXE_NAME) : main.o $(TINY_LIB_NAME) ./timetable/ttcreat.o ./timetable/ttcreat_def.o ./timetable/ttcreat_cmd.o ./timetable/y.tab.o ./timetable/lex.yy.o
 $(TINY_EXE_NAME) : main.o $(TINY_LIB_NAME)
 	$(LD) $(LDFLAGS) -o $@ $^
 
@@ -64,10 +65,26 @@ train_ctrl.o : generic.h misc.h network.h sparcs.h train_ctrl.c
 cbi.o: generic.h misc.h cbi.h ./cbi/cbi_stat_kind.def ./cbi/cbi_stat_label.h ./cbi/il_obj_instance_desc.h cbi.c
 interlock.o : generic.h misc.h network.h cbi.h srv.h interlock.h interlock.c
 surveill.o : generic.h misc.h sparcs.h cbi.h interlock.h surveill.h surveill.c
-ars.o : generic.h misc.h sparcs.h cbi.h ars.h surveill.h timetable.h ars.c
+ars.o : generic.h misc.h sparcs.h cbi.h ars.h surveill.h timetable.h ./timetable/ttcreat.h ars.c
 cbtc.o : generic.h misc.h cbtc.h interlock.h sparcs.h cbtc.c
-timetable.o : generic.h misc.h timetable.h timetable.c
-main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h surveill.h timetable.h srv.h main.c
+timetable.o : generic.h misc.h timetable.h ./timetable/ttcreat.h timetable.c
+main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h surveill.h timetable.h ./timetable/ttcreat.h srv.h main.c
+
+#./timetable/ttcreat.o : generic.h ./timetable/ttcreat.h ./timetable/ttcreat.c
+#	$(CD) ./timetable; \
+#	$(MAKE) $@
+#./timetable/ttcreat_def.o : ./timetable/ttcreat.h
+#	$(CD) ./timetable; \
+#	$(MAKE) $@
+#./timetable/tcreat_cmd.o : generic.h ./timetable/ttcreat.h
+#	$(CD) ./timetable; \
+#	$(MAKE) $@
+#./timetable/y.tab.o : ./timetable/ttcreat.h ./timetable/ttcreat_par.y
+#	$(CD) ./timetable; \
+#	$(MAKE) $@
+#./timetable/lex.yy.o : ./timetable/ttcreat.h ./timetable/ttcreat_par.y
+#	$(CD) ./timetable; \
+#	$(MAKE) $@
 
 .PHONY : clean
 clean:

@@ -9,6 +9,7 @@
 #include "ars.h"
 #include "surveill.h"
 #include "timetable.h"
+#include "./timetable/ttcreat.h"
 
 const char *cnv2str_crew_id[] = {
   "CREW_ID0000",

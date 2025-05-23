@@ -8,6 +8,8 @@
 #include "timetable.h"
 #undef TIMETABLE_C
 
+#include "./timetable/ttcreat.h"
+
 ONLINE_TIMETABLE online_timetbl;
 struct scheduled_cmds_nodebuf scheduled_cmds;
 
