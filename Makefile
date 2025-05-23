@@ -14,7 +14,6 @@ TINY_LIB_NAME = libtiny.a
 TINY_EXE_NAME = tiny-cat
 GEN_IL_DEF_NAME = gen_il_def
 GEN_IL_DEF_BIN = $(GEN_IL_DEF_NAME)
-TTCREAT_BIN = ttcreat
 
 $(TINY_EXE_NAME) : main.o $(TINY_LIB_NAME)
 	$(LD) $(LDFLAGS) -o $@ $^
@@ -50,12 +49,8 @@ surveill.h : generic.h misc.h
 	$(TOUCH) $@
 ars.h : generic.h misc.h cbi.h
 	$(TOUCH) $@
-timetable.h : generic.h misc.h sparcs.h cbtc.h interlock.h timetable_def.h ./timetable/ttcreat.h
+timetable.h : generic.h misc.h sparcs.h cbtc.h interlock.h timetable_def.h
 	$(TOUCH) $@
-./timetable/ttcreat.h : $(TTCREAT_BIN)
-$(TTCREAT_BIN) : ./timetable/$(TTCREAT_BIN)
-	$(CD) ./timetable; \
-	$(MAKE)
 network.h : generic.h
 	$(TOUCH) $@
 misc.h : generic.h

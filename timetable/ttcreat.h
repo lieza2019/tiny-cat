@@ -1,3 +1,6 @@
+#ifndef TTCREAT_H
+#define TTCREAT_H
+
 #include <stdio.h>
 #include <string.h>
 #include "../generic.h"
@@ -195,3 +198,5 @@ extern void cons_trips ( ATTR_TRIPS_PTR ptrips );
 extern void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys );
 
 extern int ttcreat ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl );
+
+#endif // TTCREAT_H
