@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "../cbi.h"
+#include "../../cbi.h"
 
 #define CBI_LEX_ERR_PREFX_MAXCHRS 256
 #define CBI_LEX_EMIT_PREFX_MAXCHRS 256

@@ -12,8 +12,7 @@ ARFLAGS =
 MAKE = make
 TINY_LIB_NAME = libtiny.a
 TINY_EXE_NAME = tiny-cat
-GEN_IL_DEF_NAME = gen_il_def
-GEN_IL_DEF_BIN = $(GEN_IL_DEF_NAME)
+GEN_IL_DEF_BIN = gen_il_def
 
 $(TINY_EXE_NAME) : main.o $(TINY_LIB_NAME) ./timetable/ttcreat.o ./timetable/ttcreat_def.o ./timetable/ttcreat_cmd.o ./timetable/y.tab.o ./timetable/lex.yy.o
 	$(LD) $(LDFLAGS) -o $@ $^
@@ -31,17 +30,17 @@ cbtc.h : generic.h misc.h ars.h cbtc_dataset.h
 	$(TOUCH) $@
 train_ctrl.h : generic.h misc.h cbtc.h
 	$(TOUCH) $@
-./cbi/cbi_stat_label.h :
-	$(CD) ./cbi; \
+./cbi/memmap/cbi_stat_label.h :
+	$(CD) ./cbi/memmap; \
 	$(MAKE); \
 	./$(GEN_IL_DEF_BIN)
-./cbi/il_obj_instance_desc.h : ./cbi/cbi_pat.def
-	$(CD) ./cbi; \
+./cbi/memmap/il_obj_instance_desc.h : ./cbi/memmap/cbi_pat.def
+	$(CD) ./cbi/memmap; \
 	$(MAKE); \
 	./$(GEN_IL_DEF_BIN)
-./cbi/il_obj_instance_decl.h : ./cbi/il_obj_instance_desc.h
+./cbi/memmap/il_obj_instance_decl.h : ./cbi/memmap/il_obj_instance_desc.h
 	$(TOUCH) $@
-cbi.h: generic.h misc.h network.h ./cbi/cbi_stat_kind.def ./cbi/il_obj_instance_decl.h
+cbi.h: generic.h misc.h network.h ./cbi/memmap/cbi_stat_kind.def ./cbi/memmap/il_obj_instance_decl.h
 	$(TOUCH) $@
 interlock.h : generic.h misc.h cbi.h cbtc.h interlock_dataset.h
 	$(TOUCH) $@
@@ -61,7 +60,7 @@ network.o : generic.h misc.h network.h network.c
 sparcs.o : generic.h misc.h sparcs.h sparcs.c
 train_cmd.o : generic.h misc.h sparcs.h train_cmd.c
 train_ctrl.o : generic.h misc.h network.h sparcs.h train_ctrl.c
-cbi.o: generic.h misc.h cbi.h ./cbi/cbi_stat_kind.def ./cbi/cbi_stat_label.h ./cbi/il_obj_instance_desc.h cbi.c
+cbi.o: generic.h misc.h cbi.h ./cbi/memmap/cbi_stat_kind.def ./cbi/memmap/cbi_stat_label.h ./cbi/memmap/il_obj_instance_desc.h cbi.c
 interlock.o : generic.h misc.h network.h cbi.h srv.h interlock.h interlock.c
 surveill.o : generic.h misc.h sparcs.h cbi.h interlock.h surveill.h surveill.c
 ars.o : generic.h misc.h sparcs.h cbi.h ars.h surveill.h timetable.h ./timetable/ttcreat.h ars.c
@@ -88,7 +87,7 @@ main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h surveill.h timeta
 
 .PHONY : clean
 clean:
-	$(CD) ./cbi; $(MAKE) clean
+	$(CD) ./cbi/memmap; $(MAKE) clean
 	$(CD) ./timetable; $(MAKE) clean
 	$(RM) -f ./a.out
 	$(RM) -f ./*.o

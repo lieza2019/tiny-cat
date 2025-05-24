@@ -6,7 +6,7 @@
 #include "misc.h"
 #include "network.h"
 
-#include "./cbi/il_obj_instance_decl.h"
+#include "./cbi/memmap/il_obj_instance_decl.h"
 
 #define CBI_STAT_CSV_FNAME_BCGN "BOTANICAL_GARDEN.csv"
 #define CBI_STAT_CSV_FNAME_JLA "JASOLA_VIHAR.csv"
@@ -210,7 +210,7 @@ extern const CBI_STAT_CSV_FNAMES il_status_geometry_resources[END_OF_OCs + 1];
 
 typedef enum cbi_stat_kind {
 #define CBI_STAT_KIND_DESC(enum, name) enum,
-#include "./cbi/cbi_stat_kind.def"
+#include "./cbi/memmap/cbi_stat_kind.def"
 #undef CBI_STAT_KIND_DESC
   END_OF_CBI_STAT_KIND
 } CBI_STAT_KIND;

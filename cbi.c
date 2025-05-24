@@ -9,13 +9,13 @@
 
 const CBI_STAT_KIND cbi_stat_kind[] = {
 #define CBI_STAT_KIND_DESC(stat_kind, name) stat_kind,
-#include "./cbi/cbi_stat_kind.def"
+#include "./cbi/memmap/cbi_stat_kind.def"
 #undef CBI_STAT_KIND_DESC
   _CBI_STAT_KIND_NONSENS
 };
 const char *cnv2str_cbi_stat[] = {
 #define CBI_STAT_KIND_DESC(stat_kind, name) name,
-#include "./cbi/cbi_stat_kind.def"
+#include "./cbi/memmap/cbi_stat_kind.def"
 #undef CBI_STAT_KIND_DESC
   NULL
 };
@@ -282,7 +282,7 @@ CBI_CTRL_STAT_INFO cbi_stat_OC2ATS[END_OF_OC2ATS] = {
 };
 RECV_BUF_CBI_STAT cbi_stat_info[END_OF_OCs];
 
-#include "./cbi/cbi_stat_label.h"
+#include "./cbi/memmap/cbi_stat_label.h"
 #ifndef CBI_STAT_LABELING
 static const CBI_STAT_LABEL cbi_stat_label[] = {
   { _CBI_STAT_KIND_NONSENS }
@@ -1124,7 +1124,7 @@ static const CBI_STAT_KIND il_sym_kind[] = {
 #define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3) exp1, exp2, exp3,
 #define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
 #define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
-#include "./cbi/il_obj_instance_desc.h"
+#include "./cbi/memmap/il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
 #undef IL_OBJ_INSTANCE_DESC1
 #undef IL_OBJ_INSTANCE_DESC2
@@ -1150,7 +1150,7 @@ static const char *il_sym_namechrs [] = {
 #define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3) exp1, exp2, exp3,
 #define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
 #define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
-#include "./cbi/il_obj_instance_desc.h"
+#include "./cbi/memmap/il_obj_instance_desc.h"
 #undef IL_OBJ_INSTANCE_DESC
 #undef IL_OBJ_INSTANCE_DESC1
 #undef IL_OBJ_INSTANCE_DESC2
