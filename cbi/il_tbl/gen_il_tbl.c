@@ -51,63 +51,6 @@ static BOOL track_prof_SR ( FILE *fp_out, char *ptr_name, const char * psfx_sr )
   return r;
 }
 
-static BOOL track_prof_TLSR ( FILE *fp_out, char *ptr_name ) {
-  assert( ptr_name );
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  
-  return track_prof_SR( fp_out, ptr_name, "_TLSR" );
-}
-static BOOL track_prof_TRSR ( FILE *fp_out, char *ptr_name ) {
-  assert( ptr_name );
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  
-  return track_prof_SR( fp_out, ptr_name, "_TRSR" );
-}
-static BOOL track_prof_sTLSR ( FILE *fp_out, char *ptr_name ) {
-  assert( ptr_name );
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  
-  return track_prof_SR( fp_out, ptr_name, "_sTLSR" );
-}
-static BOOL track_prof_sTRSR ( FILE *fp_out, char *ptr_name ) {
-  assert( ptr_name );
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  
-  return track_prof_SR( fp_out, ptr_name, "_sTRSR" );
-}
-static BOOL track_prof_eTLSR ( FILE *fp_out, char *ptr_name ) {
-  assert( ptr_name );
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  
-  return track_prof_SR( fp_out, ptr_name, "_eTLSR" );
-}
-static BOOL track_prof_eTRSR ( FILE *fp_out, char *ptr_name ) {
-  assert( ptr_name );
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  
-  return track_prof_SR( fp_out, ptr_name, "_eTRSR" );
-}
-static BOOL track_prof_kTLSR ( FILE *fp_out, char *ptr_name ) {
-  assert( ptr_name );
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  
-  return track_prof_SR( fp_out, ptr_name, "_kTLSR" );
-}
-static BOOL track_prof_kTRSR ( FILE *fp_out, char *ptr_name ) {
-  assert( ptr_name );
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  
-  return track_prof_SR( fp_out, ptr_name, "_kTRSR" );
-}
-
 static void emit_track_prof ( FILE *fp_out, char *ptr_name, char *pbounds ) {  
   assert( ptr_name );
   assert( pbounds );
@@ -124,31 +67,31 @@ static void emit_track_prof ( FILE *fp_out, char *ptr_name, char *pbounds ) {
     fprintf( fp_out, "{" );
     // TLSR / TRSR
     fprintf( fp_out, "{" );
-    track_prof_TLSR( fp_out, ptr_name );
+    track_prof_SR( fp_out, ptr_name, "_TLSR" ); // TLSR
     fprintf( fp_out, "}, " );
     fprintf( fp_out, "{" );
-    track_prof_TRSR( fp_out, ptr_name );
+    track_prof_SR( fp_out, ptr_name, "_TRSR" ); // TRSR
     fprintf( fp_out, "}, " );
     // sTLSR / sTRSR
     fprintf( fp_out, "{" );
-    track_prof_sTLSR( fp_out, ptr_name );
+    track_prof_SR( fp_out, ptr_name, "_sTLSR" ); // sTLSR
     fprintf( fp_out, "}, " );
     fprintf( fp_out, "{" );
-    track_prof_sTRSR( fp_out, ptr_name );
+    track_prof_SR( fp_out, ptr_name, "_sTRSR" ); // sTRSR
     fprintf( fp_out, "}, " );
     // eTLSR / eTRSR
     fprintf( fp_out, "{" );
-    track_prof_eTLSR( fp_out, ptr_name );
+    track_prof_SR( fp_out, ptr_name, "_eTLSR" ); // eTLSR
     fprintf( fp_out, "}, " );
     fprintf( fp_out, "{" );
-    track_prof_eTRSR( fp_out, ptr_name );
+    track_prof_SR( fp_out, ptr_name, "_eTRSR" ); // eTRSR
     fprintf( fp_out, "}, " );
     // kTLSR / kTRSR
     fprintf( fp_out, "{" );
-    track_prof_kTLSR( fp_out, ptr_name );
+    track_prof_SR( fp_out, ptr_name, "_kTLSR" ); // kTLSR
     fprintf( fp_out, "}, " );
     fprintf( fp_out, "{" );
-    track_prof_kTRSR( fp_out, ptr_name );
+    track_prof_SR( fp_out, ptr_name, "_kTRSR" ); // kTRSR
     fprintf( fp_out, "}" );
     fprintf( fp_out, "}" );
   }
@@ -169,7 +112,8 @@ static int emit_track_dataset ( FILE *fp_out, FILE *fp_src ) {
   assert( !ferror( fp_src ) );
   while( !feof(fp_src) ) {
     int n = -1;
-    n = fscanf( fp_src, "%d,%[^,],%d,%d,%[^,]", &seq, tr_name, &ce_id, &sc_id, bounds );
+    //n = fscanf( fp_src, "%d,%[^,],%d,%d,%[^,]", &seq, tr_name, &ce_id, &sc_id, bounds );
+    n = fscanf( fp_src, "%d,%[^,],%d,%d,%s", &seq, tr_name, &ce_id, &sc_id, bounds );
     if( n < 5 )
       skip_chr( fp_src );
     else {
@@ -225,19 +169,28 @@ static int init_gen_il_dataset ( void ) {
   return r;
 }
 
-static int gen_track_dataset0 ( FILE *fp_out ) {
+#define ERR_FAILED_OPEN_IL_TBL_TRACKS 2
+static int gen_track_dataset ( FILE *fp_out ) {
   assert( fp_out );
-  int r = -1;
+  assert( !ferror( fp_out ) );
+  int r = ERR_FAILED_OPEN_IL_TBL_TRACKS;
   FILE *fp_src = NULL;
   
+  emit_track_dataset_prolog( fp_out );
+  fp_src = fopen( "BCGN_TRACK.csv", "r" );
+  if( fp_src ) {
+    if( !ferror( fp_src ) ) {
+      r = emit_track_dataset( fp_out, fp_src );
+    }
+  }
+  r = ERR_FAILED_OPEN_IL_TBL_TRACKS;
   fp_src = fopen( "JLA_TRACK.csv", "r" );
   if( fp_src ) {
     if( !ferror( fp_src ) ) {
-      emit_track_dataset_prolog( fp_out );
       r = emit_track_dataset( fp_out, fp_src );
-      emit_track_dataset_epilog( fp_out );
     }
   }
+  emit_track_dataset_epilog( fp_out );
   return r;
 }
 
@@ -249,7 +202,7 @@ int main ( void ) {
   fp_out = fopen( "interlock_dataset.h", "w" );
   if( fp_out ) {
     if( !ferror( fp_out ) ) {
-      r = gen_track_dataset0( fp_out );
+      r = gen_track_dataset( fp_out );
     }
   }
   return r;
