@@ -149,13 +149,13 @@ static void emit_track_prof ( FILE *fp_out, char *ptr_name, char *pbounds ) {
     fprintf( fp_out, "}, " );
     fprintf( fp_out, "{" );
     track_prof_kTRSR( fp_out, ptr_name );
-    fprintf( fp_out, "}, " );    
+    fprintf( fp_out, "}" );
     fprintf( fp_out, "}" );
   }
   fprintf( fp_out, "},\n" );
 }
 
-static int gen_track_dataset ( FILE *fp_out, FILE *fp_src ) {
+static int emit_track_dataset ( FILE *fp_out, FILE *fp_src ) {
   assert( fp_out );
   assert( fp_src );
   int seq;
@@ -208,21 +208,48 @@ static void emit_track_dataset_epilog ( FILE *fp_out ) {
   fprintf( fp_out, "#endif // TRACK_ATTRIB_DEFINITION\n" );
 }
 
-int main ( void ) {
-  FILE *fp_src = NULL;
+#define ERR_FAILED_OPEN_MEMMAP 1
+static int init_gen_il_dataset ( void ) {
   int r = -1;
   
   int n = -1;
-  n = load_cbi_code( OC801, "../memmap/JASOLA_VIHAR.csv" );
+  n = load_cbi_code( OC801, "../memmap/BOTANICAL_GARDEN.csv" );
+  if( n > 0 ) {
+    n = load_cbi_code( OC802, "../memmap/JASOLA_VIHAR.csv" );
+    if( n > 0 )
+      r = 0;
+    else
+      r = ERR_FAILED_OPEN_MEMMAP;
+  } else
+    r = ERR_FAILED_OPEN_MEMMAP;
+  return r;
+}
+
+static int gen_track_dataset0 ( FILE *fp_out ) {
+  assert( fp_out );
+  int r = -1;
+  FILE *fp_src = NULL;
   
   fp_src = fopen( "JLA_TRACK.csv", "r" );
   if( fp_src ) {
     if( !ferror( fp_src ) ) {
-      FILE *fp_out = NULL;
-      fp_out = fopen( "interlock_dataset.h", "w" );
       emit_track_dataset_prolog( fp_out );
-      r = gen_track_dataset( fp_out, fp_src );
+      r = emit_track_dataset( fp_out, fp_src );
       emit_track_dataset_epilog( fp_out );
+    }
+  }
+  return r;
+}
+
+int main ( void ) {
+  FILE *fp_out = NULL;
+  int r = -1;
+  
+  init_gen_il_dataset();
+  fp_out = fopen( "interlock_dataset.h", "w" );
+  if( fp_out ) {
+    if( !ferror( fp_out ) ) {
+      r = gen_track_dataset0( fp_out );
     }
   }
   return r;
