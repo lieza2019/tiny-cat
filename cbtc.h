@@ -37,6 +37,7 @@ typedef struct block {
   struct {
     const IL_SYM track;
     const struct track *ptrack;
+    struct block *pNext;
   } belonging_tr;
   struct {
     const BOOL has_sp;

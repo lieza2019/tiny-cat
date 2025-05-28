@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#define CBTC_C
+#include "../../cbtc.h"
+#undef CBTC_C
 #include "../../cbi.h"
 
 #define TRACK_NAME_MAXLEN 16
@@ -51,6 +54,30 @@ static BOOL track_prof_SR ( FILE *fp_out, char *ptr_name, const char * psfx_sr )
   return r;
 }
 
+static CBTC_BLOCK_PTR track_prof_blks ( FILE *fp_out, char *ptr_name ) {
+  assert( fp_out );
+  assert( ptr_name );
+  const CBTC_BLOCK blk = block_state[1];
+  CBTC_BLOCK_PTR phead = NULL;
+  
+  CBI_STAT_ATTR_PTR pattr = NULL;
+  char idstr[ILCOND_IDENT_MAXLEN + 1];
+  strncpy( idstr, ptr_name, ILCOND_IDENT_MAXLEN );
+  strcat( idstr, "_TR" );
+  pattr = conslt_cbi_code_tbl( idstr );
+  if( pattr )
+    if( !strncmp( pattr->ident, idstr, ILCOND_IDENT_MAXLEN ) ) {      
+      CBTC_BLOCK_PTR ptail = NULL;
+      int i = 0;
+      while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+	//block_state[i].belonging_tr.track
+	i++;
+      }
+      assert( block_state[i].block_name == 0 );
+    }
+  return phead;
+}
+
 static void emit_track_prof ( FILE *fp_out, char *ptr_name, char *pbounds ) {  
   assert( ptr_name );
   assert( pbounds );
@@ -61,40 +88,45 @@ static void emit_track_prof ( FILE *fp_out, char *ptr_name, char *pbounds ) {
   fprintf( fp_out, "\"%s_TR\", ", ptr_name );
   fprintf( fp_out, "%s_TR, ", ptr_name );
   // cbtc
-  fprintf( fp_out, "{}, " );  
+#if 0 // *****
+  fprintf( fp_out, "{}, " );
+#else
+  fprintf( fp_out, "{" );
+  track_prof_blks( fp_out, ptr_name );
+  fprintf( fp_out, " }, " );
+#endif
   // lock
-  {
-    fprintf( fp_out, "{" );
-    // TLSR / TRSR
-    fprintf( fp_out, "{" );
-    track_prof_SR( fp_out, ptr_name, "_TLSR" ); // TLSR
-    fprintf( fp_out, "}, " );
-    fprintf( fp_out, "{" );
-    track_prof_SR( fp_out, ptr_name, "_TRSR" ); // TRSR
-    fprintf( fp_out, "}, " );
-    // sTLSR / sTRSR
-    fprintf( fp_out, "{" );
-    track_prof_SR( fp_out, ptr_name, "_sTLSR" ); // sTLSR
-    fprintf( fp_out, "}, " );
-    fprintf( fp_out, "{" );
-    track_prof_SR( fp_out, ptr_name, "_sTRSR" ); // sTRSR
-    fprintf( fp_out, "}, " );
-    // eTLSR / eTRSR
-    fprintf( fp_out, "{" );
-    track_prof_SR( fp_out, ptr_name, "_eTLSR" ); // eTLSR
-    fprintf( fp_out, "}, " );
-    fprintf( fp_out, "{" );
-    track_prof_SR( fp_out, ptr_name, "_eTRSR" ); // eTRSR
-    fprintf( fp_out, "}, " );
-    // kTLSR / kTRSR
-    fprintf( fp_out, "{" );
-    track_prof_SR( fp_out, ptr_name, "_kTLSR" ); // kTLSR
-    fprintf( fp_out, "}, " );
-    fprintf( fp_out, "{" );
-    track_prof_SR( fp_out, ptr_name, "_kTRSR" ); // kTRSR
-    fprintf( fp_out, "}" );
-    fprintf( fp_out, "}" );
-  }
+  fprintf( fp_out, "{" );
+  // TLSR / TRSR
+  fprintf( fp_out, "{" );
+  track_prof_SR( fp_out, ptr_name, "_TLSR" ); // TLSR
+  fprintf( fp_out, "}, " );
+  fprintf( fp_out, "{" );
+  track_prof_SR( fp_out, ptr_name, "_TRSR" ); // TRSR
+  fprintf( fp_out, "}, " );
+  // sTLSR / sTRSR
+  fprintf( fp_out, "{" );
+  track_prof_SR( fp_out, ptr_name, "_sTLSR" ); // sTLSR
+  fprintf( fp_out, "}, " );
+  fprintf( fp_out, "{" );
+  track_prof_SR( fp_out, ptr_name, "_sTRSR" ); // sTRSR
+  fprintf( fp_out, "}, " );
+  // eTLSR / eTRSR
+  fprintf( fp_out, "{" );
+  track_prof_SR( fp_out, ptr_name, "_eTLSR" ); // eTLSR
+  fprintf( fp_out, "}, " );
+  fprintf( fp_out, "{" );
+  track_prof_SR( fp_out, ptr_name, "_eTRSR" ); // eTRSR
+  fprintf( fp_out, "}, " );
+  // kTLSR / kTRSR
+  fprintf( fp_out, "{" );
+  track_prof_SR( fp_out, ptr_name, "_kTLSR" ); // kTLSR
+  fprintf( fp_out, "}, " );
+  fprintf( fp_out, "{" );
+  track_prof_SR( fp_out, ptr_name, "_kTRSR" ); // kTRSR
+  fprintf( fp_out, "}" );
+  fprintf( fp_out, "}" );
+  
   fprintf( fp_out, "},\n" );
 }
 
@@ -112,8 +144,11 @@ static int emit_track_dataset ( FILE *fp_out, FILE *fp_src ) {
   assert( !ferror( fp_src ) );
   while( !feof(fp_src) ) {
     int n = -1;
-    //n = fscanf( fp_src, "%d,%[^,],%d,%d,%[^,]", &seq, tr_name, &ce_id, &sc_id, bounds );
+#if 0 // *****
+    n = fscanf( fp_src, "%d,%[^,],%d,%d,%[^,]", &seq, tr_name, &ce_id, &sc_id, bounds );
+#else
     n = fscanf( fp_src, "%d,%[^,],%d,%d,%s", &seq, tr_name, &ce_id, &sc_id, bounds );
+#endif
     if( n < 5 )
       skip_chr( fp_src );
     else {

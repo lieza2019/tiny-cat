@@ -293,7 +293,9 @@ typedef struct il_sym_attrib {
 } IL_SYM_ATTR, *IL_SYM_ATTR_PTR;
 typedef struct cbi_lexica {
   CBI_CODETBL cbi_stat_prof[END_OF_OCs];
+#if 0 // *****
   IL_SYM_ATTR il_sym_attrs[MAX_IL_SYMS];
+#endif
 } CBI_LEXICA, *CBI_LEXICA_PTR;
 extern CBI_LEXICA cbi_stat_syms;
 

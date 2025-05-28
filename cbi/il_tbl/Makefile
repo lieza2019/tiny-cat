@@ -12,10 +12,10 @@ $(GEN_IL_TBL_BIN) : ../../cbi.o gen_il_tbl.o
 
 gen_il_tbl.o : ../../cbi.h gen_il_tbl.c
 
-../../cbi.o : ../../generic.h ../../misc.h ../../cbi.h ../../cbi.c
+../../cbi.o : ../../generic.h ../../misc.h ../../cbtc.h ../../cbi.h ../../cbi.c
 	$(CD) ../../; \
 	$(MAKE) $(@F); \
-b
+
 .PHONY : clean
 clean:
 	$(RM) -f ./a.out
