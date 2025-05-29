@@ -285,12 +285,14 @@ typedef struct cbi_code_tbl {
 
 #define IL_SYM_IDENTCHRS_LEN
 #define MAX_IL_SYMS 65536
+#if 0 // *****
 typedef struct il_sym_attrib {
   CBI_STAT_KIND kind;
   IL_SYM id;
   char identchrs[IL_SYM_IDENTCHRS_LEN + 1];
   int code;
 } IL_SYM_ATTR, *IL_SYM_ATTR_PTR;
+#endif
 typedef struct cbi_lexica {
   CBI_CODETBL cbi_stat_prof[END_OF_OCs];
 #if 0 // *****

@@ -1245,3 +1245,30 @@ char *mangl2_So_Sxxxy_HyR ( char *praw ) {
   }
   return r;
 }
+
+#if 1
+#define IL_SYM_IDENTCHRS_LEN_ 256
+typedef struct tst_str {
+  char identchrs[IL_SYM_IDENTCHRS_LEN_ + 1];
+  IL_SYM id;
+} TST_STR, *TST_STR_PTR;
+static const TST_STR il_namechrs2_sym [] = {
+#define IL_SYMS(sym_kind, sym, str, code) {str, sym}
+#define IL_OBJ_INSTANCE_DESC0(stat_kind, raw_name, label, src_specifier)
+#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, src_specifier, exp) exp,
+#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, src_specifier, exp1) exp1,
+#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, src_specifier, exp1, exp2) exp1, exp2,
+#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3) exp1, exp2, exp3,
+#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
+#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
+#include "./cbi/memmap/il_obj_instance_desc.h"
+#undef IL_OBJ_INSTANCE_DESC
+#undef IL_OBJ_INSTANCE_DESC1
+#undef IL_OBJ_INSTANCE_DESC2
+#undef IL_OBJ_INSTANCE_DESC3
+#undef IL_OBJ_INSTANCE_DESC4
+#undef IL_OBJ_INSTANCE_DESC5
+#undef IL_SYMS
+  {"", END_OF_IL_SYMS}
+};
+#endif
