@@ -54,12 +54,12 @@ static BOOL track_prof_SR ( FILE *fp_out, char *ptr_name, const char * psfx_sr )
   return r;
 }
 
-static CBTC_BLOCK_PTR track_prof_blks ( FILE *fp_out, char *ptr_name ) {
-  assert( fp_out );
+static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
+  assert( pphead );
   assert( ptr_name );
-  CBTC_BLOCK_PTR phead = NULL;
-  
+  int cnt = 0;  
   CBI_STAT_ATTR_PTR pattr = NULL;
+  
   char idstr[ILCOND_IDENT_MAXLEN + 1];
   strncpy( idstr, ptr_name, ILCOND_IDENT_MAXLEN );
   strcat( idstr, "_TR" );
@@ -67,23 +67,25 @@ static CBTC_BLOCK_PTR track_prof_blks ( FILE *fp_out, char *ptr_name ) {
   if( pattr ) {
     CBTC_BLOCK_PTR ptail = NULL;
     int i = 0;
+    *pphead = NULL;
     while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
       if( block_state[i].belonging_tr.track == pattr->id ) {
-	if( phead ) {
+	if( *pphead ) {
 	  assert( ptail );
 	  ptail->belonging_tr.pNext = &block_state[i];	    
 	} else {
 	  assert( !ptail );
-	  phead = &block_state[i];
+	  *pphead = &block_state[i];
 	}
 	block_state[i].belonging_tr.pNext = NULL;
 	ptail = &block_state[i];
+	cnt++;
       }
       i++;
     }
     assert( block_state[i].block_name == 0 );
   }
-  return phead;
+  return cnt;
 }
 
 static void emit_track_prof ( FILE *fp_out, char *ptr_name, char *pbounds ) {  
@@ -96,32 +98,30 @@ static void emit_track_prof ( FILE *fp_out, char *ptr_name, char *pbounds ) {
   fprintf( fp_out, "\"%s_TR\", ", ptr_name );
   fprintf( fp_out, "%s_TR, ", ptr_name );
   // cbtc
-#if 0 // *****
-  fprintf( fp_out, "{}, " );
-#else
   fprintf( fp_out, "{" );
   {
-    int cnt = 0;
-    {
-      CBTC_BLOCK_PTR pblk_prof = NULL;
-      pblk_prof = track_prof_blks( fp_out, ptr_name );
-      while( pblk_prof ) {
-	if( cnt > 0 )
+    int nblks = -1;
+    CBTC_BLOCK_PTR pblk_prof = NULL;
+    nblks = track_prof_blks( &pblk_prof, ptr_name );
+    assert( nblks > -1 );
+    fprintf( fp_out, "%d", nblks );
+    if( nblks > 0 ) {
+      assert( pblk_prof );
+      int n = nblks;
+      fprintf( fp_out, ", {" );
+      do {
+	assert( n > 0 );
+	if( n < nblks )
 	  fprintf( fp_out, ", " );
-	fprintf( fp_out, "%s", pblk_prof->virt_blkname_str );
+	n--;
+	fprintf( fp_out, "%s", pblk_prof->virt_blkname_str );	
 	pblk_prof = pblk_prof->belonging_tr.pNext;
-	cnt++;
-      }   
-    }
-    fprintf( fp_out, "%d", cnt );
-    if( cnt > 0 ) {
-      fprintf( fp_out, "{" );
-      ;
-      fprintf( fp_out, "}, " );
+      } while( pblk_prof );
+      assert( n == 0 );
+      fprintf( fp_out, "}" );
     }
   }
   fprintf( fp_out, "}, " );
-#endif
   // lock
   fprintf( fp_out, "{" );
   // TLSR / TRSR
