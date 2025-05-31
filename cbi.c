@@ -864,6 +864,45 @@ static int curve_codetbl ( const char *src_fname, const char *errmsg_pre ) {
 }
 #endif
 
+typedef struct il_sym_lex {
+  char identchrs[CBI_STAT_IDENT_LEN + 1];
+  IL_SYM id;
+} IL_SYM_LEX, *IL_SYM_LEX_PTR;
+static const IL_SYM_LEX il_sym_lexicon[] = {
+#define IL_SYMS(sym_kind, sym, str, code) {str, sym}
+#define IL_OBJ_INSTANCE_DESC0(stat_kind, raw_name, label, src_specifier)
+#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, src_specifier, exp) exp,
+#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, src_specifier, exp1) exp1,
+#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, src_specifier, exp1, exp2) exp1, exp2,
+#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3) exp1, exp2, exp3,
+#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
+#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
+#include "./cbi/memmap/il_obj_instance_desc.h"
+#undef IL_OBJ_INSTANCE_DESC
+#undef IL_OBJ_INSTANCE_DESC1
+#undef IL_OBJ_INSTANCE_DESC2
+#undef IL_OBJ_INSTANCE_DESC3
+#undef IL_OBJ_INSTANCE_DESC4
+#undef IL_OBJ_INSTANCE_DESC5
+#undef IL_SYMS
+  { "", END_OF_IL_SYMS }
+};
+const IL_SYM conslt_il_sym_lexicon ( const char *idstr ) {
+  assert( idstr );
+  IL_SYM sym = END_OF_IL_SYMS;
+  
+  int i = 0;
+  while( il_sym_lexicon[i].id != END_OF_IL_SYMS ) {
+    if( strncmp( il_sym_lexicon[i].identchrs, idstr, CBI_STAT_IDENT_LEN ) == 0 ) {
+      sym = il_sym_lexicon[i].id;
+      break;
+    }
+    i++;
+  }
+  assert( il_sym_lexicon[i].id == END_OF_IL_SYMS ? (strncmp( il_sym_lexicon[i].identchrs, "", CBI_STAT_IDENT_LEN ) == 0) : (strncmp( il_sym_lexicon[i].identchrs, "", CBI_STAT_IDENT_LEN ) != 0) );
+  return sym;
+}
+
 int load_cbi_code ( OC_ID oc_id, const char *fname ) {
   assert( fname );
   BOOL err = FALSE;
@@ -903,6 +942,8 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	  assert( p && !(*p) );
 	  strncpy( p, bit_name, CBI_STAT_NAME_LEN );
 	}
+	strncpy( pA->ident, pA->name, CBI_STAT_NAME_LEN );
+	pA->id = conslt_il_sym_lexicon( bit_name );
 	{
 #if 0 // *****
 	  const char *s = cbi_stat_reg_no_ovriddn( pA->name );
@@ -914,7 +955,6 @@ int load_cbi_code ( OC_ID oc_id, const char *fname ) {
 	  else
 	    strncpy( pA->src_specified, "", CBI_CODE_FILENAME_MAXLEN );
 	}
-	strncpy( pA->ident, pA->name, CBI_STAT_NAME_LEN );
 	
 	pA->oc_id = oc_id;
 	pA->kind = _UNKNOWN;
@@ -1141,7 +1181,7 @@ const CBI_STAT_KIND whats_kind_of_il_sym ( IL_SYM obj ) {
   return r;
 }
 
-static const char *il_sym_namechrs [] = {
+static const char *il_sym_namechrs[] = {
 #define IL_SYMS(sym_kind, sym, str, code) str
 #define IL_OBJ_INSTANCE_DESC0(stat_kind, raw_name, label, src_specifier)
 #define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, src_specifier, exp) exp,
@@ -1245,30 +1285,3 @@ char *mangl2_So_Sxxxy_HyR ( char *praw ) {
   }
   return r;
 }
-
-#if 1
-#define IL_SYM_IDENTCHRS_LEN_ 256
-typedef struct tst_str {
-  char identchrs[IL_SYM_IDENTCHRS_LEN_ + 1];
-  IL_SYM id;
-} TST_STR, *TST_STR_PTR;
-static const TST_STR il_namechrs2_sym [] = {
-#define IL_SYMS(sym_kind, sym, str, code) {str, sym}
-#define IL_OBJ_INSTANCE_DESC0(stat_kind, raw_name, label, src_specifier)
-#define IL_OBJ_INSTANCE_DESC(stat_kind, raw_name, label, src_specifier, exp) exp,
-#define IL_OBJ_INSTANCE_DESC1(stat_kind, raw_name, label, src_specifier, exp1) exp1,
-#define IL_OBJ_INSTANCE_DESC2(stat_kind, raw_name, label, src_specifier, exp1, exp2) exp1, exp2,
-#define IL_OBJ_INSTANCE_DESC3(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3) exp1, exp2, exp3,
-#define IL_OBJ_INSTANCE_DESC4(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4) exp1, exp2, exp3, exp4,
-#define IL_OBJ_INSTANCE_DESC5(stat_kind, raw_name, label, src_specifier, exp1, exp2, exp3, exp4, exp5) exp1, exp2, exp3, exp4, exp5,
-#include "./cbi/memmap/il_obj_instance_desc.h"
-#undef IL_OBJ_INSTANCE_DESC
-#undef IL_OBJ_INSTANCE_DESC1
-#undef IL_OBJ_INSTANCE_DESC2
-#undef IL_OBJ_INSTANCE_DESC3
-#undef IL_OBJ_INSTANCE_DESC4
-#undef IL_OBJ_INSTANCE_DESC5
-#undef IL_SYMS
-  {"", END_OF_IL_SYMS}
-};
-#endif

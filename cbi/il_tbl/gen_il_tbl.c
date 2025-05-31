@@ -57,7 +57,6 @@ static BOOL track_prof_SR ( FILE *fp_out, char *ptr_name, const char * psfx_sr )
 static CBTC_BLOCK_PTR track_prof_blks ( FILE *fp_out, char *ptr_name ) {
   assert( fp_out );
   assert( ptr_name );
-  const CBTC_BLOCK blk = block_state[1];
   CBTC_BLOCK_PTR phead = NULL;
   
   CBI_STAT_ATTR_PTR pattr = NULL;
@@ -65,16 +64,25 @@ static CBTC_BLOCK_PTR track_prof_blks ( FILE *fp_out, char *ptr_name ) {
   strncpy( idstr, ptr_name, ILCOND_IDENT_MAXLEN );
   strcat( idstr, "_TR" );
   pattr = conslt_cbi_code_tbl( idstr );
-  if( pattr )
-    if( !strncmp( pattr->ident, idstr, ILCOND_IDENT_MAXLEN ) ) {      
-      CBTC_BLOCK_PTR ptail = NULL;
-      int i = 0;
-      while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
-	//block_state[i].belonging_tr.track
-	i++;
+  if( pattr ) {
+    CBTC_BLOCK_PTR ptail = NULL;
+    int i = 0;
+    while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+      if( block_state[i].belonging_tr.track == pattr->id ) {
+	if( phead ) {
+	  assert( ptail );
+	  ptail->belonging_tr.pNext = &block_state[i];	    
+	} else {
+	  assert( !ptail );
+	  phead = &block_state[i];
+	}
+	block_state[i].belonging_tr.pNext = NULL;
+	ptail = &block_state[i];
       }
-      assert( block_state[i].block_name == 0 );
+      i++;
     }
+    assert( block_state[i].block_name == 0 );
+  }
   return phead;
 }
 
@@ -92,8 +100,27 @@ static void emit_track_prof ( FILE *fp_out, char *ptr_name, char *pbounds ) {
   fprintf( fp_out, "{}, " );
 #else
   fprintf( fp_out, "{" );
-  track_prof_blks( fp_out, ptr_name );
-  fprintf( fp_out, " }, " );
+  {
+    int cnt = 0;
+    {
+      CBTC_BLOCK_PTR pblk_prof = NULL;
+      pblk_prof = track_prof_blks( fp_out, ptr_name );
+      while( pblk_prof ) {
+	if( cnt > 0 )
+	  fprintf( fp_out, ", " );
+	fprintf( fp_out, "%s", pblk_prof->virt_blkname_str );
+	pblk_prof = pblk_prof->belonging_tr.pNext;
+	cnt++;
+      }   
+    }
+    fprintf( fp_out, "%d", cnt );
+    if( cnt > 0 ) {
+      fprintf( fp_out, "{" );
+      ;
+      fprintf( fp_out, "}, " );
+    }
+  }
+  fprintf( fp_out, "}, " );
 #endif
   // lock
   fprintf( fp_out, "{" );
@@ -234,7 +261,7 @@ int main ( void ) {
   int r = -1;
   
   init_gen_il_dataset();
-  fp_out = fopen( "interlock_dataset.h", "w" );
+  fp_out = fopen( "interlock_dataset0.h", "w" );
   if( fp_out ) {
     if( !ferror( fp_out ) ) {
       r = gen_track_dataset( fp_out );

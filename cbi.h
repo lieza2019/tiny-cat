@@ -222,6 +222,7 @@ typedef CBI_STAT_KIND IL_SYM_KIND;
 #define CBI_CODE_FILENAME_MAXLEN 512
 typedef struct cbi_stat_attr {
   char ident[CBI_STAT_IDENT_LEN + 1];
+  IL_SYM id;
   char name[CBI_STAT_NAME_LEN + 1];
   struct {
     CBI_STAT_GROUP raw;
@@ -303,6 +304,7 @@ extern CBI_LEXICA cbi_stat_syms;
 
 extern const CBI_STAT_KIND cbi_stat_kind[];
 extern const char *cnv2str_cbi_stat[];
+extern const IL_SYM conslt_il_sym_lexicon ( const char *idstr );
 extern const CBI_STAT_KIND whats_kind_of_il_sym ( IL_SYM obj );
 extern const char *cnv2str_il_sym( IL_SYM obj );
 
