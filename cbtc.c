@@ -27,6 +27,7 @@ const char *cnv2str_lkup ( const char *id2str_tbl[], int id ) {
   return r;
 }
 
+#if 0 // *****
 static const char *spcode_2_str[] = {
   "SP_NONSENS",
   "SP_73", // JLA_PL1
@@ -157,6 +158,7 @@ ST_ID str2_st_id ( const char *st_str ) {
   
   return r;
 }
+#endif
 
 TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {
   assert( pB );
