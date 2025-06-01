@@ -383,7 +383,7 @@ static SC_STAT_INFOSET_PTR willing2_recv_train_info ( TINY_SOCK_PTR pS, SC_ID sc
     TINY_SOCK_DESC d = -1;
     pSC->train_information.d_recv_train_info = -1;
     if( (d = creat_sock_recv( pS, pSC->train_information.dst_port )) < 0 ) {
-      errorF( "failed to create the socket to receive Train information from SC%d.\n", SC_ID_CONV_2_INT(sc_id) );
+      errorF( "failed to create the socket to receive Train information from SC%d.\n", SCID_CNV2_INT(sc_id) );
       goto exit;
     }
     pSC->train_information.d_recv_train_info = d;
@@ -452,7 +452,7 @@ static SC_CTRL_CMDSET_PTR willing2_send_traincmd ( TINY_SOCK_PTR pS, SC_ID sc_id
     {
       TINY_SOCK_DESC d = -1;
       if( (d = creat_sock_sendnx( pS, pSC->train_command.comm_prof.dst_port, TRUE, &pSC->train_command.comm_prof.dst_ipaddr )) < 0 ) {
-	errorF( "failed to create the socket to send Train command toward SC%d.\n", SC_ID_CONV_2_INT(sc_id) );
+	errorF( "failed to create the socket to send Train command toward SC%d.\n", SCID_CNV2_INT(sc_id) );
 	goto exit;
       }
       pSC->train_command.comm_prof.d_send_train_cmd = d;
@@ -863,7 +863,7 @@ static void chk_massiv_train_cmds_array ( SC_ID sc_id, int rakeIDs[], int num_of
       if( found ) {
 	assert( pE == ++pEp );
       } else {
-	printf( "(sc_id, rakeID) = (%d, %d)\n", SC_ID_CONV_2_INT(sc_id), rID ); // ***** for debugging.
+	printf( "(sc_id, rakeID) = (%d, %d)\n", SCID_CNV2_INT(sc_id), rID ); // ***** for debugging.
 	assert( FALSE );
       }
     }

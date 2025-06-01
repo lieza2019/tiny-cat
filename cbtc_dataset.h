@@ -23,7 +23,6 @@ typedef enum SC_ID {
   SC821,
   END_OF_SCs
 } SC_ID;
-#define SC_ID_CONV_2_INT( sc_id ) ((sc_id) + 801)
 
 typedef enum stopping_point_code {
   SP_NONSENS,
@@ -342,3 +341,4 @@ CBTC_BLOCK block_state[] = {
 extern CBTC_BLOCK block_state[];
 #endif // CBTC_C
 #endif // BLOCK_ATTRIB_DEFINITION
+

@@ -129,7 +129,7 @@ static int which_SC_zones ( SC_ID zones[], int front_blk, int back_blk ) {
   } else {
     r = 0;
   }
-  printf( "(r, (pBf, pBb), (%d, %d), (zone[0], zone[1])): (%d, (%d, %d))\n", r, (pBf != NULL), (pBb != NULL), SC_ID_CONV_2_INT(zones[0]), SC_ID_CONV_2_INT(zones[1]) ); // *****
+  printf( "(r, (pBf, pBb), (%d, %d), (zone[0], zone[1])): (%d, (%d, %d))\n", r, (pBf != NULL), (pBb != NULL), SCID_CNV2_INT(zones[0]), SCID_CNV2_INT(zones[1]) ); // *****
 #endif  
   return r;
 }
