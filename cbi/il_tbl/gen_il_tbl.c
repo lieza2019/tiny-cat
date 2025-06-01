@@ -214,23 +214,6 @@ static void emit_track_dataset_epilog ( FILE *fp_out ) {
   fprintf( fp_out, "#endif // TRACK_ATTRIB_DEFINITION\n" );
 }
 
-#define ERR_FAILED_OPEN_MEMMAP 1
-static int init_gen_il_dataset ( void ) {
-  int r = -1;
-  
-  int n = -1;
-  n = load_cbi_code( OC801, "../memmap/BOTANICAL_GARDEN.csv" );
-  if( n > 0 ) {
-    n = load_cbi_code( OC802, "../memmap/JASOLA_VIHAR.csv" );
-    if( n > 0 )
-      r = 0;
-    else
-      r = ERR_FAILED_OPEN_MEMMAP;
-  } else
-    r = ERR_FAILED_OPEN_MEMMAP;
-  return r;
-}
-
 #define ERR_FAILED_OPEN_IL_TBL_TRACKS 2
 static int gen_track_dataset ( FILE *fp_out ) {
   assert( fp_out );
@@ -256,6 +239,60 @@ static int gen_track_dataset ( FILE *fp_out ) {
   return r;
 }
 
+static void emit_route_dataset_prolog ( FILE *fp_out ) {
+  assert( fp_out );
+  assert( !ferror( fp_out ) );
+  fprintf( fp_out, "#ifdef ROUTE_ATTRIB_DEFINITION\n" );
+  fprintf( fp_out, "#ifdef INTERLOCK_C\n" );
+  fprintf( fp_out, "ROUTE route_dataset_def[] = {\n" );
+}
+static void emit_route_dataset_epilog ( FILE *fp_out ) {
+  assert( fp_out );
+  assert( !ferror( fp_out ) );
+  GEN_INDENT( fp_out, 1, 2 );
+  fprintf( fp_out, "{ END_OF_CBI_STAT_KIND, END_OF_ROUTE_KINDS }\n" );
+  fprintf( fp_out, "};\n" );
+  fprintf( fp_out, "#else\n" );
+  fprintf( fp_out, "extern ROUTE route_dataset_def[];\n" );
+  fprintf( fp_out, "#endif\n" );
+  fprintf( fp_out, "#endif // ROUTE_ATTRIB_DEFINITION\n" );
+}
+
+static int gen_route_dataset ( FILE *fp_out ) {
+  assert( fp_out );
+  int r = 0;
+
+  emit_route_dataset_prolog( fp_out );
+  emit_route_dataset_epilog( fp_out );
+  return r;
+}
+
+static int emit_route_dataset ( FILE *fp_out, FILE *fp_src ) {
+  assert( fp_out );
+  assert( fp_src );
+  int cnt = 0;
+  const PLTB_ID pltb = PL1;
+  ;
+  return cnt;
+}
+
+#define ERR_FAILED_OPEN_MEMMAP 1
+static int init_gen_il_dataset ( void ) {
+  int r = -1;
+  
+  int n = -1;
+  n = load_cbi_code( OC801, "../memmap/BOTANICAL_GARDEN.csv" );
+  if( n > 0 ) {
+    n = load_cbi_code( OC802, "../memmap/JASOLA_VIHAR.csv" );
+    if( n > 0 )
+      r = 0;
+    else
+      r = ERR_FAILED_OPEN_MEMMAP;
+  } else
+    r = ERR_FAILED_OPEN_MEMMAP;
+  return r;
+}
+
 int main ( void ) {
   FILE *fp_out = NULL;
   int r = -1;
@@ -265,6 +302,8 @@ int main ( void ) {
   if( fp_out ) {
     if( !ferror( fp_out ) ) {
       r = gen_track_dataset( fp_out );
+      fprintf( fp_out, "\n" );
+      r = gen_route_dataset( fp_out );
     }
   }
   return r;

@@ -43,6 +43,14 @@ typedef enum stopping_point_code {
   END_OF_SPs
 } STOPPING_POINT_CODE;
 
+typedef enum st_id {
+  JLA = 1,
+  KIKJ,
+  OKBS,
+  BTGD,
+  END_OF_ST_ID
+} ST_ID;
+
 typedef enum cbtc_block_id {
   VB_NONSENS,
   VB309DB,
@@ -120,10 +128,31 @@ typedef enum cbtc_block_id {
   VB363UB,
   END_OF_CBTC_BLOCKs
 } CBTC_BLOCK_ID;
+
+typedef struct sp_pltb {
+  STOPPING_POINT_CODE sp;
+  ST_ID st;
+  PLTB_ID pltb;  
+} SP_PLTB, *SP_PLTB_PTR;
 #endif // BLOCK_ID_DEFINITIONS
 
 #ifdef BLOCK_ATTRIB_DEFINITION
 #ifdef CBTC_C
+SP_PLTB sp_pltb[] = {
+  {SP_73, JLA, PL1}, // JLA_PL1
+  {SP_74, JLA, PL2}, // JLA_PL2
+  {SP_75, JLA, PL3}, // JLA_PL3
+  {SP_D4, JLA, TB4}, // JLA_TB4
+  {SP_D9, JLA, TB3}, // JLA_TB3
+  {SP_76, KIKJ, PL2}, // KIKJ_PL2
+  {SP_77, KIKJ, PL1}, // KIKJ_PL1
+  {SP_78, OKBS, PL2}, // OKBS_PL2
+  {SP_79, OKBS, PL1}, // OKBS_PL1
+  {SP_80, BTGD, PL2}, // BTGD_PL2
+  {SP_81, BTGD, PL1}, // BTGD_PL1
+  {SP_D5, BTGD, TB1}, // BTGD_TB1
+  {SP_D0, BTGD, TB2}, // BTGD_TB2
+};
 CBTC_BLOCK block_state[] = {
   // S803B_VS801B, S803B_VS803B, S803B_S831B
   //{2418, VB304DB, "VB304DB", -1, {T815B_TR}, {TRUE, SP_73, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL1 // CHECKED.
@@ -198,7 +227,7 @@ CBTC_BLOCK block_state[] = {
   {1403, VB340D, "VB340D", SC801, {1, { {{ {1402, 0}, {1404, 1} }, -1} }}, {T803A_TR}, {TRUE, SP_79, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL1 // CHECKE.D
   //{1404, VB342DA, "VB342DA", -1, {T805A_TR}, {FALSE}},
   {1404, VB342DA, "VB342DA", SC801, {1, { {{ {1403, 0}, {1405, 1} }, -1} }}, {T805A_TR}, {FALSE}},
-    
+  
   // S822A_S832B
   //{1013, VB359U, "VB359U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
   {1013, VB359U, "VB359U", SC801, {1, { {{ {1012, 0}, {1014, 1} }, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.

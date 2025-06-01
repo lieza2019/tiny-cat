@@ -33,8 +33,6 @@
 #define JOURNEY_DEFAULT_ARRTIME_MINUTE 0
 #define JOURNEY_DEFAULT_ARRTIME_SECOND 0
 
-#include "ttcreat_def.h"
-
 typedef struct ttc_ctrl {
   BOOL dump_par_symtbl;
   BOOL dump_ttc_symtbl;

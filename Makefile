@@ -14,7 +14,7 @@ TINY_LIB_NAME = libtiny.a
 TINY_EXE_NAME = tiny-cat
 GEN_IL_DEF_BIN = gen_il_def
 
-$(TINY_EXE_NAME) : main.o $(TINY_LIB_NAME) ./timetable/ttcreat.o ./timetable/ttcreat_def.o ./timetable/ttcreat_cmd.o ./timetable/y.tab.o ./timetable/lex.yy.o
+$(TINY_EXE_NAME) : main.o $(TINY_LIB_NAME) ./timetable/ttcreat.o ./timetable/ttcreat_cmd.o ./timetable/y.tab.o ./timetable/lex.yy.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(TINY_LIB_NAME) : misc.o network.o sparcs.o train_cmd.o cbtc.o train_ctrl.o cbi.o interlock.o surveill.o ars.o timetable.o
@@ -72,9 +72,6 @@ main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h surveill.h timeta
 ./timetable/ttcreat.o : generic.h ./timetable/ttcreat.h ./timetable/ttcreat.c
 	$(CD) ./timetable; \
 	$(MAKE) CFLAGS='-DNO_EXEC_BINARY' ttcreat.o
-./timetable/ttcreat_def.o : ./timetable/ttcreat.h
-	$(CD) ./timetable; \
-	$(MAKE) CFLAGS='-DNO_EXEC_BINARY' ttcreat_def.o
 ./timetable/tcreat_cmd.o : generic.h ./timetable/ttcreat.h
 	$(CD) ./timetable; \
 	$(MAKE) CFLAGS='-DNO_EXEC_BINARY' tcreat_cmd.o
