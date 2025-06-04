@@ -1,3 +1,7 @@
+/*
+ * construct parsing-platfrom for route_rel table.
+ * construct database for route profile.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,12 +11,25 @@
 #undef CBTC_C
 #include "../../cbi.h"
 
+#define TRACK_PROF_DECL_MAXNUM 1024
+#define ROUTE_PROF_DECL_MAXNUM 256
+
 #define TRACK_NAME_MAXLEN 16
 #define TRACK_BOUNDALIGN_MAXLEN 8
 
 #define ILCOND_IDENT_MAXLEN 256
 
-#define GEN_INDENT( fp, n, m ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < (m); b++ ) fprintf((fp), " "); }}
+typedef struct track_prof {
+  char route_name[CBI_STAT_IDENT_LEN + 1];
+} TRACK_PROF, *TRACK_PROF_PTR;
+
+typedef struct route_prof {
+  char route_name[CBI_STAT_IDENT_LEN + 1];
+  struct {
+    char tr_name[CBI_STAT_IDENT_LEN + 1];
+    TRACK_PROF_PTR tr_prof;
+  } origin;
+} ROUTE_PROF, *ROUTE_PROF_PTR;
 
 static void skip_chr ( FILE *fp_src ) {
   assert( fp_src );
@@ -156,6 +173,8 @@ static void emit_track_prof ( FILE *fp_out, char *ptr_name, char *pbounds ) {
   
   fprintf( fp_out, "},\n" );
 }
+
+#define GEN_INDENT( fp, n, m ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < (m); b++ ) fprintf((fp), " "); }}
 
 static int emit_track_dataset ( FILE *fp_out, FILE *fp_src ) {
   assert( fp_out );
