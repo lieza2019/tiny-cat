@@ -27,7 +27,7 @@ ttcreat : y.tab.o lex.yy.o ttcreat.o ttcreat_cmd.o ../$(TINY_LIB_NAME)
 	$(LD) -o $(TTCREAT_EXE_NAME) $^
 
 ../$(TINY_LIB_NAME) :
-	$(CD) ../; $(MAKE)
+	$(CD) ../; $(MAKE) $(TINY_LIB_NAME)
 
 y.tab.o : y.tab.c
 	$(CC) -c $<

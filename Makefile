@@ -14,7 +14,7 @@ TINY_LIB_NAME = libtiny.a
 TINY_EXE_NAME = tiny-cat
 GEN_IL_DEF_BIN = gen_il_def
 
-$(TINY_EXE_NAME) : main.o $(TINY_LIB_NAME) ./timetable/ttcreat.o ./timetable/ttcreat_cmd.o ./timetable/y.tab.o ./timetable/lex.yy.o
+$(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/ttcreat.o ./timetable/ttcreat_cmd.o $(TINY_LIB_NAME)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(TINY_LIB_NAME) : misc.o network.o sparcs.o train_cmd.o cbtc_dataset.o cbtc.o train_ctrl.o cbi.o interlock.o surveill.o ars.o timetable.o
