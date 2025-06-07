@@ -90,11 +90,7 @@ static BOOL track_prof_sr ( FILE *fp_out, struct track_sr *psr, char *ptr_name, 
 	strncpy( psr->sr_name, idstr, CBI_STAT_IDENT_LEN );
 	psr->psr_attr = pattr;
 	fprintf( fp_out, "TRUE, " );
-#if 0 // *****
-	fprintf( fp_out, "%s, %s", psfx_sr, idstr );
-#else
 	fprintf( fp_out, "%s, %s", psfx_sr, psr->sr_name );
-#endif
 	r = TRUE;
       }
     }
@@ -141,7 +137,6 @@ static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
   return cnt;
 }
 
-#if 0 // *****
 static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name, char *pbounds ) {
   assert( pprof );
   assert( ptr_name );
@@ -150,85 +145,10 @@ static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name
   assert( !ferror( fp_out ) );
   
   fprintf( fp_out, "{ _TRACK, " );
-  fprintf( fp_out, "\"%s_TR\", ", ptr_name );
-  fprintf( fp_out, "%s_TR, ", ptr_name );
-  // cbtc
-  fprintf( fp_out, "{" );
-  {
-    int nblks = -1;
-    CBTC_BLOCK_PTR pblk_prof = NULL;
-    nblks = track_prof_blks( &pblk_prof, ptr_name );
-    assert( nblks > -1 );
-    fprintf( fp_out, "%d", nblks );
-    if( nblks > 0 ) {
-      assert( pblk_prof );
-      int n = nblks;
-      fprintf( fp_out, ", {" );
-      do {
-	assert( n > 0 );
-	if( n < nblks )
-	  fprintf( fp_out, ", " );
-	n--;
-	fprintf( fp_out, "%s", pblk_prof->virt_blkname_str );	
-	pblk_prof = pblk_prof->belonging_tr.pNext;
-      } while( pblk_prof );
-      assert( n == 0 );
-      fprintf( fp_out, "}" );
-    }
-  }
-  fprintf( fp_out, "}, " );
-  // lock
-  fprintf( fp_out, "{" );
-  // TLSR / TRSR
-  fprintf( fp_out, "{" );
-  track_prof_SR( fp_out, ptr_name, "_TLSR" ); // TLSR
-  fprintf( fp_out, "}, " );
-  fprintf( fp_out, "{" );
-  track_prof_SR( fp_out, ptr_name, "_TRSR" ); // TRSR
-  fprintf( fp_out, "}, " );
-  // sTLSR / sTRSR
-  fprintf( fp_out, "{" );
-  track_prof_SR( fp_out, ptr_name, "_sTLSR" ); // sTLSR
-  fprintf( fp_out, "}, " );
-  fprintf( fp_out, "{" );
-  track_prof_SR( fp_out, ptr_name, "_sTRSR" ); // sTRSR
-  fprintf( fp_out, "}, " );
-  // eTLSR / eTRSR
-  fprintf( fp_out, "{" );
-  track_prof_SR( fp_out, ptr_name, "_eTLSR" ); // eTLSR
-  fprintf( fp_out, "}, " );
-  fprintf( fp_out, "{" );
-  track_prof_SR( fp_out, ptr_name, "_eTRSR" ); // eTRSR
-  fprintf( fp_out, "}, " );
-  // kTLSR / kTRSR
-  fprintf( fp_out, "{" );
-  track_prof_SR( fp_out, ptr_name, "_kTLSR" ); // kTLSR
-  fprintf( fp_out, "}, " );
-  fprintf( fp_out, "{" );
-  track_prof_SR( fp_out, ptr_name, "_kTRSR" ); // kTRSR
-  fprintf( fp_out, "}" );
-  fprintf( fp_out, "}" );
-  
-  fprintf( fp_out, "},\n" );
-}
-#else
-static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name, char *pbounds ) {
-  assert( pprof );
-  assert( ptr_name );
-  assert( pbounds );
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  
-  fprintf( fp_out, "{ _TRACK, " );
-#if 0 // *****
-  fprintf( fp_out, "\"%s_TR\", ", ptr_name );
-  fprintf( fp_out, "%s_TR, ", ptr_name );
-#else
   snprintf( pprof->track_name, CBI_STAT_IDENT_LEN, "%s_TR", ptr_name );
   pprof->ptr_attr = conslt_cbi_code_tbl( pprof->track_name );
   fprintf( fp_out, "\"%s\", ", pprof->track_name );
   fprintf( fp_out, "%s, ", pprof->track_name );
-#endif
   // cbtc
   fprintf( fp_out, "{" );
   {
@@ -236,12 +156,8 @@ static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name
     CBTC_BLOCK_PTR pblk_prof = NULL;
     nblks = track_prof_blks( &pblk_prof, ptr_name );
     assert( nblks > -1 );
-#if 0 // *****
-    fprintf( fp_out, "%d", nblks );
-#else
     pprof->consists_blks.nblks = nblks;
     fprintf( fp_out, "%d", pprof->consists_blks.nblks );
-#endif
     if( nblks > 0 ) {
       assert( pblk_prof );
       int n = nblks;
@@ -252,13 +168,9 @@ static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name
 	if( n < nblks )
 	  fprintf( fp_out, ", " );
 	n--;
-#if 0 // *****
-	fprintf( fp_out, "%s", pblk_prof->virt_blkname_str );
-#else
 	pprof->consists_blks.pblk_profs[i] = pblk_prof;
 	fprintf( fp_out, "%s", pprof->consists_blks.pblk_profs[i]->virt_blkname_str );
 	i++;
-#endif
 	pblk_prof = pblk_prof->belonging_tr.pNext;
       } while( pblk_prof );
       assert( n == 0 );
@@ -301,7 +213,6 @@ static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name
   
   fprintf( fp_out, "},\n" );
 }
-#endif
 
 #define GEN_INDENT( fp, n, m ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < (m); b++ ) fprintf((fp), " "); }}
 
@@ -321,11 +232,7 @@ static int emit_track_dataset ( FILE *fp_out, FILE *fp_src ) {
   while( !feof(fp_src) ) {
     assert( cnt < TRACK_PROF_DECL_MAXNUM );
     int n = -1;
-#if 0 // *****
-    n = fscanf( fp_src, "%d,%[^,],%d,%d,%[^,]", &seq, tr_name, &ce_id, &sc_id, bounds );
-#else
     n = fscanf( fp_src, "%d,%[^,],%d,%d,%s", &seq, tr_name, &ce_id, &sc_id, bounds );
-#endif
     if( n < 5 )
       skip_chr( fp_src );
     else {
