@@ -24,40 +24,24 @@
 
 #define ILCOND_IDENT_MAXLEN 256
 
+struct track_sr {
+  BOOL defined;
+  char sr_name[CBI_STAT_IDENT_LEN + 1];
+  CBI_STAT_ATTR_PTR psr_attr;
+};
 typedef struct track_prof {
   char track_name[CBI_STAT_IDENT_LEN + 1];
+  CBI_STAT_ATTR_PTR ptr_attr;
   struct {
     int nblks;
     CBTC_BLOCK_PTR pblk_profs[MAX_TRACK_BLOCKS];
   } consists_blks;
   struct {
-    struct {
-      BOOL defined;
-      char sr_name[CBI_STAT_IDENT_LEN + 1];
-      IL_SYM sr_id;
-    } TLSR;
-    struct {
-      BOOL defined;
-    } TRSR;
-    struct {
-      BOOL defined;
-    } sTLSR;
-    struct {
-      BOOL defined;
-    } sTRSR;
-    struct {
-      BOOL defined;
-    } eTLSR;
-    struct {
-      BOOL defined;
-    } eTRSR;
-    struct {
-      BOOL defined;
-    } kTLSR;
-    struct {
-      BOOL defined;
-    } kTRSR;
-  } sr;
+    struct track_sr TLSR, TRSR;
+    struct track_sr sTLSR, sTRSR;
+    struct track_sr eTLSR, eTRSR;
+    struct track_sr kTLSR, kTRSR;
+  } sr;  
 } TRACK_PROF, *TRACK_PROF_PTR;
 static TRACK_PROF_PTR track_prof = NULL;
 
@@ -84,8 +68,8 @@ static void skip_chr ( FILE *fp_src ) {
   }
 }
 
-static BOOL track_prof_sr ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name, const char * psfx_sr ) {
-  assert( pprof );
+static BOOL track_prof_sr ( FILE *fp_out, struct track_sr *psr, char *ptr_name, const char * psfx_sr ) {
+  assert( psr );
   assert( ptr_name );
   assert( psfx_sr );
   assert( fp_out );
@@ -99,15 +83,27 @@ static BOOL track_prof_sr ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name, 
   {
     CBI_STAT_ATTR_PTR pattr = NULL;
     pattr = conslt_cbi_code_tbl( idstr );
-    if( pattr )
-      if( !strncmp( pattr->ident, idstr, ILCOND_IDENT_MAXLEN ) ) {
+    if( pattr ) {
+      assert( !strncmp( cnv2str_il_sym( pattr->id ), pattr->ident, ILCOND_IDENT_MAXLEN ) ); // *****
+      if( !strncmp( pattr->ident, idstr, ILCOND_IDENT_MAXLEN ) ) {	
+	psr->defined = TRUE;
+	strncpy( psr->sr_name, idstr, CBI_STAT_IDENT_LEN );
+	psr->psr_attr = pattr;
 	fprintf( fp_out, "TRUE, " );
+#if 0 // *****
 	fprintf( fp_out, "%s, %s", psfx_sr, idstr );
+#else
+	fprintf( fp_out, "%s, %s", psfx_sr, psr->sr_name );
+#endif
 	r = TRUE;
       }
+    }
   }
-  if( !r )
+  if( !r ) {
+    psr->defined = FALSE;
+    psr->psr_attr = NULL;
     fprintf( fp_out, "FALSE" );
+  }
   return r;
 }
 
@@ -229,6 +225,7 @@ static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name
   fprintf( fp_out, "%s_TR, ", ptr_name );
 #else
   snprintf( pprof->track_name, CBI_STAT_IDENT_LEN, "%s_TR", ptr_name );
+  pprof->ptr_attr = conslt_cbi_code_tbl( pprof->track_name );
   fprintf( fp_out, "\"%s\", ", pprof->track_name );
   fprintf( fp_out, "%s, ", pprof->track_name );
 #endif
@@ -274,31 +271,31 @@ static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name
   fprintf( fp_out, "{" );
   // TLSR / TRSR
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, pprof, ptr_name, "_TLSR" ); // TLSR
+  track_prof_sr( fp_out, &pprof->sr.TLSR, ptr_name, "_TLSR" ); // TLSR
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, pprof, ptr_name, "_TRSR" ); // TRSR
+  track_prof_sr( fp_out, &pprof->sr.TRSR, ptr_name, "_TRSR" ); // TRSR
   fprintf( fp_out, "}, " );
   // sTLSR / sTRSR
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, pprof, ptr_name, "_sTLSR" ); // sTLSR
+  track_prof_sr( fp_out, &pprof->sr.sTLSR, ptr_name, "_sTLSR" ); // sTLSR
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, pprof, ptr_name, "_sTRSR" ); // sTRSR
+  track_prof_sr( fp_out, &pprof->sr.sTRSR, ptr_name, "_sTRSR" ); // sTRSR
   fprintf( fp_out, "}, " );
   // eTLSR / eTRSR
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, pprof, ptr_name, "_eTLSR" ); // eTLSR
+  track_prof_sr( fp_out, &pprof->sr.eTLSR, ptr_name, "_eTLSR" ); // eTLSR
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, pprof, ptr_name, "_eTRSR" ); // eTRSR
+  track_prof_sr( fp_out, &pprof->sr.eTRSR, ptr_name, "_eTRSR" ); // eTRSR
   fprintf( fp_out, "}, " );
   // kTLSR / kTRSR
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, pprof, ptr_name, "_kTLSR" ); // kTLSR
+  track_prof_sr( fp_out, &pprof->sr.kTLSR, ptr_name, "_kTLSR" ); // kTLSR
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, pprof, ptr_name, "_kTRSR" ); // kTRSR
+  track_prof_sr( fp_out, &pprof->sr.kTRSR, ptr_name, "_kTRSR" ); // kTRSR
   fprintf( fp_out, "}" );
   fprintf( fp_out, "}" );
   
