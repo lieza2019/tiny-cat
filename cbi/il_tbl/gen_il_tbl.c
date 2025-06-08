@@ -24,8 +24,11 @@
 
 #define ROUTE_NAME_MAXLEN 32
 #define ROUTE_MAX_CTRLTRACKS 32
+#define ROUTE_MAX_APPTRACKS 32
 
 #define ILCOND_IDENT_MAXLEN 256
+
+extern int par_csv_iltbl ( char *bufs[], const int nbufs, FILE *fp_src );
 
 struct track_sr {
   BOOL defined;
@@ -46,10 +49,16 @@ typedef struct track_prof {
     struct track_sr kTLSR, kTRSR;
   } sr;  
 } TRACK_PROF, *TRACK_PROF_PTR;
-static TRACK_PROF_PTR track_prof = NULL;
 
 typedef struct route_prof {
   char route_name[CBI_STAT_IDENT_LEN + 1];
+  struct {
+    int ntrs;
+    struct {
+      char tr_name[CBI_STAT_IDENT_LEN + 1];
+      TRACK_PROF_PTR tr_prof;
+    } tr[ROUTE_MAX_APPTRACKS];
+  } apps;
   struct {
     char tr_name[CBI_STAT_IDENT_LEN + 1];
     TRACK_PROF_PTR tr_prof;
@@ -62,7 +71,51 @@ typedef struct route_prof {
     } tr[ROUTE_MAX_CTRLTRACKS];
   } ctrls;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
-static ROUTE_PROF_PTR route_prof = NULL;
+
+static struct {
+  struct {
+    TRACK_PROF_PTR track_profs;
+    TRACK_PROF_PTR pavail;
+  } tracks;
+  struct {
+    ROUTE_PROF_PTR route_profs;
+    ROUTE_PROF_PTR pavail;
+  } routes;
+} tracks_routes_prof = {};
+
+static TRACK_PROF_PTR lkup_track_prof ( const char *ptr_name ) {
+  assert( ptr_name );
+  TRACK_PROF_PTR r = NULL;
+  
+  TRACK_PROF_PTR pprof = tracks_routes_prof.tracks.track_profs;
+  while( pprof < tracks_routes_prof.tracks.pavail ) {
+    assert( pprof );
+    assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
+    if( strncmp( pprof->track_name, ptr_name, TRACK_NAME_MAXLEN ) == 0 ) {
+      r = pprof;
+      break;
+    }
+    pprof++;
+  }
+  return r;
+}
+
+static ROUTE_PROF_PTR lkup_route_prof ( const char *pro_name ) {
+  assert( pro_name );
+  ROUTE_PROF_PTR r = NULL;
+  
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    assert( pprof );
+    assert( ROUTE_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
+    if( strncmp( pprof->route_name, pro_name, ROUTE_NAME_MAXLEN ) == 0 ) {
+      r = pprof;
+      break;
+    }
+    pprof++;
+  }
+  return r;
+}
 
 static void skip_chr ( FILE *fp_src ) {
   assert( fp_src );
@@ -191,28 +244,24 @@ static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name
   fprintf( fp_out, "}, " );
   // lock
   fprintf( fp_out, "{" );
-  // TLSR / TRSR
   fprintf( fp_out, "{" );
   track_prof_sr( fp_out, &pprof->sr.TLSR, ptr_name, "_TLSR" ); // TLSR
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
   track_prof_sr( fp_out, &pprof->sr.TRSR, ptr_name, "_TRSR" ); // TRSR
   fprintf( fp_out, "}, " );
-  // sTLSR / sTRSR
   fprintf( fp_out, "{" );
   track_prof_sr( fp_out, &pprof->sr.sTLSR, ptr_name, "_sTLSR" ); // sTLSR
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
   track_prof_sr( fp_out, &pprof->sr.sTRSR, ptr_name, "_sTRSR" ); // sTRSR
   fprintf( fp_out, "}, " );
-  // eTLSR / eTRSR
   fprintf( fp_out, "{" );
   track_prof_sr( fp_out, &pprof->sr.eTLSR, ptr_name, "_eTLSR" ); // eTLSR
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
   track_prof_sr( fp_out, &pprof->sr.eTRSR, ptr_name, "_eTRSR" ); // eTRSR
   fprintf( fp_out, "}, " );
-  // kTLSR / kTRSR
   fprintf( fp_out, "{" );
   track_prof_sr( fp_out, &pprof->sr.kTLSR, ptr_name, "_kTLSR" ); // kTLSR
   fprintf( fp_out, "}, " );
@@ -229,35 +278,48 @@ static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name
 static int emit_track_dataset ( FILE *fp_out, FILE *fp_src ) {
   assert( fp_out );
   assert( fp_src );
-  assert( track_prof );
-  int seq;
-  char tr_name[TRACK_NAME_MAXLEN];
-  int ce_id;
-  int sc_id;
-  char bounds[TRACK_BOUNDALIGN_MAXLEN];
-  
   int cnt = 0;
+  
   assert( !ferror( fp_out ) );
   assert( !ferror( fp_src ) );
   while( !feof(fp_src) ) {
     assert( cnt < TRACK_PROF_DECL_MAXNUM );
     int n = -1;
-    n = fscanf( fp_src, "%d,%[^,],%d,%d,%s", &seq, tr_name, &ce_id, &sc_id, bounds );
-    if( n < 5 )
-      skip_chr( fp_src );
-    else {
-      char Tr_name[TRACK_NAME_MAXLEN] = "T";
-      printf( "(seq, tr_name, ce_id, sc_id, bound): (%d, %s, %d, %d, %s)\n", seq, tr_name, ce_id, sc_id, bounds );
-      strcat( &Tr_name[1], tr_name );
-      GEN_INDENT( fp_out, 1, 2 );
-      emit_track_prof( fp_out, &track_prof[cnt], Tr_name, bounds );
-      if( ferror( fp_out ) )
-	break;
-      else
-	cnt++;
+    char seq[5 + 1];
+    char tr_name[TRACK_NAME_MAXLEN + 1];
+    char bounds[TRACK_BOUNDALIGN_MAXLEN + 1];
+    seq[5] = 0;
+    tr_name[TRACK_NAME_MAXLEN] = 0;
+    bounds[TRACK_BOUNDALIGN_MAXLEN] = 0;
+    strcpy( seq, "" );
+    strcpy( tr_name, "T" );
+    strcpy( bounds, "" );
+    {
+      char *strs[5];
+      char dc[256 + 1]; // dont cure.
+      strs[0] = seq;
+      strs[1] = &tr_name[1];
+      strs[2] = dc;
+      strs[3] = dc;
+      strs[4] = bounds;
+      n = par_csv_iltbl( strs, 5, fp_src );
+      if( ferror( fp_src ) )
+	break;      
     }
-    if( ferror( fp_src ) )
-      break;
+    if( n >= 5 ) {
+      assert( tr_name[0] == 'T' );
+      if( strnlen( tr_name, TRACK_NAME_MAXLEN ) > 1 ) {
+	printf( "(seq, tr_name, bound): (%s, %s, %s)\n", seq, tr_name, bounds );
+	GEN_INDENT( fp_out, 1, 2 );
+	assert( tracks_routes_prof.tracks.pavail < &tracks_routes_prof.tracks.track_profs[TRACK_PROF_DECL_MAXNUM] );
+	emit_track_prof( fp_out, tracks_routes_prof.tracks.pavail, tr_name, bounds );
+	if( ferror( fp_out ) )
+	  break;
+	cnt++;
+	tracks_routes_prof.tracks.pavail++;
+      }
+    }
+    skip_chr( fp_src );
   }
   return cnt;
 }
@@ -324,68 +386,14 @@ static void emit_route_dataset_epilog ( FILE *fp_out ) {
   fprintf( fp_out, "#endif // ROUTE_ATTRIB_DEFINITION\n" );
 }
 
-#if 0 // *****
-static int emit_route_dataset ( FILE *fp_out, FILE *fp_src ) {
+static int read_iltbl_signal ( FILE *fp_out, FILE *fp_src ) {
   assert( fp_out );
   assert( fp_src );
-  extern int par_route_iltbl ( int *pseq, char *pro_name, char *pctrl_tr, FILE *fp_src );
-  
   ROUTE_PROF_PTR pprof = NULL;
-  int cnt = -1;
-  
-  while( !feof( fp_src ) ) {
-    int seq = -1;
-    char ro_name[ROUTE_NAME_MAXLEN + 1];
-    char ctrl_tr[TRACK_NAME_MAXLEN + 1] = "T";
-    int n = -1;
-    ro_name[ROUTE_NAME_MAXLEN] = 0;
-    ctrl_tr[TRACK_NAME_MAXLEN] = 0;
-    strcpy( ro_name, "" );
-    n = par_route_iltbl( &seq, ro_name, &ctrl_tr[1], fp_src );
-    if( n > 1 ) {
-      int i;
-      if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
-	cnt++;
-	pprof = &route_prof[cnt];
-	assert( ROUTE_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
-	strncpy( pprof->route_name, ro_name, ROUTE_NAME_MAXLEN );
-	pprof->ctrls.ntrs = 0;
-      }
-      assert( pprof );
-      i = pprof->ctrls.ntrs;
-      assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
-      strncpy( pprof->ctrls.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
-      pprof->ctrls.ntrs++;
-#if 1 // *****
-      printf( "(seq, route, [ctrl_tracks]): (%d, %s, [", seq, pprof->route_name );
-      {	
-	int i = 0;
-	while( i < pprof->ctrls.ntrs ) {
-	  if( i > 0 )
-	    printf( ", " );
-	  printf( "%s", pprof->ctrls.tr[i].tr_name );	  
-	  i++;
-	}
-      }
-      printf( "])\n" );
-#endif
-    } else {
-      assert( n == 1 );
-      assert( seq > -1 );
-    }
-    skip_chr( fp_src );
-  }
-  return (cnt + 1);
-}
-#else
-static int emit_route_dataset ( FILE *fp_out, FILE *fp_src ) {
-  assert( fp_out );
-  assert( fp_src );
-  extern int par_route_iltbl ( char *bufs[], const int nbufs, FILE *fp_src );
-  
-  ROUTE_PROF_PTR pprof = NULL;
-  int cnt = -1;
-  
+  int cnt = 0;
+
+  assert( !ferror( fp_out ) );
+  assert( !ferror( fp_src ) );
   while( !feof( fp_src ) ) {
     int n = -1;
     char seq[5 + 1];
@@ -411,33 +419,40 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src ) {
       strs[7] = dc;
       strs[8] = dc;
       strs[9] = dc;
-      strs[10] = ctrl_tr;
-      n = par_route_iltbl( strs, 11, fp_src );      
+      strs[10] = &ctrl_tr[1];
+      n = par_csv_iltbl( strs, 11, fp_src );
+      assert( ctrl_tr[0] == 'T' );
     }
     if( n > 1 ) {
-      int i;
-      if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
-	cnt++;
-	pprof = &route_prof[cnt];
+      if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {
+	if( cnt > 0 )
+	  tracks_routes_prof.routes.pavail++;
+	assert( tracks_routes_prof.routes.pavail < &tracks_routes_prof.routes.route_profs[ROUTE_PROF_DECL_MAXNUM] );
+	pprof = tracks_routes_prof.routes.pavail;
 	assert( ROUTE_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	strncpy( pprof->route_name, ro_name, ROUTE_NAME_MAXLEN );
 	pprof->ctrls.ntrs = 0;
+	cnt++;
       }
       assert( pprof );
-      if( strncmp( ctrl_tr, "", TRACK_NAME_MAXLEN ) ) {	
-	i = pprof->ctrls.ntrs;
+      if( strnlen( ctrl_tr, TRACK_NAME_MAXLEN ) > 1 ) {
+	const int i = pprof->ctrls.ntrs;
+	assert( strnlen( ctrl_tr, TRACK_NAME_MAXLEN ) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
+	strncat( ctrl_tr, "_TR", TRACK_NAME_MAXLEN );
 	assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	strncpy( pprof->ctrls.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
+	pprof->ctrls.tr[i].tr_prof = lkup_track_prof( pprof->ctrls.tr[i].tr_name );
+	assert( pprof->ctrls.tr[i].tr_prof );
 	pprof->ctrls.ntrs++;
       }
-#if 1 // *****
-      printf( "(seq, route, [ctrl_tracks]): (%d, %s, [", atoi(seq), pprof->route_name );
+#if 0 // *****
+      printf( "(seq, route, [ctrl_tracks]): (%s, %s, [", seq, pprof->route_name );
       {	
 	int i = 0;
 	while( i < pprof->ctrls.ntrs ) {
 	  if( i > 0 )
 	    printf( ", " );
-	  printf( "%s", pprof->ctrls.tr[i].tr_name );	  
+	  printf( "%s", pprof->ctrls.tr[i].tr_name );
 	  i++;
 	}
       }
@@ -446,20 +461,115 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src ) {
     }
     skip_chr( fp_src );
   }
+  if( cnt > 0 )
+    tracks_routes_prof.routes.pavail++;
+  return cnt;
+}
+
+static int read_iltbl_routerel ( FILE *fp_out, FILE *fp_src ) {
+  assert( fp_out );
+  assert( fp_src );
+  extern int par_csv_iltbl ( char *bufs[], const int nbufs, FILE *fp_src );
+  
+  ROUTE_PROF_PTR pprof = NULL;
+  int cnt = -1;
+
+  assert( !ferror( fp_out ) );
+  assert( !ferror( fp_src ) );
+  while( !feof( fp_src ) ) {
+    int n = -1;
+    char seq[5 + 1];
+    char ro_name[ROUTE_NAME_MAXLEN + 1];
+    char app_tr[TRACK_NAME_MAXLEN + 1];
+    seq[5] = 0;
+    ro_name[ROUTE_NAME_MAXLEN] = 0;
+    app_tr[TRACK_NAME_MAXLEN] = 0;
+    strcpy( seq, "" );
+    strcpy( ro_name, "" );
+    strcpy( app_tr, "T" );
+    {
+      char *strs[5];
+      char dc[256 + 1]; // dont cure.
+      dc[256] = 0;
+      strs[0] = seq;
+      strs[1] = dc;
+      strs[2] = ro_name;
+      strs[3] = dc;
+      strs[4] = &app_tr[1];
+      n = par_csv_iltbl( strs, 5, fp_src );
+      assert( app_tr[0] == 'T' );
+    }
+    if( n > 1 ) {
+      if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
+	cnt++;
+	pprof = lkup_route_prof( ro_name );
+	if( pprof )
+	  pprof->apps.ntrs = 0;
+      }
+      if( pprof ) {
+	if( (strnlen(app_tr, TRACK_NAME_MAXLEN ) > 1) && strncmp(&app_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
+	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
+	  strncpy( pprof->apps.tr[pprof->apps.ntrs].tr_name, app_tr, TRACK_NAME_MAXLEN );
+	  pprof->apps.ntrs++;
+	}
+      }
+    }
+    skip_chr( fp_src );
+  }
   return (cnt + 1);
 }
+
+static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
+  assert( fp_out );
+  assert( fp_src_sig );
+  assert( fp_src_rel );
+  
+  read_iltbl_signal( fp_out, fp_src_sig );
+  read_iltbl_routerel( fp_out, fp_src_rel );
+#if 1 // *****
+  {
+    assert( tracks_routes_prof.routes.route_profs );
+    ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+    while( pprof < tracks_routes_prof.routes.pavail ) {
+      assert( pprof );
+      assert( strlen( pprof->route_name ) > 1 );
+      int i;
+      printf( "(route, [app_tracks], [ctrl_tracks]): (%s, [", pprof->route_name );
+      for( i = 0; i < pprof->apps.ntrs; i++ ) {
+	if( i > 0 )
+	  printf( ", " );
+	printf( "%s", pprof->apps.tr[i].tr_name );
+      }
+      printf( "], [" );
+      for( i = 0; i < pprof->ctrls.ntrs; i++ ) {
+	if( i > 0 )
+	  printf( ", " );
+	printf( "%s", pprof->ctrls.tr[i].tr_name );
+      }
+      printf( "])\n" );
+      pprof++;
+    }
+  }
 #endif
+  return 0;
+}
 
 static int gen_route_dataset ( FILE *fp_out ) {
   assert( fp_out );
   int r = 0;
-  FILE *fp_src = NULL;
+  FILE *fp_src_sig = NULL;
+  FILE *fp_src_rel = NULL;
   
   emit_route_dataset_prolog( fp_out );
-  fp_src = fopen( "BCGN_SIGNAL.csv", "r" );
-  if( fp_src ) {
-    if( !ferror( fp_src ) ) {
-      r = emit_route_dataset( fp_out, fp_src );
+  fp_src_sig = fopen( "BCGN_SIGNAL.csv", "r" );
+  if( fp_src_sig ) {
+    if( !ferror( fp_src_sig ) ) {
+      fp_src_rel = fopen( "BCGN_ROUTEREL.csv", "r" );
+      if( fp_src_rel ) {
+	if( !ferror( fp_src_rel ) ) {
+	  r = emit_route_dataset( fp_out, fp_src_sig, fp_src_rel );
+	}
+      }
     }
   }
   emit_route_dataset_epilog( fp_out );
@@ -469,13 +579,16 @@ static int gen_route_dataset ( FILE *fp_out ) {
 static int init_gen_il_dataset ( void ) {
   int r = ERR_FAILED_ALLOC_WORKMEM;
   
-  track_prof = calloc( TRACK_PROF_DECL_MAXNUM, sizeof(TRACK_PROF) );
-  if( !track_prof )
-    return r;  
-  route_prof = calloc( ROUTE_PROF_DECL_MAXNUM, sizeof(ROUTE_PROF) );
-  if( !route_prof )
+  tracks_routes_prof.tracks.track_profs = calloc( TRACK_PROF_DECL_MAXNUM, sizeof(TRACK_PROF) );
+  if( !tracks_routes_prof.tracks.track_profs )
     return r;
-  
+  else
+    tracks_routes_prof.tracks.pavail = tracks_routes_prof.tracks.track_profs;
+  tracks_routes_prof.routes.route_profs = calloc( ROUTE_PROF_DECL_MAXNUM, sizeof(ROUTE_PROF) );
+  if( !tracks_routes_prof.routes.route_profs )
+    return r;
+  else
+    tracks_routes_prof.routes.pavail = tracks_routes_prof.routes.route_profs;
   r = ERR_FAILED_CONS_ILSYM_DATABASE;
   {
     int n = -1;
