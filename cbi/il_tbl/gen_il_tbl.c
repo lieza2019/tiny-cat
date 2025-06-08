@@ -22,6 +22,9 @@
 #define TRACK_NAME_MAXLEN 16
 #define TRACK_BOUNDALIGN_MAXLEN 8
 
+#define ROUTE_NAME_MAXLEN 32
+#define ROUTE_MAX_CTRLTRACKS 32
+
 #define ILCOND_IDENT_MAXLEN 256
 
 struct track_sr {
@@ -51,6 +54,13 @@ typedef struct route_prof {
     char tr_name[CBI_STAT_IDENT_LEN + 1];
     TRACK_PROF_PTR tr_prof;
   } origin;
+  struct {
+    int ntrs;
+    struct {
+      char tr_name[CBI_STAT_IDENT_LEN + 1];
+      TRACK_PROF_PTR tr_prof;
+    } tr[ROUTE_MAX_CTRLTRACKS];
+  } ctrls;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
 static ROUTE_PROF_PTR route_prof = NULL;
 
@@ -314,22 +324,146 @@ static void emit_route_dataset_epilog ( FILE *fp_out ) {
   fprintf( fp_out, "#endif // ROUTE_ATTRIB_DEFINITION\n" );
 }
 
-static int gen_route_dataset ( FILE *fp_out ) {
-  assert( fp_out );
-  int r = 0;
-
-  emit_route_dataset_prolog( fp_out );
-  emit_route_dataset_epilog( fp_out );
-  return r;
-}
-
+#if 0 // *****
 static int emit_route_dataset ( FILE *fp_out, FILE *fp_src ) {
   assert( fp_out );
   assert( fp_src );
-  int cnt = 0;
-  const PLTB_ID pltb = PL1;
-  ;
-  return cnt;
+  extern int par_route_iltbl ( int *pseq, char *pro_name, char *pctrl_tr, FILE *fp_src );
+  
+  ROUTE_PROF_PTR pprof = NULL;
+  int cnt = -1;
+  
+  while( !feof( fp_src ) ) {
+    int seq = -1;
+    char ro_name[ROUTE_NAME_MAXLEN + 1];
+    char ctrl_tr[TRACK_NAME_MAXLEN + 1] = "T";
+    int n = -1;
+    ro_name[ROUTE_NAME_MAXLEN] = 0;
+    ctrl_tr[TRACK_NAME_MAXLEN] = 0;
+    strcpy( ro_name, "" );
+    n = par_route_iltbl( &seq, ro_name, &ctrl_tr[1], fp_src );
+    if( n > 1 ) {
+      int i;
+      if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
+	cnt++;
+	pprof = &route_prof[cnt];
+	assert( ROUTE_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
+	strncpy( pprof->route_name, ro_name, ROUTE_NAME_MAXLEN );
+	pprof->ctrls.ntrs = 0;
+      }
+      assert( pprof );
+      i = pprof->ctrls.ntrs;
+      assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
+      strncpy( pprof->ctrls.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
+      pprof->ctrls.ntrs++;
+#if 1 // *****
+      printf( "(seq, route, [ctrl_tracks]): (%d, %s, [", seq, pprof->route_name );
+      {	
+	int i = 0;
+	while( i < pprof->ctrls.ntrs ) {
+	  if( i > 0 )
+	    printf( ", " );
+	  printf( "%s", pprof->ctrls.tr[i].tr_name );	  
+	  i++;
+	}
+      }
+      printf( "])\n" );
+#endif
+    } else {
+      assert( n == 1 );
+      assert( seq > -1 );
+    }
+    skip_chr( fp_src );
+  }
+  return (cnt + 1);
+}
+#else
+static int emit_route_dataset ( FILE *fp_out, FILE *fp_src ) {
+  assert( fp_out );
+  assert( fp_src );
+  extern int par_route_iltbl ( char *bufs[], const int nbufs, FILE *fp_src );
+  
+  ROUTE_PROF_PTR pprof = NULL;
+  int cnt = -1;
+  
+  while( !feof( fp_src ) ) {
+    int n = -1;
+    char seq[5 + 1];
+    char ro_name[ROUTE_NAME_MAXLEN + 1];
+    char ctrl_tr[TRACK_NAME_MAXLEN + 1];
+    seq[5] = 0;
+    ro_name[ROUTE_NAME_MAXLEN] = 0;
+    ctrl_tr[TRACK_NAME_MAXLEN] = 0;
+    strcpy( seq, "" );
+    strcpy( ro_name, "" );
+    strcpy( ctrl_tr, "T" );
+    {
+      char *strs[11];
+      char dc[256 + 1]; // dont cure.
+      dc[256] = 0;
+      strs[0] = seq;;
+      strs[1] = dc;
+      strs[2] = dc;
+      strs[3] = dc;
+      strs[4] = dc;
+      strs[5] = ro_name;
+      strs[6] = dc;
+      strs[7] = dc;
+      strs[8] = dc;
+      strs[9] = dc;
+      strs[10] = ctrl_tr;
+      n = par_route_iltbl( strs, 11, fp_src );      
+    }
+    if( n > 1 ) {
+      int i;
+      if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
+	cnt++;
+	pprof = &route_prof[cnt];
+	assert( ROUTE_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
+	strncpy( pprof->route_name, ro_name, ROUTE_NAME_MAXLEN );
+	pprof->ctrls.ntrs = 0;
+      }
+      assert( pprof );
+      if( strncmp( ctrl_tr, "", TRACK_NAME_MAXLEN ) ) {	
+	i = pprof->ctrls.ntrs;
+	assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
+	strncpy( pprof->ctrls.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
+	pprof->ctrls.ntrs++;
+      }
+#if 1 // *****
+      printf( "(seq, route, [ctrl_tracks]): (%d, %s, [", atoi(seq), pprof->route_name );
+      {	
+	int i = 0;
+	while( i < pprof->ctrls.ntrs ) {
+	  if( i > 0 )
+	    printf( ", " );
+	  printf( "%s", pprof->ctrls.tr[i].tr_name );	  
+	  i++;
+	}
+      }
+      printf( "])\n" );
+#endif
+    }
+    skip_chr( fp_src );
+  }
+  return (cnt + 1);
+}
+#endif
+
+static int gen_route_dataset ( FILE *fp_out ) {
+  assert( fp_out );
+  int r = 0;
+  FILE *fp_src = NULL;
+  
+  emit_route_dataset_prolog( fp_out );
+  fp_src = fopen( "BCGN_SIGNAL.csv", "r" );
+  if( fp_src ) {
+    if( !ferror( fp_src ) ) {
+      r = emit_route_dataset( fp_out, fp_src );
+    }
+  }
+  emit_route_dataset_epilog( fp_out );
+  return r;
 }
 
 static int init_gen_il_dataset ( void ) {

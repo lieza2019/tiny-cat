@@ -7,10 +7,11 @@ CC = /usr/bin/gcc
 CFLAGS = -Wall -Wno-unused-value  -g -DCHK_STRICT_CONSISTENCY -DIN_CBI_RESOURCEDIR
 GEN_IL_TBL_BIN = gen_il_tbl
 
-$(GEN_IL_TBL_BIN) : ../../cbi.o gen_il_tbl.o
+$(GEN_IL_TBL_BIN) : ../../cbi.o par_il_tbl.o gen_il_tbl.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 gen_il_tbl.o : ../../cbi.h gen_il_tbl.c
+par_il_tbl.o : ./par_il_tbl.c
 
 ../../cbi.o : ../../generic.h ../../misc.h ../../cbtc.h ../../cbi.h ../../cbi.c
 	$(CD) ../../; \
