@@ -29,7 +29,7 @@ int par_csv_iltbl ( char *bufs[], const int nbufs, FILE *fp_src ) {
 	c = fgetc( fp_src );
 	break_on_eoferr( fp_src, i );
 	assert( c == ',' );
-      }      
+      }
     } else
       i++;
     if( i >= nbufs )
