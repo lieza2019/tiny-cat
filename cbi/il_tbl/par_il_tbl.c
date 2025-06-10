@@ -24,14 +24,11 @@ int par_csv_iltbl ( char *bufs[], const int nbufs, FILE *fp_src ) {
       s[1] = 0;
       fscanf( fp_src, "%[^,]", &s[1] );
       break_on_eoferr( fp_src, i );
-      i++;
-      if( i < nbufs ) {
-	c = fgetc( fp_src );
-	break_on_eoferr( fp_src, i );
-	assert( c == ',' );
-      }
-    } else
-      i++;
+      c = fgetc( fp_src );
+      break_on_eoferr( fp_src, i );
+      assert( c == ',' );
+    }
+    i++;
     if( i >= nbufs )
       break;
     strcpy( bufs[i], "" );
