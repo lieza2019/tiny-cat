@@ -47,7 +47,8 @@ typedef struct track_prof {
     struct track_sr sTLSR, sTRSR;
     struct track_sr eTLSR, eTRSR;
     struct track_sr kTLSR, kTRSR;
-  } sr;  
+  } sr;
+  struct track_prof *pPrev, *pNext;
 } TRACK_PROF, *TRACK_PROF_PTR;
 
 typedef struct route_prof {
@@ -521,6 +522,15 @@ static int read_iltbl_routerel ( FILE *fp_out, FILE *fp_src ) {
   return (cnt + 1);
 }
 
+static int cons_ctrl_tracks ( ROUTE_PROF_PTR pprof ) {
+  assert( pprof );
+  int i;
+  for( i = 0; i < pprof->ctrls.ntrs; i++ ) {
+    ;
+  }
+  return 0;
+}
+
 static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
   assert( fp_out );
   assert( fp_src_sig );
@@ -528,6 +538,15 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
   
   read_iltbl_signal( fp_out, fp_src_sig );
   read_iltbl_routerel( fp_out, fp_src_rel );
+  {
+    ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+    assert( pprof );
+    while( pprof < tracks_routes_prof.routes.pavail ) {
+      assert( pprof );
+      cons_ctrl_tracks( pprof );
+      pprof++;
+    }
+  }
 #if 1 // *****
   {
     assert( tracks_routes_prof.routes.route_profs );
