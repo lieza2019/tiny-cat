@@ -45,8 +45,9 @@ typedef struct block {
     int num_morphs;
     struct {
       struct {
-	const unsigned short ln_blk;
+	const unsigned short neigh_blk;
 	const int edge_pos;
+	struct block *pln_blk;
       } linkages[MAX_ADJACENT_BLKS];
       const int len;
       IL_SYM points[MAX_POINTS_ON_MORPHING];

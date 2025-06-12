@@ -77,6 +77,7 @@ static struct {
   struct {
     TRACK_PROF_PTR track_profs;
     TRACK_PROF_PTR pavail;
+    TRACK_PROF_PTR pprof_sets[END_OF_ST_ID];
   } tracks;
   struct {
     ROUTE_PROF_PTR route_profs;
@@ -201,7 +202,7 @@ static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
   return cnt;
 }
 
-static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name, char *pbounds ) {
+static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name, char *pbounds ) {
   assert( pprof );
   assert( ptr_name );
   assert( pbounds );
@@ -272,6 +273,7 @@ static void emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name
   fprintf( fp_out, "}" );
   
   fprintf( fp_out, "},\n" );
+  return pprof;
 }
 
 #define GEN_INDENT( fp, n, m ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < (m); b++ ) fprintf((fp), " "); }}
@@ -522,14 +524,23 @@ static int read_iltbl_routerel ( FILE *fp_out, FILE *fp_src ) {
   return (cnt + 1);
 }
 
+#if 0
 static int cons_ctrl_tracks ( ROUTE_PROF_PTR pprof ) {
   assert( pprof );
   int i;
   for( i = 0; i < pprof->ctrls.ntrs; i++ ) {
-    ;
+    TRACK_PROF_PTR ptr = pprof->tr[i].tr_prof;
+    assert( ptr );
+    int j;
+    for( j = 0; j < ptr->consists_blks.nblks; j++ ) {
+      CBTC_BLOCK_PTR pblk = ptr->consists_blks.pblk_profs[j];
+      assert( pblk );
+      ;
+    }
   }
   return 0;
 }
+#endif
 
 static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
   assert( fp_out );
@@ -538,6 +549,7 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
   
   read_iltbl_signal( fp_out, fp_src_sig );
   read_iltbl_routerel( fp_out, fp_src_rel );
+#if 0 // *****
   {
     ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
     assert( pprof );
@@ -547,6 +559,7 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
       pprof++;
     }
   }
+#endif
 #if 1 // *****
   {
     assert( tracks_routes_prof.routes.route_profs );
