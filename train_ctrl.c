@@ -74,7 +74,7 @@ static int enter_leave_edge ( CBTC_BLOCK_PTR pB, unsigned short ent_leav_blk ) {
   for( i = 0; i < MAX_BLOCK_MORPHS; i++ )
     for( j = 0; j < MAX_ADJACENT_BLKS; j++ ) {
       assert( pB );
-      if( pB->shape.morphs[i].linkages[j].neigh_blk_name == ent_leav_blk ) {
+      if( pB->shape.morphs[i].linkages[j].neigh_blk == ent_leav_blk ) {
 	pos = pB->shape.morphs[i].linkages[j].edge_pos;
 	break;
       }

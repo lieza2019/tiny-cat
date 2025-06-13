@@ -48,7 +48,7 @@ typedef struct track_prof {
     struct track_sr eTLSR, eTRSR;
     struct track_sr kTLSR, kTRSR;
   } sr;
-  struct track_prof *pPrev, *pNext;
+  struct track_prof *pNext;
 } TRACK_PROF, *TRACK_PROF_PTR;
 
 typedef struct route_prof {
@@ -278,9 +278,11 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char
 
 #define GEN_INDENT( fp, n, m ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < (m); b++ ) fprintf((fp), " "); }}
 
-static int emit_track_dataset ( FILE *fp_out, FILE *fp_src ) {
+static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_src ) {
+  assert( pprofs );
   assert( fp_out );
   assert( fp_src );
+  TRACK_PROF_PTR pprev = NULL;
   int cnt = 0;
   
   assert( !ferror( fp_out ) );
@@ -307,7 +309,7 @@ static int emit_track_dataset ( FILE *fp_out, FILE *fp_src ) {
       strs[4] = bounds;
       n = par_csv_iltbl( strs, 5, fp_src );
       if( ferror( fp_src ) )
-	break;      
+	break;
     }
     if( n >= 5 ) {
       assert( tr_name[0] == 'T' );
@@ -319,6 +321,16 @@ static int emit_track_dataset ( FILE *fp_out, FILE *fp_src ) {
 	if( ferror( fp_out ) )
 	  break;
 	cnt++;
+	if( cnt == 1 ) {
+	  assert( !pprev );
+	  *pprofs = tracks_routes_prof.tracks.pavail;
+	} else {
+	  assert( pprev );
+	  assert( !pprev->pNext );
+	  pprev->pNext = tracks_routes_prof.tracks.pavail;
+	}
+	(tracks_routes_prof.tracks.pavail)->pNext = NULL;
+	pprev = tracks_routes_prof.tracks.pavail;
 	tracks_routes_prof.tracks.pavail++;
       }
     }
@@ -346,6 +358,42 @@ static void emit_track_dataset_epilog ( FILE *fp_out ) {
   fprintf( fp_out, "#endif // TRACK_ATTRIB_DEFINITION\n" );
 }
 
+static void linking ( BLK_LINKAGE_PTR pbud, CBTC_BLOCK_PTR pblks, const int nblks ) {
+  assert( pbud );
+  assert( pblks );
+  assert( nblks >= 0 );
+  int i;
+  for( i = 0; i < nblks; i++ ) {
+    ;
+  }
+}
+static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
+  assert( pprofs );
+  TRACK_PROF_PTR pprof = pprofs;
+  while( pprof ) {
+    assert( pprof );
+    int i;
+    for( i = 0; i < (pprof->consists_blks.nblks - 1); i++ ) {
+      CBTC_BLOCK_PTR pblk = pprof->consists_blks.pblk_profs[i];
+      int j;
+      assert( pblk );
+      for( j = 0; j < pblk->shape.num_morphs; j++ ) {
+	assert( pblk );
+	BLK_MORPH_PTR pmor = &pblk->shape.morphs[j];
+	assert( pmor );
+	int k;
+	for( k = 0; k < pmor->num_links; k++ ) {
+	  assert( pmor );
+	  linking( &pmor->linkages[k], pprof->consists_blks.pblk_profs[i + 1], ((pprof->consists_blks.nblks - 1) - i) );
+	  ;
+	}	
+      }
+    }
+    assert( pprof );
+    pprof = pprof->pNext;
+  }
+}
+
 static int gen_track_dataset ( FILE *fp_out ) {
   assert( fp_out );
   assert( !ferror( fp_out ) );
@@ -356,14 +404,15 @@ static int gen_track_dataset ( FILE *fp_out ) {
   fp_src = fopen( "BCGN_TRACK.csv", "r" );
   if( fp_src ) {
     if( !ferror( fp_src ) ) {
-      r = emit_track_dataset( fp_out, fp_src );
+      r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[BTGD], fp_out, fp_src );
+      ;
     }
   }
   r = ERR_FAILED_OPEN_ILTBL_TRACKS;
   fp_src = fopen( "JLA_TRACK.csv", "r" );
   if( fp_src ) {
     if( !ferror( fp_src ) ) {
-      r = emit_track_dataset( fp_out, fp_src );
+      r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[JLA], fp_out, fp_src );
     }
   }
   emit_track_dataset_epilog( fp_out );

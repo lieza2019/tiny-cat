@@ -36,6 +36,19 @@ typedef enum stop_detection_cond {
 #define MAX_BLOCK_MORPHS 2
 #define MAX_POINTS_ON_MORPHING 1
 #define MAX_ADJACENT_BLKS 3
+typedef struct blk_linkages {
+  const unsigned short neigh_blk;
+  const int edge_pos;
+  struct block *pln_blk;
+  struct blk_morph *pmorph;
+} BLK_LINKAGE, *BLK_LINKAGE_PTR;
+typedef struct blk_morph {
+  BLK_LINKAGE linkages[MAX_ADJACENT_BLKS];
+  const int len;
+  IL_SYM points[MAX_POINTS_ON_MORPHING];
+  int num_links; // !!!!!, needed to be add this member on construction.
+  struct block *pblock;
+} BLK_MORPH, *BLK_MORPH_PTR;
 typedef struct block {
   const unsigned short block_name;
   const CBTC_BLOCK_ID virt_block_name;
@@ -43,15 +56,7 @@ typedef struct block {
   const SC_ID zone;
   struct {
     int num_morphs;
-    struct {
-      struct {
-	const unsigned short neigh_blk;
-	const int edge_pos;
-	struct block *pln_blk;
-      } linkages[MAX_ADJACENT_BLKS];
-      const int len;
-      IL_SYM points[MAX_POINTS_ON_MORPHING];
-    } morphs[MAX_BLOCK_MORPHS];
+    BLK_MORPH morphs[MAX_BLOCK_MORPHS];
   } shape;
   struct {
     const IL_SYM track;
