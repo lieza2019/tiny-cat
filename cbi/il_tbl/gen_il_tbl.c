@@ -358,14 +358,33 @@ static void emit_track_dataset_epilog ( FILE *fp_out ) {
   fprintf( fp_out, "#endif // TRACK_ATTRIB_DEFINITION\n" );
 }
 
-static void linking ( BLK_LINKAGE_PTR pbud, CBTC_BLOCK_PTR pblks, const int nblks ) {
-  assert( pbud );
+static BLK_LINKAGE_PTR linking ( BLK_LINKAGE_PTR pbra, CBTC_BLOCK_PTR pblks, const int nblks ) {
+  assert( pbra );
   assert( pblks );
   assert( nblks >= 0 );
   int i;
-  for( i = 0; i < nblks; i++ ) {
-    ;
+  
+  pbra->pln_neigh = NULL;
+  for( i = 0; i < nblks; i++ ) {    
+    int j;
+    assert( pblks[i].shape.num_morphs < 3 );
+    for( j = 0; j < pblks[i].shape.num_morphs; j++ ) {
+      BLK_MORPH_PTR pmor = &pblks[i].shape.morphs[j];
+      assert( pmor );
+      int k;
+      assert( pmor->num_links < 3 );
+      for( k = 0; k < pmor->num_links; k++ ) {
+	BLK_LINKAGE_PTR plnk = &pmor->linkages[k];
+	assert( plnk );
+	if( pbra->neigh_blk == plnk->neigh_blk ) {
+	  pbra->pln_neigh = plnk;
+	  return pbra->pln_neigh;
+	}
+      }
+    }   
   }
+  assert( !pbra->pln_neigh );
+  return NULL;
 }
 static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
   assert( pprofs );
@@ -383,13 +402,11 @@ static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
 	assert( pmor );
 	int k;
 	for( k = 0; k < pmor->num_links; k++ ) {
-	  assert( pmor );
 	  linking( &pmor->linkages[k], pprof->consists_blks.pblk_profs[i + 1], ((pprof->consists_blks.nblks - 1) - i) );
 	  ;
 	}	
       }
     }
-    assert( pprof );
     pprof = pprof->pNext;
   }
 }

@@ -39,7 +39,7 @@ typedef enum stop_detection_cond {
 typedef struct blk_linkages {
   const unsigned short neigh_blk;
   const int edge_pos;
-  struct block *pln_blk;
+  struct blk_linkages *pln_neigh;
   struct blk_morph *pmorph;
 } BLK_LINKAGE, *BLK_LINKAGE_PTR;
 typedef struct blk_morph {
