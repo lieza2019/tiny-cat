@@ -43,10 +43,10 @@ typedef struct blk_linkages {
   struct blk_morph *pmorph;
 } BLK_LINKAGE, *BLK_LINKAGE_PTR;
 typedef struct blk_morph {
+  int num_links; // !!!!!, needed to be add this member on construction.
   BLK_LINKAGE linkages[MAX_ADJACENT_BLKS];
   const int len;
-  IL_SYM points[MAX_POINTS_ON_MORPHING];
-  int num_links; // !!!!!, needed to be add this member on construction.
+  IL_SYM points[MAX_POINTS_ON_MORPHING];  
   struct block *pblock;
 } BLK_MORPH, *BLK_MORPH_PTR;
 typedef struct block {

@@ -155,168 +155,168 @@ SP_PLTB sp_pltb[] = {
 CBTC_BLOCK block_state[] = {
   // S803B_VS801B, S803B_VS803B, S803B_S831B
   //{2418, VB304DB, "VB304DB", -1, {T815B_TR}, {TRUE, SP_73, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL1 // CHECKED.
-  {2418, VB304DB, "VB304DB", SC802, {1, { {{{2419, 0}, 1}, -1} }}, {T815B_TR}, {TRUE, SP_73, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL1 // CHECKED.
+  {2418, VB304DB, "VB304DB", SC802, {1, { {1, {{2419, 0}}, -1} }}, {T815B_TR}, {TRUE, SP_73, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL1 // CHECKED.
   //{2419, VB306D, "VB306D", -1, {T817B_TR}, {FALSE}},
-  {2419, VB306D, "VB306D", SC802, {2, { {{{2420, 0},{2418, 1}}, -1, {P809B_NKR}}, {{{2420, 0},{2014, 2}}, -1, {P809B_RKR}} }}, {T817B_TR}, {FALSE}},
+  {2419, VB306D, "VB306D", SC802, {2, { {2, {{2420, 0},{2418, 1}}, -1, {P809B_NKR}}, {2, {{2420, 0},{2014, 2}}, -1, {P809B_RKR}} }}, {T817B_TR}, {FALSE}},
   
   // S807B_VS801B, S807B_VS803B, S807B_S831B
   //{2013, VB305U, "VB305U", -1, {T814B_TR}, {TRUE, SP_74, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL2 // CHECKED.
-  {2013, VB305U, "VB305U", SC802, { 1, { {{{2014, 0}}, -1} } }, {T814B_TR}, {TRUE, SP_74, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL2 // CHECKED.
+  {2013, VB305U, "VB305U", SC802, { 1, { {1, {{2014, 0}}, -1} } }, {T814B_TR}, {TRUE, SP_74, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL2 // CHECKED.
   //{2014, VB306U, "VB306U", -1, {T816B_TR}, {FALSE}},
-  {2014, VB306U, "VB306U", SC802, { 2, { {{{2013, 0},{2015, 1}}, -1, {P810B_NKR}}, {{{2013, 0},{2419, 2}}, -1, {P810B_RKR}} } }, {T816B_TR}, {FALSE}},
+  {2014, VB306U, "VB306U", SC802, { 2, { {2, {{2013, 0},{2015, 1}}, -1, {P810B_NKR}}, {2, {{2013, 0},{2419, 2}}, -1, {P810B_RKR}} } }, {T816B_TR}, {FALSE}},
   
   // S831B_S821A
   //{2422, VB309DB, "VB309DB", -1, {T823B_TR}, {FALSE}}, // CHECKED.
-  {2422, VB309DB, "VB309DB", SC802, {1, { {{ {2421, 0}, {2423, 1} }, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
+  {2422, VB309DB, "VB309DB", SC802, {1, { {2, {{2421, 0}, {2423, 1}}, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
   //{2423, VB311D, "VB311D", -1, {T823B_TR}, {FALSE}}, // CHECKED.
-  {2423, VB311D, "VB311D", SC802, {1, { {{ {2422, 0}, {2424, 1} }, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
+  {2423, VB311D, "VB311D", SC802, {1, { {2, {{2422, 0}, {2424, 1}}, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
   //{2424, VB313D, "VB313D", -1, {T823B_TR}, {FALSE}}, // CHECKED.
-  {2424, VB313D, "VB313D", SC802, {1, { {{ {2423, 0}, {2425, 1} }, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
+  {2424, VB313D, "VB313D", SC802, {1, { {2, {{2423, 0}, {2425, 1}}, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
   //{2425, VB315D, "VB315D", -1, {T823B_TR}, {FALSE}}, // CHECKED.
-  {2425, VB315D, "VB315D", SC802, {1, { {{ {2424, 0}, {2426, 1} }, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
+  {2425, VB315D, "VB315D", SC802, {1, { {2, {{2424, 0}, {2426, 1}}, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
   //{2426, VB318D, "VB318D", -1, {T823B_TR}, {FALSE}}, // CHECKED.
-  {2426, VB318D, "VB318D", SC802, {1, { {{ {2425, 0}, {2427, 1} }, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
+  {2426, VB318D, "VB318D", SC802, {1, { {2, {{2425, 0}, {2427, 1}}, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
   //{2427, VB320D, "VB320D", -1, {T823B_TR}, {FALSE}}, // CHECKED.
-  {2427, VB320D, "VB320D", SC802, {1, { {{ {2426, 0}, {2428, 1} }, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
+  {2427, VB320D, "VB320D", SC802, {1, { {2, {{2426, 0}, {2428, 1}}, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
   //{2428, VB322D, "VB322D", -1, {T823B_TR}, {FALSE}}, // CHECKED.
-  {2428, VB322D, "VB322D", SC802, {1, { {{ {2427, 0}, {2429, 1} }, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
+  {2428, VB322D, "VB322D", SC802, {1, { {2, {{2427, 0}, {2429, 1}}, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
   //{2429, VB324D, "VB324D", -1, {T825B_TR}, {TRUE, SP_77, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL1 // CHECKED.
-  {2429, VB324D, "VB324D", SC802, {1, { {{ {2428, 0}, {2430, 1} }, -1} }}, {T825B_TR}, {TRUE, SP_77, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL1 // CHECKED.
+  {2429, VB324D, "VB324D", SC802, {1, { {2, {{2428, 0}, {2430, 1}}, -1} }}, {T825B_TR}, {TRUE, SP_77, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL1 // CHECKED.
   //{2430, VB326D, "VB326D", -1, {T827B_TR}, {FALSE}},
-  {2430, VB326D, "VB326D", SC802, {1, { {{ {2429, 0}, {2431, 1} }, -1} }}, {T827B_TR}, {FALSE}},
+  {2430, VB326D, "VB326D", SC802, {1, { {2, {{2429, 0}, {2431, 1}}, -1} }}, {T827B_TR}, {FALSE}},
   
   // S832B_S802B
   //{1002, VB339U, "VB339U", -1, {T828B_TR}, {FALSE}}, // CHECKED.
-  {1002, VB339U, "VB339U", SC801, {1, { {{ {1001, 0}, {1003, 1} }, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
+  {1002, VB339U, "VB339U", SC801, {1, { {2, {{1001, 0}, {1003, 1}}, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
   //{1001, VB337U, "VB337U", -1, {T828B_TR}, {FALSE}}, // CHECKED.
-  {1001, VB337U, "VB337U", SC801, {1, { {{ {1000, 0}, {1002, 1} }, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
+  {1001, VB337U, "VB337U", SC801, {1, { {2, {{1000, 0}, {1002, 1}}, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
   //{1000, VB335U, "VB335U", -1, {T828B_TR}, {FALSE}}, // CHECKED.
-  {1000, VB335U, "VB335U", SC801, {1, { {{ {2031, 0}, {1001, 1} }, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
+  {1000, VB335U, "VB335U", SC801, {1, { {2, {{2031, 0}, {1001, 1}}, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
   //{2031, VB333U, "VB333U", -1, {T828B_TR}, {FALSE}}, // CHECKED.
-  {2031, VB333U, "VB333U", SC802, {1, { {{ {2030, 0}, {1000, 1} }, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
+  {2031, VB333U, "VB333U", SC802, {1, { {2, {{2030, 0}, {1000, 1}}, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
   //{2030, VB331U, "VB331U", -1, {T828B_TR}, {FALSE}}, // CHECKED.
-  {2030, VB331U, "VB331U", SC802, {1, { {{ {2029, 0}, {2031, 1} }, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
+  {2030, VB331U, "VB331U", SC802, {1, { {2, {{2029, 0}, {2031, 1}}, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
   //{2029, VB329U, "VB329U", -1, {T828B_TR}, {FALSE}}, // CHECKED.
-  {2029, VB329U, "VB329U", SC802, {1, { {{ {2028, 0}, {2030, 1} }, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
+  {2029, VB329U, "VB329U", SC802, {1, { {2, {{2028, 0}, {2030, 1}}, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
   //{2028, VB328U, "VB328U", -1, {T828B_TR}, {FALSE}}, // CHECKED.
-  {2028, VB328U, "VB328U", SC802, {1, { {{ {2027, 0}, {2029, 1} }, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
+  {2028, VB328U, "VB328U", SC802, {1, { {2, {{2027, 0}, {2029, 1}}, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
   //{2027, VB326U, "VB326U", -1, {T828B_TR}, {FALSE}}, // CHECKED.
-  {2027, VB326U, "VB326U", SC802, {1, { {{ {2026, 0}, {2028, 1} }, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
+  {2027, VB326U, "VB326U", SC802, {1, { {2, {{2026, 0}, {2028, 1}}, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
   //{2026, VB325U, "VB325U", -1, {T826B_TR}, {TRUE, SP_76, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL2 // CHECKED.
-  {2026, VB325U, "VB325U", SC802, {1, { {{ {2025, 0}, {2027, 1} }, -1} }}, {T826B_TR}, {TRUE, SP_76, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL2 // CHECKED.
+  {2026, VB325U, "VB325U", SC802, {1, { {2, {{2025, 0}, {2027, 1}}, -1} }}, {T826B_TR}, {TRUE, SP_76, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL2 // CHECKED.
   //{2025, VB324U, "VB324U", -1, {T824B_TR}, {FALSE}},
-  {2025, VB324U, "VB324U", SC802, {1, { {{ {2024, 0}, {2026, 1} }, -1} }}, {T824B_TR}, {FALSE}},
+  {2025, VB324U, "VB324U", SC802, {1, { {2, {{2024, 0}, {2026, 1}}, -1} }}, {T824B_TR}, {FALSE}},
   
   // S821A_S801A
   //{2431, VB327D, "VB327D", -1, {T801A_TR}, {FALSE}}, // CHECKED.
-  {2431, VB327D, "VB327D", SC802, {1, { {{ {2430, 0}, {2432, 1} }, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
+  {2431, VB327D, "VB327D", SC802, {1, { {2, {{2430, 0}, {2432, 1}}, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
   //{2432, VB328D, "VB328D", -1, {T801A_TR}, {FALSE}}, // CHECKED.
-  {2432, VB328D, "VB328D", SC802, {1, { {{ {2431, 0}, {2433, 1} }, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
+  {2432, VB328D, "VB328D", SC802, {1, { {2, {{2431, 0}, {2433, 1}}, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
   //{2433, VB331D, "VB331D", -1, {T801A_TR}, {FALSE}}, // CHECKED.
-  {2433, VB331D, "VB331D", SC802, {1, { {{ {2432, 0}, {2434, 1} }, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
+  {2433, VB331D, "VB331D", SC802, {1, { {2, {{2432, 0}, {2434, 1}}, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
   //{2434, VB333D, "VB333D", -1, {T801A_TR}, {FALSE}}, // CHECKED.
-  {2434, VB333D, "VB333D", SC802, {1, { {{ {2433, 0}, {1400, 1} }, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
+  {2434, VB333D, "VB333D", SC802, {1, { {2, {{2433, 0}, {1400, 1}}, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
   //{1400, VB334D, "VB334D", -1, {T801A_TR}, {FALSE}}, // CHECKED.
-  {1400, VB334D, "VB334D", SC801, {1, { {{ {2434, 0}, {1401, 1} }, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
+  {1400, VB334D, "VB334D", SC801, {1, { {2, {{2434, 0}, {1401, 1}}, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
   //{1401, VB336D, "VB336D", -1, {T801A_TR}, {FALSE}}, // CHECKED.
-  {1401, VB336D, "VB336D", SC801, {1, { {{ {1400, 0}, {1402, 1} }, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
+  {1401, VB336D, "VB336D", SC801, {1, { {2, {{1400, 0}, {1402, 1}}, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
   //{1402, VB339D, "VB339D", -1, {T801A_TR}, {FALSE}}, // CHECKED.
-  {1402, VB339D, "VB339D", SC801, {1, { {{ {1401, 0}, {1403, 1} }, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
+  {1402, VB339D, "VB339D", SC801, {1, { {2, {{1401, 0}, {1403, 1}}, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
   //{1403, VB340D, "VB340D", -1, {T803A_TR}, {TRUE, SP_79, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL1 // CHECKED.
-  {1403, VB340D, "VB340D", SC801, {1, { {{ {1402, 0}, {1404, 1} }, -1} }}, {T803A_TR}, {TRUE, SP_79, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL1 // CHECKE.D
+  {1403, VB340D, "VB340D", SC801, {1, { {2, {{1402, 0}, {1404, 1}}, -1} }}, {T803A_TR}, {TRUE, SP_79, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL1 // CHECKE.D
   //{1404, VB342DA, "VB342DA", -1, {T805A_TR}, {FALSE}},
-  {1404, VB342DA, "VB342DA", SC801, {1, { {{ {1403, 0}, {1405, 1} }, -1} }}, {T805A_TR}, {FALSE}},
+  {1404, VB342DA, "VB342DA", SC801, {1, { {2, {{1403, 0}, {1405, 1}}, -1} }}, {T805A_TR}, {FALSE}},
   
   // S822A_S832B
   //{1013, VB359U, "VB359U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
-  {1013, VB359U, "VB359U", SC801, {1, { {{ {1012, 0}, {1014, 1} }, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
-  //{1012, VB357U, "VB357U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
-  {1012, VB357U, "VB357U", SC801, {1, { {{ {1011, 0}, {1013, 1} }, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
+  {1013, VB359U, "VB359U", SC801, {1, { {2, {{1012, 0}, {1014, 1}}, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.  
+  //{1012, VB357U, "VB357U", -1, {T806A_TR}, {FALSE}}, // CHECKEDa.
+  {1012, VB357U, "VB357U", SC801, {1, { {2, {{1011, 0}, {1013, 1}}, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
   //{1011, VB355U, "VB355U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
-  {1011, VB355U, "VB355U", SC801, {1, { {{ {1010, 0}, {1012, 1} }, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
+  {1011, VB355U, "VB355U", SC801, {1, { {2, {{1010, 0}, {1012, 1}}, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
   //{1010, VB352U, "VB352U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
-  {1010, VB352U, "VB352U", SC801, {1, { {{ {1009, 0}, {1011, 1} }, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
+  {1010, VB352U, "VB352U", SC801, {1, { {2, {{1009, 0}, {1011, 1}}, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
   //{1009, VB350U, "VB350U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
-  {1009, VB350U, "VB350U", SC801, {1, { {{ {1008, 0}, {1010, 1} }, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
+  {1009, VB350U, "VB350U", SC801, {1, { {2, {{1008, 0}, {1010, 1}}, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
   //{1008, VB348U, "VB348U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
-  {1008, VB348U, "VB348U", SC801, {1, { {{ {1007, 0}, {1009, 1} }, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
+  {1008, VB348U, "VB348U", SC801, {1, { {2, {{1007, 0}, {1009, 1}}, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
   //{1007, VB346U, "VB346U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
-  {1007, VB346U, "VB346U", SC801, {1, { {{ {1006, 0}, {1008, 1} }, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
+  {1007, VB346U, "VB346U", SC801, {1, { {2, {{1006, 0}, {1008, 1}}, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
   //{1006, VB344U, "VB344U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
-  {1006, VB344U, "VB344U", SC801, {1, { {{ {1005, 0}, {1007, 1} }, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
+  {1006, VB344U, "VB344U", SC801, {1, { {2, {{1005, 0}, {1007, 1}}, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
   //{1005, VB342U, "VB342U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
-  {1005, VB342U, "VB342U", SC801, {1, { {{ {1004, 0}, {1006, 1} }, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
+  {1005, VB342U, "VB342U", SC801, {1, { {2, {{1004, 0}, {1006, 1}}, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
   //{1004, VB341U, "VB341U", -1, {T804A_TR}, {TRUE, SP_78, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL2 // CHECKED.
-  {1004, VB341U, "VB341U", SC801, {1, { {{ {1003, 0}, {1005, 1} }, -1} }}, {T804A_TR}, {TRUE, SP_78, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL2 // CHECKED.
+  {1004, VB341U, "VB341U", SC801, {1, { {2, {{1003, 0}, {1005, 1}}, -1} }}, {T804A_TR}, {TRUE, SP_78, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL2 // CHECKED.
   //{1003, VB340U, "VB340U", -1, {T802A_TR}, {FALSE}},
-  {1003, VB340U, "VB340U", SC801, {1, { {{ {1002, 0}, {1004, 1} }, -1} }}, {T802A_TR}, {FALSE}},
+  {1003, VB340U, "VB340U", SC801, {1, { {2, {{1002, 0}, {1004, 1}}, -1} }}, {T802A_TR}, {FALSE}},
   
   // S801A_S803A, S801A_S807A
   //{1405, VB342DB, "VB342DB", -1, {T807A_TR}, {FALSE}}, // CHECKED.
-  {1405, VB342DB, "VB342DB", SC801, {1, { {{ {1404, 0}, {1406, 1} }, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
+  {1405, VB342DB, "VB342DB", SC801, {1, { {2, {{1404, 0}, {1406, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1406, VB344D, "VB344D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
-  {1406, VB344D, "VB344D", SC801, {1, { {{ {1405, 0}, {1407, 1} }, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
+  {1406, VB344D, "VB344D", SC801, {1, { {2, {{1405, 0}, {1407, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1407, VB346D, "VB346D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
-  {1407, VB346D, "VB346D", SC801, {1, { {{ {1406, 0}, {1408, 1} }, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
+  {1407, VB346D, "VB346D", SC801, {1, { {2, {{1406, 0}, {1408, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1408, VB348D, "VB348D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
-  {1408, VB348D, "VB348D", SC801, {1, { {{ {1407, 0}, {1409, 1} }, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
+  {1408, VB348D, "VB348D", SC801, {1, { {2, {{1407, 0}, {1409, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1409, VB350D, "VB350D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
-  {1409, VB350D, "VB350D", SC801, {1, { {{ {1408, 0}, {1410, 1} }, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
+  {1409, VB350D, "VB350D", SC801, {1, { {2, {{1408, 0}, {1410, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1410, VB352D, "VB352D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
-  {1410, VB352D, "VB352D", SC801, {1, { {{ {1409, 0}, {1411, 1} }, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
+  {1410, VB352D, "VB352D", SC801, {1, { {2, {{1409, 0}, {1411, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1411, VB354D, "VB354D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
-  {1411, VB354D, "VB354D", SC801, {1, { {{ {1410, 0}, {1412, 1} }, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
+  {1411, VB354D, "VB354D", SC801, {1, { {2, {{1410, 0}, {1412, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1412, VB356D, "VB356D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
-  {1412, VB356D, "VB356D", SC801, {1, { {{ {1411, 0}, {1413, 1} }, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
+  {1412, VB356D, "VB356D", SC801, {1, { {2, {{1411, 0}, {1413, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1413, VB358D, "VB358D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
-  {1413, VB358D, "VB358D", SC801, {1, { {{ {1412, 0}, {1414, 1} }, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
+  {1413, VB358D, "VB358D", SC801, {1, { {2, {{1412, 0}, {1414, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1414, VB359D, "VB359D", -1, {T809A_TR}, {FALSE}},
-  {1414, VB359D, "VB359D", SC801, {1, { {{ {1413, 0}, {1415, 1} }, -1} }}, {T809A_TR}, {FALSE}},
+  {1414, VB359D, "VB359D", SC801, {1, { {2, {{1413, 0}, {1415, 1}}, -1} }}, {T809A_TR}, {FALSE}},
   //{141, VB360DA, "VB360DA", -1, {T811A_TR}, {FALSE}},
-  {1415, VB360DA, "VB360DA", SC801, {2, { {{{1414, 0},{1416, 1}}, -1, {P801A_NKR}}, {{{1414, 0},{1015, 1}}, -1, {P801A_RKR}} }}, {T811A_TR}, {FALSE}},
+  {1415, VB360DA, "VB360DA", SC801, {2, { {2, {{1414, 0},{1416, 1}}, -1, {P801A_NKR}}, {2, {{1414, 0},{1015, 1}}, -1, {P801A_RKR}} }}, {T811A_TR}, {FALSE}},
   
   // S802B_S804B, S802B_S810B
   //{2024, VB323U, "VB323U", -1, {T822B_TR}, {FALSE}}, // CHECKED.
-  {2024, VB323U, "VB323U", SC802, {1, { {{ {2023, 0}, {2025, 1} }, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
+  {2024, VB323U, "VB323U", SC802, {1, { {2, {{2023, 0}, {2025, 1}}, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
   //{2023, VB320U, "VB320U", -1, {T822B_TR}, {FALSE}}, // CHECKED.
-  {2023, VB320U, "VB320U", SC802, {1, { {{ {2022, 0}, {2024, 1} }, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
+  {2023, VB320U, "VB320U", SC802, {1, { {2, {{2022, 0}, {2024, 1}}, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
   //{2022, VB318U, "VB318U", -1, {T822B_TR}, {FALSE}}, // CHECKED.
-  {2022, VB318U, "VB318U", SC802, {1, { {{ {2021, 0}, {2023, 1} }, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
+  {2022, VB318U, "VB318U", SC802, {1, { {2, {{2021, 0}, {2023, 1}}, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
   //{2021, VB316U, "VB316U", -1, {T822B_TR}, {FALSE}}, // CHECKED.
-  {2021, VB316U, "VB316U", SC802, {1, { {{ {2020, 0}, {2022, 1} }, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
+  {2021, VB316U, "VB316U", SC802, {1, { {2, {{2020, 0}, {2022, 1}}, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
   //{2020, VB314U, "VB314U", -1, {T822B_TR}, {FALSE}}, // CHECKED.
-  {2020, VB314U, "VB314U", SC802, {1, { {{ {2019, 0}, {2021, 1} }, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
+  {2020, VB314U, "VB314U", SC802, {1, { {2, {{2019, 0}, {2021, 1}}, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
   //{2019, VB313U, "VB313U", -1, {T822B_TR}, {FALSE}}, // CHECKED.
-  {2019, VB313U, "VB313U", SC802, {1, { {{ {2018, 0}, {2020, 1} }, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
+  {2019, VB313U, "VB313U", SC802, {1, { {2, {{2018, 0}, {2020, 1}}, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
   //{2018, VB311U, "VB311U", -1, {T822B_TR}, {FALSE}}, // CHECKED.
-  {2018, VB311U, "VB311U", SC802, {1, { {{ {2017, 0}, {2019, 1} }, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
+  {2018, VB311U, "VB311U", SC802, {1, { {2, {{2017, 0}, {2019, 1}}, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
   //{2017, VB309UB, "VB309UB", -1, {T822B_TR}, {FALSE}}, // CHECKED.
-  {2017, VB309UB, "VB309UB", SC802, {1, { {{ {2016, 0}, {2018, 1} }, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
+  {2017, VB309UB, "VB309UB", SC802, {1, { {2, {{2016, 0}, {2018, 1}}, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
   //{2016, VB309UA, "VB309UA", -1, {T820B_TR}, {FALSE}},
-  {2016, VB309UA, "VB309UA", SC802, {1, { {{ {2015, 0}, {2017, 1} }, -1} }}, {T820B_TR}, {FALSE}},
+  {2016, VB309UA, "VB309UA", SC802, {1, { {2, {{2015, 0}, {2017, 1}}, -1} }}, {T820B_TR}, {FALSE}},
   
   // S806A_S804A
   //{1418, VB363DB, "VB363DB", -1, {T817A_TR}, {TRUE, SP_D5, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB1 // CHECKED.
-  {1418, VB363DB, "VB363DB", SC801, {1, { {{ {1419, 0} }, -1} }}, {T817A_TR}, {TRUE, SP_D5, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB1 // CHECKED.
+  {1418, VB363DB, "VB363DB", SC801, {1, { {1, {{1419, 0}}, -1} }}, {T817A_TR}, {TRUE, SP_D5, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB1 // CHECKED.
   //{1419, VB363DA, "VB363DA", -1, {T815A_TR}, {FALSE}},
-  {1419, VB363DA, "VB363DA", SC801, {2, { {{{1418, 0},{1417, 1}}, -1, {P805A_NKR}}, {{{1418, 0},{1017, 2}}, -1, {P805A_RKR}} }}, {T815A_TR}, {FALSE}},
+  {1419, VB363DA, "VB363DA", SC801, {2, { {2, {{1418, 0},{1417, 1}}, -1, {P805A_NKR}}, {2, {{1418, 0},{1017, 2}}, -1, {P805A_RKR}} }}, {T815A_TR}, {FALSE}},
   //{1017, VB363UA, "VB363UA", -1, {T814A_TR}, {FALSE}},
-  {1017, VB363UA, "VB363UA", SC801, {2, { {{{1016, 0},{1019, 1}}, -1, {P804A_NKR}}, {{{1016, 0},{1419, 2}}, -1, {P804A_RKR}} }}, {T814A_TR}, {FALSE}},
+  {1017, VB363UA, "VB363UA", SC801, {2, { {2, {{1016, 0},{1019, 1}}, -1, {P804A_NKR}}, {2, {{1016, 0},{1419, 2}}, -1, {P804A_RKR}} }}, {T814A_TR}, {FALSE}},
   
   // S802A_S804A
   //{1018, VB364U, "VB364U", -1, {T816A_TR}, {TRUE, SP_D0, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB2 // CHECKED.
-  {1018, VB364U, "VB364U", SC801, {1, { {{ {1019, 0} }, -1} }}, {T816A_TR}, {TRUE, SP_D0, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB2 // CHECKED.
+  {1018, VB364U, "VB364U", SC801, {1, { {1, {{1019, 0}}, -1} }}, {T816A_TR}, {TRUE, SP_D0, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB2 // CHECKED.
   //{1019, VB363UB, "VB363UB", -1, {T814A_TR}, {FALSE}},
-  {1019, VB363UB, "VB363UB", SC801, {2, { {{{1018, 0},{1017, 1}}, -1, {P806A_NKR}}, {{{1018, 0},{1417, 2}}, -1, {P806A_RKR}} }}, {T814A_TR}, {FALSE}},
+  {1019, VB363UB, "VB363UB", SC801, {2, { {2, {{1018, 0},{1017, 1}}, -1, {P806A_NKR}}, {2, {{1018, 0},{1417, 2}}, -1, {P806A_RKR}} }}, {T814A_TR}, {FALSE}},
   /* (1017, VB363UA) is registered in the case of S806A_S804A. */
   
   // S804A_S822A
   /* (1418, VB363DB) in T817A_TR, is registered in the case of S806A_S804A. */
   /* (1018, VB364U) in T816A_TR, is registered in the case of S802A_S804A. */
   //{1016, VB361U, "VB361U", -1, {T812A_TR}, {TRUE, SP_80, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL2 // CHECKED.
-  {1016, VB361U, "VB361U", SC801, {1, { {{ {1015, 0}, {1017, 1} }, -1} }}, {T812A_TR}, {TRUE, SP_80, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL2 // CHECKED.
+  {1016, VB361U, "VB361U", SC801, {1, { {2, {{1015, 0}, {1017, 1}}, -1} }}, {T812A_TR}, {TRUE, SP_80, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL2 // CHECKED.
   //{1015, VB360UB, "VB360UB", -1, {T810A_TR}, {FALSE}},
-  {1015, VB360UB, "VB360UB", SC801, {2, { {{{1016, 0},{1014, 1}}, -1, {P802A_NKR}}, {{{1016, 0},{1415, 2}}, -1, {P802A_RKR}} }}, {T810A_TR}, {FALSE}},
+  {1015, VB360UB, "VB360UB", SC801, {2, { {2, {{1016, 0},{1014, 1}}, -1, {P802A_NKR}}, {2, {{1016, 0},{1415, 2}}, -1, {P802A_RKR}} }}, {T810A_TR}, {FALSE}},
   
   // S803A_S809A, S803A_S811A
   /* all below are registered in the case of S802B_S810B / S802B_S804B. 
@@ -331,9 +331,9 @@ CBTC_BLOCK block_state[] = {
      (1413, VB358D) in T807A_TR
   */
   //{1416, VB360DB, "VB360DB", -1, {T813A_TR}, {TRUE, SP_81, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL1 // CHECKED.
-  {1416, VB360DB, "VB360DB", SC801, {1, { {{ {1415, 0}, {1417, 1} }, -1} }}, {T813A_TR}, {TRUE, SP_81, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL1 // CHECKED.
+  {1416, VB360DB, "VB360DB", SC801, {1, { {2, {{1415, 0}, {1417, 1}}, -1} }}, {T813A_TR}, {TRUE, SP_81, P0_COUPLING, {VB_NONSENS}}}, // BTbGD_PL1 // CHECKED.
   //{1417, VB362D, "VB362D", -1, {T815A_TR}, {FALSE}},
-  {1417, VB362D, "VB362D", SC801, {2, { {{{1416, 0},{1419, 1}}, -1, {P803A_NKR}}, {{{1416, 0},{1019, 2}}, -1, {P803A_RKR}} }}, {T815A_TR}, {FALSE}},
+  {1417, VB362D, "VB362D", SC801, {2, { {2, {{1416, 0},{1419, 1}}, -1, {P803A_NKR}}, {2, {{1416, 0},{1019, 2}}, -1, {P803A_RKR}} }}, {T815A_TR}, {FALSE}},
   
   {0, END_OF_CBTC_BLOCKs, "END_OF_CBTC_BLOCKs" }
 };
