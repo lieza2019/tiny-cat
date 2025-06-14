@@ -1146,7 +1146,7 @@ static void print_ttc_symtbl ( void ) {
 
 static void ttc_init ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   BOOL alloc = FALSE;
-
+  
   ttc_ctrl_flgs.dump_par_symtbl = dump_par_symtbl;
   ttc_ctrl_flgs.dump_ttc_symtbl = dump_ttc_symtbl;
   

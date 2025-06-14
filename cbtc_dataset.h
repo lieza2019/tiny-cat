@@ -341,4 +341,3 @@ CBTC_BLOCK block_state[] = {
 extern CBTC_BLOCK block_state[];
 #endif // CBTC_C
 #endif // BLOCK_ATTRIB_DEFINITION
-

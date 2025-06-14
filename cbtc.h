@@ -1,6 +1,7 @@
 #ifndef CBTC_H
 #define CBTC_H
 
+#include <pthread.h>
 #include "generic.h"
 #include "misc.h"
 
@@ -100,6 +101,8 @@ typedef const struct block *CBTC_BLOCK_C_PTR;
 
 extern const char *cnv2str_lkup ( const char *id2str_tbl[], int id );
 
+extern void cons_block_state ( void );
+
 extern void cons_lkuptbl_cbtc_block_prof ( void );
 extern CBTC_BLOCK_PTR lookup_cbtc_block_prof ( unsigned short block_name );
 extern CBTC_BLOCK_PTR conslt_cbtc_block_prof ( CBTC_BLOCK_ID virt_blkname );
@@ -107,4 +110,8 @@ extern void cons_lkuptbl_sp2_block ( void );
 extern CBTC_BLOCK_C_PTR lookup_block_of_sp ( STOPPING_POINT_CODE sp );
 extern void purge_block_restrains ( void );
 
+#if 1 // *****
+extern pthread_mutex_t cbtc_ctrl_cmds_mutex;
+extern pthread_mutex_t cbtc_stat_infos_mutex;
+#endif
 #endif // CBTC_H

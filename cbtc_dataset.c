@@ -1,5 +1,4 @@
 #include <string.h>
-#include <pthread.h>
 #include "generic.h"
 #include "misc.h"
 

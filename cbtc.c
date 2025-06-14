@@ -1,5 +1,4 @@
 #include <string.h>
-#include <pthread.h>
 #include "generic.h"
 #include "misc.h"
 
@@ -8,6 +7,13 @@
 #undef CBTC_C
 #include "interlock.h"
 #include "sparcs.h"
+
+#if 1 // *****
+//extern pthread_mutex_t cbtc_ctrl_cmds_mutex;
+//extern pthread_mutex_t cbtc_stat_infos_mutex;
+pthread_mutex_t cbtc_ctrl_cmds_mutex;
+pthread_mutex_t cbtc_stat_infos_mutex;
+#endif
 
 const char *cnv2str_lkup ( const char *id2str_tbl[], int id ) {
   assert( id2str_tbl );
@@ -25,6 +31,28 @@ const char *cnv2str_lkup ( const char *id2str_tbl[], int id ) {
   }
   assert( id <= i );
   return r;
+}
+
+void cons_block_state ( void ) {
+  int i = 0;
+  while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+    CBTC_BLOCK_PTR pblk = &block_state[i];
+    int j;
+    assert( pblk );
+    for( j = 0; j < pblk->shape.num_morphs; j++ ) {
+      BLK_MORPH_PTR pmor = &pblk->shape.morphs[j];
+      int k;
+      assert( pmor );
+      for( k = 0; k < pmor->num_links; k++ ) {
+	BLK_LINKAGE_PTR plnk = &pmor->linkages[k];
+	assert( plnk );
+	plnk->pmorph = pmor;
+      }
+      pmor->pblock = pblk;
+    }
+    i++;
+  }
+  assert( block_state[i].block_name == 0 );
 }
 
 TINY_TRAIN_STATE_PTR read_residents_CBTC_BLOCK ( CBTC_BLOCK_C_PTR pB ) {

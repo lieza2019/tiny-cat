@@ -11,6 +11,7 @@
 #include "../../cbtc.h"
 #undef CBTC_C
 #include "../../interlock.h"
+//#include "../../timetable.h"
 
 #define ERR_FAILED_ALLOC_WORKMEM 3
 #define ERR_FAILED_CONS_ILSYM_DATABASE 1
@@ -706,6 +707,9 @@ static int init_gen_il_dataset ( void ) {
 int main ( void ) {
   FILE *fp_out = NULL;
   int r = -1;
+  extern pthread_mutex_t cbtc_ctrl_cmds_mutex;
+  extern pthread_mutex_t cbtc_stat_infos_mutex;
+  cons_block_state();
   
   init_gen_il_dataset();
   fp_out = fopen( "interlock_dataset0.h", "w" );
