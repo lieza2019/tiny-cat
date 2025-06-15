@@ -29,6 +29,120 @@ const char *cnv2str_lkup ( const char *id2str_tbl[], int id ) {
   return r;
 }
 
+void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
+  assert( fp_out );
+  assert( pprof );
+  GEN_INDENT( fp_out, 1, 2 );
+  fprintf( fp_out, "(virt_blkname, block_name, num_morphs) = (%s, %d, %d)\n", pprof->virt_blkname_str, pprof->block_name, pprof->shape.num_morphs );
+  {
+    int i;
+    for( i = 0; i < pprof->shape.num_morphs; i++ ) {
+      BLK_MORPH_PTR pmor = &pprof->shape.morphs[i];
+      int j;
+      assert( pmor );
+      GEN_INDENT( fp_out, 2, 2 );
+      fprintf( fp_out, "(morph_no, num_links, length, [points]) = (%d, %d, %d, [", i, pmor->num_links, pmor->len );
+      fprintf( fp_out, "])\n" );
+      for( j = 0; j < pmor->num_links; j++ ) {
+	BLK_LINKAGE_PTR plnk = &pmor->linkages[j];
+	assert( plnk );
+	GEN_INDENT( fp_out, 3, 2 );	
+	fprintf( fp_out, "%d: ", plnk->edge_pos );
+	{
+	  int cnt = 0;
+	  BLK_LINKAGE_PTR p = plnk->pNext;
+	  while( p != plnk ) {
+	    assert( p );
+	    assert( p->pmorph );
+	    assert( (p->pmorph)->pblock );	    
+	    if( cnt > 0 )
+	      fprintf( fp_out, ", " );
+	    fprintf( fp_out, "%s", ((p->pmorph)->pblock)->virt_blkname_str );
+	    cnt++;
+	    p = p->pNext;
+	  }
+	  if( cnt == 0 )
+	    fprintf( fp_out, "none." );
+	}	
+	fprintf( fp_out, "\n" );
+      }
+    }
+  }  
+}
+
+static int *equiv_branches ( CBTC_BLOCK_PTR pblk, int bras[], int idx, const int len ) {
+  assert( pblk );
+  assert( bras );
+  assert( len <= MAX_ADJACENT_BLKS );
+  int *r = NULL;
+  
+  if( idx < len ) {
+    const int bra = bras[idx];
+    BLK_LINKAGE_PTR pHead = NULL;
+    BLK_LINKAGE_PTR pPrev = NULL;
+    BLK_LINKAGE_PTR plnk = NULL;
+    int i;
+    for( i = 0; i < pblk->shape.num_morphs; i++ ) {
+      BLK_MORPH_PTR pmor = &pblk->shape.morphs[i];
+      int j;
+      assert( pmor );
+      for( j = 0; j < pmor->num_links; j++ ) {
+	plnk = &pmor->linkages[j];
+	assert( plnk );
+	if( plnk->edge_pos == bra ) {
+	  if( pPrev ) {
+	    assert( pHead );
+	    pPrev->pNext = plnk;
+	  } else {
+	    assert( !pHead );
+	    pHead = plnk;
+	  }
+	  plnk->pNext = NULL;
+	  pPrev = plnk;
+	}
+      }
+    }
+    assert( plnk );
+    assert( pPrev );
+    assert( pHead );
+    pPrev->pNext = pHead;
+    idx++;
+    r = equiv_branches( pblk, bras, idx, len );
+  } else {
+    assert( idx == len );
+    r = &bras[len];
+  }
+  return r;
+}
+static int enum_branches ( CBTC_BLOCK_PTR pblk, int bras[], const int len ) {
+  assert( pblk );
+  assert( bras );
+  assert( len <= MAX_ADJACENT_BLKS );
+  int cnt = 0;
+  int i;
+  for( i = 0; i < pblk->shape.num_morphs; i++ ) {
+    assert( cnt < len );
+    BLK_MORPH_PTR pmor = &pblk->shape.morphs[i];
+    int j;
+    assert( pmor );    
+    for( j = 0; j < pmor->num_links; j++ ) {
+      BLK_LINKAGE_PTR plnk = &pmor->linkages[j];
+      assert( plnk );
+      int k;
+      for( k = 0; k < cnt; k++ ) {
+	assert( k < cnt );
+	if( bras[k] == plnk->edge_pos ) {	  
+	  break;
+	}
+      }
+      if( k >= cnt ) {
+	bras[k] = plnk->edge_pos;
+	cnt++;
+      }
+    }
+  }
+  return cnt;
+}
 void cons_block_state ( void ) {
   int i = 0;
   while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
@@ -45,6 +159,15 @@ void cons_block_state ( void ) {
 	plnk->pmorph = pmor;
       }
       pmor->pblock = pblk;
+    }
+    {
+      int bs[MAX_ADJACENT_BLKS] = {};
+      int *p = bs;
+      int n = -1;
+      n = enum_branches( pblk, bs, MAX_ADJACENT_BLKS );
+      assert( (n > 0) && (n <= MAX_ADJACENT_BLKS) );
+      p = equiv_branches( pblk, bs, 0, n );
+      assert( p == &bs[n] );
     }
     i++;
   }

@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "../../generic.h"
+#include "../../misc.h"
 #define CBTC_C
 #include "../../cbtc.h"
 #undef CBTC_C
@@ -299,8 +301,6 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char
   return pprof;
 }
 
-#define GEN_INDENT( fp, n, m ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < (m); b++ ) fprintf((fp), " "); }}
-
 static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_src ) {
   assert( pprofs );
   assert( fp_out );
@@ -358,6 +358,11 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_s
 	    printf( "%s", pblk->virt_blkname_str );
 	  }
 	  printf( "])\n" );
+	  for( i = 0; i < pprof->consists_blks.nblks; i++ ) {
+	    CBTC_BLOCK_PTR pblk = pprof->consists_blks.pblk_profs[i];
+	    assert( pblk );
+	    print_block_prof( stdout, pblk );
+	  }
 	}
 #endif
 	if( cnt == 1 ) {
@@ -408,9 +413,9 @@ static BLK_LINKAGE_PTR linking ( BLK_LINKAGE_PTR pbra, CBTC_BLOCK_PTR pblks, con
     int j;
     assert( pblks[i].shape.num_morphs < 3 );
     for( j = 0; j < pblks[i].shape.num_morphs; j++ ) {
-      BLK_MORPH_PTR pmor = &pblks[i].shape.morphs[j];
-      assert( pmor );
+      BLK_MORPH_PTR pmor = &pblks[i].shape.morphs[j];      
       int k;
+      assert( pmor );
       assert( pmor->num_links < 3 );
       for( k = 0; k < pmor->num_links; k++ ) {
 	BLK_LINKAGE_PTR plnk = &pmor->linkages[k];
@@ -428,6 +433,7 @@ static BLK_LINKAGE_PTR linking ( BLK_LINKAGE_PTR pbra, CBTC_BLOCK_PTR pblks, con
 static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
   assert( pprofs );
   TRACK_PROF_PTR pprof = pprofs;
+  
   while( pprof ) {
     assert( pprof );
     int i;
@@ -436,11 +442,11 @@ static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
       int j;
       assert( pblk );
       for( j = 0; j < pblk->shape.num_morphs; j++ ) {
-	assert( pblk );
-	BLK_MORPH_PTR pmor = &pblk->shape.morphs[j];
-	assert( pmor );
+	BLK_MORPH_PTR pmor = &pblk->shape.morphs[j];	
 	int k;
-	for( k = 0; k < pmor->num_links; k++ ) {
+	assert( pmor );
+	assert( pmor->num_links < 3 );
+	for( k = 0; k < pmor->num_links; k++ ) {	  
 	  linking( &pmor->linkages[k], pprof->consists_blks.pblk_profs[i + 1], ((pprof->consists_blks.nblks - 1) - i) );
 	  ;
 	}	

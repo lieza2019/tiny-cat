@@ -45,11 +45,12 @@ typedef enum stop_detection_cond {
 typedef struct blk_linkages {
   const unsigned short neigh_blk;
   const int edge_pos;
-  struct blk_linkages *pln_neigh;
+  struct blk_linkages *pNext;
   struct blk_morph *pmorph;
+  struct blk_linkages *pln_neigh;  
 } BLK_LINKAGE, *BLK_LINKAGE_PTR;
 typedef struct blk_morph {
-  int num_links; // !!!!!, needed to be add this member on construction.
+  int num_links;
   BLK_LINKAGE linkages[MAX_ADJACENT_BLKS];
   const int len;
   IL_SYM points[MAX_POINTS_ON_MORPHING];  
@@ -102,6 +103,7 @@ typedef const struct block *CBTC_BLOCK_C_PTR;
 extern CBTC_BLOCK block_state[];
 
 extern const char *cnv2str_lkup ( const char *id2str_tbl[], int id );
+extern void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof );
 
 extern void cons_block_state ( void );
 

@@ -3,6 +3,8 @@
 #include <assert.h>
 #include "generic.h"
 
+#define GEN_INDENT( fp, n, m ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < (m); b++ ) fprintf((fp), " "); }}
+
 #define ERRORF_OUTSTREAM stdout
 #define errorF( fmt, ... ) (				\
   {							\
