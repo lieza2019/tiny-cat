@@ -8,12 +8,8 @@
 #include "interlock.h"
 #include "sparcs.h"
 
-#if 1 // *****
-//extern pthread_mutex_t cbtc_ctrl_cmds_mutex;
-//extern pthread_mutex_t cbtc_stat_infos_mutex;
 pthread_mutex_t cbtc_ctrl_cmds_mutex;
 pthread_mutex_t cbtc_stat_infos_mutex;
-#endif
 
 const char *cnv2str_lkup ( const char *id2str_tbl[], int id ) {
   assert( id2str_tbl );
@@ -143,10 +139,20 @@ TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, const int 
 }
 #endif
 
+static CBTC_BLOCK_PTR limaddr_block_state ( void ) {
+  int i = 0;
+  while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+    assert( block_state[i].block_name > 0 );
+    i++;
+  }
+  assert( block_state[i].block_name == 0 );
+  return &block_state[i + 1];
+}
 static CBTC_BLOCK_PTR blkname2_cbtc_block_prof[65536];
 static CBTC_BLOCK_PTR virtblk2_cbtc_block_prof[65536];
 void cons_lkuptbl_cbtc_block_prof ( void ) {
-  const CBTC_BLOCK_PTR plim_sup = (CBTC_BLOCK_PTR)((unsigned char *)block_state + (int)sizeof(block_state));
+  //const CBTC_BLOCK_PTR plim_sup = (CBTC_BLOCK_PTR)((unsigned char *)block_state + (int)sizeof(block_state)); // now obsoleted.
+  const CBTC_BLOCK_PTR plim_sup = limaddr_block_state();
  
   // for the lookup-table of blkname2_cbtc_block_prof: block_name -> block_prof
   {

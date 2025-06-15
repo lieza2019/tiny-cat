@@ -15,9 +15,14 @@ typedef enum pltb_id {
   TB4,
   END_OF_PLTB_ID
 } PLTB_ID;
-#define BLOCK_ID_DEFINITIONS
-#include "cbtc_dataset.h"
-#undef BLOCK_ID_DEFINITIONS
+#include "cbtc_datadef.h"
+typedef struct sp_pltb {
+  STOPPING_POINT_CODE sp;
+  ST_ID st;
+  PLTB_ID pltb;  
+} SP_PLTB, *SP_PLTB_PTR;
+extern SP_PLTB sp_pltb[];
+
 #define SCID_CNV2_INT( sc_id ) ((sc_id) + 801)
 extern const char *cnv2str_sp_code ( STOPPING_POINT_CODE sp_code );
 extern STOPPING_POINT_CODE str2_sp_code ( const char *sp_str );
@@ -94,10 +99,7 @@ typedef struct block {
   } misc; // flags available for miscelleous purposes, e.g. debugging, testing and so forth.
 } CBTC_BLOCK, *CBTC_BLOCK_PTR;
 typedef const struct block *CBTC_BLOCK_C_PTR;
-
-#define BLOCK_ATTRIB_DEFINITION
-#include "cbtc_dataset.h"
-#undef BLOCK_ATTRIB_DEFINITION
+extern CBTC_BLOCK block_state[];
 
 extern const char *cnv2str_lkup ( const char *id2str_tbl[], int id );
 
@@ -110,8 +112,6 @@ extern void cons_lkuptbl_sp2_block ( void );
 extern CBTC_BLOCK_C_PTR lookup_block_of_sp ( STOPPING_POINT_CODE sp );
 extern void purge_block_restrains ( void );
 
-#if 1 // *****
 extern pthread_mutex_t cbtc_ctrl_cmds_mutex;
 extern pthread_mutex_t cbtc_stat_infos_mutex;
-#endif
 #endif // CBTC_H

@@ -11,12 +11,6 @@
 
 TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 static int frontier;
-#if 0 // *****
-//extern pthread_mutex_t cbtc_ctrl_cmds_mutex;
-//extern pthread_mutex_t cbtc_stat_infos_mutex;
-pthread_mutex_t cbtc_ctrl_cmds_mutex;
-pthread_mutex_t cbtc_stat_infos_mutex;
-#endif
 
 uint8_t sp2_dst_platformID ( STOPPING_POINT_CODE dest_sp ) {
   return 0x01;

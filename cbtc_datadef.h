@@ -1,0 +1,128 @@
+typedef enum SC_ID {
+  SC801,
+  SC802,
+  SC803,
+  SC804,
+  SC805,
+  SC806,
+  SC807,
+  SC808,
+  SC809,
+  SC810,
+  SC811,
+  SC812,
+  SC813,
+  SC814,
+  SC815,
+  SC816,
+  SC817,
+  SC818,
+  SC819,
+  SC820,
+  SC821,
+  END_OF_SCs
+} SC_ID;
+
+typedef enum stopping_point_code {
+  SP_NONSENS,
+  SP_73, // JLA_PL1
+  SP_74, // JLA_PL2
+  SP_75, // JLA_PL3
+  SP_D4, // JLA_TB4
+  SP_D9, // JLA_TB3
+  SP_76, // KIKJ_PL2
+  SP_77, // KIKJ_PL1
+  SP_78, // OKBS_PL2
+  SP_79, // OKBS_PL1
+  SP_80, // BTGD_PL2
+  SP_81, // BTGD_PL1
+  SP_D5, // BTGD_TB1
+  SP_D0, // BTGD_TB2
+  END_OF_SPs
+} STOPPING_POINT_CODE;
+
+typedef enum st_id {
+  JLA = 1,
+  KIKJ,
+  OKBS,
+  BTGD,
+  END_OF_ST_ID
+} ST_ID;
+
+typedef enum cbtc_block_id {
+  VB_NONSENS,
+  VB309DB,
+  VB311D,
+  VB313D,
+  VB315D,
+  VB318D,
+  VB320D,
+  VB322D,
+  VB324D,
+  VB326U,
+  VB328U,
+  VB329U,
+  VB331U,
+  VB333U,
+  VB335U,
+  VB337U,
+  VB339U,  
+  VB325U,
+  VB327D,
+  VB328D,
+  VB331D,
+  VB333D,
+  VB334D,
+  VB336D,
+  VB339D,
+  VB340D,  
+  VB342U,
+  VB344U,
+  VB346U,
+  VB348U,
+  VB350U,
+  VB352U,
+  VB355U,
+  VB357U,
+  VB359U,
+  VB360UB,
+  VB341U,
+  VB342DB,
+  VB344D,
+  VB346D,
+  VB348D,
+  VB350D,
+  VB352D,
+  VB354D,
+  VB356D,
+  VB358D,
+  VB309UB,
+  VB311U,
+  VB313U,
+  VB314U,
+  VB316U,
+  VB318U,
+  VB320U,
+  VB323U,
+  VB304DB,
+  VB305U,
+  VB363DB,
+  VB364U,
+  VB361U,
+  VB360DB,
+  
+  VB306D,
+  VB306U,
+  VB309UA,
+  VB326D,
+  VB324U,
+  VB342DA,
+  VB340U,
+  VB359D,
+  VB360DA,
+  VB362D,
+  VB363DA,
+  VB363UA,
+  VB363UB,
+  END_OF_CBTC_BLOCKs
+} CBTC_BLOCK_ID;

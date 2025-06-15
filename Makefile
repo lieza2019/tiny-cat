@@ -17,7 +17,7 @@ GEN_IL_DEF_BIN = gen_il_def
 $(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/ttcreat.o ./timetable/ttcreat_cmd.o $(TINY_LIB_NAME)
 	$(LD) $(LDFLAGS) -o $@ $^
 
-$(TINY_LIB_NAME) : misc.o network.o sparcs.o train_cmd.o cbtc_dataset.o cbtc.o train_ctrl.o cbi.o interlock.o surveill.o ars.o timetable.o
+$(TINY_LIB_NAME) : misc.o network.o sparcs.o train_cmd.o cbtc_datadef.o cbtc.o train_ctrl.o cbi.o interlock.o surveill.o ars.o timetable.o cbtc_dataset.o
 	$(AR) r $@ $^
 
 train_info.h : generic.h misc.h
@@ -26,7 +26,7 @@ train_cmd.h : generic.h misc.h
 	$(TOUCH) $@
 sparcs.h : generic.h misc.h network.h train_cmd.h train_info.h train_ctrl.h sparcs_def.h
 	$(TOUCH) $@
-cbtc.h : generic.h misc.h ars.h cbtc_dataset.h
+cbtc.h : generic.h misc.h ars.h cbtc_datadef.h
 	$(TOUCH) $@
 train_ctrl.h : generic.h misc.h cbtc.h
 	$(TOUCH) $@
@@ -64,9 +64,10 @@ cbi.o: generic.h misc.h cbi.h ./cbi/memmap/cbi_stat_kind.def ./cbi/memmap/cbi_st
 interlock.o : generic.h misc.h network.h cbi.h srv.h interlock.h interlock.c
 surveill.o : generic.h misc.h sparcs.h cbi.h interlock.h surveill.h surveill.c
 ars.o : generic.h misc.h sparcs.h cbi.h ars.h surveill.h timetable.h ./timetable/ttcreat.h ars.c
-cbtc_dataset.o : generic.h misc.h cbtc.h interlock.h sparcs.h cbtc_dataset.c
+cbtc_datadef.o : generic.h misc.h cbtc.h interlock.h sparcs.h cbtc_datadef.c
 cbtc.o : generic.h misc.h cbtc.h interlock.h sparcs.h cbtc.c
 timetable.o : generic.h misc.h timetable.h ./timetable/ttcreat.h timetable.c
+cbtc_dataset.o : generic.h misc.h cbtc.h cbtc_dataset.c
 
 main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h surveill.h timetable.h ./timetable/ttcreat.h srv.h main.c
 

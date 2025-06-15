@@ -11,7 +11,6 @@
 #include "../../cbtc.h"
 #undef CBTC_C
 #include "../../interlock.h"
-//#include "../../timetable.h"
 
 #define ERR_FAILED_ALLOC_WORKMEM 3
 #define ERR_FAILED_CONS_ILSYM_DATABASE 1
@@ -31,6 +30,22 @@
 
 extern int par_csv_iltbl ( char *bufs[], const int nbufs, FILE *fp_src );
 
+typedef enum track_bound {
+  BOUND_DOWN = 1,
+  BOUND_UP,
+  BOUND_UNKNOWN
+} TRACK_BOUND;
+static const char *trbound2_str[] = {
+  "HAS_NO_BOUND",
+  "BOUND_DOWN",
+  "BOUND_UP",
+  "BOUND_UNKNOWN",
+  NULL
+};
+const char *cnv2str_trbound ( TRACK_BOUND bound ) {
+  return cnv2str_lkup( trbound2_str, bound );
+}
+
 struct track_sr {
   BOOL defined;
   char sr_name[CBI_STAT_IDENT_LEN + 1];
@@ -49,6 +64,7 @@ typedef struct track_prof {
     struct track_sr eTLSR, eTRSR;
     struct track_sr kTLSR, kTRSR;
   } sr;
+  TRACK_BOUND tr_bound;
   struct track_prof *pNext;
 } TRACK_PROF, *TRACK_PROF_PTR;
 
@@ -272,8 +288,14 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char
   track_prof_sr( fp_out, &pprof->sr.kTRSR, ptr_name, "_kTRSR" ); // kTRSR
   fprintf( fp_out, "}" );
   fprintf( fp_out, "}" );
-  
   fprintf( fp_out, "},\n" );
+  
+  if( !strcmp( pbounds, "Down" ) )
+    pprof->tr_bound = BOUND_DOWN;
+  else if( !strcmp( pbounds, "Up" ) )
+    pprof->tr_bound = BOUND_UP;
+  else
+    pprof->tr_bound = BOUND_UNKNOWN;
   return pprof;
 }
 
@@ -315,13 +337,29 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_s
     if( n >= 5 ) {
       assert( tr_name[0] == 'T' );
       if( strnlen( tr_name, TRACK_NAME_MAXLEN ) > 1 ) {
-	printf( "(seq, tr_name, bound): (%s, %s, %s)\n", seq, tr_name, bounds );
+	TRACK_PROF_PTR pprof = NULL;
 	GEN_INDENT( fp_out, 1, 2 );
 	assert( tracks_routes_prof.tracks.pavail < &tracks_routes_prof.tracks.track_profs[TRACK_PROF_DECL_MAXNUM] );
-	emit_track_prof( fp_out, tracks_routes_prof.tracks.pavail, tr_name, bounds );
+	pprof = emit_track_prof( fp_out, tracks_routes_prof.tracks.pavail, tr_name, bounds );
+	assert( pprof == tracks_routes_prof.tracks.pavail );
 	if( ferror( fp_out ) )
 	  break;
 	cnt++;
+#if 1 // *****
+	{
+	  printf( "(seq, tr_name, bound, [consist_blks]): (%s, %s, %s, [", seq, pprof->track_name, cnv2str_trbound(pprof->tr_bound) );
+	  int i;
+	  for( i = 0; i < pprof->consists_blks.nblks; i++ ) {
+	    CBTC_BLOCK_PTR pblk = pprof->consists_blks.pblk_profs[i];
+	    assert( pblk );
+	    if( i > 0 )
+	      printf( ", " );
+	    assert( pblk->virt_blkname_str );
+	    printf( "%s", pblk->virt_blkname_str );
+	  }
+	  printf( "])\n" );
+	}
+#endif
 	if( cnt == 1 ) {
 	  assert( !pprev );
 	  *pprofs = tracks_routes_prof.tracks.pavail;
@@ -707,8 +745,6 @@ static int init_gen_il_dataset ( void ) {
 int main ( void ) {
   FILE *fp_out = NULL;
   int r = -1;
-  extern pthread_mutex_t cbtc_ctrl_cmds_mutex;
-  extern pthread_mutex_t cbtc_stat_infos_mutex;
   cons_block_state();
   
   init_gen_il_dataset();

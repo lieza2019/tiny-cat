@@ -146,10 +146,7 @@ extern TINY_TRAIN_STATE trains_tracking[MAX_TRAIN_TRACKINGS];
 extern int establish_SC_comm_infos ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pdescs[], const int ninfos, const int ndescs );
 extern int load_train_command ( void );
 extern void chk_solid_train_cmds ( void );
-#if 0 // *****
-extern pthread_mutex_t cbtc_ctrl_cmds_mutex;
-extern pthread_mutex_t cbtc_stat_infos_mutex;
-#endif
+
 extern void *conslt_cbtc_state ( TINY_TRAIN_STATE_PTR pT, const CBTC_CMDS_INFOS kind, void *pstat_prev, void *pstate, const int size );
 extern void *pth_emit_cbtc_ctrl_cmds ( void *arg );
 extern void *pth_reveal_cbtc_status ( void *arg );
