@@ -29,6 +29,26 @@ const char *cnv2str_lkup ( const char *id2str_tbl[], int id ) {
   return r;
 }
 
+static int morph_no( BLK_LINKAGE_PTR plnk ) {
+  assert( plnk );
+  int r = -1;
+  BLK_MORPH_PTR pmor = plnk->pmorph;
+  assert( pmor );
+  {    
+    CBTC_BLOCK_PTR pblk = pmor->pblock;
+    assert( pblk );
+    int i = 0;
+    while( i < pblk->shape.num_morphs ) {
+      if( &pblk->shape.morphs[i] == pmor ) {
+	assert( i < pblk->shape.num_morphs );
+	r = i;
+	break;
+      }
+      i++;
+    }
+  }
+  return r;
+}
 void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
   assert( fp_out );
   assert( pprof );
@@ -57,7 +77,7 @@ void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
 	    assert( (p->pmorph)->pblock );	    
 	    if( cnt > 0 )
 	      fprintf( fp_out, ", " );
-	    fprintf( fp_out, "%s", ((p->pmorph)->pblock)->virt_blkname_str );
+	    fprintf( fp_out, "%d@%d@%s", p->edge_pos, morph_no(p), ((p->pmorph)->pblock)->virt_blkname_str );
 	    cnt++;
 	    p = p->pNext;
 	  }
