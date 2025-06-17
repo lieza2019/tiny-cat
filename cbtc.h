@@ -64,6 +64,7 @@ typedef struct block {
   struct {
     int num_morphs;
     BLK_MORPH morphs[MAX_BLOCK_MORPHS];
+    BLK_LINKAGE_PTR lnks[MAX_ADJACENT_BLKS];
   } shape;
   struct {
     const IL_SYM track;

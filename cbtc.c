@@ -74,10 +74,12 @@ void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
 	  while( p != plnk ) {
 	    assert( p );
 	    assert( p->pmorph );
-	    assert( (p->pmorph)->pblock );	    
-	    if( cnt > 0 )
+	    assert( (p->pmorph)->pblock );
+	    if( cnt == 0 ) {
+	      fprintf( fp_out, "edge_pos@morph_no@virt_blkname = " );
+	      fprintf( fp_out, "%d@%d@%s", p->edge_pos, morph_no(p), ((p->pmorph)->pblock)->virt_blkname_str );
+	    } else
 	      fprintf( fp_out, ", " );
-	    fprintf( fp_out, "%d@%d@%s", p->edge_pos, morph_no(p), ((p->pmorph)->pblock)->virt_blkname_str );
 	    cnt++;
 	    p = p->pNext;
 	  }
@@ -88,6 +90,38 @@ void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
       }
     }
   }  
+}
+
+static int enum_branches ( CBTC_BLOCK_PTR pblk, int bras[], const int len ) {
+  assert( pblk );
+  assert( bras );
+  assert( len <= MAX_ADJACENT_BLKS );
+  int cnt = 0;
+  
+  int i;
+  for( i = 0; i < pblk->shape.num_morphs; i++ ) {
+    assert( cnt < len );
+    assert( pblk );
+    BLK_MORPH_PTR pmor = &pblk->shape.morphs[i];
+    int j;
+    assert( pmor );    
+    for( j = 0; j < pmor->num_links; j++ ) {
+      BLK_LINKAGE_PTR plnk = &pmor->linkages[j];
+      assert( plnk );
+      int k;
+      for( k = 0; k < cnt; k++ ) {
+	assert( k < cnt );
+	if( bras[k] == plnk->edge_pos ) {	  
+	  break;
+	}
+      }
+      if( k >= cnt ) {
+	bras[k] = plnk->edge_pos;
+	cnt++;
+      }
+    }
+  }
+  return cnt;
 }
 
 static int *equiv_branches ( CBTC_BLOCK_PTR pblk, int bras[], int idx, const int len ) {
@@ -134,35 +168,49 @@ static int *equiv_branches ( CBTC_BLOCK_PTR pblk, int bras[], int idx, const int
   }
   return r;
 }
-static int enum_branches ( CBTC_BLOCK_PTR pblk, int bras[], const int len ) {
+
+static BOOL fixed_pos ( BLK_MORPH_PTR pms[], const int nms, BLK_LINKAGE_PTR plnk ) {
+  assert( pms );
+  assert( nms <= MAX_BLOCK_MORPHS );
+  assert( plnk );
+  
+  BOOL r = FALSE;
+  return r;
+}
+static int enum_fixes ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int len ) {
   assert( pblk );
-  assert( bras );
+  assert( fixes );
   assert( len <= MAX_ADJACENT_BLKS );
+  struct {
+    int n;
+    int pos[MAX_ADJACENT_BLKS];
+  } acc = {0, {}};
   int cnt = 0;
+  
   int i;
   for( i = 0; i < pblk->shape.num_morphs; i++ ) {
     assert( cnt < len );
+    assert( pblk );
     BLK_MORPH_PTR pmor = &pblk->shape.morphs[i];
     int j;
-    assert( pmor );    
+    assert( pmor );
     for( j = 0; j < pmor->num_links; j++ ) {
       BLK_LINKAGE_PTR plnk = &pmor->linkages[j];
       assert( plnk );
+      BLK_MORPH_PTR pms[MAX_BLOCK_MORPHS] = {};
       int k;
-      for( k = 0; k < cnt; k++ ) {
-	assert( k < cnt );
-	if( bras[k] == plnk->edge_pos ) {	  
-	  break;
-	}
-      }
-      if( k >= cnt ) {
-	bras[k] = plnk->edge_pos;
+      for( k = 0; k < pblk->shape.num_morphs; k++ )
+	pms[k] = &pblk->shape.morphs[k];
+      assert( k == pblk->shape.num_morphs );
+      if( fixed_pos( pms, k, plnk ) ) {
+	fixes[cnt] = plnk;
 	cnt++;
       }
     }
   }
   return cnt;
 }
+
 void cons_block_state ( void ) {
   int i = 0;
   while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
