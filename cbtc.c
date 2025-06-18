@@ -181,11 +181,11 @@ static int enum_fixes ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int 
   assert( pblk );
   assert( fixes );
   assert( len <= MAX_ADJACENT_BLKS );
-  struct {
-    int n;
-    int pos[MAX_ADJACENT_BLKS];
-  } acc = {0, {}};
   int cnt = 0;
+  struct {
+    BLK_LINKAGE_PTR phead;
+    BLK_LINKAGE_PTR plast;
+  } book = { NULL, NULL };
   
   int i;
   for( i = 0; i < pblk->shape.num_morphs; i++ ) {
@@ -199,11 +199,18 @@ static int enum_fixes ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int 
       assert( plnk );
       BLK_MORPH_PTR pms[MAX_BLOCK_MORPHS] = {};
       int k;
+      {
+	BLK_LINKAGE_PTR p = book.pHead;
+	while( p ) {
+	  if( p == plnk )
+	    break;
+	}
+      }
       for( k = 0; k < pblk->shape.num_morphs; k++ )
 	pms[k] = &pblk->shape.morphs[k];
       assert( k == pblk->shape.num_morphs );
       if( fixed_pos( pms, k, plnk ) ) {
-	fixes[cnt] = plnk;
+	fixes[cnt] = plnk;	
 	cnt++;
       }
     }
