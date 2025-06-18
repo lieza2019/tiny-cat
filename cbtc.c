@@ -198,14 +198,22 @@ static int enum_fixes ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int 
       BLK_LINKAGE_PTR plnk = &pmor->linkages[j];
       assert( plnk );
       BLK_MORPH_PTR pms[MAX_BLOCK_MORPHS] = {};
-      int k;
+      int k;      
       {
+	BOOL found = FALSE;
 	BLK_LINKAGE_PTR p = book.pHead;
 	while( p ) {
-	  if( p == plnk )
+	  if( p == plnk ) {
+	    found = TRUE;
 	    break;
+	  }
+	  p = book.pHead->pln_neigh;
 	}
-      }
+	if( found )
+	  continue;
+	else
+	  assert( p == book.plast );
+      }	
       for( k = 0; k < pblk->shape.num_morphs; k++ )
 	pms[k] = &pblk->shape.morphs[k];
       assert( k == pblk->shape.num_morphs );
