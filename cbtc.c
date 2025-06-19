@@ -169,7 +169,7 @@ static int *equiv_branches ( CBTC_BLOCK_PTR pblk, int bras[], int idx, const int
   return r;
 }
 
-static BOOL fixed_pos ( BLK_MORPH_PTR pms[], const int nms, BLK_LINKAGE_PTR plnk ) {
+static BLK_LINKAGE_PTR fixed_pos ( BLK_MORPH_PTR pms[], const int nms, BLK_LINKAGE_PTR plnk ) {
   assert( pms );
   assert( nms <= MAX_BLOCK_MORPHS );
   assert( plnk );
@@ -202,23 +202,35 @@ static int enum_fixes ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int 
       {
 	BOOL found = FALSE;
 	BLK_LINKAGE_PTR p = book.pHead;
-	while( p ) {
-	  if( p == plnk ) {
-	    found = TRUE;
-	    break;
-	  }
-	  p = book.pHead->pln_neigh;
+	if( p ) {
+	  assert( book.phead );
+	  assert( book.plast );
+	  do {
+	    if( p == plnk ) {
+	      found = TRUE;
+	      break;
+	    }
+	    p = book.pHead->pln_neigh;
+	  } while( p );
+	} else {
+	  assert( !book.plast );
+	  book.phead = p;
+	  book.phead = book.ptail;
 	}
 	if( found )
 	  continue;
 	else
 	  assert( p == book.plast );
-      }	
+      }
       for( k = 0; k < pblk->shape.num_morphs; k++ )
 	pms[k] = &pblk->shape.morphs[k];
       assert( k == pblk->shape.num_morphs );
-      if( fixed_pos( pms, k, plnk ) ) {
-	fixes[cnt] = plnk;	
+      book.ptail = fixed_pos( pms, k, plnk )
+      if( book.ptail ) {
+#ifdef CHK_STRICT_CONSISTENCY
+	;
+#endif // CHK_STRICT_CONSISTENCY
+	fixes[cnt] = plnk;
 	cnt++;
       }
     }
