@@ -173,19 +173,19 @@ static BLK_LINKAGE_PTR fixed_pos ( BLK_MORPH_PTR pms[], const int nms, BLK_LINKA
   assert( pms );
   assert( nms <= MAX_BLOCK_MORPHS );
   assert( plnk );
+  BLK_LINKAGE_PTR r = NULL;
   
-  BOOL r = FALSE;
   return r;
 }
 static int enum_fixes ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int len ) {
   assert( pblk );
   assert( fixes );
   assert( len <= MAX_ADJACENT_BLKS );
-  int cnt = 0;
   struct {
     BLK_LINKAGE_PTR phead;
     BLK_LINKAGE_PTR plast;
   } book = { NULL, NULL };
+  int cnt = 0;
   
   int i;
   for( i = 0; i < pblk->shape.num_morphs; i++ ) {
@@ -200,38 +200,61 @@ static int enum_fixes ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int 
       BLK_MORPH_PTR pms[MAX_BLOCK_MORPHS] = {};
       int k;      
       {
-	BOOL found = FALSE;
-	BLK_LINKAGE_PTR p = book.pHead;
-	if( p ) {
-	  assert( book.phead );
+	BOOL found = FALSE;	
+	if( book.phead ) {
 	  assert( book.plast );
+	  BLK_LINKAGE_PTR p = book.phead;
 	  do {
+	    assert( p );
+	    assert( !found );
 	    if( p == plnk ) {
 	      found = TRUE;
 	      break;
 	    }
-	    p = book.pHead->pln_neigh;
+	    p = p->pln_neigh;
 	  } while( p );
 	} else {
 	  assert( !book.plast );
-	  book.phead = p;
-	  book.phead = book.ptail;
+	  book.phead = plnk;
+	  book.phead = book.plast;
 	}
 	if( found )
 	  continue;
-	else
-	  assert( p == book.plast );
       }
+      assert( book.phead );
+      assert( book.plast );
       for( k = 0; k < pblk->shape.num_morphs; k++ )
 	pms[k] = &pblk->shape.morphs[k];
       assert( k == pblk->shape.num_morphs );
-      book.ptail = fixed_pos( pms, k, plnk )
-      if( book.ptail ) {
+      {
+	BLK_LINKAGE_PTR pels = NULL;
+	pels = fixed_pos( pms, k, plnk );
+	if( pels ) {
 #ifdef CHK_STRICT_CONSISTENCY
-	;
+	  BLK_LINKAGE_PTR p = book.phead;
+	  while( p ) {
+	    assert( p );
+	    BLK_LINKAGE_PTR q = pels;
+	    do {
+	      assert( p );
+	      assert( q != p );
+	      q = q->pln_neigh;
+	    } while( q );
+	    if( p->pln_neigh )
+	      p = p->pln_neigh;
+	    else
+	      assert( p == book.plast );
+	  }
 #endif // CHK_STRICT_CONSISTENCY
-	fixes[cnt] = plnk;
-	cnt++;
+	  fixes[cnt++] = plnk;
+	  book.phead->pln_neigh = pels;
+	  while( pels->pln_neigh ) {
+	    assert( pels );
+	    pels = pels->pln_neigh;
+	  }
+	  book.plast = pels;
+	  assert( !(book.plast)->pln_neigh );
+	}
       }
     }
   }

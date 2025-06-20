@@ -47,7 +47,7 @@ typedef struct blk_linkages {
   const int edge_pos;
   struct blk_linkages *pNext;
   struct blk_morph *pmorph;
-  struct blk_linkages *pln_neigh;  
+  struct blk_linkages *pln_neigh;
 } BLK_LINKAGE, *BLK_LINKAGE_PTR;
 typedef struct blk_morph {
   int num_links;
