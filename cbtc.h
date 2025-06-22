@@ -107,6 +107,7 @@ extern const char *cnv2str_lkup ( const char *id2str_tbl[], int id );
 extern void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof );
 
 extern void cons_block_state ( void );
+extern int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int len );
 
 extern void cons_lkuptbl_cbtc_block_prof ( void );
 extern CBTC_BLOCK_PTR lookup_cbtc_block_prof ( unsigned short block_name );
