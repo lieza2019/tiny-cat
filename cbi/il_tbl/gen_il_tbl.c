@@ -320,6 +320,7 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char
       assert( i == nblks );
       fprintf( fp_out, "}" );
     }
+    link_blks_hard( pprof );
   }
   fprintf( fp_out, "}, " );
   // lock
