@@ -312,8 +312,9 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
 	assert( k == pblk->shape.num_morphs );
       }
       if( fixed_pos( pms, pblk->shape.num_morphs, plnk ) ) {
+	BLK_LINKAGE_PTR p = NULL;
 #ifdef CHK_STRICT_CONSISTENCY
-	BLK_LINKAGE_PTR p = book.phead;
+	p = book.phead;
 	while( p ) {
 	  assert( p );
 	  BLK_LINKAGE_PTR q = plnk;

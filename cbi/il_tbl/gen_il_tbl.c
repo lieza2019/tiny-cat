@@ -191,15 +191,14 @@ struct fixed_pos {
   CBTC_BLOCK_PTR pprof;
   int npos;
   BLK_LINKAGE_PTR pos[MAX_ADJACENT_BLKS];
-  struct fixed_pos *pNext;
 };
 static void _linking ( struct fixed_pos blks[], int nblks ) {
   assert( blks );
   assert( nblks <= MAX_TRACK_BLOCKS );
   if( nblks > 1 ) {
     struct fixed_pos *pblk = &blks[0];
-    assert( pblk );
     int i;
+    assert( pblk );
     for( i = 0; i < pblk->npos; i++ ) {
       int j;
       if( ! pblk->pos[i] )
@@ -232,7 +231,6 @@ static int link_blks_hard ( TRACK_PROF_PTR pattr_tr ) {
   assert( pattr_tr );
   struct fixed_pos blks_fixed_pos[MAX_TRACK_BLOCKS + 1] = {};
   int cnt = 0;
-  
   int i;
   for( i = 0; i < pattr_tr->consists_blks.nblks; i++ ) {
     assert( i < MAX_TRACK_BLOCKS );
@@ -241,11 +239,10 @@ static int link_blks_hard ( TRACK_PROF_PTR pattr_tr ) {
     if( n > 0 ) {
       blks_fixed_pos[cnt].pprof = pattr_tr->consists_blks.pblk_profs[i];
       blks_fixed_pos[cnt].npos = n;
-      blks_fixed_pos[cnt].pNext = NULL;
       cnt++;
     }
   }
-  blks_fixed_pos[cnt].npos = -1;
+  _linking( blks_fixed_pos, cnt );
   return cnt;
 }
 
