@@ -192,7 +192,7 @@ struct fixed_pos {
   int npos;
   BLK_LINKAGE_PTR pos[MAX_ADJACENT_BLKS];
 };
-static void _linking ( struct fixed_pos blks[], int nblks ) {
+static void linking ( struct fixed_pos blks[], int nblks ) {
   assert( blks );
   assert( nblks <= MAX_TRACK_BLOCKS );
   if( nblks > 1 ) {
@@ -224,7 +224,7 @@ static void _linking ( struct fixed_pos blks[], int nblks ) {
 	  break;
       }
     }
-    _linking( &blks[1], nblks - 1 );
+    linking( &blks[1], nblks - 1 );
   }
 }
 static int link_blks_hard ( TRACK_PROF_PTR pattr_tr ) {  
@@ -242,7 +242,7 @@ static int link_blks_hard ( TRACK_PROF_PTR pattr_tr ) {
       cnt++;
     }
   }
-  _linking( blks_fixed_pos, cnt );
+  linking( blks_fixed_pos, cnt );
   return cnt;
 }
 
@@ -462,7 +462,8 @@ static void emit_track_dataset_epilog ( FILE *fp_out ) {
   fprintf( fp_out, "#endif // TRACK_ATTRIB_DEFINITION\n" );
 }
 
-static BLK_LINKAGE_PTR linking ( BLK_LINKAGE_PTR pbra, CBTC_BLOCK_PTR pblks, const int nblks ) {
+#if 0 // *****
+static BLK_LINKAGE_PTR _linking ( BLK_LINKAGE_PTR pbra, CBTC_BLOCK_PTR pblks, const int nblks ) {
   assert( pbra );
   assert( pblks );
   assert( nblks >= 0 );
@@ -507,7 +508,7 @@ static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
 	assert( pmor );
 	assert( pmor->num_links < 3 );
 	for( k = 0; k < pmor->num_links; k++ ) {	  
-	  linking( &pmor->linkages[k], pprof->consists_blks.pblk_profs[i + 1], ((pprof->consists_blks.nblks - 1) - i) );
+	  _linking( &pmor->linkages[k], pprof->consists_blks.pblk_profs[i + 1], ((pprof->consists_blks.nblks - 1) - i) );
 	  ;
 	}	
       }
@@ -515,6 +516,7 @@ static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
     pprof = pprof->pNext;
   }
 }
+#endif
 
 static int gen_track_dataset ( FILE *fp_out ) {
   assert( fp_out );
