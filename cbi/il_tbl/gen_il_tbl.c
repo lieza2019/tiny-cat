@@ -212,8 +212,17 @@ static void linking ( struct fixed_pos blks[], int nblks ) {
 	  if( ! pb->pos[k] )
 	    continue;
 	  if( pblk->pos[i]->edge_pos == pb->pos[k]->edge_pos ) {
-	    pblk->pos[i]->pln_neigh = pb->pos[k];
-	    pb->pos[k]->pln_neigh = pblk->pos[i];
+	    BLK_LINKAGE_PTR pl = pblk->pos[i];
+	    do {
+	      assert( pl );
+	      pl->pln_neigh = pb->pos[k];
+	      pl = pl->pNext;
+	    } while( pl != pblk->pos[i] );
+	    pl = pb->pos[k];
+	    do {
+	      pl->pln_neigh = pblk->pos[i];
+	      pl = pl->pNext;
+	    } while( pl != pb->pos[k] );
 	    pblk->pos[i] = NULL;
 	    pb->pos[k] = NULL;
 	    found = TRUE;
@@ -237,7 +246,7 @@ static int link_blks_hard ( CBTC_BLOCK_PTR profs[], const int nblks ) {
   for( i = 0; i < nblks; i++ ) {
     assert( i < MAX_TRACK_BLOCKS );
     int n = -1;
-    n = enum_fixed_branches( profs[i], blks_fixed_pos[cnt].pos, MAX_ADJACENT_BLKS );
+    n = enum_fixed_branches( profs[i], blks_fixed_pos[cnt].pos, MAX_ADJACENT_BLKS );    
     if( n > 0 ) {
       blks_fixed_pos[cnt].pprof = profs[i];
       blks_fixed_pos[cnt].npos = n;

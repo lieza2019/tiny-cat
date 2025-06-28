@@ -242,8 +242,8 @@ static BOOL fixed_pos ( BLK_MORPH_PTR pms[], const int nms, BLK_LINKAGE_PTR plnk
   
   BLK_LINKAGE_PTR pl = plnk;
   do {
+    assert( pl );
     assert( res > 0 );
-    assert( pl );    
     int i;
     for( i = 0; i < nms; i++ ) {
       assert( pl->pmorph );
@@ -253,13 +253,28 @@ static BOOL fixed_pos ( BLK_MORPH_PTR pms[], const int nms, BLK_LINKAGE_PTR plnk
 	break;
       }
     }
-    assert( i < nms );
     pl = pl->pNext;
   } while( pl != plnk );
   assert( res >= 0 );
   return (res == 0);
 }
 #endif
+static BLK_LINKAGE_PTR ln_equ ( BLK_LINKAGE_PTR peqs, BLK_LINKAGE_PTR pln ) {
+  assert( peqs );
+  assert( pln );
+  BLK_LINKAGE_PTR r = NULL;
+  
+  BLK_LINKAGE_PTR p = peqs;
+  do {
+    assert( p );
+    if( p == pln ) {
+      r = p;
+      break;
+    }
+    p = p->pNext;
+  } while( p != peqs );
+  return r;
+}
 int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int len ) {
   assert( pblk );
   assert( fixes );
@@ -278,18 +293,18 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
     int j;
     assert( pmor );
     for( j = 0; j < pmor->num_links; j++ ) {
-      BLK_LINKAGE_PTR plnk = &pmor->linkages[j];
+      BLK_MORPH_PTR pms[MAX_BLOCK_MORPHS] = {};
+      BLK_LINKAGE_PTR plnk = &pmor->linkages[j];      
       assert( plnk );
-      BLK_MORPH_PTR pms[MAX_BLOCK_MORPHS] = {};    
       {
 	BOOL found = FALSE;	
 	if( book.phead ) {
 	  assert( book.plast );
 	  BLK_LINKAGE_PTR p = book.phead;
 	  do {
-	    assert( p );
 	    assert( !found );
-	    if( p == plnk ) {
+	    assert( p );
+	    if( ln_equ( p, plnk ) ) {
 	      found = TRUE;
 	      break;
 	    }
@@ -297,13 +312,11 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
 	  } while( p );
 	} else {
 	  assert( !book.plast );
-	  book.phead = plnk;
-	  book.phead = book.plast;
+	  book.plast = plnk;
 	}
 	if( found )
 	  continue;
       }
-      assert( book.phead );
       assert( book.plast );
       {
 	int k;
@@ -320,7 +333,7 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
 	  BLK_LINKAGE_PTR q = plnk;
 	  do {
 	    assert( q );
-	    assert( q != p );
+	    assert( !ln_equ( p, q ) );
 	    q = q->pNext;
 	  } while( q != plnk );
 	  if( ! p->pln_neigh )
@@ -329,17 +342,36 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
 	}
 #endif // CHK_STRICT_CONSISTENCY
 	fixes[cnt++] = plnk;
-	book.phead->pln_neigh = plnk;
-	p = plnk;	 
-	while( p->pNext != plnk ) {	    
-	  p->pln_neigh = p->pNext;
-	  p = p->pNext;
-	  assert( p );
+	p = plnk;
+	if( book.phead ) {
+	  assert( book.plast );
+	  book.plast->pln_neigh = plnk;	
+	  while( p->pNext != plnk ) {
+	    assert( p );
+	    p->pln_neigh = p->pNext;
+	    p = p->pNext;
+	  }
+	  book.plast = p;
+	} else {
+	  assert( book.plast == p );
+	  book.phead = p;
 	}
 	p->pln_neigh = NULL;
-	book.plast = p;	  
       }
     }
+  }
+  {
+    BLK_LINKAGE_PTR p = book.phead;
+    while( p ) {
+      assert( p );
+      BLK_LINKAGE_PTR q = p->pln_neigh;
+      if( !q )
+	assert( p == book.plast );
+      p->pln_neigh = NULL;
+      p = q;
+    }
+    assert( !(book.phead)->pln_neigh );
+    assert( !(book.plast)->pln_neigh );
   }
   return cnt;
 }
