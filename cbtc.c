@@ -53,7 +53,7 @@ void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
   assert( fp_out );
   assert( pprof );
   GEN_INDENT( fp_out, 1, 2 );
-  fprintf( fp_out, "(virt_blkname, block_name, num_morphs) = (%s, %d, %d)\n", pprof->virt_blkname_str, pprof->block_name, pprof->shape.num_morphs );
+  fprintf( fp_out, "(virt_blkname, block_name, num_morphs) = (%s(%d), %d, %d)\n", pprof->virt_blkname_str, pprof->block_name, pprof->block_name, pprof->shape.num_morphs );
   {
     int i;
     for( i = 0; i < pprof->shape.num_morphs; i++ ) {
@@ -67,7 +67,9 @@ void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
 	BLK_LINKAGE_PTR plnk = &pmor->linkages[j];
 	assert( plnk );
 	GEN_INDENT( fp_out, 3, 2 );	
-	fprintf( fp_out, "%d: ", plnk->edge_pos );
+	fprintf( fp_out, "link %02d: ", plnk->edge_pos );
+	fprintf( fp_out, "neigh_blk -> %d", plnk->neigh_blk );
+	fprintf( fp_out, ", " );
 	{
 	  int cnt = 0;
 	  BLK_LINKAGE_PTR p = plnk->pNext;
@@ -75,17 +77,28 @@ void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
 	    assert( p );
 	    assert( p->pmorph );
 	    assert( (p->pmorph)->pblock );
-	    if( cnt == 0 ) {
+	    if( cnt == 0 )
 	      fprintf( fp_out, "edge_pos@morph_no@virt_blkname = " );
-	      fprintf( fp_out, "%d@%d@%s", p->edge_pos, morph_no(p), ((p->pmorph)->pblock)->virt_blkname_str );
-	    } else
+	    else
 	      fprintf( fp_out, ", " );
 	    cnt++;
+	    fprintf( fp_out, "%d@%d@%s", p->edge_pos, morph_no(p), ((p->pmorph)->pblock)->virt_blkname_str );
 	    p = p->pNext;
 	  }
 	  if( cnt == 0 )
-	    fprintf( fp_out, "none." );
-	}	
+	    fprintf( fp_out, "none" );
+	  fprintf( fp_out, ", " );
+	  if( plnk->pln_neigh ) {
+	    BLK_MORPH_PTR pmn = plnk->pln_neigh->pmorph;
+	    assert( pmn );
+	    assert( pmn->pblock );
+	    //fprintf( fp_out, "link -> %d", (plnk->pln_neigh)->neigh_blk );
+	    fprintf( fp_out, "link -> %d", (plnk->pln_neigh)->pmorph->pblock->block_name );
+	    //fprintf( fp_out, "link -> %s(%d)", (pmn->pblock)->virt_blkname_str, (plnk->pln_neigh)->neigh_blk );
+	    //fprintf( fp_out, "link -> %s(%d)", (plnk->pln_neigh)->pmorph->pblock->virt_blkname_str, (plnk->pln_neigh)->neigh_blk );
+	  } else
+	    fprintf( fp_out, "none" );
+	}
 	fprintf( fp_out, "\n" );
       }
     }

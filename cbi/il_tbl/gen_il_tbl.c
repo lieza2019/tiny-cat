@@ -211,7 +211,7 @@ static void linking ( struct fixed_pos blks[], int nblks ) {
 	for( k = 0; k < pb->npos; k++ ) {
 	  if( ! pb->pos[k] )
 	    continue;
-	  if( pblk->pos[i]->edge_pos == pb->pos[k]->edge_pos ) {
+	  if( pblk->pos[i]->neigh_blk == pb->pos[k]->neigh_blk ) {
 	    BLK_LINKAGE_PTR pl = pblk->pos[i];
 	    do {
 	      assert( pl );
