@@ -92,10 +92,7 @@ void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
 	    BLK_MORPH_PTR pmn = plnk->pln_neigh->pmorph;
 	    assert( pmn );
 	    assert( pmn->pblock );
-	    //fprintf( fp_out, "link -> %d", (plnk->pln_neigh)->neigh_blk );
-	    fprintf( fp_out, "link -> %d", (plnk->pln_neigh)->pmorph->pblock->block_name );
-	    //fprintf( fp_out, "link -> %s(%d)", (pmn->pblock)->virt_blkname_str, (plnk->pln_neigh)->neigh_blk );
-	    //fprintf( fp_out, "link -> %s(%d)", (plnk->pln_neigh)->pmorph->pblock->virt_blkname_str, (plnk->pln_neigh)->neigh_blk );
+	    fprintf( fp_out, "link -> %s(%d)", pmn->pblock->virt_blkname_str, pmn->pblock->block_name );
 	  } else
 	    fprintf( fp_out, "none" );
 	}

@@ -202,16 +202,21 @@ static void linking ( struct fixed_pos blks[], int nblks ) {
     for( i = 0; i < pblk->npos; i++ ) {
       int j;
       if( ! pblk->pos[i] )
-	continue;      
-      for( j = 1; j < nblks; j++ ) {
-	struct fixed_pos *pb = &blks[j];
-	BOOL found = FALSE;
+	continue;
+      assert( pblk->pos[i]->pmorph );
+      assert( pblk->pos[i]->pmorph->pblock );
+      for( j = 1; j < nblks; j++ ) {			
+	struct fixed_pos *pb = &blks[j];	
+	BOOL found = FALSE;	
 	int k;
 	assert( pb );
 	for( k = 0; k < pb->npos; k++ ) {
 	  if( ! pb->pos[k] )
 	    continue;
-	  if( pblk->pos[i]->neigh_blk == pb->pos[k]->neigh_blk ) {
+	  assert( pb->pos[k]->pmorph );
+	  assert( pb->pos[k]->pmorph->pblock );
+	  if( (pblk->pos[i]->neigh_blk == pb->pos[k]->pmorph->pblock->block_name) &&
+	      (pb->pos[k]->neigh_blk == pblk->pos[i]->pmorph->pblock->block_name) ) {
 	    BLK_LINKAGE_PTR pl = pblk->pos[i];
 	    do {
 	      assert( pl );
