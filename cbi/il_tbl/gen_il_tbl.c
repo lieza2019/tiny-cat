@@ -74,25 +74,21 @@ typedef struct track_prof {
   struct track_prof *pNext;
 } TRACK_PROF, *TRACK_PROF_PTR;
 
+struct route_tr {
+  char tr_name[CBI_STAT_IDENT_LEN + 1];
+  TRACK_PROF_PTR tr_prof;
+};
 typedef struct route_prof {
   char route_name[CBI_STAT_IDENT_LEN + 1];
   struct {
     int ntrs;
-    struct {
-      char tr_name[CBI_STAT_IDENT_LEN + 1];
-      TRACK_PROF_PTR tr_prof;
-    } tr[ROUTE_MAX_APPTRACKS];
+    struct route_tr tr[ROUTE_MAX_APPTRACKS];
   } apps;
-  struct {
-    char tr_name[CBI_STAT_IDENT_LEN + 1];
-    TRACK_PROF_PTR tr_prof;
-  } origin;
+  struct route_tr origin;
   struct {
     int ntrs;
-    struct {
-      char tr_name[CBI_STAT_IDENT_LEN + 1];
-      TRACK_PROF_PTR tr_prof;
-    } tr[ROUTE_MAX_CTRLTRACKS];
+    struct route_tr tr[ROUTE_MAX_CTRLTRACKS];
+    struct route_tr ahead, *pahead;
   } ctrls;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
 
@@ -690,7 +686,7 @@ static int read_iltbl_routerel ( FILE *fp_out, FILE *fp_src ) {
   
   ROUTE_PROF_PTR pprof = NULL;
   int cnt = -1;
-
+  
   assert( !ferror( fp_out ) );
   assert( !ferror( fp_src ) );
   while( !feof( fp_src ) ) {
