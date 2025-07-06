@@ -42,12 +42,24 @@ typedef enum stop_detection_cond {
 #define MAX_BLOCK_MORPHS 2
 #define MAX_POINTS_ON_MORPHING 1
 #define MAX_ADJACENT_BLKS 3
+typedef enum linx_bondage_kind {
+  LINK_HARD = 1,
+  LINK_ORGAHD,
+  LINK_SOFT
+} LINX_BONDAGE_KIND;
 typedef struct blk_linkages {
   const unsigned short neigh_blk;
   const int edge_pos;
   struct blk_linkages *pNext;
   struct blk_morph *pmorph;
+#if 0 // *****
   struct blk_linkages *pln_neigh;
+#else
+  struct {
+    LINX_BONDAGE_KIND kind;
+    struct blk_linkages *pln_neigh;    
+  } bond;
+#endif
 } BLK_LINKAGE, *BLK_LINKAGE_PTR;
 typedef struct blk_morph {
   int num_links;

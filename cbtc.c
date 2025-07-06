@@ -1,4 +1,4 @@
-#include <string.h>
+o#include <string.h>
 #include "generic.h"
 #include "misc.h"
 
@@ -88,8 +88,8 @@ void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
 	  if( cnt == 0 )
 	    fprintf( fp_out, "none" );
 	  fprintf( fp_out, ", " );
-	  if( plnk->pln_neigh ) {
-	    BLK_MORPH_PTR pmn = plnk->pln_neigh->pmorph;
+	  if( plnk->bond.pln_neigh ) {
+	    BLK_MORPH_PTR pmn = plnk->bond.pln_neigh->pmorph;
 	    assert( pmn );
 	    assert( pmn->pblock );
 	    fprintf( fp_out, "link -> %s(%d)", pmn->pblock->virt_blkname_str, pmn->pblock->block_name );
@@ -318,7 +318,7 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
 	      found = TRUE;
 	      break;
 	    }
-	    p = p->pln_neigh;
+	    p = p->bond.pln_neigh;
 	  } while( p );
 	} else {
 	  assert( !book.plast );
@@ -346,19 +346,19 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
 	    assert( !ln_equ( p, q ) );
 	    q = q->pNext;
 	  } while( q != plnk );
-	  if( ! p->pln_neigh )
+	  if( ! p->bond.pln_neigh )
 	    assert( p == book.plast );	    
-	  p = p->pln_neigh;
+	  p = p->bond.pln_neigh;
 	}
 #endif // CHK_STRICT_CONSISTENCY
 	fixes[cnt++] = plnk;
 	p = plnk;
 	if( book.phead ) {
 	  assert( book.plast );
-	  book.plast->pln_neigh = plnk;	
+	  book.plast->bond.pln_neigh = plnk;	
 	  while( p->pNext != plnk ) {
 	    assert( p );
-	    p->pln_neigh = p->pNext;
+	    p->bond.pln_neigh = p->pNext;
 	    p = p->pNext;
 	  }
 	  book.plast = p;
@@ -366,7 +366,7 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
 	  assert( book.plast == p );
 	  book.phead = p;
 	}
-	p->pln_neigh = NULL;
+	p->bond.pln_neigh = NULL;
       }
     }
   }
@@ -374,14 +374,14 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
     BLK_LINKAGE_PTR p = book.phead;
     while( p ) {
       assert( p );
-      BLK_LINKAGE_PTR q = p->pln_neigh;
+      BLK_LINKAGE_PTR q = p->bond.pln_neigh;
       if( !q )
 	assert( p == book.plast );
-      p->pln_neigh = NULL;
+      p->bond.pln_neigh = NULL;
       p = q;
     }
-    assert( !(book.phead)->pln_neigh );
-    assert( !(book.plast)->pln_neigh );
+    assert( !(book.phead)->bond.pln_neigh );
+    assert( !(book.plast)->bond.pln_neigh );
   }
   return cnt;
 }

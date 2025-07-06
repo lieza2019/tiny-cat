@@ -192,7 +192,7 @@ struct fixed_pos {
   int npos;
   BLK_LINKAGE_PTR pos[MAX_ADJACENT_BLKS];
 };
-static void linking ( struct fixed_pos blks[], int nblks ) {
+static void linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind ) {
   assert( blks );
   assert( nblks <= MAX_TRACK_BLOCKS );
   if( nblks > 1 ) {
@@ -220,12 +220,14 @@ static void linking ( struct fixed_pos blks[], int nblks ) {
 	    BLK_LINKAGE_PTR pl = pblk->pos[i];
 	    do {
 	      assert( pl );
-	      pl->pln_neigh = pb->pos[k];
+	      pl->bond.pln_neigh = pb->pos[k];
+	      pl->bond.kind = bind;
 	      pl = pl->pNext;
 	    } while( pl != pblk->pos[i] );
 	    pl = pb->pos[k];
 	    do {
-	      pl->pln_neigh = pblk->pos[i];
+	      pl->bond.pln_neigh = pblk->pos[i];
+	      pl->bond.kind = bind;
 	      pl = pl->pNext;
 	    } while( pl != pb->pos[k] );
 	    pblk->pos[i] = NULL;
@@ -238,7 +240,40 @@ static void linking ( struct fixed_pos blks[], int nblks ) {
 	  break;
       }
     }
-    linking( &blks[1], nblks - 1 );
+    linking( &blks[1], (nblks - 1), bind );
+  }
+}
+static void link_orgahd_blks ( TRACK_PROF_PTR app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
+  assert( app_trs );
+  assert( napps <= ROUTE_MAX_APPTRACKS );
+  assert( pahd_tr );
+  struct fixed_pos blks_fixed_pos[2 + 1] = {};
+  
+  int i;
+  for( i = 0; i < napps; i++ ) {
+    assert( app_trs[i] );
+    int j;
+    for( j = 0; j < app_trs[i]->consists_blks.nblks; j++ ) {
+      CBTC_BLOCK_PTR pblk_org = app_trs[i]->consists_blks.pblk_profs[j];
+      assert( pblk_org );
+      int n = -1;
+      n = enum_fixed_branches( pblk_org, blks_fixed_pos[0].pos, MAX_ADJACENT_BLKS );
+      if( n > 0 ) {
+	int k;
+	blks_fixed_pos[0].pprof = pblk_org;
+	blks_fixed_pos[0].npos = n;
+	for( k = 0; k < pahd_tr->rare_blks.nblks; k++ ) {
+	  int m = -1;
+	  m = enum_fixed_branches( pahd_tr->rare_blks.pblk_profs[k], blks_fixed_pos[1].pos, MAX_ADJACENT_BLKS );
+	  if( m > 0 ) {
+	    blks_fixed_pos[1].pprof = pahd_tr->rare_blks.pblk_profs[k];
+	    blks_fixed_pos[1].npos = m;
+	    linking( blks_fixed_pos, 2, LINK_ORGAHD );
+	  }
+	  ;
+	}
+      }
+    }
   }
 }
 
@@ -260,7 +295,7 @@ static int rares ( CBTC_BLOCK_PTR prares[], struct fixed_pos profs[], const int 
   }
   return cnt;
 }
-static int link_blks_hard ( CBTC_BLOCK_PTR prares[], CBTC_BLOCK_PTR profs[], const int nblks ) {
+static int link_internal_blks ( CBTC_BLOCK_PTR prares[], CBTC_BLOCK_PTR profs[], const int nblks ) {
   assert( prares );
   assert( profs );
   assert( nblks <= MAX_TRACK_BLOCKS );
@@ -279,7 +314,7 @@ static int link_blks_hard ( CBTC_BLOCK_PTR prares[], CBTC_BLOCK_PTR profs[], con
       cnt++;
     }
   }
-  linking( blks_fixed_pos, cnt );
+  linking( blks_fixed_pos, cnt, LINK_HARD );
   nrares = rares( prares, blks_fixed_pos, cnt );
   return nrares;
 }
@@ -357,7 +392,7 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char
       assert( n == 0 );
       assert( i == nblks );
       fprintf( fp_out, "}" );
-      pprof->rare_blks.nblks = link_blks_hard( pprof->rare_blks.pblk_profs, pprof->consists_blks.pblk_profs, pprof->consists_blks.nblks );
+      pprof->rare_blks.nblks = link_internal_blks( pprof->rare_blks.pblk_profs, pprof->consists_blks.pblk_profs, pprof->consists_blks.nblks );
     }    
   }
   fprintf( fp_out, "}, " );
@@ -837,9 +872,6 @@ static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
 #endif
   }
   return r;
-}
-static void link_orgblk ( void ) {
-  ;
 }
 static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
   assert( fp_out );
