@@ -61,6 +61,10 @@ typedef struct track_prof {
     CBTC_BLOCK_PTR pblk_profs[MAX_TRACK_BLOCKS];
   } consists_blks;
   struct {
+    int nblks;
+    CBTC_BLOCK_PTR pblk_profs[MAX_TRACK_BLOCKS];
+  } rare_blks;
+  struct {
     struct track_sr TLSR, TRSR;
     struct track_sr sTLSR, sTRSR;
     struct track_sr eTLSR, eTRSR;
@@ -241,12 +245,33 @@ static void linking ( struct fixed_pos blks[], int nblks ) {
     linking( &blks[1], nblks - 1 );
   }
 }
-static int link_blks_hard ( CBTC_BLOCK_PTR profs[], const int nblks ) {
+
+static int rares ( CBTC_BLOCK_PTR prares[], struct fixed_pos profs[], const int nfixes ) {
+  assert( prares );
+  assert( profs );
+  assert( nfixes <= MAX_TRACK_BLOCKS );
+  int cnt = 0;
+  int i;
+  for( i = 0; i < nfixes; i++ ) {
+    int j;
+    for( j = 0; j < profs[i].npos; j++ ) {
+      if( profs[i].pos[j] ) {
+	prares[cnt] = profs[i].pprof;
+	cnt++;
+	break;
+      }
+    }
+  }
+  return cnt;
+}
+static int link_blks_hard ( CBTC_BLOCK_PTR prares[], CBTC_BLOCK_PTR profs[], const int nblks ) {
+  assert( prares );
   assert( profs );
   assert( nblks <= MAX_TRACK_BLOCKS );
+  int nrares = -1;
+  
   struct fixed_pos blks_fixed_pos[MAX_TRACK_BLOCKS + 1] = {};
   int cnt = 0;
-  
   int i;
   for( i = 0; i < nblks; i++ ) {
     assert( i < MAX_TRACK_BLOCKS );
@@ -259,7 +284,8 @@ static int link_blks_hard ( CBTC_BLOCK_PTR profs[], const int nblks ) {
     }
   }
   linking( blks_fixed_pos, cnt );
-  return cnt;
+  nrares = rares( prares, blks_fixed_pos, cnt );
+  return nrares;
 }
 
 static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
@@ -335,7 +361,7 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char
       assert( n == 0 );
       assert( i == nblks );
       fprintf( fp_out, "}" );
-      link_blks_hard( pprof->consists_blks.pblk_profs, pprof->consists_blks.nblks );
+      pprof->rare_blks.nblks = link_blks_hard( pprof->rare_blks.pblk_profs, pprof->consists_blks.pblk_profs, pprof->consists_blks.nblks );
     }    
   }
   fprintf( fp_out, "}, " );
