@@ -645,6 +645,9 @@ static int read_iltbl_signal ( FILE *fp_out, FILE *fp_src ) {
 	assert( ROUTE_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	strncpy( pprof->route_name, ro_name, ROUTE_NAME_MAXLEN );
 	pprof->ctrls.ntrs = 0;
+	strcpy( pprof->ctrls.ahead.tr_name, "" );
+	pprof->ctrls.ahead.tr_prof = NULL;
+	pprof->ctrls.pahead = NULL;
 	cnt++;
       }
       assert( pprof );
@@ -655,7 +658,9 @@ static int read_iltbl_signal ( FILE *fp_out, FILE *fp_src ) {
 	assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	strncpy( pprof->ctrls.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
 	pprof->ctrls.tr[i].tr_prof = lkup_track_prof( pprof->ctrls.tr[i].tr_name );
+#if 1 // *****
 	assert( pprof->ctrls.tr[i].tr_prof );
+#endif
 	pprof->ctrls.ntrs++;
       }
 #if 0 // *****
@@ -694,14 +699,22 @@ static int read_iltbl_routerel ( FILE *fp_out, FILE *fp_src ) {
     char seq[5 + 1];
     char ro_name[ROUTE_NAME_MAXLEN + 1];
     char app_tr[TRACK_NAME_MAXLEN + 1];
+#if 1 // *****
+    char ahd_tr[TRACK_NAME_MAXLEN + 1];
+#endif
     seq[5] = 0;
     ro_name[ROUTE_NAME_MAXLEN] = 0;
     app_tr[TRACK_NAME_MAXLEN] = 0;
     strcpy( seq, "" );
     strcpy( ro_name, "" );
     strcpy( app_tr, "T" );
+    strcpy( ahd_tr, "T" );
     {
-      char *strs[5];
+#if 0 // *****
+      char *strs[5]; // *****
+#else
+      char *strs[14];
+#endif
       char dc[256 + 1]; // dont cure.
       dc[256] = 0;
       strs[0] = seq;
@@ -709,9 +722,26 @@ static int read_iltbl_routerel ( FILE *fp_out, FILE *fp_src ) {
       strs[2] = ro_name;
       strs[3] = dc;
       strs[4] = &app_tr[1];
-      n = par_csv_iltbl( strs, 5, fp_src );
+#if 1 // *****
+      strs[5] = dc;
+      strs[6] = dc;
+      strs[7] = dc;
+      strs[8] = dc;
+      strs[9] = dc;
+      strs[10] = dc;
+      strs[11] = dc;
+      strs[12] = dc;
+      strs[13] = &ahd_tr[1];
+#endif
       assert( app_tr[0] == 'T' );
+      assert( ahd_tr[0] == 'T' );
+#if 0 // *****
+      n = par_csv_iltbl( strs, 5, fp_src );
+#else
+      n = par_csv_iltbl( strs, 14, fp_src );
+#endif
     }
+#if 0 // *****
     if( n > 1 ) {
       if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
 	cnt++;
@@ -729,6 +759,40 @@ static int read_iltbl_routerel ( FILE *fp_out, FILE *fp_src ) {
 	}
       }
     }
+#else
+    if( n > 1 ) {
+      pprof = NULL;
+      if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
+	cnt++;
+	pprof = lkup_route_prof( ro_name );	  
+      }
+      if( pprof ) {
+	assert( cnt > -1 );
+	assert( cnt == 0 ? (pprof->apps.ntrs == 0) : TRUE );
+	if( (strnlen(app_tr, TRACK_NAME_MAXLEN ) > 1) && strncmp(&app_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
+	  assert( strnlen(app_tr, TRACK_NAME_MAXLEN) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
+	  strncat( app_tr, "_TR", TRACK_NAME_MAXLEN );
+	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
+	  strncpy( pprof->apps.tr[pprof->apps.ntrs].tr_name, app_tr, TRACK_NAME_MAXLEN );
+	  pprof->apps.tr[pprof->apps.ntrs].tr_prof = lkup_track_prof( pprof->apps.tr[pprof->apps.ntrs].tr_name );
+#if 1 // *****
+	  assert( pprof->apps.tr[pprof->apps.ntrs].tr_prof );
+#endif
+	  pprof->apps.ntrs++;
+	}
+	if( (strnlen(ahd_tr, TRACK_NAME_MAXLEN ) > 1) && strncmp(&ahd_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
+	  assert( strnlen(ahd_tr, TRACK_NAME_MAXLEN) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
+	  strncat( ahd_tr, "_TR", TRACK_NAME_MAXLEN );
+	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
+	  strncpy( pprof->ctrls.ahead.tr_name, ahd_tr, TRACK_NAME_MAXLEN );
+	  pprof->ctrls.ahead.tr_prof = lkup_track_prof( pprof->ctrls.ahead.tr_name );
+#if 1 // *****
+	  assert( pprof->ctrls.ahead.tr_prof );
+#endif	  
+	}
+      }
+    }
+#endif
     skip_chr( fp_src );
   }
   return (cnt + 1);
@@ -752,6 +816,31 @@ static int cons_ctrl_tracks ( ROUTE_PROF_PTR pprof ) {
 }
 #endif
 
+static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );
+  assert( ! pro_prof->ctrls.pahead );
+  TRACK_PROF_PTR r = NULL;
+  
+  if( (strnlen(pro_prof->ctrls.ahead.tr_name, CBI_STAT_IDENT_LEN) > 1) && pro_prof->ctrls.ahead.tr_prof ) {
+    int i;
+    assert( pro_prof->ctrls.ntrs >= 0 );
+    for( i = 0; i < pro_prof->ctrls.ntrs; i++ ) {
+      if( !strncmp( pro_prof->ctrls.tr[i].tr_name, pro_prof->ctrls.ahead.tr_name, CBI_STAT_IDENT_LEN ) ) {
+	assert( pro_prof->ctrls.tr[i].tr_prof == pro_prof->ctrls.ahead.tr_prof );
+	pro_prof->ctrls.pahead = &pro_prof->ctrls.tr[i];
+	r = pro_prof->ctrls.ahead.tr_prof;
+	break;
+      }
+    }
+#if 1 // *****
+    assert( pro_prof->ctrls.pahead );
+#endif
+  }
+  return r;
+}
+static void link_orgblk ( void ) {
+  ;
+}
 static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
   assert( fp_out );
   assert( fp_src_sig );
@@ -770,31 +859,44 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
     }
   }
 #endif
+  assert( tracks_routes_prof.routes.route_profs );
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    assert( pprof );
+    TRACK_PROF_PTR pahd_tr = NULL;
+    pahd_tr = pick_ahead_track( pprof );
 #if 1 // *****
-  {
-    assert( tracks_routes_prof.routes.route_profs );
-    ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
-    while( pprof < tracks_routes_prof.routes.pavail ) {
-      assert( pprof );
+    assert( pahd_tr == pprof->ctrls.ahead.tr_prof );
+#endif
+    if( pahd_tr ) {
+      assert( pprof->ctrls.pahead );
+      ;
+    }
+#if 1 // *****
+    {
       assert( strlen( pprof->route_name ) > 1 );
       int i;
-      printf( "(route, [app_tracks], [ctrl_tracks]): (%s, [", pprof->route_name );
+      printf( "(route, [app_tracks], (ahead_track, [ctrl_tracks])): (%s, [", pprof->route_name );
       for( i = 0; i < pprof->apps.ntrs; i++ ) {
 	if( i > 0 )
 	  printf( ", " );
 	printf( "%s", pprof->apps.tr[i].tr_name );
       }
+#if 0 // *****
       printf( "], [" );
+#else
+      printf( "], (%s, [", pprof->ctrls.ahead.tr_name );
+#endif
       for( i = 0; i < pprof->ctrls.ntrs; i++ ) {
 	if( i > 0 )
 	  printf( ", " );
 	printf( "%s", pprof->ctrls.tr[i].tr_name );
       }
       printf( "])\n" );
-      pprof++;
     }
-  }
 #endif
+    pprof++;
+  }
   return 0;
 }
 
