@@ -1,4 +1,4 @@
-o#include <string.h>
+#include <string.h>
 #include "generic.h"
 #include "misc.h"
 
