@@ -273,7 +273,7 @@ static BOOL exam_link_orgahd ( struct fixed_pos *papp_befor, struct fixed_pos *p
   
   return r;
 }
-static CBTC_BLOCK_PTR link_orgahd_blks ( TRACK_PROF_PTR app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
+static TRACK_PROF_PTR link_orgahd_blks ( TRACK_PROF_PTR app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
   assert( app_trs );
   assert( napps <= ROUTE_MAX_APPTRACKS );
   assert( pahd_tr );
@@ -292,8 +292,19 @@ static CBTC_BLOCK_PTR link_orgahd_blks ( TRACK_PROF_PTR app_trs[], const int nap
 	if( exam_link_orgahd( &app_trs[i]->fixes_stat.pblk_fixes[j], &fixes[0],
 			      &pahd_tr->fixes_stat.pblk_fixes[k], &fixes[1] ) ) {
 	  app_trs[i]->fixes_stat.pblk_fixes[j] = fixes[0];
-	  pahd_tr->fixes_stat.pblk_fixes[k] = fixes[1];
-	  return fixes[0].pprof;
+	  pahd_tr->fixes_stat.pblk_fixes[k] = fixes[1];	  
+	  {
+	    BOOL found = FALSE;
+	    int l;
+	    for( l = 0; l < app_trs[i]->consists_blks.nblks; l++ ) {
+	      if( app_trs[i]->consists_blks.pblk_profs[l] == fixes[0].pprof ) {
+		found = TRUE;
+		break;
+	      }
+	    }
+	    assert( found );
+	  }
+	  return app_trs[i];
 	}
       }
     }
