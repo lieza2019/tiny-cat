@@ -88,8 +88,9 @@ typedef struct route_prof {
   struct {
     int ntrs;
     struct route_tr tr[ROUTE_MAX_APPTRACKS];
+    struct route_tr *porigin;
   } apps;
-  struct route_tr origin;
+  //struct route_tr origin;
   struct {
     int ntrs;
     struct route_tr tr[ROUTE_MAX_CTRLTRACKS];
@@ -192,9 +193,10 @@ static BOOL track_prof_sr ( FILE *fp_out, struct track_sr *psr, char *ptr_name, 
   return r;
 }
 
-static void linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind ) {
+static int linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind ) {
   assert( blks );
   assert( nblks <= MAX_TRACK_BLOCKS );
+  int cnt = 0;
   if( nblks > 1 ) {
     struct fixed_pos *pblk = &blks[0];
     int i;
@@ -205,8 +207,8 @@ static void linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind
 	continue;
       assert( pblk->pos[i]->pmorph );
       assert( pblk->pos[i]->pmorph->pblock );
-      for( j = 1; j < nblks; j++ ) {			
-	struct fixed_pos *pb = &blks[j];	
+      for( j = 1; j < nblks; j++ ) {
+	struct fixed_pos *pb = &blks[j];
 	BOOL found = FALSE;	
 	int k;
 	assert( pb );
@@ -232,6 +234,7 @@ static void linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind
 	    } while( pl != pb->pos[k] );
 	    pblk->pos[i] = NULL;
 	    pb->pos[k] = NULL;
+	    cnt++;
 	    found = TRUE;
 	    break;
 	  }
@@ -240,8 +243,9 @@ static void linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind
 	  break;
       }
     }
-    linking( &blks[1], (nblks - 1), bind );
+    cnt += linking( &blks[1], (nblks - 1), bind );
   }
+  return cnt;
 }
 static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[], const int nblks ) {
   assert( profs );
@@ -264,16 +268,7 @@ static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[]
   return cnt;
 }
 
-static BOOL exam_link_orgahd ( struct fixed_pos *papp_befor, struct fixed_pos *papp_after, struct fixed_pos *pahd_befor, struct fixed_pos *pahd_after ) {
-  assert( papp_befor );
-  assert( papp_after );
-  assert( pahd_befor );
-  assert( pahd_after );
-  BOOL r = FALSE;
-  
-  return r;
-}
-static TRACK_PROF_PTR link_orgahd_blks ( TRACK_PROF_PTR app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
+static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
   assert( app_trs );
   assert( napps <= ROUTE_MAX_APPTRACKS );
   assert( pahd_tr );
@@ -281,30 +276,33 @@ static TRACK_PROF_PTR link_orgahd_blks ( TRACK_PROF_PTR app_trs[], const int nap
   
   int i;
   for( i = 0; i < napps; i++ ) {
-    assert( app_trs[i] );
+    assert( strnlen( app_trs[i].tr_name, CBI_STAT_IDENT_LEN ) > 0 );
+    assert( app_trs[i].tr_prof );
     int j;
-    for( j = 0; j < app_trs[i]->fixes_stat.nblks; j++ ) {
+    for( j = 0; j < app_trs[i].tr_prof->fixes_stat.nblks; j++ ) {
       int k;
-      fixes[0] = app_trs[i]->fixes_stat.pblk_fixes[j];
+      fixes[0] = app_trs[i].tr_prof->fixes_stat.pblk_fixes[j];
       for( k = 0; k < pahd_tr->fixes_stat.nblks; k++ ) {
+	int n = -1;
 	fixes[1] = pahd_tr->fixes_stat.pblk_fixes[k];
-	linking( fixes, 2, LINK_ORGAHD );
-	if( exam_link_orgahd( &app_trs[i]->fixes_stat.pblk_fixes[j], &fixes[0],
-			      &pahd_tr->fixes_stat.pblk_fixes[k], &fixes[1] ) ) {
-	  app_trs[i]->fixes_stat.pblk_fixes[j] = fixes[0];
-	  pahd_tr->fixes_stat.pblk_fixes[k] = fixes[1];	  
-	  {
+	n = linking( fixes, 2, LINK_ORGAHD );
+	if( n > 0 ) {
+	  if( n == 1 ) {
 	    BOOL found = FALSE;
-	    int l;
-	    for( l = 0; l < app_trs[i]->consists_blks.nblks; l++ ) {
-	      if( app_trs[i]->consists_blks.pblk_profs[l] == fixes[0].pprof ) {
+	    int l;	      
+	    for( l = 0; l < app_trs[i].tr_prof->consists_blks.nblks; l++ ) {
+	      if( app_trs[i].tr_prof->consists_blks.pblk_profs[l] == fixes[0].pprof ) {
 		found = TRUE;
 		break;
 	      }
 	    }
 	    assert( found );
 	  }
-	  return app_trs[i];
+#if 0 // *****
+	  else
+	    assert( FALSE );
+#endif
+	  return &app_trs[i];
 	}
       }
     }
@@ -790,14 +788,13 @@ static int read_iltbl_routerel ( FILE *fp_out, FILE *fp_src ) {
     }
 #else
     if( n > 1 ) {
-      pprof = NULL;
       if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
 	cnt++;
-	pprof = lkup_route_prof( ro_name );	  
+	pprof = lkup_route_prof( ro_name );
+	assert( pprof->apps.ntrs == 0 );
       }
       if( pprof ) {
 	assert( cnt > -1 );
-	assert( cnt == 0 ? (pprof->apps.ntrs == 0) : TRUE );
 	if( (strnlen(app_tr, TRACK_NAME_MAXLEN ) > 1) && strncmp(&app_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
 	  assert( strnlen(app_tr, TRACK_NAME_MAXLEN) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
 	  strncat( app_tr, "_TR", TRACK_NAME_MAXLEN );
@@ -891,18 +888,20 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
     assert( pprof );
     TRACK_PROF_PTR pahd_tr = NULL;
     pahd_tr = pick_ahead_track( pprof );
-#if 1 // *****
-    assert( pahd_tr == pprof->ctrls.ahead.tr_prof );
-#endif
+#if 0 // *****
     if( pahd_tr ) {
       assert( pprof->ctrls.pahead );
-      ;
     }
+#endif
+    pprof->apps.porigin = link_orgahd_blks( pprof->apps.tr, pprof->apps.ntrs, pahd_tr );
+#if 0 // *****
+    assert( pprof->apps.porigin );
+#endif
 #if 1 // *****
     {
       assert( strlen( pprof->route_name ) > 1 );
       int i;
-      printf( "(route, [app_tracks], (ahead_track, [ctrl_tracks])): (%s, [", pprof->route_name );
+      printf( "(route, [app_tracks], (origin_track, (ahead_track, [ctrl_tracks]))): (%s, [", pprof->route_name );
       for( i = 0; i < pprof->apps.ntrs; i++ ) {
 	if( i > 0 )
 	  printf( ", " );
@@ -911,14 +910,15 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
 #if 0 // *****
       printf( "], [" );
 #else
-      printf( "], (%s, [", pprof->ctrls.ahead.tr_name );
+      printf( "], (%s, ", pprof->apps.porigin ? pprof->apps.porigin->tr_name : "none_origin" );
+      printf( "(%s, [", pprof->ctrls.ahead.tr_name );
 #endif
       for( i = 0; i < pprof->ctrls.ntrs; i++ ) {
 	if( i > 0 )
 	  printf( ", " );
 	printf( "%s", pprof->ctrls.tr[i].tr_name );
       }
-      printf( "])\n" );
+      printf( "])))\n" );
     }
 #endif
     pprof++;
