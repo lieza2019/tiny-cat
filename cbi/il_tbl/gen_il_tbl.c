@@ -297,9 +297,8 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
 	      }
 	    }
 	    assert( found );
-	  }
-#if 0 // *****
-	  else
+	  } else
+#if 1 // *****	  
 	    assert( FALSE );
 #endif
 	  return &app_trs[i];
@@ -894,9 +893,6 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
     }
 #endif
     pprof->apps.porigin = link_orgahd_blks( pprof->apps.tr, pprof->apps.ntrs, pahd_tr );
-#if 0 // *****
-    assert( pprof->apps.porigin );
-#endif
 #if 1 // *****
     {
       assert( strlen( pprof->route_name ) > 1 );
