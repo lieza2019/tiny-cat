@@ -317,9 +317,9 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
   struct route_tr *porg_tr = NULL;
   
   porg_tr = trylnk_orgahd( app_trs, napps, pahd_tr->hardbonds.pblk_fixes, pahd_tr->hardbonds.nblks );
-  if( porg_tr ) {
-    struct fixed_pos *pahd_added = &pahd_tr->hardbonds.pblk_fixes[pahd_tr->hardbonds.nblks];
-    assert( pahd_added < &pahd_tr->hardbonds.pblk_fixes[MAX_TRACK_BLOCKS] );
+  if( !porg_tr ) {
+    assert( pahd_tr->hardbonds.nblks < MAX_TRACK_BLOCKS );
+    struct fixed_pos *pahd_added = &pahd_tr->hardbonds.pblk_fixes[pahd_tr->hardbonds.nblks];    
     int i;
     for( i = 0; i < pahd_tr->consists_blks.nblks; i++ ) {
       CBTC_BLOCK_PTR pblk = pahd_tr->consists_blks.pblk_profs[i];
@@ -345,26 +345,25 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
 	    BOOL found = FALSE;
 	    int l;
 	    for( l = 0; l < pahd_tr->hardbonds.nblks; l++ ) {
-	      assert( pblk );
 	      struct fixed_pos *p = &pahd_tr->hardbonds.pblk_fixes[l];
 	      assert( p->pprof );
-	      if( p->pprof == pblk ) {
+	      if( p->pprof == pahd_added->pprof ) {
 		assert( p->npos < MAX_ADJACENT_BLKS );
 		p->pos[p->npos] = pahd_added->pos[0];
 		p->npos++;
 		found = TRUE;
 		break;
 	      }
-	      if( !found ) {
-		assert( pahd_tr->hardbonds.nblks < MAX_TRACK_BLOCKS );
-		pahd_tr->hardbonds.nblks++;
-	      }
 	    }
+	    if( !found ) 
+	      pahd_tr->hardbonds.nblks++;
+	    return porg_tr;
 	  }
 	}
       }
     }
-  }
+    assert( !porg_tr );
+  }  
   return porg_tr;
 }
 
