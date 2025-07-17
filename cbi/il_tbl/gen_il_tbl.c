@@ -268,48 +268,6 @@ static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[]
   return cnt;
 }
 
-#if 0
-static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
-  assert( app_trs );
-  assert( napps <= ROUTE_MAX_APPTRACKS );
-  assert( pahd_tr );
-  struct fixed_pos fixes[2] = {};
-  
-  int i;
-  for( i = 0; i < napps; i++ ) {
-    assert( strnlen( app_trs[i].tr_name, CBI_STAT_IDENT_LEN ) > 0 );
-    assert( app_trs[i].tr_prof );
-    int j;
-    for( j = 0; j < app_trs[i].tr_prof->hardbonds.nblks; j++ ) {
-      int k;
-      fixes[0] = app_trs[i].tr_prof->hardbonds.pblk_fixes[j];
-      for( k = 0; k < pahd_tr->hardbonds.nblks; k++ ) {
-	int n = -1;
-	fixes[1] = pahd_tr->hardbonds.pblk_fixes[k];
-	n = linking( fixes, 2, LINK_SEMIHARD );
-	if( n > 0 ) {
-	  if( n == 1 ) {
-	    BOOL found = FALSE;
-	    int l;	      
-	    for( l = 0; l < app_trs[i].tr_prof->consists_blks.nblks; l++ ) {
-	      if( app_trs[i].tr_prof->consists_blks.pblk_profs[l] == fixes[0].pprof ) {
-		found = TRUE;
-		break;
-	      }
-	    }
-	    assert( found );
-	  } else
-#if 1 // *****	  
-	    assert( FALSE );
-#endif
-	  return &app_trs[i];
-	}
-      }
-    }
-  }
-  return NULL;
-}
-#else
 static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int napp_trs, struct fixed_pos pahd_blks[], const int nahd_blks ) {
   assert( app_trs );
   assert( napp_trs <= ROUTE_MAX_APPTRACKS );
@@ -351,14 +309,7 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
   }
   return NULL;
 }
-#endif
-/*
-  struct fixed_pos {
-    CBTC_BLOCK_PTR pprof;
-    int npos;
-    BLK_LINKAGE_PTR pos[MAX_ADJACENT_BLKS];
-  };
-*/
+
 static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
   assert( app_trs );
   assert( napps <= ROUTE_MAX_APPTRACKS );
@@ -366,11 +317,12 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
   struct route_tr *porg_tr = NULL;
   
   porg_tr = trylnk_orgahd( app_trs, napps, pahd_tr->hardbonds.pblk_fixes, pahd_tr->hardbonds.nblks );
-#if 0
   if( porg_tr ) {
+    struct fixed_pos *pahd_added = &pahd_tr->hardbonds.pblk_fixes[pahd_tr->hardbonds.nblks];
+    assert( pahd_added < &pahd_tr->hardbonds.pblk_fixes[MAX_TRACK_BLOCKS] );
     int i;
-    for( i = 0; i < pahd_tr->oconsists_blks.nblks; i++ ) {
-      CBTC_BLOCK_PTR pblk = pahd_tr->oconsists_blks.pblk_profs[i];
+    for( i = 0; i < pahd_tr->consists_blks.nblks; i++ ) {
+      CBTC_BLOCK_PTR pblk = pahd_tr->consists_blks.pblk_profs[i];
       assert( pblk );
       int j;
       for( j = 0; j < pblk->shape.num_morphs; j++ ) {
@@ -384,13 +336,35 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
 	    assert( plnk->bond.kind != LINK_NONE );
 	    continue;
 	  }
-	  ;
+	  assert( plnk->bond.kind == LINK_NONE );
+	  pahd_added->pprof = pblk;
+	  pahd_added->pos[0] = plnk;
+	  pahd_added->npos = 1;
+	  porg_tr = trylnk_orgahd( app_trs, napps, pahd_added, 1 );
+	  if( porg_tr ) {
+	    BOOL found = FALSE;
+	    int l;
+	    for( l = 0; l < pahd_tr->hardbonds.nblks; l++ ) {
+	      assert( pblk );
+	      struct fixed_pos *p = &pahd_tr->hardbonds.pblk_fixes[l];
+	      assert( p->pprof );
+	      if( p->pprof == pblk ) {
+		assert( p->npos < MAX_ADJACENT_BLKS );
+		p->pos[p->npos] = pahd_added->pos[0];
+		p->npos++;
+		found = TRUE;
+		break;
+	      }
+	      if( !found ) {
+		assert( pahd_tr->hardbonds.nblks < MAX_TRACK_BLOCKS );
+		pahd_tr->hardbonds.nblks++;
+	      }
+	    }
+	  }
 	}
-      }	     
-      ;
+      }
     }
   }
-#endif
   return porg_tr;
 }
 
