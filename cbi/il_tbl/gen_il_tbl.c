@@ -268,6 +268,7 @@ static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[]
   return cnt;
 }
 
+#if 0
 static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
   assert( app_trs );
   assert( napps <= ROUTE_MAX_APPTRACKS );
@@ -308,7 +309,49 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
   }
   return NULL;
 }
-
+#else
+static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int napp_trs, struct fixed_pos pahd_blks[], const int nahd_blks ) {
+  assert( app_trs );
+  assert( napp_trs <= ROUTE_MAX_APPTRACKS );
+  assert( pahd_blks );
+  assert( nahd_blks <= MAX_TRACK_BLOCKS );
+  struct fixed_pos fixes[2] = {};
+  
+  int i;
+  for( i = 0; i < napp_trs; i++ ) {
+    assert( strnlen( app_trs[i].tr_name, CBI_STAT_IDENT_LEN ) > 0 );
+    assert( app_trs[i].tr_prof );
+    int j;
+    for( j = 0; j < app_trs[i].tr_prof->hardbonds.nblks; j++ ) {
+      int k;
+      fixes[0] = app_trs[i].tr_prof->hardbonds.pblk_fixes[j];
+      for( k = 0; k < nahd_blks; k++ ) {
+	int n = -1;
+	fixes[1] = pahd_blks[k];
+	n = linking( fixes, 2, LINK_SEMIHARD );
+	if( n > 0 ) {
+	  if( n == 1 ) {
+	    BOOL found = FALSE;
+	    int l;	      
+	    for( l = 0; l < app_trs[i].tr_prof->consists_blks.nblks; l++ ) {
+	      if( app_trs[i].tr_prof->consists_blks.pblk_profs[l] == fixes[0].pprof ) {
+		found = TRUE;
+		break;
+	      }
+	    }
+	    assert( found );
+	  } else
+#if 1 // *****	  
+	    assert( FALSE );
+#endif
+	  return &app_trs[i];
+	}
+      }
+    }
+  }
+  return NULL;
+}
+#endif
 /*
   struct fixed_pos {
     CBTC_BLOCK_PTR pprof;
@@ -321,9 +364,8 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
   assert( napps <= ROUTE_MAX_APPTRACKS );
   assert( pahd_tr );
   struct route_tr *porg_tr = NULL;
-  //struct fixed_pos fixes[2] = {};
   
-  porg_tr = trylnk_orgahd( app_trs, napps, pahd_tr );
+  porg_tr = trylnk_orgahd( app_trs, napps, pahd_tr->hardbonds.pblk_fixes, pahd_tr->hardbonds.nblks );
 #if 0
   if( porg_tr ) {
     int i;
