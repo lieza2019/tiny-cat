@@ -68,7 +68,7 @@ typedef struct track_prof {
   struct {
     int nblks;
     struct fixed_pos pblk_fixes[MAX_TRACK_BLOCKS];
-  } fixes_stat;
+  } hardbonds;
   struct {
     struct track_sr TLSR, TRSR;
     struct track_sr sTLSR, sTRSR;
@@ -279,13 +279,13 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
     assert( strnlen( app_trs[i].tr_name, CBI_STAT_IDENT_LEN ) > 0 );
     assert( app_trs[i].tr_prof );
     int j;
-    for( j = 0; j < app_trs[i].tr_prof->fixes_stat.nblks; j++ ) {
+    for( j = 0; j < app_trs[i].tr_prof->hardbonds.nblks; j++ ) {
       int k;
-      fixes[0] = app_trs[i].tr_prof->fixes_stat.pblk_fixes[j];
-      for( k = 0; k < pahd_tr->fixes_stat.nblks; k++ ) {
+      fixes[0] = app_trs[i].tr_prof->hardbonds.pblk_fixes[j];
+      for( k = 0; k < pahd_tr->hardbonds.nblks; k++ ) {
 	int n = -1;
-	fixes[1] = pahd_tr->fixes_stat.pblk_fixes[k];
-	n = linking( fixes, 2, LINK_ORGAHD );
+	fixes[1] = pahd_tr->hardbonds.pblk_fixes[k];
+	n = linking( fixes, 2, LINK_SEMIHARD );
 	if( n > 0 ) {
 	  if( n == 1 ) {
 	    BOOL found = FALSE;
@@ -309,13 +309,46 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
   return NULL;
 }
 
+/*
+  struct fixed_pos {
+    CBTC_BLOCK_PTR pprof;
+    int npos;
+    BLK_LINKAGE_PTR pos[MAX_ADJACENT_BLKS];
+  };
+*/
 static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
   assert( app_trs );
   assert( napps <= ROUTE_MAX_APPTRACKS );
   assert( pahd_tr );
   struct route_tr *porg_tr = NULL;
+  //struct fixed_pos fixes[2] = {};
   
   porg_tr = trylnk_orgahd( app_trs, napps, pahd_tr );
+#if 0
+  if( porg_tr ) {
+    int i;
+    for( i = 0; i < pahd_tr->oconsists_blks.nblks; i++ ) {
+      CBTC_BLOCK_PTR pblk = pahd_tr->oconsists_blks.pblk_profs[i];
+      assert( pblk );
+      int j;
+      for( j = 0; j < pblk->shape.num_morphs; j++ ) {
+	BLK_MORPH_PTR pmor = &pblk->shape.morphs[j];
+	assert( pmor );
+	int k;
+	for( k = 0; k < pmor->num_links; k++ ) {
+	  BLK_LINKAGE_PTR plnk = &pmor->linkages[k];
+	  assert( plnk );
+	  if( plnk->bond.pln_neigh ) {
+	    assert( plnk->bond.kind != LINK_NONE );
+	    continue;
+	  }
+	  ;
+	}
+      }	     
+      ;
+    }
+  }
+#endif
   return porg_tr;
 }
 
@@ -393,7 +426,7 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char
       assert( i == nblks );
       fprintf( fp_out, "}" );
       
-      pprof->fixes_stat.nblks = link_internal_blks( pprof->consists_blks.pblk_profs, pprof->fixes_stat.pblk_fixes, pprof->consists_blks.nblks );
+      pprof->hardbonds.nblks = link_internal_blks( pprof->consists_blks.pblk_profs, pprof->hardbonds.pblk_fixes, pprof->consists_blks.nblks );
     }    
   }
   fprintf( fp_out, "}, " );
