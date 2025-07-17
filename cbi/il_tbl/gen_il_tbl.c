@@ -268,7 +268,7 @@ static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[]
   return cnt;
 }
 
-static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
+static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
   assert( app_trs );
   assert( napps <= ROUTE_MAX_APPTRACKS );
   assert( pahd_tr );
@@ -307,6 +307,16 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
     }
   }
   return NULL;
+}
+
+static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
+  assert( app_trs );
+  assert( napps <= ROUTE_MAX_APPTRACKS );
+  assert( pahd_tr );
+  struct route_tr *porg_tr = NULL;
+  
+  porg_tr = trylnk_orgahd( app_trs, napps, pahd_tr );
+  return porg_tr;
 }
 
 static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
