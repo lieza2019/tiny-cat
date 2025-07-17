@@ -85,6 +85,7 @@ typedef enum cbtc_block_id {
   VB355U,
   VB357U,
   VB359U,
+  VB360UA,
   VB360UB,
   VB341U,
   VB342DB,

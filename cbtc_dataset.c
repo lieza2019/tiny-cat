@@ -186,7 +186,8 @@ CBTC_BLOCK block_state[] = {
   {1016, VB361U, "VB361U", SC801, {1, { {2, {{1015, 0}, {1017, 1}}, -1} }}, {T812A_TR}, {TRUE, SP_80, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL2 // CHECKED.
   //{1015, VB360UB, "VB360UB", -1, {T810A_TR}, {FALSE}},
   {1015, VB360UB, "VB360UB", SC801, {2, { {2, {{1016, 0},{1014, 1}}, -1, {P802A_NKR}}, {2, {{1016, 0},{1415, 2}}, -1, {P802A_RKR}} }}, {T810A_TR}, {FALSE}},
-  
+  {1014, VB360UA, "VB360UA", SC801, {1, { {2, {{1013, 0}, {1015, 1}}, -1} }}, {T808A_TR}, {FALSE}}, // dedicated to the route of S805A_S807A
+
   // S803A_S809A, S803A_S811A
   /* all below are registered in the case of S802B_S810B / S802B_S804B. 
      (1405, VB342DB) in T807A_TR
