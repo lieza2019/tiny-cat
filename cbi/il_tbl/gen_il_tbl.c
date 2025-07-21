@@ -1,7 +1,10 @@
 /*
- * establish database for track profile.
- * construct parsing-platfrom for route_rel table.
  * construct database for route profile.
+ *
+ * 1) splitting route name into src & dst ones, and regist them together.
+ * 2) identify the origin track of the route, which has the SIGNAL as its ORIGIN SIGNAL.
+ * 3) For all routes met with above condition, we should examine all ones have same track as its ORIGIN.
+ * 4) then We can judge the track as the DESTINATION track of the route we are now looking for its dest.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,6 +88,10 @@ struct route_tr {
 };
 typedef struct route_prof {
   char route_name[CBI_STAT_IDENT_LEN + 1];
+  struct {
+    char signane_org[CBI_STAT_IDENT_LEN + 1];
+    char signame_dst[CBI_STAT_IDENT_LEN + 1];
+  } orgdst;
   struct {
     int ntrs;
     struct route_tr tr[ROUTE_MAX_APPTRACKS];
@@ -683,12 +690,26 @@ static void emit_route_dataset_epilog ( FILE *fp_out ) {
   fprintf( fp_out, "#endif // ROUTE_ATTRIB_DEFINITION\n" );
 }
 
+static int split_orgdst_sigs( const char *route_name, const int name_len ) {
+  assert( route_name );
+  assert( name_len >= 0 );
+  int cnt = 0;
+  while( cnt < name_len ) {
+    assert( cnt < name_len );
+    char c = route_name[cnt];
+    if( (c == 0) || (c == '_') )
+      break;
+    cnt++;
+  }
+  return cnt;
+}
+
 static int read_iltbl_signal ( FILE *fp_out, FILE *fp_src ) {
   assert( fp_out );
   assert( fp_src );
   ROUTE_PROF_PTR pprof = NULL;
   int cnt = 0;
-
+  
   assert( !ferror( fp_out ) );
   assert( !ferror( fp_src ) );
   while( !feof( fp_src ) ) {
@@ -728,6 +749,10 @@ static int read_iltbl_signal ( FILE *fp_out, FILE *fp_src ) {
 	pprof = tracks_routes_prof.routes.pavail;
 	assert( ROUTE_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	strncpy( pprof->route_name, ro_name, ROUTE_NAME_MAXLEN );
+	{
+	  int sep = split_orgdst_sigs( pprof->route_name, strnlen(pprof->route_name, ROUTE_NAME_MAXLEN) );
+	  
+	}
 	pprof->ctrls.ntrs = 0;
 	strcpy( pprof->ctrls.ahead.tr_name, "" );
 	pprof->ctrls.ahead.tr_prof = NULL;
@@ -933,7 +958,7 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
     ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
     assert( pprof );
     while( pprof < tracks_routes_prof.routes.pavail ) {
-      assert( pprof );
+      assert( pprof );     
       cons_ctrl_tracks( pprof );
       pprof++;
     }
