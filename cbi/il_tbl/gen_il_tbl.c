@@ -701,6 +701,7 @@ static int split_orgdst_sigs( const char *route_name, const int name_len ) {
       break;
     cnt++;
   }
+  assert( (cnt >= name_len) ? route_name[cnt] == 0 : TRUE );
   return cnt;
 }
 
@@ -750,8 +751,13 @@ static int read_iltbl_signal ( FILE *fp_out, FILE *fp_src ) {
 	assert( ROUTE_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	strncpy( pprof->route_name, ro_name, ROUTE_NAME_MAXLEN );
 	{
-	  int sep = split_orgdst_sigs( pprof->route_name, strnlen(pprof->route_name, ROUTE_NAME_MAXLEN) );
-	  
+	  const int whole_len = strnlen( pprof->route_name, ROUTE_NAME_MAXLEN );
+	  assert( pprof->route_name[whole_len] == 0 );
+	  int sep = split_orgdst_sigs( pprof->route_name, whole_len );
+	  assert( sep <= whole_len );
+	  strncpy( pprof->orgdst.signane_org, pprof->route_name, sep );
+	  if( pprof->route_name[sep] == '_' )
+	    strncpy( pprof->orgdst.signame_dst, &pprof->route_name[sep+1], ROUTE_NAME_MAXLEN );
 	}
 	pprof->ctrls.ntrs = 0;
 	strcpy( pprof->ctrls.ahead.tr_name, "" );
@@ -980,7 +986,8 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
     {
       assert( strlen( pprof->route_name ) > 1 );
       int i;
-      printf( "(route, [app_tracks], (origin_track, (ahead_track, [ctrl_tracks]))): (%s, [", pprof->route_name );
+      printf( "((route, (org_sig, dst_sig)), [app_tracks], (origin_track, (ahead_track, [ctrl_tracks]))): (%s (%s, %s)), [",
+	      pprof->route_name, pprof->orgdst.signane_org, pprof->orgdst.signame_dst );
       for( i = 0; i < pprof->apps.ntrs; i++ ) {
 	if( i > 0 )
 	  printf( ", " );
