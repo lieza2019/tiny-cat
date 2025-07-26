@@ -117,6 +117,28 @@ static struct {
   } routes;
 } tracks_routes_prof = {};
 
+static void prn_route_prov_lv0 ( ROUTE_PROF_PTR pr_prof ) {
+  assert( pr_prof );
+  assert( strlen( pr_prof->route_name ) > 1 );
+  int i;
+  
+  printf( "((route, (org_sig, dst_sig)), [app_tracks], (origin_track, (ahead_track, [ctrl_tracks]))): (%s (%s, %s)), [",
+	  pr_prof->route_name, pr_prof->orgdst.signane_org, pr_prof->orgdst.signame_dst );
+  for( i = 0; i < pr_prof->apps.ntrs; i++ ) {
+    if( i > 0 )
+      printf( ", " );
+    printf( "%s", pr_prof->apps.tr[i].tr_name );
+  }
+  printf( "], (%s, ", pr_prof->orgdst.porg_tr ? pr_prof->orgdst.porg_tr->tr_name : "none_origin" );
+  printf( "(%s, [", pr_prof->ctrls.ahead.tr_name );
+  for( i = 0; i < pr_prof->ctrls.ntrs; i++ ) {
+    if( i > 0 )
+      printf( ", " );
+    printf( "%s", pr_prof->ctrls.tr[i].tr_name );
+  }
+  printf( "])))\n" );
+}
+
 static TRACK_PROF_PTR lkup_track_prof ( const char *ptr_name ) {
   assert( ptr_name );
   TRACK_PROF_PTR r = NULL;
@@ -912,32 +934,6 @@ static int read_iltbl_routerel ( FILE *fp_out, FILE *fp_src ) {
   return (cnt + 1);
 }
 
-#if 0
-static int cons_ctrl_tracks ( ROUTE_PROF_PTR pprof ) {
-  assert( pprof );
-  int i;
-  for( i = 0; i < pprof->ctrls.ntrs; i++ ) {
-    TRACK_PROF_PTR ptr = pprof->tr[i].tr_prof;
-    assert( ptr );
-    int j;
-    for( j = 0; j < ptr->consists_blks.nblks; j++ ) {
-      CBTC_BLOCK_PTR pblk = ptr->consists_blks.pblk_profs[j];
-      assert( pblk );
-      ;
-    }
-  }
-  return 0;
-}
-#endif
-
-static struct route_tr *find_dst_track ( const char *sig_dst ) {
-  assert( sig_dst );
-  struct route_tr *pdst_tr = NULL;
-  
-  
-  return pdst_tr;
-}
-
 static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   assert( ! pro_prof->ctrls.pahead );
@@ -960,13 +956,60 @@ static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
   }
   return r;
 }
+static int profile_routes ( ROUTE_PROF_PTR pprof ) {
+  assert( pprof );
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    assert( pprof );
+    TRACK_PROF_PTR pahd_tr = NULL;
+    pahd_tr = pick_ahead_track( pprof );
+    if( pahd_tr ) {
+#if 1 // *****
+      assert( pprof->ctrls.pahead );
+#endif
+    }
+    pprof->orgdst.porg_tr = link_orgahd_blks( pprof->apps.tr, pprof->apps.ntrs, pahd_tr );
+#if 1 // *****
+    prn_route_prov_lv0( pprof );
+#endif
+    pprof++;
+  }
+  return 0;
+}
+
+#if 0
+static int cons_ctrl_tracks ( ROUTE_PROF_PTR pprof ) {
+  assert( pprof );
+  int i;
+  for( i = 0; i < pprof->ctrls.ntrs; i++ ) {
+    TRACK_PROF_PTR ptr = pprof->tr[i].tr_prof;
+    assert( ptr );
+    int j;
+    for( j = 0; j < ptr->consists_blks.nblks; j++ ) {
+      CBTC_BLOCK_PTR pblk = ptr->consists_blks.pblk_profs[j];
+      assert( pblk );
+      ;
+    }
+  }
+  return 0;
+}
+#endif
+
+static struct route_tr *find_dst_track ( const char *sig_dst ) {
+  assert( sig_dst );
+  struct route_tr *pdst_tr = NULL;
+  return pdst_tr;
+}
 static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
   assert( fp_out );
   assert( fp_src_sig );
   assert( fp_src_rel );
-  
+
   read_iltbl_signal( fp_out, fp_src_sig );
   read_iltbl_routerel( fp_out, fp_src_rel );
+  assert( tracks_routes_prof.routes.route_profs );
+  
+  profile_routes( tracks_routes_prof.routes.route_profs );
+  //pprof->orgdst.pdst_tr = find_dst_track( pprof->orgdst.signame_dst );    
 #if 0 // *****
   {
     ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
@@ -978,46 +1021,7 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
     }
   }
 #endif
-  assert( tracks_routes_prof.routes.route_profs );
-  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
-  while( pprof < tracks_routes_prof.routes.pavail ) {
-    assert( pprof );
-    TRACK_PROF_PTR pahd_tr = NULL;
-    pahd_tr = pick_ahead_track( pprof );
-    if( pahd_tr ) {
-#if 1 // *****
-      assert( pprof->ctrls.pahead );
-#endif
-    }
-    pprof->orgdst.porg_tr = link_orgahd_blks( pprof->apps.tr, pprof->apps.ntrs, pahd_tr );
-    pprof->orgdst.pdst_tr = find_dst_track( pprof->orgdst.signame_dst );
-#if 1 // *****
-    {
-      assert( strlen( pprof->route_name ) > 1 );
-      int i;
-      printf( "((route, (org_sig, dst_sig)), [app_tracks], (origin_track, (ahead_track, [ctrl_tracks]))): (%s (%s, %s)), [",
-	      pprof->route_name, pprof->orgdst.signane_org, pprof->orgdst.signame_dst );
-      for( i = 0; i < pprof->apps.ntrs; i++ ) {
-	if( i > 0 )
-	  printf( ", " );
-	printf( "%s", pprof->apps.tr[i].tr_name );
-      }
-#if 0 // *****
-      printf( "], [" );
-#else
-      printf( "], (%s, ", pprof->orgdst.porg_tr ? pprof->orgdst.porg_tr->tr_name : "none_origin" );
-      printf( "(%s, [", pprof->ctrls.ahead.tr_name );
-#endif
-      for( i = 0; i < pprof->ctrls.ntrs; i++ ) {
-	if( i > 0 )
-	  printf( ", " );
-	printf( "%s", pprof->ctrls.tr[i].tr_name );
-      }
-      printf( "])))\n" );
-    }
-#endif
-    pprof++;
-  }
+  
   return 0;
 }
 
