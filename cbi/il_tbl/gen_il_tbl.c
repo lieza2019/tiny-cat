@@ -2,7 +2,7 @@
  * construct database for route profile.
  *
  * -1) splitting route name into src & dst ones, and regist them together.
- * 2) identify the origin track of the route, which has the SIGNAL as its ORIGIN SIGNAL.
+ * 2) identify the origin track of the route, which has its destination signal as its ORIGIN one.
  * 3) For all routes met with above condition, we should examine all ones have same track as its ORIGIN.
  * 4) then We can judge the track as the DESTINATION track of the route we are now looking for its dest.
  */
@@ -89,7 +89,7 @@ struct route_tr {
 typedef struct route_prof {
   char route_name[CBI_STAT_IDENT_LEN + 1];
   struct {
-    char signane_org[CBI_STAT_IDENT_LEN + 1];
+    char signame_org[CBI_STAT_IDENT_LEN + 1];
     char signame_dst[CBI_STAT_IDENT_LEN + 1];
     struct route_tr *porg_tr;
     struct route_tr *pdst_tr;
@@ -117,13 +117,13 @@ static struct {
   } routes;
 } tracks_routes_prof = {};
 
-static void prn_route_prov_lv0 ( ROUTE_PROF_PTR pr_prof ) {
+static void print_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
   assert( pr_prof );
   assert( strlen( pr_prof->route_name ) > 1 );
   int i;
   
   printf( "((route, (org_sig, dst_sig)), [app_tracks], (origin_track, (ahead_track, [ctrl_tracks]))): (%s (%s, %s)), [",
-	  pr_prof->route_name, pr_prof->orgdst.signane_org, pr_prof->orgdst.signame_dst );
+	  pr_prof->route_name, pr_prof->orgdst.signame_org, pr_prof->orgdst.signame_dst );
   for( i = 0; i < pr_prof->apps.ntrs; i++ ) {
     if( i > 0 )
       printf( ", " );
@@ -777,7 +777,7 @@ static int read_iltbl_signal ( FILE *fp_out, FILE *fp_src ) {
 	  assert( pprof->route_name[whole_len] == 0 );
 	  int sep = split_orgdst_sigs( pprof->route_name, whole_len );
 	  assert( sep <= whole_len );
-	  strncpy( pprof->orgdst.signane_org, pprof->route_name, sep );
+	  strncpy( pprof->orgdst.signame_org, pprof->route_name, sep );
 	  if( pprof->route_name[sep] == '_' )
 	    strncpy( pprof->orgdst.signame_dst, &pprof->route_name[sep+1], ROUTE_NAME_MAXLEN );
 	}
@@ -971,7 +971,7 @@ static int profile_routes ( ROUTE_PROF_PTR pr_prof ) {
     }
     pr_prof->orgdst.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.ntrs, pahd_tr );
 #if 1 // *****
-    prn_route_prov_lv0( pr_prof );
+    print_route_prof_lv0( pr_prof );
 #endif
     pr_prof++;
     n++;
@@ -999,8 +999,27 @@ static int cons_ctrl_tracks ( ROUTE_PROF_PTR pprof ) {
 
 static struct route_tr *find_dst_track ( const char *sig_dst ) {
   assert( sig_dst );
-  struct route_tr *pdst_tr = NULL;
-  return pdst_tr;
+  struct route_tr *ptr_org = NULL;
+  
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    assert( pprof );
+    if( strncmp( pprof->orgdst.signame_org, sig_dst, CBI_STAT_IDENT_LEN ) == 0 ) {
+      if( pprof->orgdst.porg_tr ) {
+	if( ptr_org ) {
+	  if( (strncmp(ptr_org->tr_name, pprof->orgdst.porg_tr->tr_name, CBI_STAT_IDENT_LEN) != 0) ||
+	      (ptr_org->tr_prof ? (ptr_org->tr_prof != pprof->orgdst.porg_tr->tr_prof) : FALSE) ) {
+#if 1 // *****
+	    assert( FALSE );
+#endif
+	  }
+	}
+	ptr_org = pprof->orgdst.porg_tr;
+      }
+    }
+    pprof++;
+  }
+  return ptr_org;
 }
 static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
   assert( fp_out );
