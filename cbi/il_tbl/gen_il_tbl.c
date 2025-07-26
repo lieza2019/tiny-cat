@@ -117,7 +117,14 @@ static struct {
     TRACK_PROF_PTR pprof_sets[END_OF_ST_ID];
   } tracks;
   struct {
+#if 0 // *****
     ROUTE_PROF_PTR route_profs;
+#else
+    struct {
+      ROUTE_PROF_PTR pwhole;
+      ROUTE_PROF_PTR pcrnt_ixl;
+    } profs;
+#endif
     ROUTE_PROF_PTR pavail;
     struct {
       ROUTE_PROF_PTR pdestin;
@@ -170,7 +177,7 @@ static void prn_route_prof_lv1 ( ROUTE_PROF_PTR pr_prof ) {
 static int print_route_profs ( void ) {
   int n = 0;
   
-  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pcrnt_ixl;
   while( pprof < tracks_routes_prof.routes.pavail ) {
     prn_route_prof_lv1( pprof );
     n++;
@@ -200,7 +207,7 @@ static ROUTE_PROF_PTR lkup_route_prof ( const char *pro_name ) {
   assert( pro_name );
   ROUTE_PROF_PTR r = NULL;
   
-  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pcrnt_ixl;
   while( pprof < tracks_routes_prof.routes.pavail ) {
     assert( pprof );
     assert( ROUTE_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
@@ -806,7 +813,7 @@ static int read_iltbl_signal ( FILE *fp_src ) {
       if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {
 	if( cnt > 0 )
 	  tracks_routes_prof.routes.pavail++;
-	assert( tracks_routes_prof.routes.pavail < &tracks_routes_prof.routes.route_profs[ROUTE_PROF_DECL_MAXNUM] );
+	assert( tracks_routes_prof.routes.pavail < &tracks_routes_prof.routes.profs.pwhole[ROUTE_PROF_DECL_MAXNUM] );
 	pprof = tracks_routes_prof.routes.pavail;
 	assert( ROUTE_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	strncpy( pprof->route_name, ro_name, ROUTE_NAME_MAXLEN );
@@ -997,7 +1004,7 @@ static struct route_tr *pick_dest_track ( const char *sig_dst ) {
   assert( sig_dst );
   struct route_tr *ptr_org = NULL;
   
-  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pcrnt_ixl;
   while( pprof < tracks_routes_prof.routes.pavail ) {
     assert( pprof );
     if( strncmp( pprof->orgdst.org.signame_org, sig_dst, CBI_STAT_IDENT_LEN ) == 0 ) {
@@ -1025,8 +1032,8 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   
   read_iltbl_signal( fp_src_sig );
   read_iltbl_routerel( fp_src_rel );
-  if( tracks_routes_prof.routes.route_profs ) {
-    ROUTE_PROF_PTR pr_prof = tracks_routes_prof.routes.route_profs;
+  if( tracks_routes_prof.routes.profs.pcrnt_ixl ) {
+    ROUTE_PROF_PTR pr_prof = tracks_routes_prof.routes.profs.pcrnt_ixl;
     while( pr_prof < tracks_routes_prof.routes.pavail ) {
       assert( pr_prof );
       TRACK_PROF_PTR pahd_tr = NULL;
@@ -1051,7 +1058,7 @@ static int fill_dest_tracks ( void ) {
   int n = 0;
   
   ROUTE_PROF_PTR pbkp_dst = tracks_routes_prof.routes.bkpatches.pdestin;
-  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pcrnt_ixl;
   assert( pprof );
   while( pprof < tracks_routes_prof.routes.pavail ) {
     assert( pprof );
@@ -1166,9 +1173,12 @@ static int gen_route_dataset ( FILE *fp_out ) {
   int r = -1;
   
   emit_route_dataset_prolog( fp_out );
+  
+  tracks_routes_prof.routes.profs.pcrnt_ixl = tracks_routes_prof.routes.pavail;
   r = cons_route_profs( "BCGN" );
   emit_route_dataset( fp_out );
   print_route_profs();
+  
   emit_route_dataset_epilog( fp_out );
   return r;
 }
@@ -1181,11 +1191,11 @@ static int init_gen_il_dataset ( void ) {
     return r;
   else
     tracks_routes_prof.tracks.pavail = tracks_routes_prof.tracks.track_profs;
-  tracks_routes_prof.routes.route_profs = calloc( ROUTE_PROF_DECL_MAXNUM, sizeof(ROUTE_PROF) );
-  if( !tracks_routes_prof.routes.route_profs )
+  tracks_routes_prof.routes.profs.pwhole = calloc( ROUTE_PROF_DECL_MAXNUM, sizeof(ROUTE_PROF) );
+  if( !tracks_routes_prof.routes.profs.pwhole )
     return r;
-  else
-    tracks_routes_prof.routes.pavail = tracks_routes_prof.routes.route_profs;
+  else    
+    tracks_routes_prof.routes.pavail = tracks_routes_prof.routes.profs.pwhole;
   r = ERR_FAILED_CONS_ILSYM_DATABASE;
   {
     int n = -1;
