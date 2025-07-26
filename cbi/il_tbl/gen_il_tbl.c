@@ -112,14 +112,14 @@ typedef struct route_prof {
 
 static struct {
   struct {
-    TRACK_PROF_PTR track_profs;
+     TRACK_PROF_PTR track_profs;
     TRACK_PROF_PTR pavail;
     TRACK_PROF_PTR pprof_sets[END_OF_ST_ID];
   } tracks;
   struct {
     struct {
-      int nixls;
       ROUTE_PROF_PTR pwhole;
+      int nixls;
       ROUTE_PROF_PTR pprevs[END_OF_OCs];
       ROUTE_PROF_PTR pcrnt_ixl;
     } profs;
@@ -1000,27 +1000,32 @@ static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
   return r;
 }
 
-static struct route_tr *pick_dest_track ( const char *sig_dst ) {
+static struct route_tr *pick_dest_track ( const char *sig_dst, const int kikdn ) {
   assert( sig_dst );
+  assert( kikdn > -2 );
   struct route_tr *ptr_org = NULL;
   
-  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pcrnt_ixl;
-  while( pprof < tracks_routes_prof.routes.pavail ) {
-    assert( pprof );
-    if( strncmp( pprof->orgdst.org.signame_org, sig_dst, CBI_STAT_IDENT_LEN ) == 0 ) {
-      if( pprof->orgdst.org.porg_tr ) {
-	if( ptr_org ) {
-	  if( (strncmp(ptr_org->tr_name, pprof->orgdst.org.porg_tr->tr_name, CBI_STAT_IDENT_LEN) != 0) ||
-	      (ptr_org->tr_prof ? (ptr_org->tr_prof != pprof->orgdst.org.porg_tr->tr_prof) : FALSE) ) {
+  if( kikdn >= 0 ) {
+    ROUTE_PROF_PTR pprof = (kikdn == tracks_routes_prof.routes.profs.nixls) ? tracks_routes_prof.routes.profs.pcrnt_ixl : tracks_routes_prof.routes.profs.pprevs[kikdn];
+    while( pprof < tracks_routes_prof.routes.pavail ) {
+      assert( pprof );
+      if( strncmp( pprof->orgdst.org.signame_org, sig_dst, CBI_STAT_IDENT_LEN ) == 0 ) {
+	if( pprof->orgdst.org.porg_tr ) {
+	  if( ptr_org ) {
+	    if( (strncmp(ptr_org->tr_name, pprof->orgdst.org.porg_tr->tr_name, CBI_STAT_IDENT_LEN) != 0) ||
+		(ptr_org->tr_prof ? (ptr_org->tr_prof != pprof->orgdst.org.porg_tr->tr_prof) : FALSE) ) {
 #if 1 // *****
-	    assert( FALSE );
+	      assert( FALSE );
 #endif
+	    }
 	  }
+	  ptr_org = pprof->orgdst.org.porg_tr;
 	}
-	ptr_org = pprof->orgdst.org.porg_tr;
       }
+      pprof++;
     }
-    pprof++;
+    if( !ptr_org )
+      ptr_org = pick_dest_track( sig_dst, (kikdn - 1) );
   }
   return ptr_org;
 }
@@ -1062,7 +1067,7 @@ static int fill_dest_tracks ( void ) {
   assert( pprof );
   while( pprof < tracks_routes_prof.routes.pavail ) {
     assert( pprof );
-    pprof->orgdst.dst.pdst_tr = pick_dest_track( pprof->orgdst.dst.signame_dst );
+    pprof->orgdst.dst.pdst_tr = pick_dest_track( pprof->orgdst.dst.signame_dst, tracks_routes_prof.routes.profs.nixls );
     if( ! pprof->orgdst.dst.pdst_tr ) {
       if( pbkp_dst ) {
 	assert( tracks_routes_prof.routes.bkpatches.pdestin );
@@ -1089,7 +1094,7 @@ static int bkpat_destin ( void ) {
   while( *pprof ) {
     assert( *pprof );
     assert( ! (*pprof)->orgdst.dst.pdst_tr );
-    (*pprof)->orgdst.dst.pdst_tr = pick_dest_track( (*pprof)->orgdst.dst.signame_dst );
+    (*pprof)->orgdst.dst.pdst_tr = pick_dest_track( (*pprof)->orgdst.dst.signame_dst, tracks_routes_prof.routes.profs.nixls );
     if( (*pprof)->orgdst.dst.pdst_tr )
       *pprof = (*pprof)->orgdst.dst.pNext;
     else
