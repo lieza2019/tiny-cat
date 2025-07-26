@@ -117,19 +117,32 @@ static struct {
   } routes;
 } tracks_routes_prof = {};
 
+static BOOL prn_rtprof_lv1 = FALSE;
 static void print_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
   assert( pr_prof );
   assert( strlen( pr_prof->route_name ) > 1 );
   int i;
-  
-  printf( "((route, (org_sig, dst_sig)), [app_tracks], (origin_track, (ahead_track, [ctrl_tracks]))): (%s (%s, %s)), [",
-	  pr_prof->route_name, pr_prof->orgdst.signame_org, pr_prof->orgdst.signame_dst );
+  printf( "((route, (org_sig, dst_sig), [app_tracks], (" );
+  if( prn_rtprof_lv1 )
+    printf( "(" );
+  printf( "origin_track, " );
+  if( prn_rtprof_lv1 )
+    printf( "destin_track), " );
+  else
+    printf( "origin_track, " );
+  printf( "ahead_track, [ctrl_tracks]))): " );
+  printf( "(%s (%s, %s), [", pr_prof->route_name, pr_prof->orgdst.signame_org, pr_prof->orgdst.signame_dst );
   for( i = 0; i < pr_prof->apps.ntrs; i++ ) {
     if( i > 0 )
       printf( ", " );
     printf( "%s", pr_prof->apps.tr[i].tr_name );
-  }
-  printf( "], (%s, ", pr_prof->orgdst.porg_tr ? pr_prof->orgdst.porg_tr->tr_name : "none_origin" );
+  }  
+  printf( "], (" );
+  if( prn_rtprof_lv1 )
+    printf( "(" );
+  printf( "%s, ", pr_prof->orgdst.porg_tr ? pr_prof->orgdst.porg_tr->tr_name : "none_origin" );  
+  if( prn_rtprof_lv1 )
+    printf( "%s), ", pr_prof->orgdst.pdst_tr ? pr_prof->orgdst.pdst_tr->tr_name : "none_destin" );
   printf( "(%s, [", pr_prof->ctrls.ahead.tr_name );
   for( i = 0; i < pr_prof->ctrls.ntrs; i++ ) {
     if( i > 0 )
@@ -137,6 +150,13 @@ static void print_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
     printf( "%s", pr_prof->ctrls.tr[i].tr_name );
   }
   printf( "])))\n" );
+  prn_rtprof_lv1 = FALSE;
+}
+static void print_route_prof_lv1 ( ROUTE_PROF_PTR pr_prof ) {
+  assert( pr_prof );
+  prn_rtprof_lv1 = TRUE;
+  print_route_prof_lv0( pr_prof );
+  assert( !prn_rtprof_lv1 );
 }
 
 static TRACK_PROF_PTR lkup_track_prof ( const char *ptr_name ) {
@@ -970,7 +990,7 @@ static int profile_routes ( ROUTE_PROF_PTR pr_prof ) {
 #endif
     }
     pr_prof->orgdst.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.ntrs, pahd_tr );
-#if 1 // *****
+#if 0 // *****
     print_route_prof_lv0( pr_prof );
 #endif
     pr_prof++;
@@ -1039,6 +1059,9 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
       assert( pprof );
       pprof->orgdst.pdst_tr = find_dst_track( pprof->orgdst.signame_dst );
       //cons_ctrl_tracks( pprof );
+#if 1 // *****
+      print_route_prof_lv1( pprof );
+#endif
       pprof++;
       n++;;
     }
