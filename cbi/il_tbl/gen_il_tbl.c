@@ -117,14 +117,12 @@ static struct {
     TRACK_PROF_PTR pprof_sets[END_OF_ST_ID];
   } tracks;
   struct {
-#if 0 // *****
-    ROUTE_PROF_PTR route_profs;
-#else
     struct {
+      int nixls;
       ROUTE_PROF_PTR pwhole;
+      ROUTE_PROF_PTR pprevs[END_OF_OCs];
       ROUTE_PROF_PTR pcrnt_ixl;
     } profs;
-#endif
     ROUTE_PROF_PTR pavail;
     struct {
       ROUTE_PROF_PTR pdestin;
@@ -1176,10 +1174,14 @@ static int gen_route_dataset ( FILE *fp_out ) {
   
   emit_route_dataset_prolog( fp_out );
   
+  assert( tracks_routes_prof.routes.profs.nixls == 0 );
   tracks_routes_prof.routes.profs.pcrnt_ixl = tracks_routes_prof.routes.pavail;
   r = cons_route_profs( "BCGN" );
+  
+  tracks_routes_prof.routes.profs.pprevs[tracks_routes_prof.routes.profs.nixls++] = tracks_routes_prof.routes.profs.pcrnt_ixl;
   tracks_routes_prof.routes.profs.pcrnt_ixl = tracks_routes_prof.routes.pavail;
   r = cons_route_profs( "JLA" );
+  
   emit_route_dataset( fp_out );
   print_route_profs( tracks_routes_prof.routes.profs.pwhole );
   
@@ -1195,6 +1197,7 @@ static int init_gen_il_dataset ( void ) {
     return r;
   else
     tracks_routes_prof.tracks.pavail = tracks_routes_prof.tracks.track_profs;
+  tracks_routes_prof.routes.profs.nixls = 0;
   tracks_routes_prof.routes.profs.pwhole = calloc( ROUTE_PROF_DECL_MAXNUM, sizeof(ROUTE_PROF) );
   if( !tracks_routes_prof.routes.profs.pwhole )
     return r;
