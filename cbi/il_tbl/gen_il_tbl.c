@@ -1,7 +1,7 @@
 /*
  * construct database for route profile.
  *
- * 1) splitting route name into src & dst ones, and regist them together.
+ * -1) splitting route name into src & dst ones, and regist them together.
  * 2) identify the origin track of the route, which has the SIGNAL as its ORIGIN SIGNAL.
  * 3) For all routes met with above condition, we should examine all ones have same track as its ORIGIN.
  * 4) then We can judge the track as the DESTINATION track of the route we are now looking for its dest.
@@ -91,13 +91,13 @@ typedef struct route_prof {
   struct {
     char signane_org[CBI_STAT_IDENT_LEN + 1];
     char signame_dst[CBI_STAT_IDENT_LEN + 1];
+    struct route_tr *porg_tr;
+    struct route_tr *pdst_tr;
   } orgdst;
   struct {
     int ntrs;
     struct route_tr tr[ROUTE_MAX_APPTRACKS];
-    struct route_tr *porigin;
   } apps;
-  //struct route_tr origin;
   struct {
     int ntrs;
     struct route_tr tr[ROUTE_MAX_CTRLTRACKS];
@@ -930,6 +930,14 @@ static int cons_ctrl_tracks ( ROUTE_PROF_PTR pprof ) {
 }
 #endif
 
+static struct route_tr *find_dst_track ( const char *sig_dst ) {
+  assert( sig_dst );
+  struct route_tr *pdst_tr = NULL;
+  
+  
+  return pdst_tr;
+}
+
 static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   assert( ! pro_prof->ctrls.pahead );
@@ -976,12 +984,13 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
     assert( pprof );
     TRACK_PROF_PTR pahd_tr = NULL;
     pahd_tr = pick_ahead_track( pprof );
-#if 0 // *****
     if( pahd_tr ) {
+#if 1 // *****
       assert( pprof->ctrls.pahead );
-    }
 #endif
-    pprof->apps.porigin = link_orgahd_blks( pprof->apps.tr, pprof->apps.ntrs, pahd_tr );
+    }
+    pprof->orgdst.porg_tr = link_orgahd_blks( pprof->apps.tr, pprof->apps.ntrs, pahd_tr );
+    pprof->orgdst.pdst_tr = find_dst_track( pprof->orgdst.signame_dst );
 #if 1 // *****
     {
       assert( strlen( pprof->route_name ) > 1 );
@@ -996,7 +1005,7 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
 #if 0 // *****
       printf( "], [" );
 #else
-      printf( "], (%s, ", pprof->apps.porigin ? pprof->apps.porigin->tr_name : "none_origin" );
+      printf( "], (%s, ", pprof->orgdst.porg_tr ? pprof->orgdst.porg_tr->tr_name : "none_origin" );
       printf( "(%s, [", pprof->ctrls.ahead.tr_name );
 #endif
       for( i = 0; i < pprof->ctrls.ntrs; i++ ) {
