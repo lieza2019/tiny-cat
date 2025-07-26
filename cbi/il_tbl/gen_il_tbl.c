@@ -174,14 +174,15 @@ static void prn_route_prof_lv1 ( ROUTE_PROF_PTR pr_prof ) {
   assert( !prn_rtprof_lv1 );
 }
 
-static int print_route_profs ( void ) {
+static int print_route_profs ( ROUTE_PROF_PTR pr_prof ) {
+  assert( pr_prof );
   int n = 0;
   
-  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pcrnt_ixl;
-  while( pprof < tracks_routes_prof.routes.pavail ) {
-    prn_route_prof_lv1( pprof );
+  //ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pcrnt_ixl;
+  while( pr_prof < tracks_routes_prof.routes.pavail ) {
+    prn_route_prof_lv1( pr_prof );
     n++;
-    pprof++;    
+    pr_prof++;
   }
   return n;
 }
@@ -353,9 +354,10 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
   
   int i;
   for( i = 0; i < napp_trs; i++ ) {
-    assert( strnlen( app_trs[i].tr_name, CBI_STAT_IDENT_LEN ) > 0 );
-    assert( app_trs[i].tr_prof );
     int j;
+    assert( strnlen( app_trs[i].tr_name, CBI_STAT_IDENT_LEN ) > 0 );    
+    if( !app_trs[i].tr_prof )
+      continue;
     for( j = 0; j < app_trs[i].tr_prof->hardbonds.nblks; j++ ) {
       int k;
       fixes[0] = app_trs[i].tr_prof->hardbonds.pblk_fixes[j];
@@ -840,7 +842,7 @@ static int read_iltbl_signal ( FILE *fp_src ) {
 	assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	strncpy( pprof->ctrls.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
 	pprof->ctrls.tr[i].tr_prof = lkup_track_prof( pprof->ctrls.tr[i].tr_name );
-#if 1 // *****
+#if 0 // ***** !!!!!
 	assert( pprof->ctrls.tr[i].tr_prof );
 #endif
 	pprof->ctrls.ntrs++;
@@ -954,7 +956,7 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	  strncpy( pprof->apps.tr[pprof->apps.ntrs].tr_name, app_tr, TRACK_NAME_MAXLEN );
 	  pprof->apps.tr[pprof->apps.ntrs].tr_prof = lkup_track_prof( pprof->apps.tr[pprof->apps.ntrs].tr_name );
-#if 1 // *****
+#if 0 // ***** !!!!!
 	  assert( pprof->apps.tr[pprof->apps.ntrs].tr_prof );
 #endif
 	  pprof->apps.ntrs++;
@@ -1176,8 +1178,10 @@ static int gen_route_dataset ( FILE *fp_out ) {
   
   tracks_routes_prof.routes.profs.pcrnt_ixl = tracks_routes_prof.routes.pavail;
   r = cons_route_profs( "BCGN" );
+  tracks_routes_prof.routes.profs.pcrnt_ixl = tracks_routes_prof.routes.pavail;
+  r = cons_route_profs( "JLA" );
   emit_route_dataset( fp_out );
-  print_route_profs();
+  print_route_profs( tracks_routes_prof.routes.profs.pwhole );
   
   emit_route_dataset_epilog( fp_out );
   return r;
