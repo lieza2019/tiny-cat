@@ -1109,22 +1109,33 @@ static int profile_routes ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   return n;  
 }
 
-static int cons_route_profs ( void ) {
+static int cons_route_profs ( const char *ixl ) {
+  assert( ixl );
   int r = -1;
+  char fname_sig[ILTBL_FILENAME_MAXLEN + 1] = "";
   FILE *fp_src_sig = NULL;
-  FILE *fp_src_rel = NULL;
   
-  fp_src_sig = fopen( "BCGN_SIGNAL.csv", "r" );
+  fname_sig[ILTBL_FILENAME_MAXLEN] = 0;
+  strncpy( fname_sig, ixl, ILTBL_FILENAME_MAXLEN );
+  assert( strncmp( fname_sig, ixl, ILTBL_FILENAME_MAXLEN ) == 0 );
+  strncat( fname_sig, "_SIGNAL.csv", ILTBL_FILENAME_MAXLEN );
+  fp_src_sig = fopen( fname_sig, "r" );
   if( fp_src_sig ) {
     if( !ferror( fp_src_sig ) ) {
-      fp_src_rel = fopen( "BCGN_ROUTEREL.csv", "r" );
+      char fname_rel[ILTBL_FILENAME_MAXLEN + 1] = "";
+      FILE *fp_src_rel = NULL;
+      fname_rel[ILTBL_FILENAME_MAXLEN] = 0;
+      strncpy( fname_rel, ixl, ILTBL_FILENAME_MAXLEN );
+      assert( strncmp( fname_rel, ixl, ILTBL_FILENAME_MAXLEN ) == 0 );
+      strncat( fname_rel, "_ROUTEREL.csv", ILTBL_FILENAME_MAXLEN );
+      fp_src_rel = fopen( fname_rel, "r" );
       if( fp_src_rel ) {
 	if( !ferror( fp_src_rel ) ) {
 	  r = profile_routes( fp_src_sig, fp_src_rel );
 	}
       }
     }
-  }  
+  }
   return r;
 }
 
@@ -1155,12 +1166,13 @@ static int gen_route_dataset ( FILE *fp_out ) {
   int r = -1;
   
   emit_route_dataset_prolog( fp_out );
-  r = cons_route_profs();
+  r = cons_route_profs( "BCGN" );
   emit_route_dataset( fp_out );
   print_route_profs();
   emit_route_dataset_epilog( fp_out );
   return r;
 }
+
 static int init_gen_il_dataset ( void ) {
   int r = ERR_FAILED_ALLOC_WORKMEM;
   

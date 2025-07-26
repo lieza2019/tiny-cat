@@ -6,6 +6,8 @@
 #ifndef INTERLOCK_H
 #define INTERLOCK_H
 
+#define ILTBL_FILENAME_MAXLEN 512
+
 typedef struct route_lock {
   BOOL app;
   IL_SYM_KIND kind;
