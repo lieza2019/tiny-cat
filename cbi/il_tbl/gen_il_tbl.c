@@ -767,13 +767,11 @@ static int split_orgdst_sigs( const char *route_name, const int name_len ) {
   return cnt;
 }
 
-static int read_iltbl_signal ( FILE *fp_out, FILE *fp_src ) {
-  assert( fp_out );
+static int read_iltbl_signal ( FILE *fp_src ) {
   assert( fp_src );
   ROUTE_PROF_PTR pprof = NULL;
   int cnt = 0;
   
-  assert( !ferror( fp_out ) );
   assert( !ferror( fp_src ) );
   while( !feof( fp_src ) ) {
     int n = -1;
@@ -861,15 +859,13 @@ static int read_iltbl_signal ( FILE *fp_out, FILE *fp_src ) {
   return cnt;
 }
 
-static int read_iltbl_routerel ( FILE *fp_out, FILE *fp_src ) {
-  assert( fp_out );
+static int read_iltbl_routerel ( FILE *fp_src ) {
   assert( fp_src );
   extern int par_csv_iltbl ( char *bufs[], const int nbufs, FILE *fp_src );
   
   ROUTE_PROF_PTR pprof = NULL;
   int cnt = -1;
   
-  assert( !ferror( fp_out ) );
   assert( !ferror( fp_src ) );
   while( !feof( fp_src ) ) {
     int n = -1;
@@ -1022,14 +1018,13 @@ static struct route_tr *pick_dest_track ( const char *sig_dst ) {
   return ptr_org;
 }
 
-static int read_route_iltbls ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
-  assert( fp_out );
+static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   assert( fp_src_sig );
   assert( fp_src_rel );
   int n = 0;
   
-  read_iltbl_signal( fp_out, fp_src_sig );
-  read_iltbl_routerel( fp_out, fp_src_rel );
+  read_iltbl_signal( fp_src_sig );
+  read_iltbl_routerel( fp_src_rel );
   if( tracks_routes_prof.routes.route_profs ) {
     ROUTE_PROF_PTR pr_prof = tracks_routes_prof.routes.route_profs;
     while( pr_prof < tracks_routes_prof.routes.pavail ) {
@@ -1103,16 +1098,34 @@ static int bkpat_destin ( void ) {
   return res;
 }
 
-static int profile_routes ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
-  assert( fp_out );
+static int profile_routes ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   assert( fp_src_sig );
   assert( fp_src_rel );
   int n = -1;
   
-  n = read_route_iltbls( fp_out, fp_src_sig, fp_src_rel );
+  n = read_route_iltbls( fp_src_sig, fp_src_rel );
   bkpat_destin();
   fill_dest_tracks();
   return n;  
+}
+
+static int cons_route_profs ( void ) {
+  int r = -1;
+  FILE *fp_src_sig = NULL;
+  FILE *fp_src_rel = NULL;
+  
+  fp_src_sig = fopen( "BCGN_SIGNAL.csv", "r" );
+  if( fp_src_sig ) {
+    if( !ferror( fp_src_sig ) ) {
+      fp_src_rel = fopen( "BCGN_ROUTEREL.csv", "r" );
+      if( fp_src_rel ) {
+	if( !ferror( fp_src_rel ) ) {
+	  r = profile_routes( fp_src_sig, fp_src_rel );
+	}
+      }
+    }
+  }  
+  return r;
 }
 
 #if 0
@@ -1133,33 +1146,21 @@ static int cons_ctrl_tracks ( ROUTE_PROF_PTR pprof ) {
 }
 #endif
 
-static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
+static int emit_route_dataset ( FILE *fp_out ) {
+  assert( fp_out );
   return 0;
 }
-
 static int gen_route_dataset ( FILE *fp_out ) {
   assert( fp_out );
-  int r = 0;
-  FILE *fp_src_sig = NULL;
-  FILE *fp_src_rel = NULL;
+  int r = -1;
   
   emit_route_dataset_prolog( fp_out );
-  fp_src_sig = fopen( "BCGN_SIGNAL.csv", "r" );
-  if( fp_src_sig ) {
-    if( !ferror( fp_src_sig ) ) {
-      fp_src_rel = fopen( "BCGN_ROUTEREL.csv", "r" );
-      if( fp_src_rel ) {
-	if( !ferror( fp_src_rel ) ) {
-	  r = profile_routes( fp_out, fp_src_sig, fp_src_rel );
-	}
-      }
-    }
-  }
-  emit_route_dataset_epilog( fp_out );
+  r = cons_route_profs();
+  emit_route_dataset( fp_out );
   print_route_profs();
+  emit_route_dataset_epilog( fp_out );
   return r;
 }
-
 static int init_gen_il_dataset ( void ) {
   int r = ERR_FAILED_ALLOC_WORKMEM;
   
