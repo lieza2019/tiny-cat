@@ -956,24 +956,27 @@ static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
   }
   return r;
 }
-static int profile_routes ( ROUTE_PROF_PTR pprof ) {
-  assert( pprof );
-  while( pprof < tracks_routes_prof.routes.pavail ) {
-    assert( pprof );
+static int profile_routes ( ROUTE_PROF_PTR pr_prof ) {
+  assert( pr_prof );
+  int n = 0;
+  
+  while( pr_prof < tracks_routes_prof.routes.pavail ) {
+    assert( pr_prof );
     TRACK_PROF_PTR pahd_tr = NULL;
-    pahd_tr = pick_ahead_track( pprof );
+    pahd_tr = pick_ahead_track( pr_prof );
     if( pahd_tr ) {
 #if 1 // *****
-      assert( pprof->ctrls.pahead );
+      assert( pr_prof->ctrls.pahead );
 #endif
     }
-    pprof->orgdst.porg_tr = link_orgahd_blks( pprof->apps.tr, pprof->apps.ntrs, pahd_tr );
+    pr_prof->orgdst.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.ntrs, pahd_tr );
 #if 1 // *****
-    prn_route_prov_lv0( pprof );
+    prn_route_prov_lv0( pr_prof );
 #endif
-    pprof++;
+    pr_prof++;
+    n++;
   }
-  return 0;
+  return n;
 }
 
 #if 0
@@ -1003,26 +1006,25 @@ static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_re
   assert( fp_out );
   assert( fp_src_sig );
   assert( fp_src_rel );
-
+  int n = 0;
+  
   read_iltbl_signal( fp_out, fp_src_sig );
   read_iltbl_routerel( fp_out, fp_src_rel );
-  assert( tracks_routes_prof.routes.route_profs );
   
-  profile_routes( tracks_routes_prof.routes.route_profs );
-  //pprof->orgdst.pdst_tr = find_dst_track( pprof->orgdst.signame_dst );    
-#if 0 // *****
+  assert( tracks_routes_prof.routes.route_profs );
+  profile_routes( tracks_routes_prof.routes.route_profs );  
   {
     ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
     assert( pprof );
     while( pprof < tracks_routes_prof.routes.pavail ) {
-      assert( pprof );     
-      cons_ctrl_tracks( pprof );
+      assert( pprof );
+      pprof->orgdst.pdst_tr = find_dst_track( pprof->orgdst.signame_dst );
+      //cons_ctrl_tracks( pprof );
       pprof++;
+      n++;;
     }
   }
-#endif
-  
-  return 0;
+  return n;
 }
 
 static int gen_route_dataset ( FILE *fp_out ) {
