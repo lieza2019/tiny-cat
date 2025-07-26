@@ -89,10 +89,15 @@ struct route_tr {
 typedef struct route_prof {
   char route_name[CBI_STAT_IDENT_LEN + 1];
   struct {
-    char signame_org[CBI_STAT_IDENT_LEN + 1];
-    char signame_dst[CBI_STAT_IDENT_LEN + 1];
-    struct route_tr *porg_tr;
-    struct route_tr *pdst_tr;
+    struct {
+      char signame_org[CBI_STAT_IDENT_LEN + 1];
+      struct route_tr *porg_tr;
+    } org;
+    struct {
+      char signame_dst[CBI_STAT_IDENT_LEN + 1];
+      struct route_tr *pdst_tr;
+      struct route_prof *pNext;
+    } dst;
   } orgdst;
   struct {
     int ntrs;
@@ -102,7 +107,7 @@ typedef struct route_prof {
     int ntrs;
     struct route_tr tr[ROUTE_MAX_CTRLTRACKS];
     struct route_tr ahead, *pahead;
-  } ctrls;
+  } ctrls;  
 } ROUTE_PROF, *ROUTE_PROF_PTR;
 
 static struct {
@@ -114,11 +119,14 @@ static struct {
   struct {
     ROUTE_PROF_PTR route_profs;
     ROUTE_PROF_PTR pavail;
+    struct {
+      ROUTE_PROF_PTR pdestin;
+    } bkpatches;
   } routes;
 } tracks_routes_prof = {};
 
 static BOOL prn_rtprof_lv1 = FALSE;
-static void print_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
+static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
   assert( pr_prof );
   assert( strlen( pr_prof->route_name ) > 1 );
   int i;
@@ -131,7 +139,7 @@ static void print_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
   else
     printf( "origin_track, " );
   printf( "ahead_track, [ctrl_tracks]))): " );
-  printf( "(%s (%s, %s), [", pr_prof->route_name, pr_prof->orgdst.signame_org, pr_prof->orgdst.signame_dst );
+  printf( "(%s (%s, %s), [", pr_prof->route_name, pr_prof->orgdst.org.signame_org, pr_prof->orgdst.dst.signame_dst );
   for( i = 0; i < pr_prof->apps.ntrs; i++ ) {
     if( i > 0 )
       printf( ", " );
@@ -140,9 +148,9 @@ static void print_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
   printf( "], (" );
   if( prn_rtprof_lv1 )
     printf( "(" );
-  printf( "%s, ", pr_prof->orgdst.porg_tr ? pr_prof->orgdst.porg_tr->tr_name : "none_origin" );  
+  printf( "%s, ", pr_prof->orgdst.org.porg_tr ? pr_prof->orgdst.org.porg_tr->tr_name : "none_origin" );  
   if( prn_rtprof_lv1 )
-    printf( "%s), ", pr_prof->orgdst.pdst_tr ? pr_prof->orgdst.pdst_tr->tr_name : "none_destin" );
+    printf( "%s), ", pr_prof->orgdst.dst.pdst_tr ? pr_prof->orgdst.dst.pdst_tr->tr_name : "none_destin" );
   printf( "(%s, [", pr_prof->ctrls.ahead.tr_name );
   for( i = 0; i < pr_prof->ctrls.ntrs; i++ ) {
     if( i > 0 )
@@ -152,11 +160,23 @@ static void print_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
   printf( "])))\n" );
   prn_rtprof_lv1 = FALSE;
 }
-static void print_route_prof_lv1 ( ROUTE_PROF_PTR pr_prof ) {
+static void prn_route_prof_lv1 ( ROUTE_PROF_PTR pr_prof ) {
   assert( pr_prof );
   prn_rtprof_lv1 = TRUE;
-  print_route_prof_lv0( pr_prof );
+  prn_route_prof_lv0( pr_prof );
   assert( !prn_rtprof_lv1 );
+}
+
+static int print_route_profs ( void ) {
+  int n = 0;
+  
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    prn_route_prof_lv1( pprof );
+    n++;
+    pprof++;    
+  }
+  return n;
 }
 
 static TRACK_PROF_PTR lkup_track_prof ( const char *ptr_name ) {
@@ -797,9 +817,9 @@ static int read_iltbl_signal ( FILE *fp_out, FILE *fp_src ) {
 	  assert( pprof->route_name[whole_len] == 0 );
 	  int sep = split_orgdst_sigs( pprof->route_name, whole_len );
 	  assert( sep <= whole_len );
-	  strncpy( pprof->orgdst.signame_org, pprof->route_name, sep );
+	  strncpy( pprof->orgdst.org.signame_org, pprof->route_name, sep );
 	  if( pprof->route_name[sep] == '_' )
-	    strncpy( pprof->orgdst.signame_dst, &pprof->route_name[sep+1], ROUTE_NAME_MAXLEN );
+	    strncpy( pprof->orgdst.dst.signame_dst, &pprof->route_name[sep+1], ROUTE_NAME_MAXLEN );
 	}
 	pprof->ctrls.ntrs = 0;
 	strcpy( pprof->ctrls.ahead.tr_name, "" );
@@ -976,27 +996,123 @@ static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
   }
   return r;
 }
-static int profile_routes ( ROUTE_PROF_PTR pr_prof ) {
-  assert( pr_prof );
+
+static struct route_tr *pick_dest_track ( const char *sig_dst ) {
+  assert( sig_dst );
+  struct route_tr *ptr_org = NULL;
+  
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    assert( pprof );
+    if( strncmp( pprof->orgdst.org.signame_org, sig_dst, CBI_STAT_IDENT_LEN ) == 0 ) {
+      if( pprof->orgdst.org.porg_tr ) {
+	if( ptr_org ) {
+	  if( (strncmp(ptr_org->tr_name, pprof->orgdst.org.porg_tr->tr_name, CBI_STAT_IDENT_LEN) != 0) ||
+	      (ptr_org->tr_prof ? (ptr_org->tr_prof != pprof->orgdst.org.porg_tr->tr_prof) : FALSE) ) {
+#if 1 // *****
+	    assert( FALSE );
+#endif
+	  }
+	}
+	ptr_org = pprof->orgdst.org.porg_tr;
+      }
+    }
+    pprof++;
+  }
+  return ptr_org;
+}
+
+static int read_route_iltbls ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
+  assert( fp_out );
+  assert( fp_src_sig );
+  assert( fp_src_rel );
   int n = 0;
   
-  while( pr_prof < tracks_routes_prof.routes.pavail ) {
-    assert( pr_prof );
-    TRACK_PROF_PTR pahd_tr = NULL;
-    pahd_tr = pick_ahead_track( pr_prof );
-    if( pahd_tr ) {
+  read_iltbl_signal( fp_out, fp_src_sig );
+  read_iltbl_routerel( fp_out, fp_src_rel );
+  if( tracks_routes_prof.routes.route_profs ) {
+    ROUTE_PROF_PTR pr_prof = tracks_routes_prof.routes.route_profs;
+    while( pr_prof < tracks_routes_prof.routes.pavail ) {
+      assert( pr_prof );
+      TRACK_PROF_PTR pahd_tr = NULL;
+      pahd_tr = pick_ahead_track( pr_prof );
+      if( pahd_tr ) {
 #if 1 // *****
-      assert( pr_prof->ctrls.pahead );
+	assert( pr_prof->ctrls.pahead );
 #endif
-    }
-    pr_prof->orgdst.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.ntrs, pahd_tr );
+      }
+      pr_prof->orgdst.org.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.ntrs, pahd_tr );
 #if 0 // *****
-    print_route_prof_lv0( pr_prof );
+      prn_route_prof_lv0( pr_prof );
 #endif
-    pr_prof++;
-    n++;
+      pr_prof++;
+      n++;
+    }
   }
   return n;
+}
+
+static int fill_dest_tracks ( void ) {
+  int n = 0;
+  
+  ROUTE_PROF_PTR pbkp_dst = tracks_routes_prof.routes.bkpatches.pdestin;
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
+  assert( pprof );
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    assert( pprof );
+    pprof->orgdst.dst.pdst_tr = pick_dest_track( pprof->orgdst.dst.signame_dst );
+    if( ! pprof->orgdst.dst.pdst_tr ) {
+      if( pbkp_dst ) {
+	assert( tracks_routes_prof.routes.bkpatches.pdestin );
+	pbkp_dst->orgdst.dst.pNext = pprof;
+	pbkp_dst = pprof;
+      } else {
+	assert( !tracks_routes_prof.routes.bkpatches.pdestin );	  
+	pbkp_dst = pprof;
+	tracks_routes_prof.routes.bkpatches.pdestin = pbkp_dst;
+      }
+      pbkp_dst->orgdst.dst.pNext = NULL;
+    } else
+      n++;
+    pprof++;    
+  }
+  return n;
+}
+
+static int bkpat_destin ( void ) {
+  int res = 0;
+  
+  ROUTE_PROF_PTR *pprof = &tracks_routes_prof.routes.bkpatches.pdestin;
+  assert( pprof );
+  while( *pprof ) {
+    assert( *pprof );
+    assert( ! (*pprof)->orgdst.dst.pdst_tr );
+    (*pprof)->orgdst.dst.pdst_tr = pick_dest_track( (*pprof)->orgdst.dst.signame_dst );
+    if( (*pprof)->orgdst.dst.pdst_tr )
+      *pprof = (*pprof)->orgdst.dst.pNext;
+    else
+      pprof = &(*pprof)->orgdst.dst.pNext;
+  }
+  {
+    ROUTE_PROF_PTR p = tracks_routes_prof.routes.bkpatches.pdestin;
+    while( p ) {
+      res++;
+      p = p->orgdst.dst.pNext;
+    }
+  }
+  return res;
+}
+
+static int profile_routes ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
+  assert( fp_out );
+  assert( fp_src_sig );
+  assert( fp_src_rel );
+  int n = -1;
+  
+  n = read_route_iltbls( fp_out, fp_src_sig, fp_src_rel );
+  bkpat_destin();
+  fill_dest_tracks();
+  return n;  
 }
 
 #if 0
@@ -1017,56 +1133,8 @@ static int cons_ctrl_tracks ( ROUTE_PROF_PTR pprof ) {
 }
 #endif
 
-static struct route_tr *find_dst_track ( const char *sig_dst ) {
-  assert( sig_dst );
-  struct route_tr *ptr_org = NULL;
-  
-  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
-  while( pprof < tracks_routes_prof.routes.pavail ) {
-    assert( pprof );
-    if( strncmp( pprof->orgdst.signame_org, sig_dst, CBI_STAT_IDENT_LEN ) == 0 ) {
-      if( pprof->orgdst.porg_tr ) {
-	if( ptr_org ) {
-	  if( (strncmp(ptr_org->tr_name, pprof->orgdst.porg_tr->tr_name, CBI_STAT_IDENT_LEN) != 0) ||
-	      (ptr_org->tr_prof ? (ptr_org->tr_prof != pprof->orgdst.porg_tr->tr_prof) : FALSE) ) {
-#if 1 // *****
-	    assert( FALSE );
-#endif
-	  }
-	}
-	ptr_org = pprof->orgdst.porg_tr;
-      }
-    }
-    pprof++;
-  }
-  return ptr_org;
-}
 static int emit_route_dataset ( FILE *fp_out, FILE *fp_src_sig,  FILE *fp_src_rel ) {
-  assert( fp_out );
-  assert( fp_src_sig );
-  assert( fp_src_rel );
-  int n = 0;
-  
-  read_iltbl_signal( fp_out, fp_src_sig );
-  read_iltbl_routerel( fp_out, fp_src_rel );
-  
-  assert( tracks_routes_prof.routes.route_profs );
-  profile_routes( tracks_routes_prof.routes.route_profs );  
-  {
-    ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.route_profs;
-    assert( pprof );
-    while( pprof < tracks_routes_prof.routes.pavail ) {
-      assert( pprof );
-      pprof->orgdst.pdst_tr = find_dst_track( pprof->orgdst.signame_dst );
-      //cons_ctrl_tracks( pprof );
-#if 1 // *****
-      print_route_prof_lv1( pprof );
-#endif
-      pprof++;
-      n++;;
-    }
-  }
-  return n;
+  return 0;
 }
 
 static int gen_route_dataset ( FILE *fp_out ) {
@@ -1082,12 +1150,13 @@ static int gen_route_dataset ( FILE *fp_out ) {
       fp_src_rel = fopen( "BCGN_ROUTEREL.csv", "r" );
       if( fp_src_rel ) {
 	if( !ferror( fp_src_rel ) ) {
-	  r = emit_route_dataset( fp_out, fp_src_sig, fp_src_rel );
+	  r = profile_routes( fp_out, fp_src_sig, fp_src_rel );
 	}
       }
     }
   }
   emit_route_dataset_epilog( fp_out );
+  print_route_profs();
   return r;
 }
 
