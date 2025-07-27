@@ -24,13 +24,15 @@ SP_PLTB sp_pltb[] = {
 CBTC_BLOCK block_state[] = {
   // S803B_VS801B, S803B_VS803B, S803B_S831B
   //{2418, VB304DB, "VB304DB", -1, {T815B_TR}, {TRUE, SP_73, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL1 // CHECKED.
-  {2418, VB304DB, "VB304DB", SC802, {1, { {1, {{2419, 0}}, -1} }}, {T815B_TR}, {TRUE, SP_73, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL1 // CHECKED.
+  {2418, VB304DB, "VB304DB", SC802, {1, { {2, {{2417, 0}, {2419, 1}}, -1} }}, {T815B_TR}, {TRUE, SP_73, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL1 // CHECKED.
+  
   //{2419, VB306D, "VB306D", -1, {T817B_TR}, {FALSE}},
   {2419, VB306D, "VB306D", SC802, {2, { {2, {{2420, 0},{2418, 1}}, -1, {P809B_NKR}}, {2, {{2420, 0},{2014, 2}}, -1, {P809B_RKR}} }}, {T817B_TR}, {FALSE}},
   
   // S807B_VS801B, S807B_VS803B, S807B_S831B
   //{2013, VB305U, "VB305U", -1, {T814B_TR}, {TRUE, SP_74, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL2 // CHECKED.
-  {2013, VB305U, "VB305U", SC802, { 1, { {1, {{2014, 0}}, -1} } }, {T814B_TR}, {TRUE, SP_74, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL2 // CHECKED.
+  {2013, VB305U,  "VB305U",  SC802, {1, { {2, {{2012, 0},{2014, 1}}, -1} } }, {T814B_TR}, {TRUE, SP_74, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL2 // CHECKED.
+  
   //{2014, VB306U, "VB306U", -1, {T816B_TR}, {FALSE}},
   {2014, VB306U, "VB306U", SC802, { 2, { {2, {{2013, 0},{2015, 1}}, -1, {P810B_NKR}}, {2, {{2013, 0},{2419, 2}}, -1, {P810B_RKR}} } }, {T816B_TR}, {FALSE}},
   
@@ -207,8 +209,10 @@ CBTC_BLOCK block_state[] = {
   {1417, VB362D, "VB362D", SC801, {2, { {2, {{1416, 0},{1419, 1}}, -1, {P803A_NKR}}, {2, {{1416, 0},{1019, 2}}, -1, {P803A_RKR}} }}, {T815A_TR}, {FALSE}},
 
   // others
-  {2421, VB309DA, "VB309DA", SC802, {1, { {2, {{2420, 0}, {2422, 1}}, -1} }}, {T821B_TR}, {FALSE}}, // added for the use of S805A_S807A
-  
+  {2012, VB303U, "VB303U", SC802, {2, { {2, {{2013, 0},{2011, 1}}, -1, {P804B_NKR}}, {2, {{2013, 0},{2417, 2}}, -1, {P804B_RKR}} }}, {T812B_TR}, {FALSE}}, // ahead of S804B.
+  {2417, VB304DA, "VB304DA", SC802, {2, { {2, {{2416, 0},{2418, 1}}, -1, {P803B_NKR}}, {2, {{2416, 0},{2012, 2}}, -1, {P803B_RKR}} }}, {T813B_TR}, {FALSE}}, // ahead of S810B.
+  {2421, VB309DA, "VB309DA", SC802, {1, { {2, {{2420, 0},{2422, 1}}, -1} }}, {T821B_TR}, {FALSE}}, // added for the use of S805A_S807A
+
   {0, END_OF_CBTC_BLOCKs, "END_OF_CBTC_BLOCKs" }
 };
 #else
