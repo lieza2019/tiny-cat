@@ -2,9 +2,9 @@
  * construct database for route profile.
  *
  * -1) splitting route name into src & dst ones, and regist them together.
- * 2) identify the origin track of the route, which has its destination signal as its ORIGIN one.
- * 3) For all routes met with above condition, we should examine all ones have same track as its ORIGIN.
- * 4) then We can judge the track as the DESTINATION track of the route we are now looking for its dest.
+ * -2) identify the origin track of the route, which has its destination signal as its ORIGIN one.
+ * -3) For all relevant routes claim above condition, we should examine all ones have same track as its ORIGIN.
+ * -4) then We can judge the track as the DESTINATION track of the route we are now looking for its dest.
  */
 #include <stdio.h>
 #include <stdlib.h>
