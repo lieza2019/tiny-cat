@@ -163,6 +163,7 @@ CBTC_BLOCK block_state[] = {
   {2017, VB309UB, "VB309UB", SC802, {1, { {2, {{2016, 0}, {2018, 1}}, -1} }}, {T822B_TR}, {FALSE}}, // CHECKED.
   //{2016, VB309UA, "VB309UA", -1, {T820B_TR}, {FALSE}},
   {2016, VB309UA, "VB309UA", SC802, {1, { {2, {{2015, 0}, {2017, 1}}, -1} }}, {T820B_TR}, {FALSE}},
+  {2015, VB307U, "VB307U", SC802, { 2, { {2, {{2016, 0},{2014, 1}}, -1, {P812B_NKR}}, {2, {{2016, 0},{2420, 2}}, -1, {P812B_RKR}} } }, {T818B_TR}, {FALSE}},
   
   // S806A_S804A
   //{1418, VB363DB, "VB363DB", -1, {T817A_TR}, {TRUE, SP_D5, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB1 // CHECKED.
@@ -186,8 +187,8 @@ CBTC_BLOCK block_state[] = {
   {1016, VB361U, "VB361U", SC801, {1, { {2, {{1015, 0}, {1017, 1}}, -1} }}, {T812A_TR}, {TRUE, SP_80, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL2 // CHECKED.
   //{1015, VB360UB, "VB360UB", -1, {T810A_TR}, {FALSE}},
   {1015, VB360UB, "VB360UB", SC801, {2, { {2, {{1016, 0},{1014, 1}}, -1, {P802A_NKR}}, {2, {{1016, 0},{1415, 2}}, -1, {P802A_RKR}} }}, {T810A_TR}, {FALSE}},
-  {1014, VB360UA, "VB360UA", SC801, {1, { {2, {{1013, 0}, {1015, 1}}, -1} }}, {T808A_TR}, {FALSE}}, // dedicated to the route of S805A_S807A
-
+  {1014, VB360UA, "VB360UA", SC801, {1, { {2, {{1013, 0}, {1015, 1}}, -1} }}, {T808A_TR}, {FALSE}}, // added for the case of S805A_S807A
+  
   // S803A_S809A, S803A_S811A
   /* all below are registered in the case of S802B_S810B / S802B_S804B. 
      (1405, VB342DB) in T807A_TR
@@ -204,6 +205,9 @@ CBTC_BLOCK block_state[] = {
   {1416, VB360DB, "VB360DB", SC801, {1, { {2, {{1415, 0}, {1417, 1}}, -1} }}, {T813A_TR}, {TRUE, SP_81, P0_COUPLING, {VB_NONSENS}}}, // BTbGD_PL1 // CHECKED.
   //{1417, VB362D, "VB362D", -1, {T815A_TR}, {FALSE}},
   {1417, VB362D, "VB362D", SC801, {2, { {2, {{1416, 0},{1419, 1}}, -1, {P803A_NKR}}, {2, {{1416, 0},{1019, 2}}, -1, {P803A_RKR}} }}, {T815A_TR}, {FALSE}},
+
+  // others
+  {2421, VB309DA, "VB309DA", SC802, {1, { {2, {{2420, 0}, {2422, 1}}, -1} }}, {T821B_TR}, {FALSE}}, // added for the use of S805A_S807A
   
   {0, END_OF_CBTC_BLOCKs, "END_OF_CBTC_BLOCKs" }
 };

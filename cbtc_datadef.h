@@ -51,6 +51,7 @@ typedef enum st_id {
 
 typedef enum cbtc_block_id {
   VB_NONSENS,
+  VB309DA,
   VB309DB,
   VB311D,
   VB313D,
@@ -114,6 +115,7 @@ typedef enum cbtc_block_id {
   
   VB306D,
   VB306U,
+  VB307U,
   VB309UA,
   VB326D,
   VB324U,
