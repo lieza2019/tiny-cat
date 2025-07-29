@@ -716,6 +716,7 @@ static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
 }
 #endif
 
+#if 1 // *****
 static int gen_track_dataset ( FILE *fp_out ) {
   assert( fp_out );
   assert( !ferror( fp_out ) );
@@ -738,6 +739,53 @@ static int gen_track_dataset ( FILE *fp_out ) {
   }
   emit_track_dataset_epilog( fp_out );
   return r;
+}
+#endif
+static int _gen_track_dataset ( FILE *fp_out ) {
+  assert( fp_out );
+  assert( !ferror( fp_out ) );
+  int r = ERR_FAILED_OPEN_ILTBL_TRACKS;
+  FILE *fp_src = NULL;
+  
+  emit_track_dataset_prolog( fp_out );
+  fp_src = fopen( "BCGN_TRACK.csv", "r" );
+  if( fp_src ) {
+    if( !ferror( fp_src ) ) {      
+      r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[BTGD], fp_out, fp_src );     
+    }
+  }
+  r = ERR_FAILED_OPEN_ILTBL_TRACKS;
+  fp_src = fopen( "JLA_TRACK.csv", "r" );
+  if( fp_src ) {
+    if( !ferror( fp_src ) ) {
+      r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[JLA], fp_out, fp_src );
+    }
+  }
+  emit_track_dataset_epilog( fp_out );
+  return r;
+}
+
+static int foobar ( FILE *fp_out ) {
+  assert( fp_out );
+  assert( !ferror( fp_out ) );
+  char fname[ILTBL_FILENAME_MAXLEN + 1] = "";
+  FILE *fp_src = NULL;
+  
+  emit_track_dataset_prolog( fp_out );
+  {
+    fname[ILTBL_FILENAME_MAXLEN] = 0;
+    strncpy( fname, ixl, ILTBL_FILENAME_MAXLEN );
+    assert( strncmp( fname, ixl, ILTBL_FILENAME_MAXLEN ) == 0 );
+    strncat( fname, "_TRACK.csv", ILTBL_FILENAME_MAXLEN );
+    fp_src = fopen( fname, "r" );
+    if( fp_src ) {
+      if( !ferror( fp_src ) ) {
+	_gen_track_dataset( fp_out );
+      }
+    }
+  }
+  emit_track_dataset_epilog( fp_out );
+  
 }
 
 static void emit_route_dataset_prolog ( FILE *fp_out ) {
