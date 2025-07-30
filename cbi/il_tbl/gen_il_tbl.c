@@ -107,12 +107,12 @@ typedef struct route_prof {
     int ntrs;
     struct route_tr tr[ROUTE_MAX_CTRLTRACKS];
     struct route_tr ahead, *pahead;
-  } ctrls;  
+  } ctrls;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
 
 static struct {
   struct {
-     TRACK_PROF_PTR track_profs;
+    TRACK_PROF_PTR track_profs;
     TRACK_PROF_PTR pavail;
     TRACK_PROF_PTR pprof_sets[END_OF_ST_ID];
   } tracks;
@@ -716,7 +716,6 @@ static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
 }
 #endif
 
-#if 1 // *****
 static int gen_track_dataset ( FILE *fp_out ) {
   assert( fp_out );
   assert( !ferror( fp_out ) );
@@ -739,53 +738,6 @@ static int gen_track_dataset ( FILE *fp_out ) {
   }
   emit_track_dataset_epilog( fp_out );
   return r;
-}
-#endif
-static int _gen_track_dataset ( FILE *fp_out ) {
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  int r = ERR_FAILED_OPEN_ILTBL_TRACKS;
-  FILE *fp_src = NULL;
-  
-  emit_track_dataset_prolog( fp_out );
-  fp_src = fopen( "BCGN_TRACK.csv", "r" );
-  if( fp_src ) {
-    if( !ferror( fp_src ) ) {      
-      r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[BTGD], fp_out, fp_src );     
-    }
-  }
-  r = ERR_FAILED_OPEN_ILTBL_TRACKS;
-  fp_src = fopen( "JLA_TRACK.csv", "r" );
-  if( fp_src ) {
-    if( !ferror( fp_src ) ) {
-      r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[JLA], fp_out, fp_src );
-    }
-  }
-  emit_track_dataset_epilog( fp_out );
-  return r;
-}
-
-static int foobar ( FILE *fp_out ) {
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  char fname[ILTBL_FILENAME_MAXLEN + 1] = "";
-  FILE *fp_src = NULL;
-  
-  emit_track_dataset_prolog( fp_out );
-  {
-    fname[ILTBL_FILENAME_MAXLEN] = 0;
-    strncpy( fname, ixl, ILTBL_FILENAME_MAXLEN );
-    assert( strncmp( fname, ixl, ILTBL_FILENAME_MAXLEN ) == 0 );
-    strncat( fname, "_TRACK.csv", ILTBL_FILENAME_MAXLEN );
-    fp_src = fopen( fname, "r" );
-    if( fp_src ) {
-      if( !ferror( fp_src ) ) {
-	_gen_track_dataset( fp_out );
-      }
-    }
-  }
-  emit_track_dataset_epilog( fp_out );
-  
 }
 
 static void emit_route_dataset_prolog ( FILE *fp_out ) {
@@ -1158,6 +1110,42 @@ static int bkpat_destin ( void ) {
   return res;
 }
 
+static void trylnk_ahd2dst ( volid ) {
+  ;
+}
+
+static void stretch2_dest_track ( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );
+  trylnk_ahd2dst();
+  
+}
+static void fine_ctrl_tracks ( void ) {
+  int n = 0;
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
+  assert( pprof );
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    assert( pprof );
+    if( pprof->orgdst.dst.pdst_tr ) {
+      assert( strnlen( (pprof->orgdst.dst.pdst_tr)->tr_name, CBI_STAT_IDENT_LEN ) > 0 );
+      assert( (pprof->orgdst.dst.pdst_tr)->tr_prof );
+      BOOL found = FALSE;
+      int i;
+      for( i = 0; i < pprof->ctrls.ntrs; i++ )
+	if( strncmp(pprof->ctrls.tr[i].tr_name, (pprof->orgdst.dst.pdst_tr)->tr_name, CBI_STAT_IDENT_LEN) == 0 ) {
+	  pprof->ctrls.ntrs = i + 1;
+	  found = TRUE;
+	  break;
+	}
+      if( !found ) {
+	stretch2_dest_track();
+      }
+    }
+    TRACK_PROF_PTR pdst = 
+      
+    pprof++;
+  }
+}
+
 static int profile_routes ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   assert( fp_src_sig );
   assert( fp_src_rel );
@@ -1166,6 +1154,8 @@ static int profile_routes ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   n = read_route_iltbls( fp_src_sig, fp_src_rel );
   bkpat_destin();
   fill_dest_tracks();
+  fine_ctrl_tracks();
+  
   return n;  
 }
 
