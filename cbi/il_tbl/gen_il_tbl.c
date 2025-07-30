@@ -1110,7 +1110,8 @@ static int bkpat_destin ( void ) {
   return res;
 }
 
-static void trylnk_ahd2dst ( volid ) {
+static void trylnk_ahd2dst ( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );
   ;
 }
 
@@ -1120,7 +1121,6 @@ static void stretch2_dest_track ( ROUTE_PROF_PTR pro_prof ) {
   
 }
 static void fine_ctrl_tracks ( void ) {
-  int n = 0;
   ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
   assert( pprof );
   while( pprof < tracks_routes_prof.routes.pavail ) {
@@ -1137,11 +1137,9 @@ static void fine_ctrl_tracks ( void ) {
 	  break;
 	}
       if( !found ) {
-	stretch2_dest_track();
+	stretch2_dest_track( pprof );
       }
     }
-    TRACK_PROF_PTR pdst = 
-      
     pprof++;
   }
 }
