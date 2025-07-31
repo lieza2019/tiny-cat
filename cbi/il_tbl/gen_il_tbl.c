@@ -107,7 +107,7 @@ typedef struct route_prof {
     int ntrs;
     struct route_tr tr[ROUTE_MAX_CTRLTRACKS];
     struct route_tr ahead, *pahead;
-  } ctrls;
+  } body;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
 
 static struct {
@@ -156,11 +156,11 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
   printf( "%s, ", pr_prof->orgdst.org.porg_tr ? pr_prof->orgdst.org.porg_tr->tr_name : "none_origin" );  
   if( prn_rtprof_lv1 )
     printf( "%s), ", pr_prof->orgdst.dst.pdst_tr ? pr_prof->orgdst.dst.pdst_tr->tr_name : "none_destin" );
-  printf( "(%s, [", pr_prof->ctrls.ahead.tr_name );
-  for( i = 0; i < pr_prof->ctrls.ntrs; i++ ) {
+  printf( "(%s, [", pr_prof->body.ahead.tr_name );
+  for( i = 0; i < pr_prof->body.ntrs; i++ ) {
     if( i > 0 )
       printf( ", " );
-    printf( "%s", pr_prof->ctrls.tr[i].tr_name );
+    printf( "%s", pr_prof->body.tr[i].tr_name );
   }
   printf( "])))\n" );
   prn_rtprof_lv1 = FALSE;
@@ -826,24 +826,24 @@ static int read_iltbl_signal ( FILE *fp_src ) {
 	  if( pprof->route_name[sep] == '_' )
 	    strncpy( pprof->orgdst.dst.signame_dst, &pprof->route_name[sep+1], ROUTE_NAME_MAXLEN );
 	}
-	pprof->ctrls.ntrs = 0;
-	strcpy( pprof->ctrls.ahead.tr_name, "" );
-	pprof->ctrls.ahead.tr_prof = NULL;
-	pprof->ctrls.pahead = NULL;
+	pprof->body.ntrs = 0;
+	strcpy( pprof->body.ahead.tr_name, "" );
+	pprof->body.ahead.tr_prof = NULL;
+	pprof->body.pahead = NULL;
 	cnt++;
       }
       assert( pprof );
       if( strnlen( ctrl_tr, TRACK_NAME_MAXLEN ) > 1 ) {
-	const int i = pprof->ctrls.ntrs;
+	const int i = pprof->body.ntrs;
 	assert( strnlen( ctrl_tr, TRACK_NAME_MAXLEN ) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
 	strncat( ctrl_tr, "_TR", TRACK_NAME_MAXLEN );
 	assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
-	strncpy( pprof->ctrls.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
-	pprof->ctrls.tr[i].tr_prof = lkup_track_prof( pprof->ctrls.tr[i].tr_name );
+	strncpy( pprof->body.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
+	pprof->body.tr[i].tr_prof = lkup_track_prof( pprof->body.tr[i].tr_name );
 #if 0 // ***** !!!!!
 	assert( pprof->ctrls.tr[i].tr_prof );
 #endif
-	pprof->ctrls.ntrs++;
+	pprof->body.ntrs++;
       }
 #if 0 // *****
       printf( "(seq, route, [ctrl_tracks]): (%s, %s, [", seq, pprof->route_name );
@@ -963,10 +963,10 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 	  assert( strnlen(ahd_tr, TRACK_NAME_MAXLEN) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
 	  strncat( ahd_tr, "_TR", TRACK_NAME_MAXLEN );
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
-	  strncpy( pprof->ctrls.ahead.tr_name, ahd_tr, TRACK_NAME_MAXLEN );
-	  pprof->ctrls.ahead.tr_prof = lkup_track_prof( pprof->ctrls.ahead.tr_name );
+	  strncpy( pprof->body.ahead.tr_name, ahd_tr, TRACK_NAME_MAXLEN );
+	  pprof->body.ahead.tr_prof = lkup_track_prof( pprof->body.ahead.tr_name );
 #if 1 // *****
-	  assert( pprof->ctrls.ahead.tr_prof );
+	  assert( pprof->body.ahead.tr_prof );
 #endif	  
 	}
       }
@@ -979,22 +979,22 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 
 static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
-  assert( ! pro_prof->ctrls.pahead );
+  assert( ! pro_prof->body.pahead );
   TRACK_PROF_PTR r = NULL;
   
-  if( (strnlen(pro_prof->ctrls.ahead.tr_name, CBI_STAT_IDENT_LEN) > 1) && pro_prof->ctrls.ahead.tr_prof ) {
+  if( (strnlen(pro_prof->body.ahead.tr_name, CBI_STAT_IDENT_LEN) > 1) && pro_prof->body.ahead.tr_prof ) {
     int i;
-    assert( pro_prof->ctrls.ntrs >= 0 );
-    for( i = 0; i < pro_prof->ctrls.ntrs; i++ ) {
-      if( !strncmp( pro_prof->ctrls.tr[i].tr_name, pro_prof->ctrls.ahead.tr_name, CBI_STAT_IDENT_LEN ) ) {
-	assert( pro_prof->ctrls.tr[i].tr_prof == pro_prof->ctrls.ahead.tr_prof );
-	pro_prof->ctrls.pahead = &pro_prof->ctrls.tr[i];
-	r = pro_prof->ctrls.ahead.tr_prof;
+    assert( pro_prof->body.ntrs >= 0 );
+    for( i = 0; i < pro_prof->body.ntrs; i++ ) {
+      if( !strncmp( pro_prof->body.tr[i].tr_name, pro_prof->body.ahead.tr_name, CBI_STAT_IDENT_LEN ) ) {
+	assert( pro_prof->body.tr[i].tr_prof == pro_prof->body.ahead.tr_prof );
+	pro_prof->body.pahead = &pro_prof->body.tr[i];
+	r = pro_prof->body.ahead.tr_prof;
 	break;
       }
     }
 #if 1 // *****
-    assert( pro_prof->ctrls.pahead );
+    assert( pro_prof->body.pahead );
 #endif
   }
   return r;
@@ -1045,7 +1045,7 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
       pahd_tr = pick_ahead_track( pr_prof );
       if( pahd_tr ) {
 #if 1 // *****
-	assert( pr_prof->ctrls.pahead );
+	assert( pr_prof->body.pahead );
 #endif
       }
       pr_prof->orgdst.org.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.ntrs, pahd_tr );
@@ -1117,7 +1117,7 @@ static void trylnk_ahd2dst ( ROUTE_PROF_PTR pro_prof ) {
 
 static void stretch2_dest_track ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
-  trylnk_ahd2dst();
+  trylnk_ahd2dst( pro_prof );
   
 }
 static void fine_ctrl_tracks ( void ) {
@@ -1130,9 +1130,9 @@ static void fine_ctrl_tracks ( void ) {
       assert( (pprof->orgdst.dst.pdst_tr)->tr_prof );
       BOOL found = FALSE;
       int i;
-      for( i = 0; i < pprof->ctrls.ntrs; i++ )
-	if( strncmp(pprof->ctrls.tr[i].tr_name, (pprof->orgdst.dst.pdst_tr)->tr_name, CBI_STAT_IDENT_LEN) == 0 ) {
-	  pprof->ctrls.ntrs = i + 1;
+      for( i = 0; i < pprof->body.ntrs; i++ )
+	if( strncmp(pprof->body.tr[i].tr_name, (pprof->orgdst.dst.pdst_tr)->tr_name, CBI_STAT_IDENT_LEN) == 0 ) {
+	  pprof->body.ntrs = i + 1;
 	  found = TRUE;
 	  break;
 	}

@@ -30,13 +30,13 @@ ttcreat : y.tab.o lex.yy.o ttcreat.o ttcreat_cmd.o ../$(TINY_LIB_NAME)
 	$(CD) ../; $(MAKE) $(TINY_LIB_NAME)
 
 y.tab.o : y.tab.c
-	$(CC) -c $<
+	$(CC) $(CFLAGS) $<
 
 y.tab.c : ttcreat_par.y ttcreat.h
 	$(YACC) $(YFLAGS) $<
 
 lex.yy.o : lex.yy.c
-	$(CC) -c $<
+	$(CC) $(CFLAGS) $<
 
 lex.yy.c : ttcreat_lex.l ttcreat.h
 	$(LEX) $(LFLAGS) $<
