@@ -1,4 +1,8 @@
 %{
+  int yylex();
+  int yyerror ( const char *s );
+%}
+%{
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1886,3 +1890,4 @@ jr_asgn : TK_JOURNEY_ID TK_ASGN TK_RAKE_ID {
 int yyerror ( const char *s ) {
   return 1;
 }
+
