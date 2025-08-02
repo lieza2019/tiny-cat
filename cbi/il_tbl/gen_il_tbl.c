@@ -963,8 +963,6 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
       strs[12] = dc;
       strs[13] = &ahd_tr[1];
 #endif
-      assert( app_tr[0] == 'T' );
-      assert( ahd_tr[0] == 'T' );
 #if 0 // *****
       n = par_csv_iltbl( strs, 5, fp_src );
 #else
@@ -998,8 +996,9 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
       }
       if( pprof ) {
 	assert( cnt > -1 );
-	if( (strnlen(app_tr, TRACK_NAME_MAXLEN) > 1) && strncmp(&app_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
-	  assert( strnlen(app_tr, TRACK_NAME_MAXLEN) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
+	assert( app_tr[0] == 'T' );
+	if( (strnlen(&app_tr[1], (TRACK_NAME_MAXLEN - 1)) > 1) && strncmp(&app_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
+	  assert( strnlen(&app_tr[1], (TRACK_NAME_MAXLEN - 1)) < ((TRACK_NAME_MAXLEN - 1) - strlen("_TR")) );
 	  strncat( app_tr, "_TR", TRACK_NAME_MAXLEN );
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	  strncpy( pprof->apps.tr[pprof->apps.ntrs].tr_name, app_tr, TRACK_NAME_MAXLEN );
@@ -1009,8 +1008,9 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 #endif
 	  pprof->apps.ntrs++;
 	}
-	if( (strnlen(ahd_tr, TRACK_NAME_MAXLEN) > 1) && strncmp(&ahd_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
-	  assert( strnlen(ahd_tr, TRACK_NAME_MAXLEN) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
+	assert( ahd_tr[0] == 'T' );
+	if( (strnlen(&ahd_tr[1], (TRACK_NAME_MAXLEN - 1)) > 1) && strncmp(&ahd_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
+	  assert( strnlen(&ahd_tr[1], (TRACK_NAME_MAXLEN - 1)) < ((TRACK_NAME_MAXLEN - 1) - strlen("_TR")) );
 	  strncat( ahd_tr, "_TR", TRACK_NAME_MAXLEN );
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	  strncpy( pprof->body.ahead.tr_name, ahd_tr, TRACK_NAME_MAXLEN );
