@@ -31,6 +31,9 @@
 #define ROUTE_MAX_CTRLTRACKS 32
 #define ROUTE_MAX_APPTRACKS 32
 
+#define POINT_NAME_NAXLEN 32
+#define ROUTE_MAX_POINTS 16
+
 #define ILCOND_IDENT_MAXLEN 256
 
 extern int par_csv_iltbl ( char *bufs[], const int nbufs, FILE *fp_src );
@@ -86,6 +89,13 @@ struct route_tr {
   char tr_name[CBI_STAT_IDENT_LEN + 1];
   TRACK_PROF_PTR tr_prof;
 };
+struct route_sw {
+  char pt_name[CBI_STAT_IDENT_LEN + 1];
+  struct {
+    BOOL normal;
+    BOOL reverse;
+  } stat;
+};
 typedef struct route_prof {
   char route_name[CBI_STAT_IDENT_LEN + 1];
   struct {
@@ -104,9 +114,11 @@ typedef struct route_prof {
     struct route_tr tr[ROUTE_MAX_APPTRACKS];
   } apps;
   struct {
-    int ntrs;
+    int ntrs;    
     struct route_tr tr[ROUTE_MAX_CTRLTRACKS];
     struct route_tr ahead, *pahead;
+    int npts;
+    struct route_sw pt[ROUTE_MAX_POINTS];
   } body;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
 
@@ -784,9 +796,13 @@ static int read_iltbl_signal ( FILE *fp_src ) {
     int n = -1;
     char seq[5 + 1];
     char ro_name[ROUTE_NAME_MAXLEN + 1];
+    char nor_sw[POINT_NAME_NAXLEN + 1] = "P";
+    char rev_sw[POINT_NAME_NAXLEN + 1] = "P";
     char ctrl_tr[TRACK_NAME_MAXLEN + 1];
     seq[5] = 0;
     ro_name[ROUTE_NAME_MAXLEN] = 0;
+    nor_sw[POINT_NAME_NAXLEN] = 0;
+    rev_sw[POINT_NAME_NAXLEN] = 0;
     ctrl_tr[TRACK_NAME_MAXLEN] = 0;
     strcpy( seq, "" );
     strcpy( ro_name, "" );
@@ -801,8 +817,8 @@ static int read_iltbl_signal ( FILE *fp_src ) {
       strs[3] = dc;
       strs[4] = dc;
       strs[5] = ro_name;
-      strs[6] = dc;
-      strs[7] = dc;
+      strs[6] = &nor_sw[1];
+      strs[7] = &rev_sw[1];
       strs[8] = dc;
       strs[9] = dc;
       strs[10] = &ctrl_tr[1];
@@ -830,6 +846,7 @@ static int read_iltbl_signal ( FILE *fp_src ) {
 	strcpy( pprof->body.ahead.tr_name, "" );
 	pprof->body.ahead.tr_prof = NULL;
 	pprof->body.pahead = NULL;
+	pprof->body.npts = 0;
 	cnt++;
       }
       assert( pprof );
@@ -844,7 +861,7 @@ static int read_iltbl_signal ( FILE *fp_src ) {
 	assert( pprof->ctrls.tr[i].tr_prof );
 #endif
 	pprof->body.ntrs++;
-      }
+      }     
 #if 0 // *****
       printf( "(seq, route, [ctrl_tracks]): (%s, %s, [", seq, pprof->route_name );
       {	
@@ -858,6 +875,24 @@ static int read_iltbl_signal ( FILE *fp_src ) {
       }
       printf( "])\n" );
 #endif
+      assert( nor_sw[0] == 'P' );
+      if( (strnlen(&nor_sw[1], (POINT_NAME_NAXLEN - 1)) > 1) && strncmp(&nor_sw[1], "Nil", (POINT_NAME_NAXLEN - 1)) ) {
+	const int i = pprof->body.npts;	
+	assert( strnlen(&nor_sw[1], (POINT_NAME_NAXLEN - 1)) < ((POINT_NAME_NAXLEN - 1) - strlen("_NKR")) );
+	strncat( &nor_sw[1], "_NKR", (POINT_NAME_NAXLEN - 1) );
+	assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
+	strncpy( pprof->body.pt[i].pt_name, nor_sw, POINT_NAME_NAXLEN );
+	pprof->body.npts++;
+      }
+      assert( rev_sw[0] == 'P' );
+      if( (strnlen(&rev_sw[1], (POINT_NAME_NAXLEN - 1)) > 1) && strncmp(&rev_sw[1], "Nil", (POINT_NAME_NAXLEN - 1)) ) {
+	const int i = pprof->body.npts;	
+	assert( strnlen(&rev_sw[1], (POINT_NAME_NAXLEN - 1)) < ((POINT_NAME_NAXLEN - 1) - strlen("_RKR")) );
+	strncat( &rev_sw[1], "_RKR", (POINT_NAME_NAXLEN - 1) );
+	assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
+	strncpy( pprof->body.pt[i].pt_name, rev_sw, POINT_NAME_NAXLEN );
+	pprof->body.npts++;
+      }
     }
     skip_chr( fp_src );
   }
@@ -930,7 +965,7 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 	  pprof->apps.ntrs = 0;
       }
       if( pprof ) {
-	if( (strnlen(app_tr, TRACK_NAME_MAXLEN ) > 1) && strncmp(&app_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
+	if( (strnlen(app_tr, TRACK_NAME_MAXLEN) > 1) && strncmp(&app_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
 	  assert( strnlen( app_tr, TRACK_NAME_MAXLEN ) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
 	  strncat( app_tr, "_TR", TRACK_NAME_MAXLEN );
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
@@ -948,7 +983,7 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
       }
       if( pprof ) {
 	assert( cnt > -1 );
-	if( (strnlen(app_tr, TRACK_NAME_MAXLEN ) > 1) && strncmp(&app_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
+	if( (strnlen(app_tr, TRACK_NAME_MAXLEN) > 1) && strncmp(&app_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
 	  assert( strnlen(app_tr, TRACK_NAME_MAXLEN) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
 	  strncat( app_tr, "_TR", TRACK_NAME_MAXLEN );
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
@@ -959,7 +994,7 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 #endif
 	  pprof->apps.ntrs++;
 	}
-	if( (strnlen(ahd_tr, TRACK_NAME_MAXLEN ) > 1) && strncmp(&ahd_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
+	if( (strnlen(ahd_tr, TRACK_NAME_MAXLEN) > 1) && strncmp(&ahd_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
 	  assert( strnlen(ahd_tr, TRACK_NAME_MAXLEN) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
 	  strncat( ahd_tr, "_TR", TRACK_NAME_MAXLEN );
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
