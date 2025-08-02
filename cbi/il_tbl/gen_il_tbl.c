@@ -147,7 +147,7 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
   assert( pr_prof );
   assert( strlen( pr_prof->route_name ) > 1 );
   int i;
-  printf( "((route, (org_sig, dst_sig), [app_tracks], (" );
+  printf( "(route, (org_sig, dst_sig), [app_tracks], (" );
   if( prn_rtprof_lv1 )
     printf( "(" );
   printf( "origin_track, " );
@@ -155,7 +155,8 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
     printf( "destin_track), " );
   else
     printf( "origin_track, " );
-  printf( "ahead_track, [ctrl_tracks]))): " );
+  printf( "points, " );
+  printf( "(ahead_track, [ctrl_tracks]))): " );
   printf( "(%s (%s, %s), [", pr_prof->route_name, pr_prof->orgdst.org.signame_org, pr_prof->orgdst.dst.signame_dst );
   for( i = 0; i < pr_prof->apps.ntrs; i++ ) {
     if( i > 0 )
@@ -168,6 +169,24 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
   printf( "%s, ", pr_prof->orgdst.org.porg_tr ? pr_prof->orgdst.org.porg_tr->tr_name : "none_origin" );  
   if( prn_rtprof_lv1 )
     printf( "%s), ", pr_prof->orgdst.dst.pdst_tr ? pr_prof->orgdst.dst.pdst_tr->tr_name : "none_destin" );
+  {
+    int i;
+    for( i = 0; i < pr_prof->body.npts; i++ ) {
+      if( i > 0 )
+	printf( ", " );
+      printf( "%s:", pr_prof->body.pt[i].pt_name );
+      if( pr_prof->body.pt[i].stat.normal )
+	printf( "NKR" );
+      if( pr_prof->body.pt[i].stat.reverse ) {
+	if( pr_prof->body.pt[i].stat.normal )
+	  printf( "&" );
+	printf( "RKR" );
+      }
+      if( !(pr_prof->body.pt[i].stat.normal || pr_prof->body.pt[i].stat.reverse) )
+	printf( "none" );
+    }
+    printf( ", " );
+  }
   printf( "(%s, [", pr_prof->body.ahead.tr_name );
   for( i = 0; i < pr_prof->body.ntrs; i++ ) {
     if( i > 0 )
@@ -877,20 +896,16 @@ static int read_iltbl_signal ( FILE *fp_src ) {
 #endif
       assert( nor_sw[0] == 'P' );
       if( (strnlen(&nor_sw[1], (POINT_NAME_NAXLEN - 1)) > 1) && strncmp(&nor_sw[1], "Nil", (POINT_NAME_NAXLEN - 1)) ) {
-	const int i = pprof->body.npts;	
-	assert( strnlen(&nor_sw[1], (POINT_NAME_NAXLEN - 1)) < ((POINT_NAME_NAXLEN - 1) - strlen("_NKR")) );
-	strncat( &nor_sw[1], "_NKR", (POINT_NAME_NAXLEN - 1) );
 	assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
-	strncpy( pprof->body.pt[i].pt_name, nor_sw, POINT_NAME_NAXLEN );
+	strncpy( pprof->body.pt[pprof->body.npts].pt_name, nor_sw, POINT_NAME_NAXLEN );
+	pprof->body.pt[pprof->body.npts].stat.normal = TRUE;
 	pprof->body.npts++;
       }
       assert( rev_sw[0] == 'P' );
       if( (strnlen(&rev_sw[1], (POINT_NAME_NAXLEN - 1)) > 1) && strncmp(&rev_sw[1], "Nil", (POINT_NAME_NAXLEN - 1)) ) {
-	const int i = pprof->body.npts;	
-	assert( strnlen(&rev_sw[1], (POINT_NAME_NAXLEN - 1)) < ((POINT_NAME_NAXLEN - 1) - strlen("_RKR")) );
-	strncat( &rev_sw[1], "_RKR", (POINT_NAME_NAXLEN - 1) );
 	assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
-	strncpy( pprof->body.pt[i].pt_name, rev_sw, POINT_NAME_NAXLEN );
+	strncpy( pprof->body.pt[pprof->body.npts].pt_name, rev_sw, POINT_NAME_NAXLEN );
+	pprof->body.pt[pprof->body.npts].stat.reverse = TRUE;
 	pprof->body.npts++;
       }
     }
