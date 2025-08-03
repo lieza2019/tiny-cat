@@ -32,6 +32,7 @@
 #define ROUTE_MAX_APPTRACKS 32
 
 #define POINT_NAME_NAXLEN 32
+#define TURNOUT_MAX_POINTS 16
 #define ROUTE_MAX_POINTS 16
 
 #define ILCOND_IDENT_MAXLEN 256
@@ -81,6 +82,13 @@ typedef struct track_prof {
     struct track_sr eTLSR, eTRSR;
     struct track_sr kTLSR, kTRSR;
   } sr;
+  struct {
+    int npts;
+    struct {
+      char pt_name[CBI_STAT_IDENT_LEN + 1];
+      CBI_STAT_ATTR_PTR ppt_attr;
+    } point[TURNOUT_MAX_POINTS];
+  } turnout;
   TRACK_BOUND tr_bound;
   struct track_prof *pNext;
 } TRACK_PROF, *TRACK_PROF_PTR;
@@ -665,6 +673,70 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_s
 	(tracks_routes_prof.tracks.pavail)->pNext = NULL;
 	pprev = tracks_routes_prof.tracks.pavail;
 	tracks_routes_prof.tracks.pavail++;
+      }
+    }
+    skip_chr( fp_src );
+  }
+  return cnt;
+}
+
+static int read_iltbl_point ( FILE *fp_src ) {
+  assert( fp_src );
+  assert( !ferror( fp_src ) );
+  int cnt = 0;
+  
+  while( !feof( fp_src ) ) {
+    int n = -1;
+    char seq[5 + 1] = "";    
+    char sw_name[POINT_NAME_NAXLEN + 1] = "P";
+    char tr_name[TRACK_NAME_MAXLEN + 1] = "T";
+    seq[5] = 0;
+    sw_name[POINT_NAME_NAXLEN] = 0;
+    tr_name[TRACK_NAME_MAXLEN] = 0;
+    {
+      char *strs[11];
+      char dc[256 + 1]; // dont cure.
+      dc[256] = 0;
+      strs[0] = seq;
+      strs[1] = dc;
+      strs[2] = &sw_name[1];
+      strs[3] = &tr_name[1];
+      strs[4] = dc;      
+      strs[5] = dc;
+      strs[6] = dc;
+      strs[7] = dc;
+      n = par_csv_iltbl( strs, 8, fp_src );
+    }
+    if( n > 1 ) {
+      if( strncmp( sw_name, "", POINT_NAME_NAXLEN ) ) {
+	assert( sw_name[0] == 'P' );
+	TRACK_PROF_PTR ptr_prof = NULL;
+	if( strncmp( tr_name, "", TRACK_NAME_MAXLEN ) ) {
+	  assert( tr_name[0] == 'T' );
+	  ptr_prof = lkup_track_prof( tr_name );
+	  if( ptr_prof ) {  
+	    const int idx = ptr_prof->turnout.npts;
+	    assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
+	    strncpy( ptr_prof->turnout.point[idx].pt_name, sw_name, POINT_NAME_NAXLEN );
+	    ptr_prof->turnout.npts++;
+	    cnt++;
+	  } else {
+#if 1 // *****
+	    cnt *= -1;
+	    assert( FALSE );
+#endif
+	  }	    
+	} else {
+#if 1 // *****
+	  cnt *= -1;
+	  assert( FALSE );
+#endif
+	}
+      } else {
+#if 1 // *****
+	cnt *= -1;
+	assert( FALSE );
+#endif
       }
     }
     skip_chr( fp_src );
