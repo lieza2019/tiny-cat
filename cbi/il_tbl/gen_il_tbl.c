@@ -740,26 +740,34 @@ static int _emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_
   assert( fp_out );
   assert( fp_src_tr );
   assert( fp_src_sw );
+  int cnt = 0;
   
   if( !ferror( fp_src_tr ) ) {
-    emit_track_dataset( pprofs, fp_src_tr );
-    if( !ferror( fp_src_sw ) )
-      read_iltbl_point( fp_src_sw );
-    {
+    if( emit_track_dataset( pprofs, fp_src_tr ) > 1 ) {
       TRACK_PROF_PTR prof = *pprofs;
+      if( !ferror( fp_src_sw ) )
+	read_iltbl_point( fp_src_sw );
       while( prof ) {
-	assert( !ferror( fp_out ) );
-	TRACK_PROF_PTR p = NULL;
-	GEN_INDENT( fp_out, 1, 2 );
-	p = emit_track_prof( fp_out, prof );
-	if( ferror( fp_out ) )
+	if( !ferror( fp_out ) ) {
+	  GEN_INDENT( fp_out, 1, 2 );
+	  if( !ferror( fp_out ) ) {
+	    TRACK_PROF_PTR p = NULL;
+	    p = emit_track_prof( fp_out, prof );
+	    assert( p == prof );
+	  } else {
+	    cnt *= -1;
+	    break;
+	  }
+	} else {
+	  cnt *= -1;
 	  break;
-	assert( p == prof );
+	}
+	cnt++;
 	prof = prof->pNext;
       }
     }
   }
-  return 0;
+  return cnt;
 }
 
 #if 0 // *****
@@ -841,20 +849,32 @@ static int gen_track_dataset ( FILE *fp_out ) {
   assert( fp_out );
   assert( !ferror( fp_out ) );
   int r = ERR_FAILED_OPEN_ILTBL_TRACKS;
-  FILE *fp_src = NULL;
   
+  FILE *fp_src_tr = NULL;
+  FILE *fp_src_sw = NULL;
+  int n = 0;
   emit_track_dataset_prolog( fp_out );
-  fp_src = fopen( "BCGN_TRACK.csv", "r" );
-  if( fp_src ) {
-    if( !ferror( fp_src ) ) {      
-      r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[BTGD], fp_out, fp_src );
+  fp_src_tr = fopen( "BCGN_TRACK.csv", "r" );
+  if( fp_src_tr ) {
+    if( !ferror( fp_src_tr ) ) {
+      fp_src_sw = fopen( "BCGN_POINT.csv", "r" );
+      if( fp_src_sw ) {
+	if( !ferror( fp_src_sw ) ) {
+	  r = _emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[BTGD], fp_out, fp_src_tr, fp_src_sw );	  
+	}
+      }
     }
   }
   r = ERR_FAILED_OPEN_ILTBL_TRACKS;
-  fp_src = fopen( "JLA_TRACK.csv", "r" );
-  if( fp_src ) {
-    if( !ferror( fp_src ) ) {
-      r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[JLA], fp_out, fp_src );
+  fp_src_tr = fopen( "JLA_TRACK.csv", "r" );
+  if( fp_src_tr ) {
+    if( !ferror( fp_src_tr ) ) {
+      fp_src_sw = fopen( "JLA_POINT.csv", "r" );
+      if( fp_src_sw ) {
+	if( !ferror( fp_src_sw ) ) {
+	  r = _emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[JLA], fp_out, fp_src_tr, fp_src_sw );
+	}
+      }
     }
   }
   emit_track_dataset_epilog( fp_out );
