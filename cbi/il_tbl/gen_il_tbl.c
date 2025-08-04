@@ -599,7 +599,7 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char
 }
 
 static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_src ) {
-  assert( pprofs );
+  assert( pprofs);
   assert( fp_out );
   assert( fp_src );
   TRACK_PROF_PTR pprev = NULL;
@@ -742,6 +742,23 @@ static int read_iltbl_point ( FILE *fp_src ) {
     skip_chr( fp_src );
   }
   return cnt;
+}
+
+static int _emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_src ) {
+  assert( pprofs );
+  assert( fp_out );
+  assert( fp_src );
+  emit_track_dataset( pprofs, fp_out, fp_src );
+  {
+    FILE *fp_src_point = NULL;
+    fp_src_point = fopen( "BCGN_POINT.csv", "r" );
+    if( fp_src_point ) {
+      if( !ferror( fp_src_point ) ) {
+	read_iltbl_point( fp_src_point );
+      }
+    }
+  }
+  return 0;
 }
 
 static void emit_track_dataset_prolog ( FILE *fp_out ) {
