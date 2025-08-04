@@ -516,18 +516,17 @@ static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
   return cnt;
 }
 
-static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char *ptr_name, char *pbounds ) {
+static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
   assert( pprof );
-  assert( ptr_name );
-  assert( pbounds );
   assert( fp_out );
   assert( !ferror( fp_out ) );
+  char *ptr_name = pprof->track_name;
   
   fprintf( fp_out, "{ _TRACK, " );
-  snprintf( pprof->track_name, CBI_STAT_IDENT_LEN, "%s_TR", ptr_name );
-  pprof->ptr_attr = conslt_cbi_code_tbl( pprof->track_name );
-  fprintf( fp_out, "\"%s\", ", pprof->track_name );
-  fprintf( fp_out, "%s, ", pprof->track_name );
+  //snprintf( pprof->track_name, CBI_STAT_IDENT_LEN, "%s_TR", ptr_name ); // *****
+  pprof->ptr_attr = conslt_cbi_code_tbl( ptr_name );
+  fprintf( fp_out, "\"%s\", ", ptr_name );
+  fprintf( fp_out, "%s, ", ptr_name );
   // cbtc
   fprintf( fp_out, "{" );
   {
@@ -589,36 +588,25 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof, char
   fprintf( fp_out, "}" );
   fprintf( fp_out, "},\n" );
   
-  if( !strcmp( pbounds, "Down" ) )
-    pprof->tr_bound = BOUND_DOWN;
-  else if( !strcmp( pbounds, "Up" ) )
-    pprof->tr_bound = BOUND_UP;
-  else
-    pprof->tr_bound = BOUND_UNKNOWN;
   return pprof;
 }
 
-static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_src ) {
+static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_src ) {
   assert( pprofs);
-  assert( fp_out );
   assert( fp_src );
   TRACK_PROF_PTR pprev = NULL;
   int cnt = 0;
   
-  assert( !ferror( fp_out ) );
-  assert( !ferror( fp_src ) );
   while( !feof(fp_src) ) {
+    assert( !ferror( fp_src ) );
     assert( cnt < TRACK_PROF_DECL_MAXNUM );
     int n = -1;
-    char seq[5 + 1];
-    char tr_name[TRACK_NAME_MAXLEN + 1];
-    char bounds[TRACK_BOUNDALIGN_MAXLEN + 1];
+    char seq[5 + 1] = "";
+    char tr_name[TRACK_NAME_MAXLEN + 1] = "T";
+    char bounds[TRACK_BOUNDALIGN_MAXLEN + 1] = "";
     seq[5] = 0;
     tr_name[TRACK_NAME_MAXLEN] = 0;
     bounds[TRACK_BOUNDALIGN_MAXLEN] = 0;
-    strcpy( seq, "" );
-    strcpy( tr_name, "T" );
-    strcpy( bounds, "" );
     {
       char *strs[5];
       char dc[256 + 1]; // dont cure.
@@ -633,14 +621,16 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_s
     }
     if( n >= 5 ) {
       assert( tr_name[0] == 'T' );
-      if( strnlen( tr_name, TRACK_NAME_MAXLEN ) > 1 ) {
-	TRACK_PROF_PTR pprof = NULL;
-	GEN_INDENT( fp_out, 1, 2 );
+      if( strnlen( &tr_name[1], (TRACK_NAME_MAXLEN - 1) ) > 1 ) {
 	assert( tracks_routes_prof.tracks.pavail < &tracks_routes_prof.tracks.track_profs[TRACK_PROF_DECL_MAXNUM] );
-	pprof = emit_track_prof( fp_out, tracks_routes_prof.tracks.pavail, tr_name, bounds );
-	assert( pprof == tracks_routes_prof.tracks.pavail );	
-	if( ferror( fp_out ) )
-	  break;
+	TRACK_PROF_PTR pprof = tracks_routes_prof.tracks.pavail;
+	snprintf( pprof->track_name, CBI_STAT_IDENT_LEN, "%s_TR", tr_name );
+	if( !strcmp( bounds, "Down" ) )
+	  pprof->tr_bound = BOUND_DOWN;
+	else if( !strcmp( bounds, "Up" ) )
+	  pprof->tr_bound = BOUND_UP;
+	else
+	  pprof->tr_bound = BOUND_UNKNOWN;
 	cnt++;
 #if 1 // *****
 	{
@@ -662,16 +652,17 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_s
 	  }
 	}
 #endif
+	assert( pprof == tracks_routes_prof.tracks.pavail );
 	if( cnt == 1 ) {
 	  assert( !pprev );
-	  *pprofs = tracks_routes_prof.tracks.pavail;
+	  *pprofs = pprof;
 	} else {
 	  assert( pprev );
 	  assert( !pprev->pNext );
-	  pprev->pNext = tracks_routes_prof.tracks.pavail;
+	  pprev->pNext = pprof;
 	}
-	(tracks_routes_prof.tracks.pavail)->pNext = NULL;
-	pprev = tracks_routes_prof.tracks.pavail;
+	pprof->pNext = NULL;
+	pprev = pprof;
 	tracks_routes_prof.tracks.pavail++;
       }
     }
@@ -744,40 +735,31 @@ static int read_iltbl_point ( FILE *fp_src ) {
   return cnt;
 }
 
-static int _emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_src ) {
+static int _emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_src_tr, FILE *fp_src_sw ) {
   assert( pprofs );
   assert( fp_out );
-  assert( fp_src );
-  emit_track_dataset( pprofs, fp_out, fp_src );
-  {
-    FILE *fp_src_point = NULL;
-    fp_src_point = fopen( "BCGN_POINT.csv", "r" );
-    if( fp_src_point ) {
-      if( !ferror( fp_src_point ) ) {
-	read_iltbl_point( fp_src_point );
+  assert( fp_src_tr );
+  assert( fp_src_sw );
+  
+  if( !ferror( fp_src_tr ) ) {
+    emit_track_dataset( pprofs, fp_src_tr );
+    if( !ferror( fp_src_sw ) )
+      read_iltbl_point( fp_src_sw );
+    {
+      TRACK_PROF_PTR prof = *pprofs;
+      while( prof ) {
+	assert( !ferror( fp_out ) );
+	TRACK_PROF_PTR p = NULL;
+	GEN_INDENT( fp_out, 1, 2 );
+	p = emit_track_prof( fp_out, prof );
+	if( ferror( fp_out ) )
+	  break;
+	assert( p == prof );
+	prof = prof->pNext;
       }
     }
   }
   return 0;
-}
-
-static void emit_track_dataset_prolog ( FILE *fp_out ) {
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  fprintf( fp_out, "#ifdef TRACK_ATTRIB_DEFINITION\n" );
-  fprintf( fp_out, "#ifdef INTERLOCK_C\n" );
-  fprintf( fp_out, "TRACK track_dataset_def[] = {\n" );
-}
-static void emit_track_dataset_epilog ( FILE *fp_out ) {
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  GEN_INDENT( fp_out, 1, 2 );
-  fprintf( fp_out, "{ END_OF_CBI_STAT_KIND }\n" );
-  fprintf( fp_out, "};\n" );
-  fprintf( fp_out, "#else\n" );
-  fprintf( fp_out, "extern TRACK track_dataset_def[];\n" );
-  fprintf( fp_out, "#endif\n" );
-  fprintf( fp_out, "#endif // TRACK_ATTRIB_DEFINITION\n" );
 }
 
 #if 0 // *****
@@ -836,6 +818,25 @@ static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
 }
 #endif
 
+static void emit_track_dataset_prolog ( FILE *fp_out ) {
+  assert( fp_out );
+  assert( !ferror( fp_out ) );
+  fprintf( fp_out, "#ifdef TRACK_ATTRIB_DEFINITION\n" );
+  fprintf( fp_out, "#ifdef INTERLOCK_C\n" );
+  fprintf( fp_out, "TRACK track_dataset_def[] = {\n" );
+}
+static void emit_track_dataset_epilog ( FILE *fp_out ) {
+  assert( fp_out );
+  assert( !ferror( fp_out ) );
+  GEN_INDENT( fp_out, 1, 2 );
+  fprintf( fp_out, "{ END_OF_CBI_STAT_KIND }\n" );
+  fprintf( fp_out, "};\n" );
+  fprintf( fp_out, "#else\n" );
+  fprintf( fp_out, "extern TRACK track_dataset_def[];\n" );
+  fprintf( fp_out, "#endif\n" );
+  fprintf( fp_out, "#endif // TRACK_ATTRIB_DEFINITION\n" );
+}
+
 static int gen_track_dataset ( FILE *fp_out ) {
   assert( fp_out );
   assert( !ferror( fp_out ) );
@@ -846,7 +847,7 @@ static int gen_track_dataset ( FILE *fp_out ) {
   fp_src = fopen( "BCGN_TRACK.csv", "r" );
   if( fp_src ) {
     if( !ferror( fp_src ) ) {      
-      r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[BTGD], fp_out, fp_src );     
+      r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[BTGD], fp_out, fp_src );
     }
   }
   r = ERR_FAILED_OPEN_ILTBL_TRACKS;
