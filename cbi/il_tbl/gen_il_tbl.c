@@ -5,6 +5,7 @@
  * -2) identify the origin track of the route, which has its destination signal as its ORIGIN one.
  * -3) For all relevant routes claim above condition, we should examine all ones have same track as its ORIGIN.
  * -4) then We can judge the track as the DESTINATION track of the route we are now looking for its dest.
+ * read_iltbl_track, read_iltbl_point
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -591,7 +592,7 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
   return pprof;
 }
 
-static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_src ) {
+static int read_iltbl_track ( TRACK_PROF_PTR *pprofs, FILE *fp_src ) {
   assert( pprofs);
   assert( fp_src );
   TRACK_PROF_PTR pprev = NULL;
@@ -665,6 +666,11 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_src ) {
 	pprev = pprof;
 	tracks_routes_prof.tracks.pavail++;
       }
+    } else {
+      cnt *= -1;
+#if 1 // *****
+      assert( FALSE );
+#endif
     }
     skip_chr( fp_src );
   }
@@ -698,7 +704,7 @@ static int read_iltbl_point ( FILE *fp_src ) {
       strs[7] = dc;
       n = par_csv_iltbl( strs, 8, fp_src );
     }
-    if( n > 1 ) {
+    if( n >= 8 ) {
       if( strncmp( sw_name, "", POINT_NAME_NAXLEN ) ) {
 	assert( sw_name[0] == 'P' );
 	TRACK_PROF_PTR ptr_prof = NULL;
@@ -712,30 +718,25 @@ static int read_iltbl_point ( FILE *fp_src ) {
 	    ptr_prof->turnout.npts++;
 	    cnt++;
 	  } else {
-#if 1 // *****
 	    cnt *= -1;
-	    assert( FALSE );
-#endif
-	  }	    
-	} else {
 #if 1 // *****
-	  cnt *= -1;
-	  assert( FALSE );
+	    //assert( FALSE );
 #endif
+	  }
 	}
-      } else {
-#if 1 // *****
-	cnt *= -1;
-	assert( FALSE );
-#endif
       }
+    } else {
+      cnt *= -1;
+#if 1 // *****
+      assert( FALSE );
     }
+#endif
     skip_chr( fp_src );
   }
   return cnt;
 }
 
-static int _emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_src_tr, FILE *fp_src_sw ) {
+static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_src_tr, FILE *fp_src_sw ) {
   assert( pprofs );
   assert( fp_out );
   assert( fp_src_tr );
@@ -743,7 +744,7 @@ static int _emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_
   int cnt = 0;
   
   if( !ferror( fp_src_tr ) ) {
-    if( emit_track_dataset( pprofs, fp_src_tr ) > 1 ) {
+    if( read_iltbl_track( pprofs, fp_src_tr ) > 1 ) {
       TRACK_PROF_PTR prof = *pprofs;
       if( !ferror( fp_src_sw ) )
 	read_iltbl_point( fp_src_sw );
@@ -852,7 +853,6 @@ static int gen_track_dataset ( FILE *fp_out ) {
   
   FILE *fp_src_tr = NULL;
   FILE *fp_src_sw = NULL;
-  int n = 0;
   emit_track_dataset_prolog( fp_out );
   fp_src_tr = fopen( "BCGN_TRACK.csv", "r" );
   if( fp_src_tr ) {
@@ -860,7 +860,7 @@ static int gen_track_dataset ( FILE *fp_out ) {
       fp_src_sw = fopen( "BCGN_POINT.csv", "r" );
       if( fp_src_sw ) {
 	if( !ferror( fp_src_sw ) ) {
-	  r = _emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[BTGD], fp_out, fp_src_tr, fp_src_sw );	  
+	  r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[BTGD], fp_out, fp_src_tr, fp_src_sw );	  
 	}
       }
     }
@@ -872,7 +872,7 @@ static int gen_track_dataset ( FILE *fp_out ) {
       fp_src_sw = fopen( "JLA_POINT.csv", "r" );
       if( fp_src_sw ) {
 	if( !ferror( fp_src_sw ) ) {
-	  r = _emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[JLA], fp_out, fp_src_tr, fp_src_sw );
+	  r = emit_track_dataset( &tracks_routes_prof.tracks.pprof_sets[JLA], fp_out, fp_src_tr, fp_src_sw );
 	}
       }
     }
