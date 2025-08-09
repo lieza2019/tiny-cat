@@ -151,6 +151,30 @@ static struct {
   } routes;
 } tracks_routes_prof = {};
 
+
+static void print_track_profs ( TRACK_PROF_PTR ptr_prof ) {
+  assert( ptr_prof );
+  
+  printf( "(tr_name, bound, [consist_blks]): (%s, %s, [", ptr_prof->track_name, cnv2str_trbound(ptr_prof->tr_bound) );
+  int i;
+  for( i = 0; i < ptr_prof->consists_blks.nblks; i++ ) {
+    CBTC_BLOCK_PTR pblk = ptr_prof->consists_blks.pblk_profs[i];
+    assert( pblk );
+    if( i > 0 )
+      printf( ", " );
+    assert( pblk->virt_blkname_str );
+    printf( "%s", pblk->virt_blkname_str );
+  }
+  printf( "])\n" );
+#if 0 // *****
+  for( i = 0; i < ptr_prof->consists_blks.nblks; i++ ) {
+    CBTC_BLOCK_PTR pblk = ptr_prof->consists_blks.pblk_profs[i];
+    assert( pblk );
+    print_block_prof( stdout, pblk );
+  }
+#endif
+}
+
 static BOOL prn_rtprof_lv1 = FALSE;
 static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pr_prof ) {
   assert( pr_prof );
@@ -483,40 +507,6 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
   return porg_tr;
 }
 
-static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
-  assert( pphead );
-  assert( ptr_name );
-  int cnt = 0;  
-  CBI_STAT_ATTR_PTR pattr = NULL;
-  
-  char idstr[ILCOND_IDENT_MAXLEN + 1];
-  strncpy( idstr, ptr_name, ILCOND_IDENT_MAXLEN );
-  strcat( idstr, "_TR" );
-  pattr = conslt_cbi_code_tbl( idstr );
-  if( pattr ) {
-    CBTC_BLOCK_PTR ptail = NULL;
-    int i = 0;
-    *pphead = NULL;
-    while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
-      if( block_state[i].belonging_tr.track == pattr->id ) {
-	if( *pphead ) {
-	  assert( ptail );
-	  ptail->belonging_tr.pNext = &block_state[i];	    
-	} else {
-	  assert( !ptail );
-	  *pphead = &block_state[i];
-	}
-	block_state[i].belonging_tr.pNext = NULL;
-	ptail = &block_state[i];
-	cnt++;
-      }
-      i++;
-    }
-    assert( block_state[i].block_name == 0 );
-  }
-  return cnt;
-}
-
 static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
   assert( pprof );
   assert( fp_out );
@@ -524,42 +514,25 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
   char *ptr_name = pprof->track_name;
   
   fprintf( fp_out, "{ _TRACK, " );
-  //snprintf( pprof->track_name, CBI_STAT_IDENT_LEN, "%s_TR", ptr_name ); // *****
   pprof->ptr_attr = conslt_cbi_code_tbl( ptr_name );
   fprintf( fp_out, "\"%s\", ", ptr_name );
   fprintf( fp_out, "%s, ", ptr_name );
+  
   // cbtc
   fprintf( fp_out, "{" );
   {
-    int nblks = -1;
-    CBTC_BLOCK_PTR pblk_prof = NULL;
-    nblks = track_prof_blks( &pblk_prof, ptr_name );
-    assert( nblks > -1 );
-    pprof->consists_blks.nblks = nblks;
+    int i;
     fprintf( fp_out, "%d", pprof->consists_blks.nblks );
-    if( nblks > 0 ) {
-      assert( pblk_prof );
-      int n = nblks;
-      int i = 0;
-      fprintf( fp_out, ", {" );
-      do {
-	assert( n > 0 );
-	if( n < nblks )
-	  fprintf( fp_out, ", " );
-	n--;
-	pprof->consists_blks.pblk_profs[i] = pblk_prof;
-	fprintf( fp_out, "%s", pprof->consists_blks.pblk_profs[i]->virt_blkname_str );
-	i++;
-	pblk_prof = pblk_prof->belonging_tr.pNext;
-      } while( pblk_prof );
-      assert( n == 0 );
-      assert( i == nblks );
-      fprintf( fp_out, "}" );
-      
-      pprof->hardbonds.nblks = link_internal_blks( pprof->consists_blks.pblk_profs, pprof->hardbonds.pblk_fixes, pprof->consists_blks.nblks );
-    }    
+    fprintf( fp_out, ", {" );
+    for( i = 0; i < pprof->consists_blks.nblks; i++ ) {
+      if( i > 0 )
+	fprintf( fp_out, ", " );
+      fprintf( fp_out, "%s", pprof->consists_blks.pblk_profs[i]->virt_blkname_str );
+    }
+    fprintf( fp_out, "}" );
   }
   fprintf( fp_out, "}, " );
+  
   // lock
   fprintf( fp_out, "{" );
   fprintf( fp_out, "{" );
@@ -633,26 +606,6 @@ static int read_iltbl_track ( TRACK_PROF_PTR *pprofs, FILE *fp_src ) {
 	else
 	  pprof->tr_bound = BOUND_UNKNOWN;
 	cnt++;
-#if 1 // *****
-	{
-	  printf( "(seq, tr_name, bound, [consist_blks]): (%s, %s, %s, [", seq, pprof->track_name, cnv2str_trbound(pprof->tr_bound) );
-	  int i;
-	  for( i = 0; i < pprof->consists_blks.nblks; i++ ) {
-	    CBTC_BLOCK_PTR pblk = pprof->consists_blks.pblk_profs[i];
-	    assert( pblk );
-	    if( i > 0 )
-	      printf( ", " );
-	    assert( pblk->virt_blkname_str );
-	    printf( "%s", pblk->virt_blkname_str );
-	  }
-	  printf( "])\n" );
-	  for( i = 0; i < pprof->consists_blks.nblks; i++ ) {
-	    CBTC_BLOCK_PTR pblk = pprof->consists_blks.pblk_profs[i];
-	    assert( pblk );
-	    print_block_prof( stdout, pblk );
-	  }
-	}
-#endif
 	assert( pprof == tracks_routes_prof.tracks.pavail );
 	if( cnt == 1 ) {
 	  assert( !pprev );
@@ -726,6 +679,65 @@ static int read_iltbl_point ( FILE *fp_src ) {
   return cnt;
 }
 
+static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
+  assert( pphead );
+  assert( ptr_name );
+  int cnt = 0;  
+  CBI_STAT_ATTR_PTR pattr = NULL;
+  
+  char idstr[ILCOND_IDENT_MAXLEN + 1];
+  strncpy( idstr, ptr_name, ILCOND_IDENT_MAXLEN );
+  pattr = conslt_cbi_code_tbl( idstr );
+  if( pattr ) {
+    CBTC_BLOCK_PTR ptail = NULL;
+    int i = 0;
+    *pphead = NULL;
+    while( block_state[i].virt_block_name != END_OF_CBTC_BLOCKs ) {
+      if( block_state[i].belonging_tr.track == pattr->id ) {
+	if( *pphead ) {
+	  assert( ptail );
+	  ptail->belonging_tr.pNext = &block_state[i];	    
+	} else {
+	  assert( !ptail );
+	  *pphead = &block_state[i];
+	}
+	block_state[i].belonging_tr.pNext = NULL;
+	ptail = &block_state[i];
+	cnt++;
+      }
+      i++;
+    }
+    assert( block_state[i].block_name == 0 );
+  }
+  return cnt;
+}
+
+static void consists_and_linking_blks ( TRACK_PROF_PTR ptr_prof ) {
+  assert( ptr_prof );
+  int nblks = -1;
+  CBTC_BLOCK_PTR pblk_prof = NULL;
+  
+  nblks = track_prof_blks( &pblk_prof, ptr_prof->track_name );
+#if 1 // *****
+  assert( nblks > -1 );
+#endif
+  ptr_prof->consists_blks.nblks = nblks;
+  if( nblks > 0 ) {
+    assert( pblk_prof );
+    int n = nblks;
+    int i = 0;
+    do {
+      assert( n > 0 );
+      ptr_prof->consists_blks.pblk_profs[i++] = pblk_prof;
+      n--;
+      pblk_prof = pblk_prof->belonging_tr.pNext;
+    } while( pblk_prof );
+    assert( n == 0 );
+    assert( i == nblks );    
+    ptr_prof->hardbonds.nblks = link_internal_blks( ptr_prof->consists_blks.pblk_profs, ptr_prof->hardbonds.pblk_fixes, ptr_prof->consists_blks.nblks );
+  }
+}
+
 static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_src_tr, FILE *fp_src_sw ) {
   assert( pprofs );
   assert( fp_out );
@@ -743,6 +755,8 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_s
 	  GEN_INDENT( fp_out, 1, 2 );
 	  if( !ferror( fp_out ) ) {
 	    TRACK_PROF_PTR p = NULL;
+	    consists_and_linking_blks( prof );
+	    print_track_profs( prof );
 	    p = emit_track_prof( fp_out, prof );
 	    assert( p == prof );
 	  } else {
