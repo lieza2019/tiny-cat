@@ -666,11 +666,6 @@ static int read_iltbl_track ( TRACK_PROF_PTR *pprofs, FILE *fp_src ) {
 	pprev = pprof;
 	tracks_routes_prof.tracks.pavail++;
       }
-    } else {
-      cnt *= -1;
-#if 1 // *****
-      assert( FALSE );
-#endif
     }
     skip_chr( fp_src );
   }
@@ -704,7 +699,7 @@ static int read_iltbl_point ( FILE *fp_src ) {
       strs[7] = dc;
       n = par_csv_iltbl( strs, 8, fp_src );
     }
-    if( n >= 7 ) {
+    if( n > 3 ) {
       if( strncmp( sw_name, "", POINT_NAME_NAXLEN ) ) {
 	assert( sw_name[0] == 'P' );
 	TRACK_PROF_PTR ptr_prof = NULL;
@@ -725,12 +720,7 @@ static int read_iltbl_point ( FILE *fp_src ) {
 	  }
 	}
       }
-    } else {
-      cnt *= -1;
-#if 1 // *****
-      assert( FALSE );
     }
-#endif
     skip_chr( fp_src );
   }
   return cnt;
