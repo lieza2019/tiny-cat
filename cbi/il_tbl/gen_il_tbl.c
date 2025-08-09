@@ -149,28 +149,97 @@ static struct {
   } routes;
 } tracks_routes_prof = {};
 
-
 static void print_track_prof ( TRACK_PROF_PTR ptr_prof ) {
   assert( ptr_prof );
   
-  printf( "(tr_name, bound, [consist_blks]): (%s, %s, [", ptr_prof->track_name, cnv2str_trbound(ptr_prof->tr_bound) );
-  int i;
-  for( i = 0; i < ptr_prof->consists_blks.nblks; i++ ) {
-    CBTC_BLOCK_PTR pblk = ptr_prof->consists_blks.pblk_profs[i];
-    assert( pblk );
-    if( i > 0 )
-      printf( ", " );
-    assert( pblk->virt_blkname_str );
-    printf( "%s", pblk->virt_blkname_str );
+  printf( "(tr_name, bound, {points}, {route_locks}, [consist_blks]): (%s, %s, {", ptr_prof->track_name, cnv2str_trbound(ptr_prof->tr_bound) );
+  {
+    int i;
+    for( i = 0; i < ptr_prof->turnout.npts; i++ ) {
+      if( i > 0 )
+	printf( ", " );
+      printf( "%s", ptr_prof->turnout.point[i].pt_name );
+    }
   }
-  printf( "])\n" );
+  printf( "}, {" );
+  
+  {
+    BOOL sr = FALSE;
+    // TLSR
+    if( ptr_prof->sr.TLSR.defined ) {
+      if( sr )
+	printf( ", " );
+      printf( "%s", ptr_prof->sr.TLSR.sr_name );
+      sr = TRUE;
+    }
+    // TRSR
+    if( ptr_prof->sr.TRSR.defined ) {
+      if( sr )
+	printf( ", " );
+      printf( "%s", ptr_prof->sr.TRSR.sr_name );
+      sr = TRUE;
+    }    
+    // sTLSR
+    if( ptr_prof->sr.sTLSR.defined ) {
+      if( sr )
+	printf( ", " );
+      printf( "%s", ptr_prof->sr.sTLSR.sr_name );
+      sr = TRUE;
+    }
+    // sTRRS
+    if( ptr_prof->sr.sTRSR.defined ) {
+      if( sr )
+	printf( ", " );
+      printf( "%s", ptr_prof->sr.sTRSR.sr_name );
+      sr = TRUE;
+    }
+    // eTLSR
+    if( ptr_prof->sr.eTLSR.defined ) {
+      if( sr )
+	printf( ", " );
+      printf( "%s", ptr_prof->sr.eTLSR.sr_name );
+      sr = TRUE;
+    }
+    // eTRSR
+    if( ptr_prof->sr.eTRSR.defined ) {
+      if( sr )
+	printf( ", " );
+      printf( "%s", ptr_prof->sr.eTRSR.sr_name );
+      sr = TRUE;
+    }
+    // kTLSR
+    if( ptr_prof->sr.kTLSR.defined ) {
+      if( sr )
+	printf( ", " );
+      printf( "%s", ptr_prof->sr.kTLSR.sr_name );
+      sr = TRUE;
+    }
+    // kTRSR
+    if( ptr_prof->sr.kTRSR.defined ) {
+      if( sr )
+	printf( ", " );
+      printf( "%s", ptr_prof->sr.kTRSR.sr_name );
+      sr = TRUE;
+    }
+  }
+  printf( "}, " );
+  
+  {
+    int i;
+    for( i = 0; i < ptr_prof->consists_blks.nblks; i++ ) {
+      CBTC_BLOCK_PTR pblk = ptr_prof->consists_blks.pblk_profs[i];
+      assert( pblk );
+      if( i > 0 )
+	printf( ", " );
 #if 0 // *****
-  for( i = 0; i < ptr_prof->consists_blks.nblks; i++ ) {
-    CBTC_BLOCK_PTR pblk = ptr_prof->consists_blks.pblk_profs[i];
-    assert( pblk );
-    print_block_prof( stdout, pblk );
-  }
+      print_block_prof( stdout, pblk );
+#else
+      assert( pblk->virt_blkname_str );
+      printf( "%s", pblk->virt_blkname_str );
 #endif
+    }
+    printf( "])\n" );
+  }
 }
 
 static BOOL prn_rtprof_lv1 = FALSE;
@@ -475,20 +544,16 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
   assert( fp_out );
   assert( !ferror( fp_out ) );
   char *ptr_name = pprof->track_name;
+  
   fprintf( fp_out, "{ _TRACK, " );
-#if 0 // *****
-  pprof->ptr_attr = conslt_cbi_code_tbl( ptr_name );
-  fprintf( fp_out, "\"%s\", ", ptr_name );
-  fprintf( fp_out, "%s, ", ptr_name );
-#else
   if( pprof->ptr_attr ) {
     fprintf( fp_out, "\"%s\", ", (pprof->ptr_attr)->ident );
     fprintf( fp_out, "%s, ", (pprof->ptr_attr)->ident );
   } else {
     fprintf( fp_out, "\"%s\", ", ptr_name );
     fprintf( fp_out, "%s, ", ptr_name );
-  } 
-#endif
+  }
+  
   // cbtc
   fprintf( fp_out, "{" );
   {
@@ -668,8 +733,9 @@ static int read_iltbl_point ( FILE *fp_src ) {
 	TRACK_PROF_PTR ptr_prof = NULL;
 	if( strncmp( tr_name, "", TRACK_NAME_MAXLEN ) ) {
 	  assert( tr_name[0] == 'T' );
+	  strncat( tr_name, "_TR", TRACK_NAME_MAXLEN );
 	  ptr_prof = lkup_track_prof( tr_name );
-	  if( ptr_prof ) {  
+	  if( ptr_prof ) {
 	    const int idx = ptr_prof->turnout.npts;
 	    assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
 	    strncpy( ptr_prof->turnout.point[idx].pt_name, sw_name, POINT_NAME_NAXLEN );
