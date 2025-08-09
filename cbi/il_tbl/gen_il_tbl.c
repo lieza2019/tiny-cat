@@ -620,7 +620,7 @@ static int read_iltbl_track ( TRACK_PROF_PTR *pprofs, FILE *fp_src ) {
       if( ferror( fp_src ) )
 	break;
     }
-    if( n >= 5 ) {
+    if( n > 1 ) {
       assert( tr_name[0] == 'T' );
       if( strnlen( &tr_name[1], (TRACK_NAME_MAXLEN - 1) ) > 1 ) {
 	assert( tracks_routes_prof.tracks.pavail < &tracks_routes_prof.tracks.track_profs[TRACK_PROF_DECL_MAXNUM] );
@@ -704,7 +704,7 @@ static int read_iltbl_point ( FILE *fp_src ) {
       strs[7] = dc;
       n = par_csv_iltbl( strs, 8, fp_src );
     }
-    if( n >= 8 ) {
+    if( n >= 7 ) {
       if( strncmp( sw_name, "", POINT_NAME_NAXLEN ) ) {
 	assert( sw_name[0] == 'P' );
 	TRACK_PROF_PTR ptr_prof = NULL;
