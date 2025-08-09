@@ -1029,9 +1029,7 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
     char seq[5 + 1];
     char ro_name[ROUTE_NAME_MAXLEN + 1];
     char app_tr[TRACK_NAME_MAXLEN + 1];
-#if 1 // *****
     char ahd_tr[TRACK_NAME_MAXLEN + 1];
-#endif
     seq[5] = 0;
     ro_name[ROUTE_NAME_MAXLEN] = 0;
     app_tr[TRACK_NAME_MAXLEN] = 0;
@@ -1040,11 +1038,7 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
     strcpy( app_tr, "T" );
     strcpy( ahd_tr, "T" );
     {
-#if 0 // *****
-      char *strs[5]; // *****
-#else
       char *strs[14];
-#endif
       char dc[256 + 1]; // dont cure.
       dc[256] = 0;
       strs[0] = seq;
@@ -1052,7 +1046,6 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
       strs[2] = ro_name;
       strs[3] = dc;
       strs[4] = &app_tr[1];
-#if 1 // *****
       strs[5] = dc;
       strs[6] = dc;
       strs[7] = dc;
@@ -1062,32 +1055,8 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
       strs[11] = dc;
       strs[12] = dc;
       strs[13] = &ahd_tr[1];
-#endif
-#if 0 // *****
-      n = par_csv_iltbl( strs, 5, fp_src );
-#else
       n = par_csv_iltbl( strs, 14, fp_src );
-#endif
     }
-#if 0 // *****
-    if( n > 1 ) {
-      if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
-	cnt++;
-	pprof = lkup_route_prof( ro_name );
-	if( pprof )
-	  pprof->apps.ntrs = 0;
-      }
-      if( pprof ) {
-	if( (strnlen(app_tr, TRACK_NAME_MAXLEN) > 1) && strncmp(&app_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
-	  assert( strnlen( app_tr, TRACK_NAME_MAXLEN ) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
-	  strncat( app_tr, "_TR", TRACK_NAME_MAXLEN );
-	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
-	  strncpy( pprof->apps.tr[pprof->apps.ntrs].tr_name, app_tr, TRACK_NAME_MAXLEN );
-	  pprof->apps.ntrs++;
-	}
-      }
-    }
-#else
     if( n > 1 ) {
       if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
 	cnt++;
@@ -1121,7 +1090,6 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 	}
       }
     }
-#endif
     skip_chr( fp_src );
   }
   return (cnt + 1);
