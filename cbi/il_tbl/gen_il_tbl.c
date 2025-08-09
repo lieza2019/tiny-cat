@@ -297,41 +297,6 @@ static void skip_chr ( FILE *fp_src ) {
   }
 }
 
-static BOOL track_prof_sr ( FILE *fp_out, struct track_sr *psr, char *ptr_name, const char * psfx_sr ) {
-  assert( psr );
-  assert( ptr_name );
-  assert( psfx_sr );
-  assert( fp_out );
-  assert( !ferror( fp_out ) );
-  BOOL r = FALSE;
-  
-  char idstr[ILCOND_IDENT_MAXLEN + 1];
-  strncpy( idstr, ptr_name, ILCOND_IDENT_MAXLEN );
-  strcat( idstr, psfx_sr );
-  idstr[ILCOND_IDENT_MAXLEN] = 0;
-  {
-    CBI_STAT_ATTR_PTR pattr = NULL;
-    pattr = conslt_cbi_code_tbl( idstr );
-    if( pattr ) {
-      assert( !strncmp( cnv2str_il_sym( pattr->id ), pattr->ident, ILCOND_IDENT_MAXLEN ) ); // *****
-      if( !strncmp( pattr->ident, idstr, ILCOND_IDENT_MAXLEN ) ) {	
-	psr->defined = TRUE;
-	strncpy( psr->sr_name, idstr, CBI_STAT_IDENT_LEN );
-	psr->psr_attr = pattr;
-	fprintf( fp_out, "TRUE, " );
-	fprintf( fp_out, "%s, %s", psfx_sr, psr->sr_name );
-	r = TRUE;
-      }
-    }
-  }
-  if( !r ) {
-    psr->defined = FALSE;
-    psr->psr_attr = NULL;
-    fprintf( fp_out, "FALSE" );
-  }
-  return r;
-}
-
 static int linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind ) {
   assert( blks );
   assert( nblks <= MAX_TRACK_BLOCKS );
@@ -533,35 +498,74 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
   }
   fprintf( fp_out, "}, " );
   
-  // lock
+  // lock, TLSR
   fprintf( fp_out, "{" );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, &pprof->sr.TLSR, ptr_name, "_TLSR" ); // TLSR
+  if( pprof->sr.TLSR.defined ) {
+    fprintf( fp_out, "TRUE, " );
+    fprintf( fp_out, "%s, %s", "_TLSR", pprof->sr.TLSR.sr_name );
+  } else
+    fprintf( fp_out, "FALSE" );
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, &pprof->sr.TRSR, ptr_name, "_TRSR" ); // TRSR
+  // TRSR
+  if( pprof->sr.TRSR.defined ) {
+    fprintf( fp_out, "TRUE, " );
+    fprintf( fp_out, "%s, %s", "_TRSR", pprof->sr.TRSR.sr_name );
+  } else
+    fprintf( fp_out, "FALSE" );
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, &pprof->sr.sTLSR, ptr_name, "_sTLSR" ); // sTLSR
+  // sTLSR
+  if( pprof->sr.sTLSR.defined ) {
+    fprintf( fp_out, "TRUE, " );
+    fprintf( fp_out, "%s, %s", "_sTLSR", pprof->sr.sTLSR.sr_name );
+  } else
+    fprintf( fp_out, "FALSE" );
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, &pprof->sr.sTRSR, ptr_name, "_sTRSR" ); // sTRSR
+  // sTRRS
+  if( pprof->sr.sTRSR.defined ) {
+    fprintf( fp_out, "TRUE, " );
+    fprintf( fp_out, "%s, %s", "_sTRSR", pprof->sr.sTRSR.sr_name );
+  } else
+    fprintf( fp_out, "FALSE" );
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, &pprof->sr.eTLSR, ptr_name, "_eTLSR" ); // eTLSR
+  // eTLSR
+  if( pprof->sr.eTLSR.defined ) {
+    fprintf( fp_out, "TRUE, " );
+    fprintf( fp_out, "%s, %s", "_eTLSR", pprof->sr.eTLSR.sr_name );
+  } else
+    fprintf( fp_out, "FALSE" );
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, &pprof->sr.eTRSR, ptr_name, "_eTRSR" ); // eTRSR
+  // eTRSR
+  if( pprof->sr.eTRSR.defined ) {
+    fprintf( fp_out, "TRUE, " );
+    fprintf( fp_out, "%s, %s", "_eTRSR", pprof->sr.eTRSR.sr_name );
+  } else
+   fprintf( fp_out, "FALSE" );
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, &pprof->sr.kTLSR, ptr_name, "_kTLSR" ); // kTLSR
+  // kTLSR
+  if( pprof->sr.kTLSR.defined ) {
+    fprintf( fp_out, "TRUE, " );
+    fprintf( fp_out, "%s, %s", "_kTLSR", pprof->sr.kTLSR.sr_name );
+  } else
+    fprintf( fp_out, "FALSE" );
   fprintf( fp_out, "}, " );
   fprintf( fp_out, "{" );
-  track_prof_sr( fp_out, &pprof->sr.kTRSR, ptr_name, "_kTRSR" ); // kTRSR
+  // kTRSR
+  if( pprof->sr.kTRSR.defined ) {
+    fprintf( fp_out, "TRUE, " );
+    fprintf( fp_out, "%s, %s", "_kTRSR", pprof->sr.kTRSR.sr_name );
+  } else
+    fprintf( fp_out, "FALSE" );
   fprintf( fp_out, "}" );
   fprintf( fp_out, "}" );
-  fprintf( fp_out, "},\n" );
   
+  fprintf( fp_out, "},\n" );
   return pprof;
 }
 
@@ -679,6 +683,71 @@ static int read_iltbl_point ( FILE *fp_src ) {
   return cnt;
 }
 
+static char *stem_track ( char *stem, const char *tr_name, const int stem_len ) {
+  assert( stem );
+  BOOL trimmed = FALSE;
+  
+  const char *p = tr_name;
+  while( *p ) {
+    assert( *p );
+    if( strncmp( p, "_TR", strlen("_TR") ) == 0 ) {
+      const int slen = (p - tr_name) < stem_len ? (p - tr_name) : stem_len;
+      strncpy( stem, tr_name, slen );
+      if( slen < stem_len )
+	stem[slen] = 0;
+      else
+	assert( slen == stem_len );
+      trimmed = TRUE;
+      break;
+    }
+    p++;
+  }
+  return (trimmed ? stem : NULL );
+}
+static BOOL identify_sr ( struct track_sr *psr, char *tr_name, const char *psfx_sr ) {
+  assert( psr );
+  assert( tr_name );
+  assert( psfx_sr );
+  BOOL r = FALSE;
+  
+  char idstr[CBI_STAT_IDENT_LEN + 1];
+  {
+    char *p = NULL;
+    p = stem_track( idstr, tr_name, CBI_STAT_IDENT_LEN );
+    assert( p == idstr );
+  }
+  strcat( idstr, psfx_sr );
+  idstr[CBI_STAT_IDENT_LEN] = 0;
+  {
+    CBI_STAT_ATTR_PTR pattr = NULL;
+    pattr = conslt_cbi_code_tbl( idstr );
+    if( pattr ) {
+      assert( !strncmp( cnv2str_il_sym(pattr->id), pattr->ident, CBI_STAT_IDENT_LEN ) ); // *****
+      psr->defined = TRUE;
+      strncpy( psr->sr_name, pattr->ident, CBI_STAT_IDENT_LEN );
+      psr->psr_attr = pattr;
+      r = TRUE;
+    } else {
+      psr->defined = FALSE;
+      psr->psr_attr = NULL;
+    }
+  }
+  return r;
+}
+static void track_prof_sr ( TRACK_PROF_PTR ptr_prof ) {
+  assert( ptr_prof );
+  assert( strnlen(ptr_prof->track_name, CBI_STAT_IDENT_LEN) > 0 );
+  
+  identify_sr( &ptr_prof->sr.TLSR, ptr_prof->track_name, "_TLSR" ); // TLSR
+  identify_sr( &ptr_prof->sr.TRSR, ptr_prof->track_name, "_TRSR" ); // TRSR
+  identify_sr( &ptr_prof->sr.sTLSR, ptr_prof->track_name, "_sTLSR" ); // sTLSR
+  identify_sr( &ptr_prof->sr.sTRSR, ptr_prof->track_name, "_sTRSR" ); // sTRSR
+  identify_sr( &ptr_prof->sr.eTLSR, ptr_prof->track_name, "_eTLSR" ); // eTLSR
+  identify_sr( &ptr_prof->sr.eTRSR, ptr_prof->track_name, "_eTRSR" ); // eTRSR
+  identify_sr( &ptr_prof->sr.kTLSR, ptr_prof->track_name, "_kTLSR" ); // kTLSR
+  identify_sr( &ptr_prof->sr.kTRSR, ptr_prof->track_name, "_kTRSR" ); // kTRSR
+}
+
 static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
   assert( pphead );
   assert( ptr_name );
@@ -711,7 +780,6 @@ static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
   }
   return cnt;
 }
-
 static void consists_and_linking_blks ( TRACK_PROF_PTR ptr_prof ) {
   assert( ptr_prof );
   int nblks = -1;
@@ -753,12 +821,15 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_s
       while( prof ) {
 	if( !ferror( fp_out ) ) {
 	  GEN_INDENT( fp_out, 1, 2 );
-	  if( !ferror( fp_out ) ) {
-	    TRACK_PROF_PTR p = NULL;
+	  if( !ferror( fp_out ) ) {	    
+	    track_prof_sr( prof );
 	    consists_and_linking_blks( prof );
 	    print_track_profs( prof );
-	    p = emit_track_prof( fp_out, prof );
-	    assert( p == prof );
+	    {
+	      TRACK_PROF_PTR p = NULL;
+	      p = emit_track_prof( fp_out, prof );
+	      assert( p == prof );
+	    }
 	  } else {
 	    cnt *= -1;
 	    break;
