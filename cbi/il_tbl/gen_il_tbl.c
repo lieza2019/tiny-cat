@@ -7,6 +7,7 @@
  * -4) then We can judge the track as the DESTINATION track of the route we are now looking for its dest.
  * -read_iltbl_track, read_iltbl_point
  * verification the registration of POINT name over the cbi codetable, in read_iltbl_point.
+ * how to tame the case of that both NKR & RKR are TRUE, its obvious ilegal condition.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -1392,6 +1393,7 @@ static int bkpat_destin ( void ) {
   return res;
 }
 
+#if 0
 static void trylnk_ahd2dst ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   ;
@@ -1425,6 +1427,98 @@ static void fine_ctrl_tracks ( void ) {
     pprof++;
   }
 }
+#else
+static int link_ahead ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_front, TRACK_PROF_PTR ptr_ahd, ROUTE_PROF_PTR pro_prof, const int nmphs_ahd ) {
+  assert( pmphs_ahd );
+  assert( ptr_front );
+  assert( ptr_ahd );
+  assert( pro_prof );
+  int r = 0;
+  struct route_sw *ppts[TURNOUT_MAX_POINTS] = {};
+  int nps = 0;
+  
+  int i;
+  for( i = 0; i < ptr_ahd->turnout.npts; i++ ) {
+    int j;
+    for( j = 0; j < pro_prof->body.npts; j++ ) {
+      if( strncmp( ptr_ahd->turnout.point[i].pt_name, pro_prof->body.pt[j].pt_name, CBI_STAT_IDENT_LEN ) == 0 ) {
+	ppts[nps] = &pro_prof->body.pt[j];
+	nps++;
+      }
+    }
+  }
+  {
+    int nms = 0;
+    int i;
+    for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
+      CBTC_BLOCK_PTR pblk = ptr_ahd->consists_blks.pblk_profs[i];
+      if( pblk ) {
+	int j;
+	for( j = 0; j < pblk->shape.num_morphs; j++ ) {
+	  BOOL found = FALSE;
+	  int k;
+	  for( k = 0; k < pblk->shape.morphs[j].nps; k++ ) {
+	    int l;
+	    for( found = FALSE, l = 0; l < nps; l++ ) {
+	      assert( ppts[l] );
+	      char pt_kr[CBI_STAT_IDENT_LEN + 1] = "";
+	      pt_kr[CBI_STAT_IDENT_LEN] = 0;
+	      strncpy( pt_kr, ppts[l]->pt_name, CBI_STAT_IDENT_LEN );
+	      if( ppts[l]->stat.normal ) {
+		strncat( pt_kr, "_NKR", CBI_STAT_IDENT_LEN );
+		if( strncmp( cnv2str_il_sym(pblk->shape.morphs[j].points[k]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
+		  found = TRUE;
+		  break;
+		}
+	      }
+	      strncpy( pt_kr, ppts[l]->pt_name, CBI_STAT_IDENT_LEN );
+	      if( ppts[l]->stat.reverse ) {
+		strncat( pt_kr, "_RKR", CBI_STAT_IDENT_LEN );
+		if( strncmp( cnv2str_il_sym(pblk->shape.morphs[j].points[k]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
+		  found = TRUE;
+		  break;
+		}
+	      }
+	    }
+	    if( !found )
+	      break;
+	  }
+	  if( found ) {
+	    pmphs_ahd[nms] = &pblk->shape.morphs[j]; // spare & enumerate the current morph on the block as, pblk->shape.morphs[j].
+	    nms++;
+	    break;
+	  }
+	}
+      }
+    }
+    r = nms;
+  }
+  return r;
+}
+
+struct frontier {
+  TRACK_PROF_PTR pt_fro;
+  BLK_MORPH_PTR pm_fro[MAX_TRACK_BLOCKS];
+};
+static void fine_ctrl_tracks ( void ) {
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    assert( pprof );
+    struct frontier front = {};
+    struct frontier ahead = {};
+    if( !front.pt_fro ) {
+      if( pprof->orgdst.org.porg_tr )
+	front.pt_fro = (pprof->orgdst.org.porg_tr)->tr_prof;
+      if( pprof->body.pahead )
+	ahead.pt_fro = (pprof->body.pahead)->tr_prof;
+      link_ahead( front.pm_fro, front.pt_fro, ahead.pt_fro, pprof, MAX_TRACK_BLOCKS );
+    } else {
+      assert( ahead.pt_fro );
+      front = ahead;
+    }    
+  }
+}
+#endif
 
 static int profile_routes ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   assert( fp_src_sig );

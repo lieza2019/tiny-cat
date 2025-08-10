@@ -66,7 +66,8 @@ typedef struct blk_morph {
   int num_links;
   BLK_LINKAGE linkages[MAX_ADJACENT_BLKS];
   const int len;
-  IL_SYM points[MAX_POINTS_ON_MORPHING];  
+  IL_SYM points[MAX_POINTS_ON_MORPHING];
+  int nps;
   struct block *pblock;
 } BLK_MORPH, *BLK_MORPH_PTR;
 typedef struct block {
