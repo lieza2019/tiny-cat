@@ -1266,40 +1266,51 @@ static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
       }
     }
     if( !pro_prof->body.pahead ) {
-      printf( "warning: ahead-track %s is not found in control ones of %s.\n", pro_prof->body.ahead.tr_name, pro_prof->route_name );
+      printf( "warning: ahead-track %s is not found in control-ones of %s.\n", pro_prof->body.ahead.tr_name, pro_prof->route_name );
     }
   }
   return r;
 }
 
-static struct route_tr *pick_dest_track ( const char *sig_dst, const int kikdn ) {
+static struct route_tr *pick_dest_track ( const char *sig_dst, const int kickdn ) {
   assert( sig_dst );
-  assert( kikdn > -2 );
-  struct route_tr *ptr_org = NULL;
+  assert( kickdn > -2 );
+  struct {
+    struct route_tr *ptr_org;
+    ROUTE_PROF_PTR pro_prof;
+  } ro_org = {};
   
-  if( kikdn >= 0 ) {
-    ROUTE_PROF_PTR pprof = (kikdn == tracks_routes_prof.routes.profs.nixls) ? tracks_routes_prof.routes.profs.pcrnt_ixl : tracks_routes_prof.routes.profs.pprevs[kikdn];
-    while( pprof < tracks_routes_prof.routes.pavail ) {
-      assert( pprof );
-      if( strncmp( pprof->orgdst.org.signame_org, sig_dst, CBI_STAT_IDENT_LEN ) == 0 ) {
-	if( pprof->orgdst.org.porg_tr ) {
-	  if( ptr_org ) {
-	    if( (strncmp(ptr_org->tr_name, pprof->orgdst.org.porg_tr->tr_name, CBI_STAT_IDENT_LEN) != 0) ||
-		(ptr_org->tr_prof ? (ptr_org->tr_prof != pprof->orgdst.org.porg_tr->tr_prof) : FALSE) ) {
-#if 1 // *****
-	      assert( FALSE );
-#endif
+  if( kickdn >= 0 ) {
+    ROUTE_PROF_PTR pr_prof = (kickdn == tracks_routes_prof.routes.profs.nixls) ? tracks_routes_prof.routes.profs.pcrnt_ixl : tracks_routes_prof.routes.profs.pprevs[kickdn];
+    while( pr_prof < tracks_routes_prof.routes.pavail ) {
+      assert( pr_prof );
+      if( strncmp( pr_prof->orgdst.org.signame_org, sig_dst, CBI_STAT_IDENT_LEN ) == 0 ) {
+	if( pr_prof->orgdst.org.porg_tr ) {
+	  if( ro_org.ptr_org ) {
+	    assert( ro_org.pro_prof );
+	    TRACK_PROF_PTR pt_prof = pr_prof->orgdst.org.porg_tr->tr_prof;
+	    if( !((strncmp(ro_org.ptr_org->tr_name, pr_prof->orgdst.org.porg_tr->tr_name, CBI_STAT_IDENT_LEN) != 0) ||
+		  (ro_org.ptr_org->tr_prof ? (pt_prof ? ro_org.ptr_org->tr_prof != pt_prof : FALSE) : FALSE)) ) {
+	      if( pt_prof ) {
+		ro_org.ptr_org = pr_prof->orgdst.org.porg_tr;
+		ro_org.pro_prof = pr_prof;
+	      }
+	    } else {
+	      printf( "warning: inconsitency found on the origin tracks of %s and %s, for %s and %s respectively.\n", ro_org.ptr_org->tr_name, pr_prof->orgdst.org.porg_tr->tr_name,
+		      (ro_org.pro_prof)->route_name, pr_prof->route_name );
 	    }
+	  } else {
+	    ro_org.ptr_org = pr_prof->orgdst.org.porg_tr;
+	    ro_org.pro_prof = pr_prof;
 	  }
-	  ptr_org = pprof->orgdst.org.porg_tr;
 	}
       }
-      pprof++;
+      pr_prof++;
     }
-    if( !ptr_org )
-      ptr_org = pick_dest_track( sig_dst, (kikdn - 1) );
+    if( !ro_org.ptr_org )
+      ro_org.ptr_org = pick_dest_track( sig_dst, (kickdn - 1) );
   }
-  return ptr_org;
+  return ro_org.ptr_org;
 }
 
 static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
