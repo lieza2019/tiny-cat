@@ -5,7 +5,8 @@
  * -2) identify the origin track of the route, which has its destination signal as its ORIGIN one.
  * -3) For all relevant routes claim above condition, we should examine all ones have same track as its ORIGIN.
  * -4) then We can judge the track as the DESTINATION track of the route we are now looking for its dest.
- * read_iltbl_track, read_iltbl_point
+ * -read_iltbl_track, read_iltbl_point
+ * verification the registration of POINT name over the cbi codetable, in read_iltbl_point.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -470,11 +471,12 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
 	      }
 	    }
 	    assert( found );
-	  } else
-#if 1 // *****	  
-	    assert( FALSE );
-#endif
-	  return &app_trs[i];
+	    return &app_trs[i];
+	  } else {
+	    printf( "fatal: ill-formed linking detected on the blocks of %s and %s.\n",
+		    ((fixes[0].pprof) ? (fixes[0].pprof)->virt_blkname_str : "UNKNOWN"),
+		    ((fixes[1].pprof) ? (fixes[1].pprof)->virt_blkname_str : "UNKNOWN") );
+	  }	  
 	}
       }
     }
@@ -733,19 +735,19 @@ static int read_iltbl_point ( FILE *fp_src ) {
 	TRACK_PROF_PTR ptr_prof = NULL;
 	if( strncmp( tr_name, "", TRACK_NAME_MAXLEN ) ) {
 	  assert( tr_name[0] == 'T' );
-	  strncat( tr_name, "_TR", TRACK_NAME_MAXLEN );
-	  ptr_prof = lkup_track_prof( tr_name );
-	  if( ptr_prof ) {
-	    const int idx = ptr_prof->turnout.npts;
-	    assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
-	    strncpy( ptr_prof->turnout.point[idx].pt_name, sw_name, POINT_NAME_NAXLEN );
-	    ptr_prof->turnout.npts++;
-	    cnt++;
-	  } else {
-	    cnt *= -1;
-#if 1 // *****
-	    //assert( FALSE );
-#endif
+	  if( strnlen( tr_name, TRACK_NAME_MAXLEN ) > 1 ) {
+	    strncat( tr_name, "_TR", TRACK_NAME_MAXLEN );
+	    ptr_prof = lkup_track_prof( tr_name );
+	    if( ptr_prof ) {
+	      const int idx = ptr_prof->turnout.npts;
+	      assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
+	      strncpy( ptr_prof->turnout.point[idx].pt_name, sw_name, POINT_NAME_NAXLEN );
+	      ptr_prof->turnout.npts++;
+	      cnt++;
+	    } else {
+	      cnt *= -1;
+	      printf( "warning: unknown turnout track %s with %s detected, not found in TRACK of interlock table.\n", tr_name, sw_name );
+	    }
 	  }
 	}
       }
@@ -794,7 +796,7 @@ static BOOL identify_sr ( struct track_sr *psr, char *tr_name, const char *psfx_
     CBI_STAT_ATTR_PTR pattr = NULL;
     pattr = conslt_cbi_code_tbl( idstr );
     if( pattr ) {
-      assert( !strncmp( cnv2str_il_sym(pattr->id), pattr->ident, CBI_STAT_IDENT_LEN ) ); // *****
+      assert( !strncmp( cnv2str_il_sym(pattr->id), pattr->ident, CBI_STAT_IDENT_LEN ) );
       psr->defined = TRUE;
       strncpy( psr->sr_name, pattr->ident, CBI_STAT_IDENT_LEN );
       psr->psr_attr = pattr;
@@ -852,22 +854,21 @@ static int track_prof_blks ( CBTC_BLOCK_PTR *pphead, char *ptr_name ) {
   }
   return cnt;
 }
-static void consists_and_linking_blks ( TRACK_PROF_PTR ptr_prof ) {
+static void consist_blks_and_linking ( TRACK_PROF_PTR ptr_prof ) {
   assert( ptr_prof );
-  int nblks = -1;
-  CBTC_BLOCK_PTR pblk_prof = NULL;
   
-  if( ptr_prof->ptr_attr )
-    nblks = track_prof_blks( &pblk_prof, (ptr_prof->ptr_attr)->ident );
-  else
-    nblks = track_prof_blks( &pblk_prof, ptr_prof->track_name );
-#if 1 // *****
-  assert( nblks > -1 );
-#endif
-  ptr_prof->consists_blks.nblks = nblks;
-  if( nblks > 0 ) {
+  CBTC_BLOCK_PTR pblk_prof = NULL;
+  {
+    int nblks = -1;
+    if( ptr_prof->ptr_attr )
+      nblks = track_prof_blks( &pblk_prof, (ptr_prof->ptr_attr)->ident );
+    else
+      nblks = track_prof_blks( &pblk_prof, ptr_prof->track_name );
+    ptr_prof->consists_blks.nblks = nblks;
+  }
+  if( ptr_prof->consists_blks.nblks > 0 ) {
     assert( pblk_prof );
-    int n = nblks;
+    int n = ptr_prof->consists_blks.nblks;
     int i = 0;
     do {
       assert( n > 0 );
@@ -876,8 +877,10 @@ static void consists_and_linking_blks ( TRACK_PROF_PTR ptr_prof ) {
       pblk_prof = pblk_prof->belonging_tr.pNext;
     } while( pblk_prof );
     assert( n == 0 );
-    assert( i == nblks );    
+    assert( i == ptr_prof->consists_blks.nblks );
     ptr_prof->hardbonds.nblks = link_internal_blks( ptr_prof->consists_blks.pblk_profs, ptr_prof->hardbonds.pblk_fixes, ptr_prof->consists_blks.nblks );
+  } else {
+    printf( "warning: track %s has no blocks.\n", (ptr_prof->ptr_attr ? (ptr_prof->ptr_attr)->ident : ptr_prof->track_name) );
   }
 }
 
@@ -900,11 +903,9 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_s
 	    track_prof_sr( prof );
 	    prof->ptr_attr = conslt_cbi_code_tbl( prof->track_name );
 	    if( ! prof->ptr_attr ) {
-#if 1 // *****
-	      assert( FALSE );
-#endif
+	      printf( "warning: track %s has no registration in cbi codetable.\n", prof->track_name );
 	    }
-	    consists_and_linking_blks( prof );
+	    consist_blks_and_linking( prof );
 	    print_track_prof( prof );
 	    {
 	      TRACK_PROF_PTR p = NULL;
@@ -1142,24 +1143,11 @@ static int read_iltbl_signal ( FILE *fp_src ) {
 	assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	strncpy( pprof->body.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
 	pprof->body.tr[i].tr_prof = lkup_track_prof( pprof->body.tr[i].tr_name );
-#if 0 // ***** !!!!!
-	assert( pprof->ctrls.tr[i].tr_prof );
-#endif
-	pprof->body.ntrs++;
-      }     
-#if 0 // *****
-      printf( "(seq, route, [ctrl_tracks]): (%s, %s, [", seq, pprof->route_name );
-      {	
-	int i = 0;
-	while( i < pprof->ctrls.ntrs ) {
-	  if( i > 0 )
-	    printf( ", " );
-	  printf( "%s", pprof->ctrls.tr[i].tr_name );
-	  i++;
+	if( ! pprof->body.tr[i].tr_prof ) {
+	  printf( "warning: unknown control-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->body.tr[i].tr_name, pprof->route_name );
 	}
+	pprof->body.ntrs++;
       }
-      printf( "])\n" );
-#endif
       assert( nor_sw[0] == 'P' );
       if( (strnlen(&nor_sw[1], (POINT_NAME_NAXLEN - 1)) > 1) && strncmp(&nor_sw[1], "Nil", (POINT_NAME_NAXLEN - 1)) ) {
 	assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
@@ -1238,9 +1226,9 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	  strncpy( pprof->apps.tr[pprof->apps.ntrs].tr_name, app_tr, TRACK_NAME_MAXLEN );
 	  pprof->apps.tr[pprof->apps.ntrs].tr_prof = lkup_track_prof( pprof->apps.tr[pprof->apps.ntrs].tr_name );
-#if 0 // ***** !!!!!
-	  assert( pprof->apps.tr[pprof->apps.ntrs].tr_prof );
-#endif
+	  if( !pprof->apps.tr[pprof->apps.ntrs].tr_prof ) {
+	    printf( "warning: unknown approach-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->apps.tr[pprof->apps.ntrs].tr_name, pprof->route_name );
+	  }
 	  pprof->apps.ntrs++;
 	}
 	assert( ahd_tr[0] == 'T' );
@@ -1250,9 +1238,9 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
 	  strncpy( pprof->body.ahead.tr_name, ahd_tr, TRACK_NAME_MAXLEN );
 	  pprof->body.ahead.tr_prof = lkup_track_prof( pprof->body.ahead.tr_name );
-#if 1 // *****
-	  assert( pprof->body.ahead.tr_prof );
-#endif	  
+	  if( !pprof->body.ahead.tr_prof ) {
+	    printf( "warning: unknown ahead-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->body.ahead.tr_name, pprof->route_name );
+	  }
 	}
       }
     }
@@ -1277,9 +1265,9 @@ static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
 	break;
       }
     }
-#if 1 // *****
-    assert( pro_prof->body.pahead );
-#endif
+    if( !pro_prof->body.pahead ) {
+      printf( "warning: ahead-track %s is not found in control ones of %s.\n", pro_prof->body.ahead.tr_name, pro_prof->route_name );
+    }
   }
   return r;
 }
@@ -1328,11 +1316,10 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
       TRACK_PROF_PTR pahd_tr = NULL;
       pahd_tr = pick_ahead_track( pr_prof );
       if( pahd_tr ) {
-#if 1 // *****
-	assert( pr_prof->body.pahead );
-#endif
+	pr_prof->orgdst.org.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.ntrs, pahd_tr );
+      } else {	
+	printf( "warning: missing ahead-track of %s.\n", pr_prof->route_name );
       }
-      pr_prof->orgdst.org.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.ntrs, pahd_tr );
 #if 0 // *****
       prn_route_prof_lv0( pr_prof );
 #endif
