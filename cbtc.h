@@ -53,21 +53,17 @@ typedef struct blk_linkages {
   const int edge_pos;
   struct blk_linkages *pNext;
   struct blk_morph *pmorph;
-#if 0 // *****
-  struct blk_linkages *pln_neigh;
-#else
   struct {
     LINX_BONDAGE_KIND kind;
     struct blk_linkages *pln_neigh;
   } bond;
-#endif
 } BLK_LINKAGE, *BLK_LINKAGE_PTR;
 typedef struct blk_morph {
-  int num_links; // its 2 as definitely.
+  int num_links;
   BLK_LINKAGE linkages[MAX_ADJACENT_BLKS];
   const int len;
+  int num_points;
   IL_SYM points[MAX_POINTS_ON_MORPHING];
-  int num_points; // !!!!!!
   struct block *pblock;
 } BLK_MORPH, *BLK_MORPH_PTR;
 typedef struct block {
@@ -78,8 +74,8 @@ typedef struct block {
   struct {
     int num_morphs;
     BLK_MORPH morphs[MAX_BLOCK_MORPHS];
-    BLK_LINKAGE_PTR lnks[MAX_ADJACENT_BLKS];
     int num_lnks; // !!!!!!
+    BLK_LINKAGE_PTR lnks[MAX_ADJACENT_BLKS];    
   } shape;
   struct {
     const IL_SYM track;
