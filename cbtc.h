@@ -63,7 +63,7 @@ typedef struct blk_linkages {
 #endif
 } BLK_LINKAGE, *BLK_LINKAGE_PTR;
 typedef struct blk_morph {
-  int num_links;
+  int num_links; // its 2 as definitely.
   BLK_LINKAGE linkages[MAX_ADJACENT_BLKS];
   const int len;
   IL_SYM points[MAX_POINTS_ON_MORPHING];

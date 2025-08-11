@@ -1429,10 +1429,9 @@ static void chase_ctrl_tracks ( void ) {
   }
 }
 #else
-static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd, TRACK_PROF_PTR ptr_front, ROUTE_PROF_PTR pro_prof, const int nmphs_ahd ) {
+static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd, ROUTE_PROF_PTR pro_prof, const int nmphs_ahd ) {
   assert( pmphs_ahd );
   assert( ptr_ahd );
-  assert( ptr_front );  
   assert( pro_prof );
   int r = 0;
   struct route_sw *ppts[TURNOUT_MAX_POINTS] = {};
@@ -1497,6 +1496,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
       r = nms;
     }
   } else {
+    assert( ptr_ahd->turnout.npts == 0 );
     int i;
     for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
       assert( ptr_ahd );
@@ -1515,7 +1515,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	    assert( nps == pro_prof->body.npts );
 	    goto panic;
 	  }
-	}      
+	}
       }
     }
     if( ptr_ahd->hardbonds.nblks == ptr_ahd->consists_blks.nblks ) {
@@ -1533,6 +1533,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
 	if( pbs_ahd ) {
 	  if( (pbs_ahd->shape.num_morphs == 1) && (pbs_ahd->shape.num_lnks == 2) ) {
+	    
 	    BOOL found = FALSE;
 	    int j;
 	    for( j = 0; j < ptr_ahd->hardbonds.nblks; j++ ) {
@@ -1552,19 +1553,21 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 		    assert( fst < 2 );
 		    const int snd = (fst == 0) ? 1 : 0;
 		    if( (blk_lnks[j].plnks)->pos[snd] == pbs_ahd->shape.lnks[1] ) {
+		      assert( ! blk_lnks[j].chk );
 		      blk_lnks[j].chk = TRUE;
 		      found = TRUE;
 		      break;
 		    } else
 		      goto failed;
 		  } else
-		    goto failed;		  
+		    goto failed;
 		} else
 		  goto failed;
 	      }
 	    }
 	    if( !found )
 	      goto failed;
+	    
 	  } else
 	    goto failed;
 	}
@@ -1578,7 +1581,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	int cnt = 0;
 	for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
 	  assert( ptr_ahd );
-	  assert( ! blk_lnks[i].chk );
+	  assert( blk_lnks[i].chk );
 	  assert( blk_lnks[i].plnks );
 	  assert( (blk_lnks[i].plnks)->pprof );
 	  assert( (blk_lnks[i].plnks)->npos == 2 );
@@ -1623,23 +1626,13 @@ struct frontier {
   int nms;
   BLK_MORPH_PTR pm_fro[MAX_TRACK_BLOCKS];
 };
-static void trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront ) {
-  assert( pahead );
+static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront ) {
   assert( pfront );
   struct fixed_pos ln_blks[MAX_TRACK_BLOCKS * 2] = {};
-  int cnt = 0;
+  int r = -1;
   
+  int cnt = 0;
   int i;
-  for( i = 0; i < pahead->nms; i++ ) {
-    assert( pahead );
-    assert( pahead->pm_fro[i] );
-    int j;
-    ln_blks[cnt].pprof = (pahead->pm_fro[i])->pblock;
-    ln_blks[cnt].npos = (pahead->pm_fro[i])->num_links;
-    for( j = 0; j < ln_blks[cnt].npos; j++ )
-      ln_blks[cnt].pos[j] = &(pahead->pm_fro[i])->linkages[j];
-    cnt++;
-  }
   for( i = 0; i < pfront->nms; i++ ) {
     assert( pfront );
     assert( pfront->pm_fro[i] );
@@ -1650,45 +1643,60 @@ static void trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront 
       ln_blks[cnt].pos[j] = &(pfront->pm_fro[i])->linkages[j];
     cnt++;
   }
-  linking( ln_blks, cnt, LINK_SOFT );
+  assert( cnt <= MAX_TRACK_BLOCKS );
+  if( pahead ) {
+    for( i = 0; i < pahead->nms; i++ ) {
+      assert( pahead );
+      assert( pahead->pm_fro[i] );
+      int j;
+      ln_blks[cnt].pprof = (pahead->pm_fro[i])->pblock;
+      ln_blks[cnt].npos = (pahead->pm_fro[i])->num_links;
+      for( j = 0; j < ln_blks[cnt].npos; j++ )
+	ln_blks[cnt].pos[j] = &(pahead->pm_fro[i])->linkages[j];
+      cnt++;
+    }
+    assert( cnt <= (MAX_TRACK_BLOCKS * 2) );
+  }  
+  r = linking( ln_blks, cnt, LINK_SOFT );
+  return r;
 }
 
 static void chase_ctrl_tracks ( void ) {
   ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
+  
   while( pprof < tracks_routes_prof.routes.pavail ) {
     assert( pprof );
     struct frontier front = {};
     struct frontier ahead = {};
-    int i;    
+    int i;
     for( i = 0; i < pprof->body.ntrs; i++ ) {
       assert( pprof );
-      if( !front.pt_fro ) {      
-	if( pprof->orgdst.org.porg_tr )
+      if( ! front.pt_fro ) {
+	if( pprof->orgdst.org.porg_tr ) {
+	  int m = -1;
 	  front.pt_fro = (pprof->orgdst.org.porg_tr)->tr_prof;
+	  m = morph_ahead_blks( front.pm_fro, front.pt_fro, pprof, MAX_TRACK_BLOCKS );
+	  assert( m > -1 );
+	  front.nms = m;
+	  trylnk_ahead_blk( NULL, &front );
+	}
 	if( pprof->body.pahead )
 	  ahead.pt_fro = (pprof->body.pahead)->tr_prof;
-	{
-	  int n = -1;
-	  n = morph_ahead_blks( ahead.pm_fro, ahead.pt_fro, front.pt_fro, pprof, MAX_TRACK_BLOCKS );
-	  assert( n > -1 );
-	  ahead.nms = n;
-	}
       } else {
 	assert( ahead.pt_fro );
 	front = ahead;
-	// retrieve the advance track, and put it on ahead.
 	ahead.pt_fro = pprof->body.tr[i].tr_prof;
 	ahead.nms = 0;
-	{
-	  int n = -1;
-	  n = morph_ahead_blks( ahead.pm_fro, ahead.pt_fro, front.pt_fro, pprof, MAX_TRACK_BLOCKS );
-	  assert( n > -1 );
-	  ahead.nms = n;
-	}	
+      }
+      {
+	int n = -1;
+	n = morph_ahead_blks( ahead.pm_fro, ahead.pt_fro, pprof, MAX_TRACK_BLOCKS );
+	assert( n > -1 );
+	ahead.nms = n;
       }
       trylnk_ahead_blk( &ahead, &front );
     }
-    
+    pprof++;
   }
 }
 #endif
