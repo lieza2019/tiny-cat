@@ -1540,8 +1540,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	assert( ptr_ahd );
 	CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
 	if( pbs_ahd ) {
-	  if( (pbs_ahd->shape.num_morphs == 1) && (pbs_ahd->shape.num_lnks == 2) ) {
-	    
+	  if( (pbs_ahd->shape.num_morphs == 1) && (pbs_ahd->shape.morphs[0].num_links == 2) ) {
 	    BOOL found = FALSE;
 	    int j;
 	    for( j = 0; j < ptr_ahd->hardbonds.nblks; j++ ) {
@@ -1552,15 +1551,15 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 		if( (blk_lnks[j].plnks)->npos == 2 ) {
 		  int fst = -1;
 		  for( k = 0; k < 2; k++ ) {
-		    if( (blk_lnks[j].plnks)->pos[k] == pbs_ahd->shape.lnks[0] ) {
+		    if( (blk_lnks[j].plnks)->pos[k] == &pbs_ahd->shape.morphs[0].linkages[0] ) {
 		      fst = k;
-		      break;		      
-		    }		    
+		      break;
+		    }
 		  }
 		  if( fst > -1 ) {
 		    assert( fst < 2 );
 		    const int snd = (fst == 0) ? 1 : 0;
-		    if( (blk_lnks[j].plnks)->pos[snd] == pbs_ahd->shape.lnks[1] ) {
+		    if( (blk_lnks[j].plnks)->pos[snd] == &pbs_ahd->shape.morphs[0].linkages[1] ) {
 		      assert( ! blk_lnks[j].chk );
 		      blk_lnks[j].chk = TRUE;
 		      found = TRUE;
