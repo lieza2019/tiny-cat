@@ -379,6 +379,10 @@ static int linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind 
       int j;
       if( ! pblk->pos[i] )
 	continue;
+      if( (pblk->pos[i])->bond.pln_neigh ) {
+	assert( (pblk->pos[i])->bond.kind != LINK_NONE );
+	continue;
+      }
       assert( pblk->pos[i]->pmorph );
       assert( pblk->pos[i]->pmorph->pblock );
       for( j = 1; j < nblks; j++ ) {
@@ -389,6 +393,10 @@ static int linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind 
 	for( k = 0; k < pb->npos; k++ ) {
 	  if( ! pb->pos[k] )
 	    continue;
+	  if( (pb->pos[k])->bond.pln_neigh ) {
+	    assert( (pb->pos[k])->bond.kind != LINK_NONE );
+	    continue;
+	  }
 	  assert( pb->pos[k]->pmorph );
 	  assert( pb->pos[k]->pmorph->pblock );
 	  if( (pblk->pos[i]->neigh_blk == pb->pos[k]->pmorph->pblock->block_name) &&
