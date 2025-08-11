@@ -1441,10 +1441,10 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
   assert( pmphs_ahd );
   assert( ptr_ahd );
   assert( pro_prof );
-  int r = 0;
   struct route_sw *ppts[TURNOUT_MAX_POINTS] = {};
+  int nms = 0;
+  
   int nps = 0;
-
   if( ptr_ahd->turnout.npts > 0 ) {
     int i;
     for( i = 0; i < ptr_ahd->turnout.npts; i++ ) {
@@ -1457,8 +1457,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
       }
     }
   panic:
-    {
-      int nms = 0;
+    { 
       int i;    
       for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
 	CBTC_BLOCK_PTR pblk = ptr_ahd->consists_blks.pblk_profs[i];
@@ -1501,7 +1500,6 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	  }
 	}
       }
-      r = nms;
     }
   } else {
     assert( ptr_ahd->turnout.npts == 0 );
@@ -1536,7 +1534,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	blk_lnks[i].chk = FALSE;
       }
       assert( i == ptr_ahd->hardbonds.nblks );
-      for( i = 0; ptr_ahd->consists_blks.nblks; i++ ) {
+      for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
 	assert( ptr_ahd );
 	CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
 	if( pbs_ahd ) {
@@ -1584,48 +1582,33 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	if( ! blk_lnks[i].chk )
 	  goto failed;
       }
-      {
-	int cnt = 0;
-	for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
-	  assert( ptr_ahd );
-	  assert( blk_lnks[i].chk );
-	  assert( blk_lnks[i].plnks );
-	  assert( (blk_lnks[i].plnks)->pprof );
-	  assert( (blk_lnks[i].plnks)->npos == 2 );
-	  BLK_LINKAGE_PTR pfst = (blk_lnks[i].plnks)->pos[0];
-	  BLK_LINKAGE_PTR psnd = (blk_lnks[i].plnks)->pos[1];
-	  assert( pfst );
-	  assert( psnd );
-	  if( pfst->bond.kind == LINK_NONE ) {
-	    assert( ! pfst->bond.pln_neigh );
-	    if( cnt < 2 ) {
-	      assert( pfst->pmorph );
-	      pmphs_ahd[cnt] = pfst->pmorph;
-	      cnt++;
-	    } else
-	      goto failed;
-	  } else
-	    assert( pfst->bond.pln_neigh );
-	  if( psnd->bond.kind == LINK_NONE ) {
-	    assert( ! psnd->bond.pln_neigh );
-	    if( cnt < 2 ) {
-	      assert( psnd->pmorph );
-	      pmphs_ahd[cnt] = psnd->pmorph;
-	      cnt++;
-	    } else
-	      goto failed;
-	  } else
-	    assert( psnd->bond.pln_neigh );
-	}
-	if( cnt != 2 )
-	  goto failed;
-	else
-	  r = cnt;
+      for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
+	assert( ptr_ahd );
+	assert( blk_lnks[i].chk );
+	assert( blk_lnks[i].plnks );
+	assert( (blk_lnks[i].plnks)->pprof );
+	assert( (blk_lnks[i].plnks)->npos == 2 );
+	BLK_LINKAGE_PTR pfst = (blk_lnks[i].plnks)->pos[0];
+	BLK_LINKAGE_PTR psnd = (blk_lnks[i].plnks)->pos[1];
+	assert( pfst );
+	assert( psnd );
+	if( pfst->bond.kind == LINK_NONE ) {
+	  assert( ! pfst->bond.pln_neigh );
+	  pmphs_ahd[nms] = pfst->pmorph;
+	  nms++;
+	} else
+	  assert( pfst->bond.pln_neigh );
+	if( psnd->bond.kind == LINK_NONE ) {
+	  assert( ! psnd->bond.pln_neigh );
+	  pmphs_ahd[nms] = psnd->pmorph;
+	  nms++;
+	} else
+	  assert( psnd->bond.pln_neigh );
       }
     } else
       goto failed;
   }
-  return r;
+  return nms;
 }
 
 struct frontier {
