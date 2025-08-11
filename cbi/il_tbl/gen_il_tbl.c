@@ -370,6 +370,7 @@ static int linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind 
   assert( blks );
   assert( nblks <= MAX_TRACK_BLOCKS );
   int cnt = 0;
+  
   if( nblks > 1 ) {
     struct fixed_pos *pblk = &blks[0];
     int i;
@@ -1436,62 +1437,183 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
   int r = 0;
   struct route_sw *ppts[TURNOUT_MAX_POINTS] = {};
   int nps = 0;
-  
-  int i;
-  for( i = 0; i < ptr_ahd->turnout.npts; i++ ) {
-    int j;
-    for( j = 0; j < pro_prof->body.npts; j++ ) {
-      if( strncmp( ptr_ahd->turnout.point[i].pt_name, pro_prof->body.pt[j].pt_name, CBI_STAT_IDENT_LEN ) == 0 ) {
-	ppts[nps] = &pro_prof->body.pt[j];
-	nps++;
-      }
-    }
-  }
-  {
-    int nms = 0;
+
+  if( ptr_ahd->turnout.npts > 0 ) {
     int i;
-    for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
-      CBTC_BLOCK_PTR pblk = ptr_ahd->consists_blks.pblk_profs[i];
-      if( pblk ) {
-	int j;
-	for( j = 0; j < pblk->shape.num_morphs; j++ ) {
-	  BOOL found = FALSE;
-	  int k;
-	  for( k = 0; k < pblk->shape.morphs[j].nps; k++ ) {
-	    int l;
-	    for( found = FALSE, l = 0; l < nps; l++ ) {
-	      assert( ppts[l] );
-	      char pt_kr[CBI_STAT_IDENT_LEN + 1] = "";
-	      pt_kr[CBI_STAT_IDENT_LEN] = 0;
-	      strncpy( pt_kr, ppts[l]->pt_name, CBI_STAT_IDENT_LEN );
-	      if( ppts[l]->stat.normal ) {
-		strncat( pt_kr, "_NKR", CBI_STAT_IDENT_LEN );
-		if( strncmp( cnv2str_il_sym(pblk->shape.morphs[j].points[k]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
-		  found = TRUE;
-		  break;
-		}
-	      }
-	      strncpy( pt_kr, ppts[l]->pt_name, CBI_STAT_IDENT_LEN );
-	      if( ppts[l]->stat.reverse ) {
-		strncat( pt_kr, "_RKR", CBI_STAT_IDENT_LEN );
-		if( strncmp( cnv2str_il_sym(pblk->shape.morphs[j].points[k]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
-		  found = TRUE;
-		  break;
-		}
-	      }
-	    }
-	    if( !found )
-	      break;
-	  }
-	  if( found ) {
-	    pmphs_ahd[nms] = &pblk->shape.morphs[j]; // spare & enumerate the current morph on the block as, pblk->shape.morphs[j].
-	    nms++;
-	    break;
-	  }
+    for( i = 0; i < ptr_ahd->turnout.npts; i++ ) {
+      int j;
+      for( j = 0; j < pro_prof->body.npts; j++ ) {
+	if( strncmp( ptr_ahd->turnout.point[i].pt_name, pro_prof->body.pt[j].pt_name, CBI_STAT_IDENT_LEN ) == 0 ) {
+	  ppts[nps] = &pro_prof->body.pt[j];
+	  nps++;
 	}
       }
     }
-    r = nms;
+  panic:
+    {
+      int nms = 0;
+      int i;    
+      for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
+	CBTC_BLOCK_PTR pblk = ptr_ahd->consists_blks.pblk_profs[i];
+	if( pblk ) {
+	  int j;
+	  for( j = 0; j < pblk->shape.num_morphs; j++ ) {
+	    BOOL found = FALSE;
+	    int k;
+	    for( k = 0; k < pblk->shape.morphs[j].num_points; k++ ) {
+	      int l;
+	      for( found = FALSE, l = 0; l < nps; l++ ) {
+		assert( ppts[l] );
+		char pt_kr[CBI_STAT_IDENT_LEN + 1] = "";
+		pt_kr[CBI_STAT_IDENT_LEN] = 0;
+		strncpy( pt_kr, ppts[l]->pt_name, CBI_STAT_IDENT_LEN );
+		if( ppts[l]->stat.normal ) {
+		  strncat( pt_kr, "_NKR", CBI_STAT_IDENT_LEN );
+		  if( strncmp( cnv2str_il_sym(pblk->shape.morphs[j].points[k]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
+		    found = TRUE;
+		    break;
+		  }
+		}
+		strncpy( pt_kr, ppts[l]->pt_name, CBI_STAT_IDENT_LEN );
+		if( ppts[l]->stat.reverse ) {
+		  strncat( pt_kr, "_RKR", CBI_STAT_IDENT_LEN );
+		  if( strncmp( cnv2str_il_sym(pblk->shape.morphs[j].points[k]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
+		    found = TRUE;
+		    break;
+		  }
+		}
+	      }
+	      if( !found )
+		break;
+	    }
+	    if( found ) {
+	      pmphs_ahd[nms] = &pblk->shape.morphs[j]; // spare & enumerate the current morph on the block as, pblk->shape.morphs[j].
+	      nms++;
+	      break;
+	    }
+	  }
+	}
+      }
+      r = nms;
+    }
+  } else {
+    int i;
+    for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
+      assert( ptr_ahd );
+      CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
+      if( pbs_ahd ) {	
+	int j;
+	for( j = 0; j < pbs_ahd->shape.num_morphs; j++ ) {
+	  assert( pbs_ahd );
+	  if( pbs_ahd->shape.morphs[j].num_points > 0 ) {
+	    int k;
+	  failed:
+	    for( k = 0; k < pro_prof->body.npts; k++ ) {
+	      ppts[nps] = &pro_prof->body.pt[k];
+	      nps++;
+	    }
+	    assert( nps == pro_prof->body.npts );
+	    goto panic;
+	  }
+	}      
+      }
+    }
+    if( ptr_ahd->hardbonds.nblks == ptr_ahd->consists_blks.nblks ) {
+      struct {	
+	struct fixed_pos *plnks;
+	BOOL chk;
+      } blk_lnks[MAX_TRACK_BLOCKS] = {};
+      for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
+	blk_lnks[i].plnks = &ptr_ahd->hardbonds.pblk_fixes[i];
+	blk_lnks[i].chk = FALSE;
+      }
+      assert( i == ptr_ahd->hardbonds.nblks );
+      for( i = 0; ptr_ahd->consists_blks.nblks; i++ ) {
+	assert( ptr_ahd );
+	CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
+	if( pbs_ahd ) {
+	  if( (pbs_ahd->shape.num_morphs == 1) && (pbs_ahd->shape.num_lnks == 2) ) {
+	    BOOL found = FALSE;
+	    int j;
+	    for( j = 0; j < ptr_ahd->hardbonds.nblks; j++ ) {
+	      assert( ptr_ahd );
+	      assert( blk_lnks[j].plnks );
+	      if( (blk_lnks[j].plnks)->pprof == pbs_ahd ) {
+		int k;
+		if( (blk_lnks[j].plnks)->npos == 2 ) {
+		  int fst = -1;
+		  for( k = 0; k < 2; k++ ) {
+		    if( (blk_lnks[j].plnks)->pos[k] == pbs_ahd->shape.lnks[0] ) {
+		      fst = k;
+		      break;		      
+		    }		    
+		  }
+		  if( fst > -1 ) {
+		    assert( fst < 2 );
+		    const int snd = (fst == 0) ? 1 : 0;
+		    if( (blk_lnks[j].plnks)->pos[snd] == pbs_ahd->shape.lnks[1] ) {
+		      blk_lnks[j].chk = TRUE;
+		      found = TRUE;
+		      break;
+		    } else
+		      goto failed;
+		  } else
+		    goto failed;		  
+		} else
+		  goto failed;
+	      }
+	    }
+	    if( !found )
+	      goto failed;
+	  } else
+	    goto failed;
+	}
+      }
+      for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
+	assert( ptr_ahd );
+	if( ! blk_lnks[i].chk )
+	  goto failed;
+      }
+      {
+	int cnt = 0;
+	for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
+	  assert( ptr_ahd );
+	  assert( ! blk_lnks[i].chk );
+	  assert( blk_lnks[i].plnks );
+	  assert( (blk_lnks[i].plnks)->pprof );
+	  assert( (blk_lnks[i].plnks)->npos == 2 );
+	  BLK_LINKAGE_PTR pfst = (blk_lnks[i].plnks)->pos[0];
+	  BLK_LINKAGE_PTR psnd = (blk_lnks[i].plnks)->pos[1];
+	  assert( pfst );
+	  assert( psnd );
+	  if( pfst->bond.kind == LINK_NONE ) {
+	    assert( ! pfst->bond.pln_neigh );
+	    if( cnt < 2 ) {
+	      assert( pfst->pmorph );
+	      pmphs_ahd[cnt] = pfst->pmorph;
+	      cnt++;
+	    } else
+	      goto failed;
+	  } else
+	    assert( pfst->bond.pln_neigh );
+	  if( psnd->bond.kind == LINK_NONE ) {
+	    assert( ! psnd->bond.pln_neigh );
+	    if( cnt < 2 ) {
+	      assert( psnd->pmorph );
+	      pmphs_ahd[cnt] = psnd->pmorph;
+	      cnt++;
+	    } else
+	      goto failed;
+	  } else
+	    assert( psnd->bond.pln_neigh );
+	}
+	if( cnt != 2 )
+	  goto failed;
+	else
+	  r = cnt;
+      }
+    } else
+      goto failed;
   }
   return r;
 }
@@ -1501,7 +1623,7 @@ struct frontier {
   int nms;
   BLK_MORPH_PTR pm_fro[MAX_TRACK_BLOCKS];
 };
-static void trylnk_ahead ( struct frontier *pahead, struct frontier *pfront ) {
+static void trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront ) {
   assert( pahead );
   assert( pfront );
   struct fixed_pos ln_blks[MAX_TRACK_BLOCKS * 2] = {};
@@ -1528,7 +1650,6 @@ static void trylnk_ahead ( struct frontier *pahead, struct frontier *pfront ) {
       ln_blks[cnt].pos[j] = &(pfront->pm_fro[i])->linkages[j];
     cnt++;
   }
-  // static int linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind );
   linking( ln_blks, cnt, LINK_SOFT );
 }
 
@@ -1565,7 +1686,7 @@ static void chase_ctrl_tracks ( void ) {
 	  ahead.nms = n;
 	}	
       }
-      trylnk_ahead( &ahead, &front );
+      trylnk_ahead_blk( &ahead, &front );
     }
     
   }
