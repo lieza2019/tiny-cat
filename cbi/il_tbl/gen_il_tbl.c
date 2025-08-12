@@ -60,6 +60,11 @@ struct fixed_pos {
   CBTC_BLOCK_PTR pprof;
   int npos;
   BLK_LINKAGE_PTR pos[MAX_ADJACENT_BLKS];
+  struct {
+    LINX_BONDAGE_KIND kind;
+    BLK_LINKAGE_PTR plnk;
+    BOOL bond;
+  } _pos[MAX_ADJACENT_BLKS];
 };
 struct track_sr {
   BOOL defined;
