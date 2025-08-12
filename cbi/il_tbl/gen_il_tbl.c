@@ -448,11 +448,18 @@ static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[]
   int i;
   for( i = 0; i < nblks; i++ ) {
     assert( i < MAX_TRACK_BLOCKS );
+    BLK_LINKAGE_PTR plnks[MAX_ADJACENT_BLKS] = {};
     int n = -1;
-    n = enum_fixed_branches( profs[i], fixes[cnt].pos, MAX_ADJACENT_BLKS );    
+    n = enum_fixed_branches( profs[i], plnks, MAX_ADJACENT_BLKS );
     if( n > 0 ) {
+      int j;
       fixes[cnt].pprof = profs[i];
       fixes[cnt].npos = n;
+      for( j = 0; j < fixes[cnt].npos; j++ ) {
+	assert( plnks[j] );
+	fixes[cnt].pos[j].plnk = plnks[j];
+	fixes[cnt].pos[j].bond = FALSE;
+      }
       cnt++;
     }
   }
@@ -1559,7 +1566,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 		if( (blk_lnks[j].plnks)->npos == 2 ) {
 		  int fst = -1;
 		  for( k = 0; k < 2; k++ ) {
-		    if( (blk_lnks[j].plnks)->pos[k] == &pbs_ahd->shape.morphs[0].linkages[0] ) {
+		    if( (blk_lnks[j].plnks)->pos[k].plnk == &pbs_ahd->shape.morphs[0].linkages[0] ) {
 		      fst = k;
 		      break;
 		    }
@@ -1567,7 +1574,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 		  if( fst > -1 ) {
 		    assert( fst < 2 );
 		    const int snd = (fst == 0) ? 1 : 0;
-		    if( (blk_lnks[j].plnks)->pos[snd] == &pbs_ahd->shape.morphs[0].linkages[1] ) {
+		    if( (blk_lnks[j].plnks)->pos[snd].plnk == &pbs_ahd->shape.morphs[0].linkages[1] ) {
 		      assert( ! blk_lnks[j].chk );
 		      blk_lnks[j].chk = TRUE;
 		      found = TRUE;
@@ -1582,7 +1589,6 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	    }
 	    if( !found )
 	      goto failed;
-	    
 	  } else
 	    goto failed;
 	}
@@ -1598,22 +1604,22 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	assert( blk_lnks[i].plnks );
 	assert( (blk_lnks[i].plnks)->pprof );
 	assert( (blk_lnks[i].plnks)->npos == 2 );
-	BLK_LINKAGE_PTR pfst = (blk_lnks[i].plnks)->pos[0];
-	BLK_LINKAGE_PTR psnd = (blk_lnks[i].plnks)->pos[1];
+	BLK_LINKAGE_PTR pfst = (blk_lnks[i].plnks)->pos[0].plnk;
+	BLK_LINKAGE_PTR psnd = (blk_lnks[i].plnks)->pos[1].plnk;
 	assert( pfst );
 	assert( psnd );
-	if( pfst->bond.kind == LINK_NONE ) {
-	  assert( ! pfst->bond.pln_neigh );
+	if( ! pfst->bond.pln_neigh ) {
+	  assert( pfst->bond.kind == LINK_NONE );
 	  pmphs_ahd[nms] = pfst->pmorph;
 	  nms++;
 	} else
-	  assert( pfst->bond.pln_neigh );
-	if( psnd->bond.kind == LINK_NONE ) {
-	  assert( ! psnd->bond.pln_neigh );
+	  assert( pfst->bond.kind != LINK_NONE );
+	if( ! psnd->bond.pln_neigh ) {
+	  assert( psnd->bond.kind == LINK_NONE );
 	  pmphs_ahd[nms] = psnd->pmorph;
 	  nms++;
 	} else
-	  assert( psnd->bond.pln_neigh );
+	  assert( psnd->bond.kind != LINK_NONE );
       }
     } else
       goto failed;
@@ -1639,8 +1645,13 @@ static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront )
       int j;
       ln_blks[cnt].pprof = (pfront->pm_fro[i])->pblock;
       ln_blks[cnt].npos = (pfront->pm_fro[i])->num_links;
-      for( j = 0; j < ln_blks[cnt].npos; j++ )
-	ln_blks[cnt].pos[j] = &(pfront->pm_fro[i])->linkages[j];
+      for( j = 0; j < ln_blks[cnt].npos; j++ ) {
+	assert( ! (pfront->pm_fro[i])->linkages[j].bond.pln_neigh );
+	assert( (pfront->pm_fro[i])->linkages[j].bond.kind == LINK_NONE );
+	ln_blks[cnt].pos[j].plnk = &(pfront->pm_fro[i])->linkages[j];
+	ln_blks[cnt].pos[j].kind = LINK_NONE;
+	ln_blks[cnt].pos[j].bond = FALSE;
+      }
       cnt++;
     }
     assert( cnt <= MAX_TRACK_BLOCKS );
@@ -1652,8 +1663,13 @@ static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront )
       int j;
       ln_blks[cnt].pprof = (pahead->pm_fro[i])->pblock;
       ln_blks[cnt].npos = (pahead->pm_fro[i])->num_links;
-      for( j = 0; j < ln_blks[cnt].npos; j++ )
-	ln_blks[cnt].pos[j] = &(pahead->pm_fro[i])->linkages[j];
+      for( j = 0; j < ln_blks[cnt].npos; j++ ) {
+	assert( ! (pahead->pm_fro[i])->linkages[j].bond.pln_neigh );
+	assert( (pahead->pm_fro[i])->linkages[j].bond.kind == LINK_NONE );
+	ln_blks[cnt].pos[j].plnk = &(pahead->pm_fro[i])->linkages[j];
+	ln_blks[cnt].pos[j].kind = LINK_NONE;
+	ln_blks[cnt].pos[j].bond = FALSE;
+      }
       cnt++;
     }
     assert( cnt <= (MAX_TRACK_BLOCKS * 2) );
