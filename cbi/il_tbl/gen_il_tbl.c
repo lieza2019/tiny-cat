@@ -59,12 +59,15 @@ const char *cnv2str_trbound ( TRACK_BOUND bound ) {
 struct fixed_pos {
   CBTC_BLOCK_PTR pprof;
   int npos;
+#if 0 // *****
   BLK_LINKAGE_PTR pos[MAX_ADJACENT_BLKS];
+#else
   struct {
     LINX_BONDAGE_KIND kind;
     BLK_LINKAGE_PTR plnk;
     BOOL bond;
-  } _pos[MAX_ADJACENT_BLKS];
+  } pos[MAX_ADJACENT_BLKS];
+#endif
 };
 struct track_sr {
   BOOL defined;
@@ -379,48 +382,50 @@ static int linking ( struct fixed_pos blks[], int nblks, LINX_BONDAGE_KIND bind 
   if( nblks > 1 ) {
     struct fixed_pos *pblk = &blks[0];
     int i;
-    assert( pblk );
     for( i = 0; i < pblk->npos; i++ ) {
+      assert( pblk->pos[i].plnk );
       int j;
-      if( ! pblk->pos[i] )
+      if( pblk->pos[i].bond )
 	continue;
-      if( (pblk->pos[i])->bond.pln_neigh ) {
-	assert( (pblk->pos[i])->bond.kind != LINK_NONE );
+      if( (pblk->pos[i].plnk)->bond.pln_neigh ) {
+	assert( (pblk->pos[i].plnk)->bond.kind != LINK_NONE );
 	continue;
       }
-      assert( pblk->pos[i]->pmorph );
-      assert( pblk->pos[i]->pmorph->pblock );
+      assert( (pblk->pos[i].plnk)->pmorph );
+      assert( (pblk->pos[i].plnk)->pmorph->pblock );
       for( j = 1; j < nblks; j++ ) {
 	struct fixed_pos *pb = &blks[j];
 	BOOL found = FALSE;	
-	int k;
-	assert( pb );
+	int k;	
 	for( k = 0; k < pb->npos; k++ ) {
-	  if( ! pb->pos[k] )
+	  assert( pb->pos[k].plnk );
+	  if( pb->pos[k].bond )
 	    continue;
-	  if( (pb->pos[k])->bond.pln_neigh ) {
-	    assert( (pb->pos[k])->bond.kind != LINK_NONE );
+	  if( (pb->pos[k].plnk)->bond.pln_neigh ) {
+	    assert( (pb->pos[k].plnk)->bond.kind != LINK_NONE );
 	    continue;
 	  }
-	  assert( pb->pos[k]->pmorph );
-	  assert( pb->pos[k]->pmorph->pblock );
-	  if( (pblk->pos[i]->neigh_blk == pb->pos[k]->pmorph->pblock->block_name) &&
-	      (pb->pos[k]->neigh_blk == pblk->pos[i]->pmorph->pblock->block_name) ) {
-	    BLK_LINKAGE_PTR pl = pblk->pos[i];
+	  assert( (pb->pos[k].plnk)->pmorph );
+	  assert( (pb->pos[k].plnk)->pmorph->pblock );
+	  if( ((pblk->pos[i].plnk)->neigh_blk == (pb->pos[k].plnk)->pmorph->pblock->block_name) &&
+	      ((pb->pos[k].plnk)->neigh_blk == (pblk->pos[i].plnk)->pmorph->pblock->block_name) ) {
+	    BLK_LINKAGE_PTR pl = pblk->pos[i].plnk;
 	    do {
 	      assert( pl );
-	      pl->bond.pln_neigh = pb->pos[k];
-	      pl->bond.kind = bind;
+	      pl->bond.pln_neigh = pb->pos[k].plnk;
+	      pl->bond.kind = bind;	      
 	      pl = pl->pNext;
-	    } while( pl != pblk->pos[i] );
-	    pl = pb->pos[k];
+	    } while( pl != pblk->pos[i].plnk );
+	    pl = pb->pos[k].plnk;
 	    do {
-	      pl->bond.pln_neigh = pblk->pos[i];
+	      pl->bond.pln_neigh = pblk->pos[i].plnk;
 	      pl->bond.kind = bind;
 	      pl = pl->pNext;
-	    } while( pl != pb->pos[k] );
-	    pblk->pos[i] = NULL;
-	    pb->pos[k] = NULL;
+	    } while( pl != pb->pos[k].plnk );
+	    pblk->pos[i].bond = TRUE;
+	    pblk->pos[i].kind = bind;
+	    pb->pos[k].bond = TRUE;
+	    pb->pos[k].kind = bind;
 	    cnt++;
 	    found = TRUE;
 	    break;
