@@ -1524,10 +1524,17 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	      if( !found )
 		break;
 	    }
-	    if( found ) {
-	      pmphs_ahd[nms] = &pblk->shape.morphs[j]; // spare & enumerate the current morph on the block as, pblk->shape.morphs[j].
-	      nms++;
-	      break;
+	    if( k > 0 ) {
+	      assert( pblk->shape.morphs[j].num_points > 0 );
+	      if( found ) {
+	      regist4_no_turnout:
+		pmphs_ahd[nms] = &pblk->shape.morphs[j];
+		nms++;
+		break;
+	      }
+	    } else {
+	      assert( pblk->shape.morphs[j].num_points == 0 );
+	      goto regist4_no_turnout; //assert( pblk->shape.num_morphs == 1 );
 	    }
 	  }
 	}
@@ -1556,7 +1563,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	}
       }
     }
-    if( ptr_ahd->hardbonds.nblks == ptr_ahd->consists_blks.nblks ) {
+    if( ptr_ahd->hardbonds.nblks >= ptr_ahd->consists_blks.nblks ) {
       struct {	
 	struct fixed_pos *plnks;
 	BOOL chk;
@@ -1582,6 +1589,11 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 		  int fst = -1;
 		  for( k = 0; k < 2; k++ ) {
 		    if( (blk_lnks[j].plnks)->pos[k].plnk == &pbs_ahd->shape.morphs[0].linkages[0] ) {
+		      if( blk_lnks[j].chk ) {
+			printf( "fatal: ill-formed linkage found in (block, morpt_num, link_num) = (%s, %d, %d), such linkage seems to belong other blocks/morphs also.\n",
+				pbs_ahd->virt_blkname_str, 0, 0 );
+			goto failed;
+		      }
 		      fst = k;
 		      break;
 		    }
@@ -1590,7 +1602,11 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 		    assert( fst < 2 );
 		    const int snd = (fst == 0) ? 1 : 0;
 		    if( (blk_lnks[j].plnks)->pos[snd].plnk == &pbs_ahd->shape.morphs[0].linkages[1] ) {
-		      assert( ! blk_lnks[j].chk );
+		      if( blk_lnks[j].chk ) {
+			printf( "fatal: ill-formed linkage found in (block, morpt_num, link_num) = (%s, %d, %d), such linkage seems to belong other blocks/morphs also.\n",
+				pbs_ahd->virt_blkname_str, 0, 0 );				
+			goto failed;
+		      }		      
 		      blk_lnks[j].chk = TRUE;
 		      found = TRUE;
 		      break;
@@ -1598,9 +1614,9 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 		      goto failed;
 		  } else
 		    goto failed;
-		} else
-		  goto failed;
-	      }
+		}
+	      } else
+		assert( FALSE );	      
 	    }
 	    if( !found )
 	      goto failed;
@@ -1610,31 +1626,30 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
       }
       for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
 	assert( ptr_ahd );
-	if( ! blk_lnks[i].chk )
-	  goto failed;
-      }
-      for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
-	assert( ptr_ahd );
-	assert( blk_lnks[i].chk );
 	assert( blk_lnks[i].plnks );
 	assert( (blk_lnks[i].plnks)->pprof );
-	assert( (blk_lnks[i].plnks)->npos == 2 );
-	BLK_LINKAGE_PTR pfst = (blk_lnks[i].plnks)->pos[0].plnk;
-	BLK_LINKAGE_PTR psnd = (blk_lnks[i].plnks)->pos[1].plnk;
-	assert( pfst );
-	assert( psnd );
-	if( ! pfst->bond.pln_neigh ) {
-	  assert( pfst->bond.kind == LINK_NONE );
-	  pmphs_ahd[nms] = pfst->pmorph;
-	  nms++;
-	} else
-	  assert( pfst->bond.kind != LINK_NONE );
-	if( ! psnd->bond.pln_neigh ) {
-	  assert( psnd->bond.kind == LINK_NONE );
-	  pmphs_ahd[nms] = psnd->pmorph;
-	  nms++;
-	} else
-	  assert( psnd->bond.kind != LINK_NONE );
+	assert( (blk_lnks[i].plnks)->npos > 0 );
+	if( blk_lnks[i].chk ) {
+	  assert( (blk_lnks[i].plnks)->npos == 2 );
+	  BLK_LINKAGE_PTR pfst = (blk_lnks[i].plnks)->pos[0].plnk;
+	  BLK_LINKAGE_PTR psnd = (blk_lnks[i].plnks)->pos[1].plnk;
+	  assert( pfst );
+	  assert( psnd );
+	  if( ! pfst->bond.pln_neigh ) {
+	    assert( pfst->bond.kind == LINK_NONE );
+	    assert( ! (blk_lnks[i].plnks)->pos[0].bond );
+	    pmphs_ahd[nms] = pfst->pmorph;
+	    nms++;
+	  } else
+	    assert( pfst->bond.kind != LINK_NONE );
+	  if( ! psnd->bond.pln_neigh ) {
+	    assert( psnd->bond.kind == LINK_NONE );
+	    assert( ! (blk_lnks[i].plnks)->pos[1].bond );
+	    pmphs_ahd[nms] = psnd->pmorph;
+	    nms++;
+	  } else
+	    assert( psnd->bond.kind != LINK_NONE );
+	}
       }
     } else
       goto failed;
