@@ -1457,7 +1457,7 @@ static CBTC_BLOCK_PTR pop_blk ( BLK_TRACER_PTR pstk ) {
 typedef struct book {
   int ntrs;
   struct {
-    struct route_tr ptr;
+    struct route_tr *ptr;
     BOOL touch;
   } ctrl_trax[ROUTE_MAX_CTRLTRACKS];
 } BOOK, *BOOK_PTR;
@@ -1470,7 +1470,8 @@ static BOOL route_out( CBTC_BLOCK_PTR pblk, BOOK_PTR pbok) {
   for( i = 0; i < pbok->ntrs; i++ ) {
     assert( pblk );
     assert( pbok );
-    if( strncmp( pbok->ctrl_trax[i].ptr.tr_name, cnv2str_il_sym(pblk->belonging_tr.track), CBI_STAT_IDENT_LEN ) == 0 )
+    assert( pbok->ctrl_trax[i].ptr );
+    if( strncmp( pbok->ctrl_trax[i].ptr->tr_name, cnv2str_il_sym(pblk->belonging_tr.track), CBI_STAT_IDENT_LEN ) == 0 )
       if( ! pbok->ctrl_trax[i].touch ) {
 	pbok->ctrl_trax[i].touch = TRUE;
 	r = TRUE;
@@ -1481,7 +1482,7 @@ static BOOL route_out( CBTC_BLOCK_PTR pblk, BOOK_PTR pbok) {
 }
 
 typedef enum WALK {
-  ROUTE_OUT,
+  ROUTEOUT,
   BAD_KR,
   DEADEND,
   REACHOUT
@@ -1499,7 +1500,7 @@ static WALK enter_next( BLK_MORPH_PTR pmor_ahd, ROUTE_PROF_PTR pro_prof, BLK_TRA
     assert( plnk->pmorph );
     assert( plnk->pmorph->pblock );
     r = wandering( plnk->pmorph->pblock, pro_prof, pacc, pbok );
-    if( r == ROUTE_OUT )
+    if( r == ROUTEOUT )
       goto go_thru;
   } else {
   go_thru:
@@ -1527,7 +1528,7 @@ static BOOL reached_out ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
   }
   return r;
 }
-static WALK wandering( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
+static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
   assert( pblk );
   assert( pro_prof );
   assert( pacc );
@@ -1539,57 +1540,104 @@ static WALK wandering( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER_
     if( reached_out( pblk, pro_prof ) )
       r = REACHOUT;
     else
-    if( pblk->shape.num_morphs == 1 ) {      
-      r = enter_next( &pblk->shape.morphs[0], pro_prof, pacc, pbok );
-      if( r != REACHOUT )
-	pop_blk( pacc );
-    } else {
-      int i;
-      for( i = 0; i < pblk->shape.num_morphs; i++ ) {
-	BLK_MORPH_PTR pmor = &pblk->shape.morphs[i];
-	BOOL found = FALSE;
-	int j;	
-	for( j = 0; j < pmor->num_points; j++ ) {
-	  int k;	 
-	  for( found = FALSE, k = 0; k < pro_prof->body.npts; k++ ) {
-	    char pt_kr_ro[CBI_STAT_IDENT_LEN + 1] = "";
-	    pt_kr_ro[CBI_STAT_IDENT_LEN] = 0;
-	    strncpy( pt_kr_ro, pro_prof->body.pt[k].pt_name, CBI_STAT_IDENT_LEN );
-	    if( pro_prof->body.pt[k].stat.normal ) {
-	      strncat( pt_kr_ro, "_NKR", CBI_STAT_IDENT_LEN );
-	      if( strncmp( cnv2str_il_sym(pmor->points[j]), pt_kr_ro, CBI_STAT_IDENT_LEN ) == 0 ) {
-		found = TRUE;
-		break;
+      if( pblk->shape.num_morphs == 1 ) {      
+	r = enter_next( &pblk->shape.morphs[0], pro_prof, pacc, pbok );
+	if( r != REACHOUT )
+	  pop_blk( pacc );
+      } else {
+	int i;
+	for( i = 0; i < pblk->shape.num_morphs; i++ ) {
+	  BLK_MORPH_PTR pmor = &pblk->shape.morphs[i];
+	  BOOL found = FALSE;
+	  int j;	
+	  for( j = 0; j < pmor->num_points; j++ ) {
+	    int k;	 
+	    for( found = FALSE, k = 0; k < pro_prof->body.npts; k++ ) {
+	      char pt_kr[CBI_STAT_IDENT_LEN + 1] = "";
+	      pt_kr[CBI_STAT_IDENT_LEN] = 0;
+	      strncpy( pt_kr, pro_prof->body.pt[k].pt_name, CBI_STAT_IDENT_LEN );
+	      if( pro_prof->body.pt[k].stat.normal ) {
+		strncat( pt_kr, "_NKR", CBI_STAT_IDENT_LEN );
+		if( strncmp( cnv2str_il_sym(pmor->points[j]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
+		  found = TRUE;
+		  break;
+		}
+	      }
+	      strncpy( pt_kr, pro_prof->body.pt[k].pt_name, CBI_STAT_IDENT_LEN );
+	      if( pro_prof->body.pt[k].stat.reverse ) {	      
+		strncat( pt_kr, "_RKR", CBI_STAT_IDENT_LEN );
+		if( strncmp( cnv2str_il_sym(pmor->points[j]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
+		  found = TRUE;
+		  break;
+		}
 	      }
 	    }
-	    strncpy( pt_kr_ro, pro_prof->body.pt[k].pt_name, CBI_STAT_IDENT_LEN );
-	    if( pro_prof->body.pt[k].stat.reverse ) {	      
-	      strncat( pt_kr_ro, "_RKR", CBI_STAT_IDENT_LEN );
-	      if( strncmp( cnv2str_il_sym(pmor->points[j]), pt_kr_ro, CBI_STAT_IDENT_LEN ) == 0 ) {
-		found = TRUE;
-		break;
-	      }
-	    }
+	    if( !found )
+	      break;
 	  }
-	  if( !found )
+	  if( found ) {
+	    r = enter_next( pmor, pro_prof, pacc, pbok );
+	    if( r != REACHOUT )
+	      pop_blk( pacc );
 	    break;
+	  }
 	}
-	if( found ) {
-	  r = enter_next( pmor, pro_prof, pacc, pbok );
-	  if( r != REACHOUT )
-	    pop_blk( pacc );
-	  break;
-	}
+	r = BAD_KR;
       }
-      r = BAD_KR;
-    }
   } else
-    r = ROUTE_OUT;
+    r = ROUTEOUT;
   return r;
 }
 
-static void trace_ctrl_tracks ( ROUTE_PROF_PTR pro_prof ) {
-  ;
+static int trace_ctrl_tracks ( CBTC_BLOCK_PTR pro_blks[], ROUTE_PROF_PTR pro_prof, const int nro_blks ) {
+  assert( pro_blks );
+  assert( pro_prof );
+  assert( nro_blks > MAX_TRACK_BLOCKS );
+  BLK_TRACER blkstk = {};
+  BOOK book = {};
+  int r = -1;
+  
+  CBTC_BLOCK_PTR porg_blk = NULL;
+  int i;
+  book.ntrs = pro_prof->body.ntrs;
+  for( i = 0; i < book.ntrs; i++ ) {
+    book.ctrl_trax[i].ptr = &pro_prof->body.tr[i];
+    book.ctrl_trax[i].touch = FALSE;
+  }
+  assert( i == pro_prof->body.ntrs );
+  assert( pro_prof->body.ntrs < ROUTE_MAX_CTRLTRACKS );
+  if( pro_prof->orgdst.org.porg_tr ) {
+    book.ctrl_trax[i].ptr = pro_prof->orgdst.org.porg_tr;
+    book.ctrl_trax[i].touch = FALSE;
+    book.ntrs++;
+    {
+      TRACK_PROF_PTR ptr_org = (pro_prof->orgdst.org.porg_tr)->tr_prof;
+      if( ptr_org ) {
+	if( ptr_org->consists_blks.nblks > 0 )
+	  porg_blk = ptr_org->consists_blks.pblk_profs[0];
+      }
+    }
+  }
+  i = 0;
+  while( !porg_blk ) {
+    assert( pro_prof );
+    TRACK_PROF_PTR ptr_org = NULL;
+    if( i >= pro_prof->body.ntrs )
+      break;
+    ptr_org = pro_prof->body.tr[i].tr_prof;
+    if( ptr_org ) {
+      if( ptr_org->consists_blks.nblks > 0 )
+	porg_blk = ptr_org->consists_blks.pblk_profs[0];
+    }
+    i++;
+  }
+  if( porg_blk )
+    wandering( porg_blk, pro_prof, &blkstk, &book );
+  i = 0;
+  for( i = 0; i < blkstk.sp; i++ )
+    pro_blks[i] = blkstk.stack[i];
+  r = i;
+  return r;
 }
 
 static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd, ROUTE_PROF_PTR pro_prof, const int nmphs_ahd ) {
