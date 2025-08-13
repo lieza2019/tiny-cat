@@ -1465,20 +1465,24 @@ static BOOL route_out( CBTC_BLOCK_PTR pblk, BOOK_PTR pbok) {
   assert( pblk );
   assert( pbok );
   BOOL r = FALSE;
-  
+
+  BOOL found = FALSE;
   int i;
   for( i = 0; i < pbok->ntrs; i++ ) {
     assert( pblk );
     assert( pbok );
     assert( pbok->ctrl_trax[i].ptr );
     if( strncmp( pbok->ctrl_trax[i].ptr->tr_name, cnv2str_il_sym(pblk->belonging_tr.track), CBI_STAT_IDENT_LEN ) == 0 ) {
-      if( pbok->ctrl_trax[i].hit ) {
+      found = TRUE;
+      if( pbok->ctrl_trax[i].hit )	
 	r = TRUE;
-	break;
-      } else
+      else
 	pbok->ctrl_trax[i].hit = TRUE;
-    }    
+      break;
+    }
   }
+  if( !found )
+    r = TRUE;
   return r;
 }
 
@@ -1511,11 +1515,11 @@ static BOOL reached_out ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   BOOL r = FALSE;
   
-  if( pro_prof->body.npts > 0 ) {
+  if( pro_prof->body.ntrs > 0 ) {
     struct route_tr *ptr = &pro_prof->body.tr[pro_prof->body.ntrs - 1];
     r = (strncmp( ptr->tr_name, cnv2str_il_sym(pblk->belonging_tr.track), CBI_STAT_IDENT_LEN ) == 0);
   } else {
-    assert( pro_prof->body.npts == 0 );
+    assert( pro_prof->body.ntrs == 0 );
     r = TRUE;
   }
   return r;
@@ -1527,13 +1531,15 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
   assert( pbok );
   WALK r = DEADEND;
   
+  printf( "block_bame: %s.\n", pblk->virt_blkname_str ); // *****
+  
   if( ! route_out( pblk, pbok ) ) {    
     push_blk( pacc, pblk );
     if( reached_out( pblk, pro_prof ) )
       r = REACHOUT;
     else
       if( pblk->shape.num_morphs == 1 ) {      
-	r = enter_next( &pblk->shape.morphs[0], 0, pro_prof, pacc, pbok );	
+	r = entner_next( &pblk->shape.morphs[0], 0, pro_prof, pacc, pbok );	
 	if( r != REACHOUT ) {
 	  r = enter_next( &pblk->shape.morphs[0], 1, pro_prof, pacc, pbok );
 	  if( r != REACHOUT )
