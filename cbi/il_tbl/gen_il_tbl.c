@@ -1489,28 +1489,19 @@ typedef enum WALK {
   REACHOUT
 } WALK;
 static WALK wandering( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok );
-static WALK enter_next( BLK_MORPH_PTR pmor_ahd, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
+static WALK enter_next( BLK_MORPH_PTR pmor_ahd, const int ln_id, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
   assert( pmor_ahd );
+  assert( (ln_id > -1) && (ln_id < 2) );
   assert( pro_prof );
   assert( pacc );
   assert( pbok );
   WALK r = DEADEND;
-  
-  BLK_LINKAGE_PTR plnk = pmor_ahd->linkages[0].bond.pln_neigh;
+
+  BLK_LINKAGE_PTR plnk = pmor_ahd->linkages[ln_id].bond.pln_neigh;
   if( plnk ) {
     assert( plnk->pmorph );
     assert( plnk->pmorph->pblock );
     r = wandering( plnk->pmorph->pblock, pro_prof, pacc, pbok );
-    if( r == ROUTEOUT )
-      goto go_thru;
-  } else {
-  go_thru:
-    plnk = pmor_ahd->linkages[1].bond.pln_neigh;
-    if( plnk ) {
-      assert( plnk->pmorph );
-      assert( plnk->pmorph->pblock );
-      r = wandering( plnk->pmorph->pblock, pro_prof, pacc, pbok );
-    }
   }
   return r;
 }
@@ -1542,9 +1533,12 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
       r = REACHOUT;
     else
       if( pblk->shape.num_morphs == 1 ) {      
-	r = enter_next( &pblk->shape.morphs[0], pro_prof, pacc, pbok );
-	if( r != REACHOUT )
-	  pop_blk( pacc );
+	r = enter_next( &pblk->shape.morphs[0], 0, pro_prof, pacc, pbok );	
+	if( r != REACHOUT ) {
+	  r = enter_next( &pblk->shape.morphs[0], 1, pro_prof, pacc, pbok );
+	  if( r != REACHOUT )
+	    pop_blk( pacc );
+	}
       } else {
 	int i;
 	for( i = 0; i < pblk->shape.num_morphs; i++ ) {
@@ -1577,9 +1571,12 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
 	      break;
 	  }
 	  if( found ) {
-	    r = enter_next( pmor, pro_prof, pacc, pbok );
-	    if( r != REACHOUT )
-	      pop_blk( pacc );
+	    r = enter_next( pmor, 0, pro_prof, pacc, pbok );
+	    if( r != REACHOUT ) {
+	      r = enter_next( pmor, 1, pro_prof, pacc, pbok );
+	      if( r != REACHOUT )
+		pop_blk( pacc );
+	    }	    	    
 	    break;
 	  }
 	}
