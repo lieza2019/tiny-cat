@@ -1920,6 +1920,13 @@ static void creat_ctrl_tracks ( void ) {
       }     
       trylnk_ahead_blk( pahd, pfro );
     }
+    {
+      assert( pprof );
+      const int ro_blk_maxnum = 256;
+      CBTC_BLOCK_PTR ro_blks[ro_blk_maxnum] = {};
+      trace_ctrl_tracks( ro_blks, pprof, ro_blk_maxnum );
+      assert( TRUE );
+    }
     pprof++;
   }
 }
