@@ -1454,19 +1454,26 @@ static CBTC_BLOCK_PTR pop_blk ( BLK_TRACER_PTR pstk ) {
   return r;
 }
 
+typedef enum WALK {
+  ROUTEOUT,
+  MISSREAD,
+  BAD_KR,
+  DEADEND,
+  REACHOUT
+} WALK;
 typedef struct book {
   int ntrs;
   struct {
     struct route_tr *ptr;
-    //BOOL hit;
   } ctrl_trax[ROUTE_MAX_CTRLTRACKS];
 } BOOK, *BOOK_PTR;
-static BOOL route_out( CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
+static BOOL route_out( WALK *preason, CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
+  assert( preason );
   assert( pblk );
   assert( pacc );
   assert( pbok );
   BOOL r = FALSE;
-
+  
   BOOL found = FALSE;
   int i;
   for( i = 0; i < pbok->ntrs; i++ ) {
@@ -1478,12 +1485,14 @@ static BOOL route_out( CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, BOOK_PTR pbok )
       break;
     }
   }
-  if( !found )
+  if( !found ) {
+    *preason = ROUTEOUT;
     r = TRUE;
-  else {
+  } else {
     int i;
     for( i = 0; i < pacc->sp; i++ ) {
       if( pacc->stack[i] == pblk ) {
+	*preason = MISSREAD;
 	r = TRUE;
 	break;
       }
@@ -1492,12 +1501,6 @@ static BOOL route_out( CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, BOOK_PTR pbok )
   return r;
 }
 
-typedef enum WALK {
-  ROUTEOUT,
-  BAD_KR,
-  DEADEND,
-  REACHOUT
-} WALK;
 static WALK wandering( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok );
 static WALK stepin_next( BLK_MORPH_PTR pmor_ahd, const int ln_id, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
   assert( pmor_ahd );
@@ -1537,7 +1540,7 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
   assert( pbok );
   WALK r = DEADEND;
   
-  if( ! route_out( pblk, pacc, pbok ) ) {
+  if( ! route_out( &r, pblk, pacc, pbok ) ) {
     push_blk( pacc, pblk );
     if( reachout( pblk, pro_prof ) )
       r = REACHOUT;
@@ -1593,7 +1596,7 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
 	r = BAD_KR;
       }
   } else
-    r = ROUTEOUT;
+    assert( r != REACHOUT );
   return r;
 }
 
