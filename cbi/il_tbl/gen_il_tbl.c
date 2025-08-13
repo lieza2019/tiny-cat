@@ -1458,7 +1458,7 @@ typedef struct book {
   int ntrs;
   struct {
     struct route_tr *ptr;
-    BOOL touch;
+    BOOL hit;
   } ctrl_trax[ROUTE_MAX_CTRLTRACKS];
 } BOOK, *BOOK_PTR;
 static BOOL route_out( CBTC_BLOCK_PTR pblk, BOOK_PTR pbok) {
@@ -1471,12 +1471,13 @@ static BOOL route_out( CBTC_BLOCK_PTR pblk, BOOK_PTR pbok) {
     assert( pblk );
     assert( pbok );
     assert( pbok->ctrl_trax[i].ptr );
-    if( strncmp( pbok->ctrl_trax[i].ptr->tr_name, cnv2str_il_sym(pblk->belonging_tr.track), CBI_STAT_IDENT_LEN ) == 0 )
-      if( ! pbok->ctrl_trax[i].touch ) {
-	pbok->ctrl_trax[i].touch = TRUE;
+    if( strncmp( pbok->ctrl_trax[i].ptr->tr_name, cnv2str_il_sym(pblk->belonging_tr.track), CBI_STAT_IDENT_LEN ) == 0 ) {
+      if( pbok->ctrl_trax[i].hit ) {
 	r = TRUE;
 	break;
-      }
+      } else
+	pbok->ctrl_trax[i].hit = TRUE;
+    }    
   }
   return r;
 }
@@ -1602,13 +1603,13 @@ static int trace_ctrl_tracks ( CBTC_BLOCK_PTR pro_blks[], ROUTE_PROF_PTR pro_pro
   book.ntrs = pro_prof->body.ntrs;
   for( i = 0; i < book.ntrs; i++ ) {
     book.ctrl_trax[i].ptr = &pro_prof->body.tr[i];
-    book.ctrl_trax[i].touch = FALSE;
+    book.ctrl_trax[i].hit = FALSE;
   }
   assert( i == pro_prof->body.ntrs );
   assert( pro_prof->body.ntrs < ROUTE_MAX_CTRLTRACKS );
   if( pro_prof->orgdst.org.porg_tr ) {
     book.ctrl_trax[i].ptr = pro_prof->orgdst.org.porg_tr;
-    book.ctrl_trax[i].touch = FALSE;
+    book.ctrl_trax[i].hit = FALSE;
     book.ntrs++;
     {
       TRACK_PROF_PTR ptr_org = (pro_prof->orgdst.org.porg_tr)->tr_prof;
