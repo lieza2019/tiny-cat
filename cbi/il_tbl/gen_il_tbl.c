@@ -1458,31 +1458,37 @@ typedef struct book {
   int ntrs;
   struct {
     struct route_tr *ptr;
-    BOOL hit;
+    //BOOL hit;
   } ctrl_trax[ROUTE_MAX_CTRLTRACKS];
 } BOOK, *BOOK_PTR;
-static BOOL route_out( CBTC_BLOCK_PTR pblk, BOOK_PTR pbok) {
+static BOOL route_out( CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
   assert( pblk );
+  assert( pacc );
   assert( pbok );
   BOOL r = FALSE;
 
   BOOL found = FALSE;
   int i;
   for( i = 0; i < pbok->ntrs; i++ ) {
-    assert( pblk );
+    assert( pblk );    
     assert( pbok );
     assert( pbok->ctrl_trax[i].ptr );
     if( strncmp( pbok->ctrl_trax[i].ptr->tr_name, cnv2str_il_sym(pblk->belonging_tr.track), CBI_STAT_IDENT_LEN ) == 0 ) {
       found = TRUE;
-      if( pbok->ctrl_trax[i].hit )	
-	r = TRUE;
-      else
-	pbok->ctrl_trax[i].hit = TRUE;
       break;
     }
   }
   if( !found )
     r = TRUE;
+  else {
+    int i;
+    for( i = 0; i < pacc->sp; i++ ) {
+      if( pacc->stack[i] == pblk ) {
+	r = TRUE;
+	break;
+      }
+    }
+  }
   return r;
 }
 
@@ -1493,7 +1499,7 @@ typedef enum WALK {
   REACHOUT
 } WALK;
 static WALK wandering( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok );
-static WALK enter_next( BLK_MORPH_PTR pmor_ahd, const int ln_id, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
+static WALK stepin_next( BLK_MORPH_PTR pmor_ahd, const int ln_id, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
   assert( pmor_ahd );
   assert( (ln_id > -1) && (ln_id < 2) );
   assert( pro_prof );
@@ -1510,14 +1516,14 @@ static WALK enter_next( BLK_MORPH_PTR pmor_ahd, const int ln_id, ROUTE_PROF_PTR 
   return r;
 }
 
-static BOOL reached_out ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
+static BOOL reachout ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
   assert( pblk );
   assert( pro_prof );
   BOOL r = FALSE;
   
   if( pro_prof->body.ntrs > 0 ) {
     struct route_tr *ptr = &pro_prof->body.tr[pro_prof->body.ntrs - 1];
-    r = (strncmp( ptr->tr_name, cnv2str_il_sym(pblk->belonging_tr.track), CBI_STAT_IDENT_LEN ) == 0);
+    r = (strncmp( cnv2str_il_sym(pblk->belonging_tr.track), ptr->tr_name, CBI_STAT_IDENT_LEN ) == 0);
   } else {
     assert( pro_prof->body.ntrs == 0 );
     r = TRUE;
@@ -1531,17 +1537,15 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
   assert( pbok );
   WALK r = DEADEND;
   
-  printf( "block_bame: %s.\n", pblk->virt_blkname_str ); // *****
-  
-  if( ! route_out( pblk, pbok ) ) {    
+  if( ! route_out( pblk, pacc, pbok ) ) {
     push_blk( pacc, pblk );
-    if( reached_out( pblk, pro_prof ) )
+    if( reachout( pblk, pro_prof ) )
       r = REACHOUT;
     else
       if( pblk->shape.num_morphs == 1 ) {      
-	r = entner_next( &pblk->shape.morphs[0], 0, pro_prof, pacc, pbok );	
+	r = stepin_next( &pblk->shape.morphs[0], 0, pro_prof, pacc, pbok ); 
 	if( r != REACHOUT ) {
-	  r = enter_next( &pblk->shape.morphs[0], 1, pro_prof, pacc, pbok );
+	  r = stepin_next( &pblk->shape.morphs[0], 1, pro_prof, pacc, pbok );
 	  if( r != REACHOUT )
 	    pop_blk( pacc );
 	}
@@ -1577,9 +1581,9 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
 	      break;
 	  }
 	  if( found ) {
-	    r = enter_next( pmor, 0, pro_prof, pacc, pbok );
+	    r = stepin_next( pmor, 0, pro_prof, pacc, pbok );
 	    if( r != REACHOUT ) {
-	      r = enter_next( pmor, 1, pro_prof, pacc, pbok );
+	      r = stepin_next( pmor, 1, pro_prof, pacc, pbok );
 	      if( r != REACHOUT )
 		pop_blk( pacc );
 	    }	    	    
@@ -1604,15 +1608,12 @@ static int trace_ctrl_tracks ( CBTC_BLOCK_PTR pro_blks[], ROUTE_PROF_PTR pro_pro
   CBTC_BLOCK_PTR porg_blk = NULL;
   int i;
   book.ntrs = pro_prof->body.ntrs;
-  for( i = 0; i < book.ntrs; i++ ) {
+  for( i = 0; i < book.ntrs; i++ )
     book.ctrl_trax[i].ptr = &pro_prof->body.tr[i];
-    book.ctrl_trax[i].hit = FALSE;
-  }
   assert( i == pro_prof->body.ntrs );
   assert( pro_prof->body.ntrs < ROUTE_MAX_CTRLTRACKS );
   if( pro_prof->orgdst.org.porg_tr ) {
     book.ctrl_trax[i].ptr = pro_prof->orgdst.org.porg_tr;
-    book.ctrl_trax[i].hit = FALSE;
     book.ntrs++;
     {
       TRACK_PROF_PTR ptr_org = (pro_prof->orgdst.org.porg_tr)->tr_prof;
@@ -1928,8 +1929,19 @@ static void creat_ctrl_tracks ( void ) {
       assert( pprof );
       const int ro_blk_maxnum = 256;
       CBTC_BLOCK_PTR ro_blks[ro_blk_maxnum] = {};
-      trace_ctrl_tracks( ro_blks, pprof, ro_blk_maxnum );
-      assert( TRUE );
+      int n = -1;
+      n = trace_ctrl_tracks( ro_blks, pprof, ro_blk_maxnum );
+      assert( n > -1 );
+      {
+	int i;
+	for( i = 0; i < n; i++ ) {
+	  assert( ro_blks[i] );
+	  if( i > 0 )
+	    printf( ", " );
+	  printf( "%s", ro_blks[i]->virt_blkname_str );
+	}
+	assert( FALSE );
+      }
     }
     pprof++;
   }
