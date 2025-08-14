@@ -1484,8 +1484,7 @@ static BOOL route_out( WALK *preason, CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, 
       found = TRUE;
       break;
     }
-  }
-  if( !found ) {
+  }  if( !found ) {
     *preason = ROUTEOUT;
     r = TRUE;
   } else {
@@ -1580,8 +1579,10 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
 		}
 	      }
 	    }
-	    if( !found )
+	    if( !found ) {
+	      r = BAD_KR;
 	      break;
+	    }
 	  }
 	  if( found ) {
 	    r = stepin_next( pmor, 0, pro_prof, pacc, pbok );
@@ -1589,11 +1590,12 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
 	      r = stepin_next( pmor, 1, pro_prof, pacc, pbok );
 	      if( r != REACHOUT )
 		pop_blk( pacc );
-	    }	    	    
+	      else
+		break;
+	    }
 	    break;
 	  }
 	}
-	r = BAD_KR;
       }
   } else
     assert( r != REACHOUT );
@@ -1928,33 +1930,27 @@ static void creat_ctrl_tracks ( void ) {
       trylnk_ahead_blk( pahd, pfro );
     }
 #if 1 // *****
+    //if( strcmp( pprof->route_name, "S801A_S803A" ) == 0 ) {
     {
-      assert( pprof );
-      const int ro_blk_maxnum = 256;
-      CBTC_BLOCK_PTR ro_blks[ro_blk_maxnum] = {};
-      int n = -1;
-      n = trace_ctrl_tracks( ro_blks, pprof, ro_blk_maxnum );
-      assert( n > -1 );      
-      {
 	assert( pprof );
-	int i;
-#if 0
-	if( strcmp( pprof->route_name, "S803B_VS803B" ) == 0 ){
+	const int ro_blk_maxnum = 256;
+	CBTC_BLOCK_PTR ro_blks[ro_blk_maxnum] = {};
+	int n = -1;
+	n = trace_ctrl_tracks( ro_blks, pprof, ro_blk_maxnum );
+	assert( n > -1 );      
+	{
+	  assert( pprof );
+	  int i;
 	  printf( "(route, [blocks]): (%s, [", pprof->route_name );
-	  ;
+	  for( i = 0; i < n; i++ ) {
+	    assert( ro_blks[i] );
+	    if( i > 0 )
+	      printf( ", " );
+	    printf( "%s", ro_blks[i]->virt_blkname_str );
+	  }
+	  printf( "])\n" );
+	  //assert( FALSE );
 	}
-#else
-	printf( "(route, [blocks]): (%s, [", pprof->route_name );
-#endif	
-	for( i = 0; i < n; i++ ) {
-	  assert( ro_blks[i] );
-	  if( i > 0 )
-	    printf( ", " );
-	  printf( "%s", ro_blks[i]->virt_blkname_str );
-	}
-	printf( "])\n" );
-	//assert( FALSE );
-      }
     }
 #endif
     pprof++;
