@@ -1930,7 +1930,7 @@ static void creat_ctrl_tracks ( void ) {
       trylnk_ahead_blk( pahd, pfro );
     }
 #if 1 // *****
-    //if( strcmp( pprof->route_name, "S801A_S803A" ) == 0 ) {
+    //if( strcmp( pprof->route_name, "S808A_VS802A" ) == 0 ) {
     {
 	assert( pprof );
 	const int ro_blk_maxnum = 256;
