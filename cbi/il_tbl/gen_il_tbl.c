@@ -1650,190 +1650,189 @@ static int trace_ctrl_tracks ( CBTC_BLOCK_PTR pro_blks[], ROUTE_PROF_PTR pro_pro
 
 static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd, ROUTE_PROF_PTR pro_prof, const int nmphs_ahd ) {
   assert( pmphs_ahd );
-  assert( ptr_ahd );
   assert( pro_prof );
-  struct route_sw *ppts[TURNOUT_MAX_POINTS] = {};
   int nms = 0;
-  
-  int nps = 0;
-  if( ptr_ahd->turnout.npts > 0 ) {
-    int i;
-    for( i = 0; i < ptr_ahd->turnout.npts; i++ ) {
-      int j;
-      for( j = 0; j < pro_prof->body.npts; j++ ) {
-	if( strncmp( ptr_ahd->turnout.point[i].pt_name, pro_prof->body.pt[j].pt_name, CBI_STAT_IDENT_LEN ) == 0 ) {
-	  ppts[nps] = &pro_prof->body.pt[j];
-	  nps++;
-	}
-      }
-    }
-  panic:
-    { 
-      int i;    
-      for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
-	CBTC_BLOCK_PTR pblk = ptr_ahd->consists_blks.pblk_profs[i];
-	if( pblk ) {
-	  int j;
-	  for( j = 0; j < pblk->shape.num_morphs; j++ ) {
-	    BOOL found = FALSE;
-	    int k;
-	    for( k = 0; k < pblk->shape.morphs[j].num_points; k++ ) {
-	      int l;
-	      for( found = FALSE, l = 0; l < nps; l++ ) {
-		assert( ppts[l] );
-		char pt_kr[CBI_STAT_IDENT_LEN + 1] = "";
-		pt_kr[CBI_STAT_IDENT_LEN] = 0;
-		strncpy( pt_kr, ppts[l]->pt_name, CBI_STAT_IDENT_LEN );
-		if( ppts[l]->stat.normal ) {
-		  strncat( pt_kr, "_NKR", CBI_STAT_IDENT_LEN );
-		  if( strncmp( cnv2str_il_sym(pblk->shape.morphs[j].points[k]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
-		    found = TRUE;
-		    break;
-		  }
-		}
-		strncpy( pt_kr, ppts[l]->pt_name, CBI_STAT_IDENT_LEN );
-		if( ppts[l]->stat.reverse ) {
-		  strncat( pt_kr, "_RKR", CBI_STAT_IDENT_LEN );
-		  if( strncmp( cnv2str_il_sym(pblk->shape.morphs[j].points[k]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
-		    found = TRUE;
-		    break;
-		  }
-		}
-	      }
-	      if( !found )
-		break;
-	    }
-	    if( k > 0 ) {
-	      assert( pblk->shape.morphs[j].num_points > 0 );
-	      if( found ) {
-	      regist4_no_turnout:
-		pmphs_ahd[nms] = &pblk->shape.morphs[j];
-		nms++;
-		break;
-	      }
-	    } else {
-	      assert( pblk->shape.morphs[j].num_points == 0 );
-	      goto regist4_no_turnout; //assert( pblk->shape.num_morphs == 1 );
-	    }
-	  }
-	}
-      }
-    }
-  } else {
-    assert( ptr_ahd->turnout.npts == 0 );
-    int i;
-    for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
-      assert( ptr_ahd );
-      CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
-      if( pbs_ahd ) {	
+  if( ptr_ahd ) {
+    struct route_sw *ppts[TURNOUT_MAX_POINTS] = {};
+    int nps = 0;
+    if( ptr_ahd->turnout.npts > 0 ) {
+      int i;
+      for( i = 0; i < ptr_ahd->turnout.npts; i++ ) {
 	int j;
-	for( j = 0; j < pbs_ahd->shape.num_morphs; j++ ) {
-	  assert( pbs_ahd );
-	  if( pbs_ahd->shape.morphs[j].num_points > 0 ) {
-	    int k;
-	  failed:
-	    for( k = 0; k < pro_prof->body.npts; k++ ) {
-	      ppts[nps] = &pro_prof->body.pt[k];
-	      nps++;
-	    }
-	    assert( nps == pro_prof->body.npts );
-	    goto panic;
+	for( j = 0; j < pro_prof->body.npts; j++ ) {
+	  if( strncmp( ptr_ahd->turnout.point[i].pt_name, pro_prof->body.pt[j].pt_name, CBI_STAT_IDENT_LEN ) == 0 ) {
+	    ppts[nps] = &pro_prof->body.pt[j];
+	    nps++;
 	  }
 	}
       }
-    }
-    if( ptr_ahd->hardbonds.nblks >= ptr_ahd->consists_blks.nblks ) {
-      struct {	
-	struct fixed_pos *plnks;
-	BOOL chk;
-      } blk_lnks[MAX_TRACK_BLOCKS] = {};
-      for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
-	blk_lnks[i].plnks = &ptr_ahd->hardbonds.pblk_fixes[i];
-	blk_lnks[i].chk = FALSE;
-      }
-      assert( i == ptr_ahd->hardbonds.nblks );
-      for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
-	assert( ptr_ahd );
-	CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
-	if( pbs_ahd ) {
-	  if( (pbs_ahd->shape.num_morphs == 1) && (pbs_ahd->shape.morphs[0].num_links == 2) ) {
-	    BOOL found = FALSE;
+    panic:
+      { 
+	int i;    
+	for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
+	  CBTC_BLOCK_PTR pblk = ptr_ahd->consists_blks.pblk_profs[i];
+	  if( pblk ) {
 	    int j;
-	    for( j = 0; j < ptr_ahd->hardbonds.nblks; j++ ) {
-	      assert( ptr_ahd );
-	      assert( blk_lnks[j].plnks );
-	      if( (blk_lnks[j].plnks)->pprof == pbs_ahd ) {
-		int k;
-		if( (blk_lnks[j].plnks)->npos == 2 ) {
-		  int fst = -1;
-		  for( k = 0; k < 2; k++ ) {
-		    if( (blk_lnks[j].plnks)->pos[k].plnk == &pbs_ahd->shape.morphs[0].linkages[0] ) {
-		      if( blk_lnks[j].chk ) {
-			printf( "fatal: ill-formed linkage found in (block, morpt_num, link_num) = (%s, %d, %d), such linkage seems to belong other blocks/morphs also.\n",
-				pbs_ahd->virt_blkname_str, 0, 0 );
-			goto failed;
-		      }
-		      fst = k;
+	    for( j = 0; j < pblk->shape.num_morphs; j++ ) {
+	      BOOL found = FALSE;
+	      int k;
+	      for( k = 0; k < pblk->shape.morphs[j].num_points; k++ ) {
+		int l;
+		for( found = FALSE, l = 0; l < nps; l++ ) {
+		  assert( ppts[l] );
+		  char pt_kr[CBI_STAT_IDENT_LEN + 1] = "";
+		  pt_kr[CBI_STAT_IDENT_LEN] = 0;
+		  strncpy( pt_kr, ppts[l]->pt_name, CBI_STAT_IDENT_LEN );
+		  if( ppts[l]->stat.normal ) {
+		    strncat( pt_kr, "_NKR", CBI_STAT_IDENT_LEN );
+		    if( strncmp( cnv2str_il_sym(pblk->shape.morphs[j].points[k]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
+		      found = TRUE;
 		      break;
 		    }
 		  }
-		  if( fst > -1 ) {
-		    assert( fst < 2 );
-		    const int snd = (fst == 0) ? 1 : 0;
-		    if( (blk_lnks[j].plnks)->pos[snd].plnk == &pbs_ahd->shape.morphs[0].linkages[1] ) {
-		      if( blk_lnks[j].chk ) {
-			printf( "fatal: ill-formed linkage found in (block, morpt_num, link_num) = (%s, %d, %d), such linkage seems to belong other blocks/morphs also.\n",
-				pbs_ahd->virt_blkname_str, 0, 0 );				
-			goto failed;
-		      }		      
-		      blk_lnks[j].chk = TRUE;
+		  strncpy( pt_kr, ppts[l]->pt_name, CBI_STAT_IDENT_LEN );
+		  if( ppts[l]->stat.reverse ) {
+		    strncat( pt_kr, "_RKR", CBI_STAT_IDENT_LEN );
+		    if( strncmp( cnv2str_il_sym(pblk->shape.morphs[j].points[k]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
 		      found = TRUE;
 		      break;
 		    }
 		  }
 		}
+		if( !found )
+		  break;
+	      }
+	      if( found ) {
+	      has_no_turnout:
+		pmphs_ahd[nms] = &pblk->shape.morphs[j];
+		nms++;
+		break;
+	      } else {
+		if( pblk->shape.morphs[j].num_points == 0 ) {
+		  assert( pblk->shape.num_morphs == 1 );
+		  goto has_no_turnout;
+		}
 	      }
 	    }
-	    if( !found )
-	      goto failed;
-	  } else
-	    goto failed;
+	  }
 	}
       }
-      for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
+    } else {
+      assert( ptr_ahd->turnout.npts == 0 );
+      int i;
+      for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
 	assert( ptr_ahd );
-	assert( blk_lnks[i].plnks );
-	assert( (blk_lnks[i].plnks)->pprof );
-	assert( (blk_lnks[i].plnks)->npos > 0 );
-	if( blk_lnks[i].chk ) {
-	  assert( (blk_lnks[i].plnks)->npos == 2 );
-	  BOOL omit = FALSE;
-	  BLK_LINKAGE_PTR pfst = (blk_lnks[i].plnks)->pos[0].plnk;
-	  BLK_LINKAGE_PTR psnd = (blk_lnks[i].plnks)->pos[1].plnk;
-	  assert( pfst );
-	  assert( psnd );
-	  assert( pfst->pmorph == psnd->pmorph );       
-	  if( ! pfst->bond.pln_neigh ) {
-	    assert( pfst->bond.kind == LINK_NONE );
-	    assert( ! (blk_lnks[i].plnks)->pos[0].bond );
-	    pmphs_ahd[nms] = pfst->pmorph;
-	    nms++;
-	    omit = TRUE;
-	  } else
-	    assert( pfst->bond.kind != LINK_NONE );
-	  if( ! psnd->bond.pln_neigh ) {
-	    assert( psnd->bond.kind == LINK_NONE );
-	    assert( ! (blk_lnks[i].plnks)->pos[1].bond );
-	    if( !omit ) {
-	      pmphs_ahd[nms] = psnd->pmorph;
-	      nms++;
+	CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
+	if( pbs_ahd ) {	
+	  int j;
+	  for( j = 0; j < pbs_ahd->shape.num_morphs; j++ ) {
+	    assert( pbs_ahd );
+	    if( pbs_ahd->shape.morphs[j].num_points > 0 ) {
+	      int k;
+	    failed:
+	      for( k = 0; k < pro_prof->body.npts; k++ ) {
+		ppts[nps] = &pro_prof->body.pt[k];
+		nps++;
+	      }
+	      assert( nps == pro_prof->body.npts );
+	      goto panic;
 	    }
-	  } else
-	    assert( psnd->bond.kind != LINK_NONE );
+	  }
 	}
       }
-    } else
-      goto failed;
+      if( ptr_ahd->hardbonds.nblks >= ptr_ahd->consists_blks.nblks ) {
+	struct {	
+	  struct fixed_pos *plnks;
+	  BOOL chk;
+	} blk_lnks[MAX_TRACK_BLOCKS] = {};
+	for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
+	  blk_lnks[i].plnks = &ptr_ahd->hardbonds.pblk_fixes[i];
+	  blk_lnks[i].chk = FALSE;
+	}
+	assert( i == ptr_ahd->hardbonds.nblks );
+	for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
+	  assert( ptr_ahd );
+	  CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
+	  if( pbs_ahd ) {
+	    if( (pbs_ahd->shape.num_morphs == 1) && (pbs_ahd->shape.morphs[0].num_links == 2) ) {
+	      BOOL found = FALSE;
+	      int j;
+	      for( j = 0; j < ptr_ahd->hardbonds.nblks; j++ ) {
+		assert( ptr_ahd );
+		assert( blk_lnks[j].plnks );
+		if( (blk_lnks[j].plnks)->pprof == pbs_ahd ) {
+		  int k;
+		  if( (blk_lnks[j].plnks)->npos == 2 ) {
+		    int fst = -1;
+		    for( k = 0; k < 2; k++ ) {
+		      if( (blk_lnks[j].plnks)->pos[k].plnk == &pbs_ahd->shape.morphs[0].linkages[0] ) {
+			if( blk_lnks[j].chk ) {
+			  printf( "fatal: ill-formed linkage found in (block, morpt_num, link_num) = (%s, %d, %d), such linkage seems to belong other blocks/morphs also.\n",
+				  pbs_ahd->virt_blkname_str, 0, 0 );
+			  goto failed;
+			}
+			fst = k;
+			break;
+		      }
+		    }
+		    if( fst > -1 ) {
+		      assert( fst < 2 );
+		      const int snd = (fst == 0) ? 1 : 0;
+		      if( (blk_lnks[j].plnks)->pos[snd].plnk == &pbs_ahd->shape.morphs[0].linkages[1] ) {
+			if( blk_lnks[j].chk ) {
+			  printf( "fatal: ill-formed linkage found in (block, morpt_num, link_num) = (%s, %d, %d), such linkage seems to belong other blocks/morphs also.\n",
+				  pbs_ahd->virt_blkname_str, 0, 0 );				
+			  goto failed;
+			}		      
+			blk_lnks[j].chk = TRUE;
+			found = TRUE;
+			break;
+		      }
+		    }
+		  }
+		}
+	      }
+	      if( !found )
+		goto failed;
+	    } else
+	      goto failed;
+	  }
+	}
+	for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
+	  assert( ptr_ahd );
+	  assert( blk_lnks[i].plnks );
+	  assert( (blk_lnks[i].plnks)->pprof );
+	  assert( (blk_lnks[i].plnks)->npos > 0 );
+	  if( blk_lnks[i].chk ) {
+	    assert( (blk_lnks[i].plnks)->npos == 2 );
+	    BOOL omit = FALSE;
+	    BLK_LINKAGE_PTR pfst = (blk_lnks[i].plnks)->pos[0].plnk;
+	    BLK_LINKAGE_PTR psnd = (blk_lnks[i].plnks)->pos[1].plnk;
+	    assert( pfst );
+	    assert( psnd );
+	    assert( pfst->pmorph == psnd->pmorph );       
+	    if( ! pfst->bond.pln_neigh ) {
+	      assert( pfst->bond.kind == LINK_NONE );
+	      assert( ! (blk_lnks[i].plnks)->pos[0].bond );
+	      pmphs_ahd[nms] = pfst->pmorph;
+	      nms++;
+	      omit = TRUE;
+	    } else
+	      assert( pfst->bond.kind != LINK_NONE );
+	    if( ! psnd->bond.pln_neigh ) {
+	      assert( psnd->bond.kind == LINK_NONE );
+	      assert( ! (blk_lnks[i].plnks)->pos[1].bond );
+	      if( !omit ) {
+		pmphs_ahd[nms] = psnd->pmorph;
+		nms++;
+	      }
+	    } else
+	      assert( psnd->bond.kind != LINK_NONE );
+	  }
+	}
+      } else
+	goto failed;
+    }
   }
   return nms;
 }
@@ -1915,7 +1914,7 @@ static void creat_ctrl_tracks ( void ) {
       } else {
 	assert( i > 0 );
 	front = ahead;
-	ahead.pt_fro = pprof->body.tr[i].tr_prof;	
+	ahead.pt_fro = pprof->body.tr[i].tr_prof;
 	pfro = (front.nms > -1 ? &front : NULL);
 	pahd = &ahead;
       }
@@ -1928,24 +1927,36 @@ static void creat_ctrl_tracks ( void ) {
       }     
       trylnk_ahead_blk( pahd, pfro );
     }
+#if 1 // *****
     {
       assert( pprof );
       const int ro_blk_maxnum = 256;
       CBTC_BLOCK_PTR ro_blks[ro_blk_maxnum] = {};
       int n = -1;
       n = trace_ctrl_tracks( ro_blks, pprof, ro_blk_maxnum );
-      assert( n > -1 );
+      assert( n > -1 );      
       {
+	assert( pprof );
 	int i;
+#if 0
+	if( strcmp( pprof->route_name, "S803B_VS803B" ) == 0 ){
+	  printf( "(route, [blocks]): (%s, [", pprof->route_name );
+	  ;
+	}
+#else
+	printf( "(route, [blocks]): (%s, [", pprof->route_name );
+#endif	
 	for( i = 0; i < n; i++ ) {
 	  assert( ro_blks[i] );
 	  if( i > 0 )
 	    printf( ", " );
 	  printf( "%s", ro_blks[i]->virt_blkname_str );
 	}
-	assert( FALSE );
+	printf( "])\n" );
+	//assert( FALSE );
       }
     }
+#endif
     pprof++;
   }
 }
