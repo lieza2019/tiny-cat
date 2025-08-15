@@ -373,7 +373,7 @@ static void skip_chr ( FILE *fp_src ) {
   }
 }
 
-static int _linking ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
+static int linking_core ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
   assert( pblks );
   assert( nblks <= MAX_TRACK_BLOCKS );
   int cnt = 0;
@@ -436,11 +436,11 @@ static int _linking ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bi
 	  break;
       }
     }
-    cnt += _linking( &pblks[1], (nblks - 1), bind );
+    cnt += linking_core( &pblks[1], (nblks - 1), bind );
   }
   return cnt;
 }
-static int linking ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
+static int linking_blks ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
   assert( pblks );
   assert( nblks <= MAX_TRACK_BLOCKS );
   int r = -1;
@@ -452,7 +452,7 @@ static int linking ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bin
       pblks[i]->pos[k].bond = FALSE;
     }
   }
-  r = _linking( pblks, nblks, bind );
+  r = linking_core( pblks, nblks, bind );
   return r;
 }
 
@@ -482,7 +482,7 @@ static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[]
   }
   for( i = 0; i < cnt; i++ )
     pps[i] = &fixes[i];
-  linking( pps, cnt, LINK_HARD );
+  linking_blks( pps, cnt, LINK_HARD );
   return cnt;
 }
 
@@ -505,7 +505,7 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
       for( k = 0; k < nahd_blks; k++ ) {
 	int n = -1;
 	pps[1] = &pahd_blks[k];
-	n = linking( pps, 2, LINK_SEMIHARD );
+	n = linking_blks( pps, 2, LINK_SEMIHARD );
 	if( n > 0 ) {
 	  if( n == 1 ) {
 	    BOOL found = FALSE;
@@ -1903,7 +1903,7 @@ static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront )
     struct fixed_pos *pps[MAX_TRACK_BLOCKS * 2] = {};
     for( i = 0; i < cnt; i++ )
       pps[i] = &ln_blks[i];
-    r = linking( pps, cnt, LINK_SOFT );
+    r = linking_blks( pps, cnt, LINK_SOFT );
   }
   return r;
 }
