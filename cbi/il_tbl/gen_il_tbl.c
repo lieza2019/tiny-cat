@@ -1913,8 +1913,8 @@ static void creat_ctrl_tracks ( void ) {
   
   while( pprof < tracks_routes_prof.routes.pavail ) {
     assert( pprof );
-#if 0 // *****
-    if( strcmp( pprof->route_name, "S803B_S831B" ) == 0 ) {
+#if 1 // *****
+    if( strcmp( pprof->route_name, "S803B_VS801B" ) == 0 ) {
       printf( "HIT." );
     }
 #endif
