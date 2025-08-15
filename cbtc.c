@@ -105,7 +105,7 @@ void print_block_prof ( FILE *fp_out, CBTC_BLOCK_PTR pprof ) {
 static int enum_branches ( CBTC_BLOCK_PTR pblk, int bras[], const int len ) {
   assert( pblk );
   assert( bras );
-  assert( len <= MAX_ADJACENT_BLKS );
+  assert( len <= (MAX_ADJACENT_BLKS * MAX_BLOCK_MORPHS) );
   int cnt = 0;
   
   int i;
@@ -114,7 +114,8 @@ static int enum_branches ( CBTC_BLOCK_PTR pblk, int bras[], const int len ) {
     assert( pblk );
     BLK_MORPH_PTR pmor = &pblk->shape.morphs[i];
     int j;
-    assert( pmor );    
+    assert( pmor );
+    
     for( j = 0; j < pmor->num_links; j++ ) {
       BLK_LINKAGE_PTR plnk = &pmor->linkages[j];
       assert( plnk );
@@ -130,6 +131,7 @@ static int enum_branches ( CBTC_BLOCK_PTR pblk, int bras[], const int len ) {
 	cnt++;
       }
     }
+    
   }
   return cnt;
 }
@@ -197,11 +199,11 @@ void cons_block_state ( void ) {
       pmor->pblock = pblk;
     }
     {
-      int bs[MAX_ADJACENT_BLKS] = {};
+      int bs[MAX_ADJACENT_BLKS * MAX_BLOCK_MORPHS] = {};
       int *p = bs;
       int n = -1;
-      n = enum_branches( pblk, bs, MAX_ADJACENT_BLKS );
-      assert( (n > 0) && (n <= MAX_ADJACENT_BLKS) );
+      n = enum_branches( pblk, bs, (MAX_ADJACENT_BLKS * MAX_BLOCK_MORPHS));
+      assert( (n > 0) && (n <= (MAX_ADJACENT_BLKS * MAX_BLOCK_MORPHS)) );
       p = equiv_branches( pblk, bs, 0, n );
       assert( p == &bs[n] );
     }

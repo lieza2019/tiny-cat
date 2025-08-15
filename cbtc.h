@@ -39,9 +39,9 @@ typedef enum stop_detection_cond {
   END_OF_STOP_DETECTION_TYPES
 } STOP_DETECTION_TYPE;
 
-#define MAX_BLOCK_MORPHS 2
-#define MAX_POINTS_ON_MORPHING 1
-#define MAX_ADJACENT_BLKS 3
+#define MAX_BLOCK_MORPHS 16
+#define MAX_POINTS_ON_MORPHING 8
+#define MAX_ADJACENT_BLKS 16
 typedef enum linx_bondage_kind {
   LINK_NONE = 0,
   LINK_HARD = 1,
