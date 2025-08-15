@@ -1523,6 +1523,21 @@ static BOOL route_out( WALK *preason, CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, 
   return r;
 }
 
+static BOOL reachout ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
+  assert( pblk );
+  assert( pro_prof );
+  BOOL r = FALSE;
+  
+  if( pro_prof->body.ntrs > 0 ) {
+    struct route_tr *ptr = &pro_prof->body.tr[pro_prof->body.ntrs - 1];
+    r = (strncmp( cnv2str_il_sym(pblk->belonging_tr.track), ptr->tr_name, CBI_STAT_IDENT_LEN ) == 0);
+  } else {
+    assert( pro_prof->body.ntrs == 0 );
+    r = TRUE;
+  }
+  return r;
+}
+
 static WALK wandering( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok );
 static WALK stepin_next( BLK_MORPH_PTR pmor_ahd, const int ln_id, ROUTE_PROF_PTR pro_prof, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
   assert( pmor_ahd );
@@ -1537,21 +1552,6 @@ static WALK stepin_next( BLK_MORPH_PTR pmor_ahd, const int ln_id, ROUTE_PROF_PTR
     assert( plnk->pmorph );
     assert( plnk->pmorph->pblock );
     r = wandering( plnk->pmorph->pblock, pro_prof, pacc, pbok );
-  }
-  return r;
-}
-
-static BOOL reachout ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
-  assert( pblk );
-  assert( pro_prof );
-  BOOL r = FALSE;
-  
-  if( pro_prof->body.ntrs > 0 ) {
-    struct route_tr *ptr = &pro_prof->body.tr[pro_prof->body.ntrs - 1];
-    r = (strncmp( cnv2str_il_sym(pblk->belonging_tr.track), ptr->tr_name, CBI_STAT_IDENT_LEN ) == 0);
-  } else {
-    assert( pro_prof->body.ntrs == 0 );
-    r = TRUE;
   }
   return r;
 }
