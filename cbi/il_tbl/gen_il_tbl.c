@@ -475,8 +475,7 @@ static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[]
       fixes[cnt].npos = n;
       for( j = 0; j < fixes[cnt].npos; j++ ) {
 	assert( plnks[j] );
-	fixes[cnt].pos[j].plnk = plnks[j];
-	fixes[cnt].pos[j].bond = FALSE;
+	fixes[cnt].pos[j].plnk = plnks[j];	
       }
       cnt++;
     }
@@ -560,7 +559,6 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
 	  assert( plnk->bond.kind == LINK_NONE );
 	  pahd_added->pprof = pblk;
 	  pahd_added->pos[0].plnk = plnk;
-	  pahd_added->pos[0].bond = FALSE;
 	  pahd_added->npos = 1;
 	  porg_tr = trylnk_orgahd( app_trs, napps, pahd_added, 1 );
 	  if( porg_tr ) {
@@ -1481,7 +1479,7 @@ static CBTC_BLOCK_PTR pop_blk ( BLK_TRACER_PTR pstk ) {
 
 typedef enum WALK {
   ROUTEOUT,
-  MISSREAD,
+  MISSTEP,
   BAD_KR,
   DEADEND,
   REACHOUT
@@ -1516,7 +1514,7 @@ static BOOL route_out( WALK *preason, CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, 
     int i;
     for( i = 0; i < pacc->sp; i++ ) {
       if( pacc->stack[i] == pblk ) {
-	*preason = MISSREAD;
+	*preason = MISSTEP;
 	r = TRUE;
 	break;
       }
