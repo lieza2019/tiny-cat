@@ -1362,6 +1362,11 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
     ROUTE_PROF_PTR pr_prof = tracks_routes_prof.routes.profs.pcrnt_ixl;
     while( pr_prof < tracks_routes_prof.routes.pavail ) {
       assert( pr_prof );
+#if 1 // *****
+      if(  strcmp( pr_prof->route_name, "S801A_S803A" ) == 0 ) {
+	printf( "HIT" );
+      }
+#endif
       TRACK_PROF_PTR pahd_tr = NULL;
       pahd_tr = pick_ahead_track( pr_prof );
       if( pahd_tr ) {
