@@ -373,7 +373,7 @@ static void skip_chr ( FILE *fp_src ) {
   }
 }
 
-static int linking ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
+static int _linking ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
   assert( pblks );
   assert( nblks <= MAX_TRACK_BLOCKS );
   int cnt = 0;
@@ -386,10 +386,12 @@ static int linking ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bin
       int j;
       if( pblk->pos[i].bond )
 	continue;
+#if 0 // *****
       if( (pblk->pos[i].plnk)->bond.pln_neigh ) {
 	assert( (pblk->pos[i].plnk)->bond.kind != LINK_NONE );
 	continue;
       }
+#endif
       assert( (pblk->pos[i].plnk)->pmorph );
       assert( (pblk->pos[i].plnk)->pmorph->pblock );
       for( j = 1; j < nblks; j++ ) {
@@ -400,10 +402,12 @@ static int linking ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bin
 	  assert( pb->pos[k].plnk );
 	  if( pb->pos[k].bond )
 	    continue;
+#if 0 // *****
 	  if( (pb->pos[k].plnk)->bond.pln_neigh ) {
 	    assert( (pb->pos[k].plnk)->bond.kind != LINK_NONE );
 	    continue;
 	  }
+#endif
 	  assert( (pb->pos[k].plnk)->pmorph );
 	  assert( (pb->pos[k].plnk)->pmorph->pblock );
 	  if( ((pblk->pos[i].plnk)->neigh_blk == (pb->pos[k].plnk)->pmorph->pblock->block_name) &&
@@ -432,10 +436,26 @@ static int linking ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bin
 	  break;
       }
     }
-    cnt += linking( &pblks[1], (nblks - 1), bind );
+    cnt += _linking( &pblks[1], (nblks - 1), bind );
   }
   return cnt;
 }
+static int linking ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
+  assert( pblks );
+  assert( nblks <= MAX_TRACK_BLOCKS );
+  int r = -1;
+  
+  int i;
+  for( i = 0; i < nblks; i++ ) {
+    int k;
+    for( k = 0; k < MAX_ADJACENT_BLKS; k++ ) {
+      pblks[i]->pos[k].bond = FALSE;
+    }
+  }
+  r = _linking( pblks, nblks, bind );
+  return r;
+}
+
 static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[], const int nblks ) {
   assert( profs );
   assert( fixes );
@@ -1362,8 +1382,8 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
     ROUTE_PROF_PTR pr_prof = tracks_routes_prof.routes.profs.pcrnt_ixl;
     while( pr_prof < tracks_routes_prof.routes.pavail ) {
       assert( pr_prof );
-#if 1 // *****
-      if(  strcmp( pr_prof->route_name, "S801A_S803A" ) == 0 ) {
+#if 0 // *****
+      if(  strcmp( pr_prof->route_name, "S801A_S807A" ) == 0 ) {
 	printf( "HIT" );
       }
 #endif
