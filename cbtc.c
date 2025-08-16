@@ -296,6 +296,12 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
     BLK_LINKAGE_PTR plast;
   } book = { NULL, NULL };
   int cnt = 0;
+
+#if 1 // *****
+  if( pblk->block_name == 2420 ) {
+    printf( "HIT." );
+  }
+#endif
   
   int i;
   for( i = 0; i < pblk->shape.num_morphs; i++ ) {

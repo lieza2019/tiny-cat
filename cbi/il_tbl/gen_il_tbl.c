@@ -1792,7 +1792,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 		    for( k = 0; k < 2; k++ ) {
 		      if( (blk_lnks[j].plnks)->pos[k].plnk == &pbs_ahd->shape.morphs[0].linkages[0] ) {
 			if( blk_lnks[j].chk ) {
-			  printf( "fatal: ill-formed linkage found in (block, morpt_num, link_num) = (%s, %d, %d), such linkage seems to belong other blocks/morphs also.\n",
+			  printf( "fatal: ill-formed linkage found in (block, morpt_num, link_num) = (%s, %d, %d), such linkage seems to belong other blocks/morphs.\n",
 				  pbs_ahd->virt_blkname_str, 0, 0 );
 			  goto failed;
 			}
@@ -1913,7 +1913,7 @@ static void creat_ctrl_tracks ( void ) {
   
   while( pprof < tracks_routes_prof.routes.pavail ) {
     assert( pprof );
-#if 1 // *****
+#if 0 // *****
     if( strcmp( pprof->route_name, "S803B_VS801B" ) == 0 ) {
       printf( "HIT." );
     }
