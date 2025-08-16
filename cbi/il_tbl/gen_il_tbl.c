@@ -59,14 +59,10 @@ const char *cnv2str_trbound ( TRACK_BOUND bound ) {
 struct fixed_pos {
   CBTC_BLOCK_PTR pprof;
   int npos;
-#if 0 // *****
-  BLK_LINKAGE_PTR pos[MAX_ADJACENT_BLKS];
-#else
   struct {
     BLK_LINKAGE_PTR plnk;
     BOOL bond;
   } pos[MAX_ADJACENT_BLKS];
-#endif
 };
 struct track_sr {
   BOOL defined;
@@ -386,12 +382,6 @@ static int linking_core ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIN
       int j;
       if( pblk->pos[i].bond )
 	continue;
-#if 0 // *****
-      if( (pblk->pos[i].plnk)->bond.pln_neigh ) {
-	assert( (pblk->pos[i].plnk)->bond.kind != LINK_NONE );
-	continue;
-      }
-#endif
       assert( (pblk->pos[i].plnk)->pmorph );
       assert( (pblk->pos[i].plnk)->pmorph->pblock );
       for( j = 1; j < nblks; j++ ) {
@@ -402,12 +392,6 @@ static int linking_core ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIN
 	  assert( pb->pos[k].plnk );
 	  if( pb->pos[k].bond )
 	    continue;
-#if 0 // *****
-	  if( (pb->pos[k].plnk)->bond.pln_neigh ) {
-	    assert( (pb->pos[k].plnk)->bond.kind != LINK_NONE );
-	    continue;
-	  }
-#endif
 	  assert( (pb->pos[k].plnk)->pmorph );
 	  assert( (pb->pos[k].plnk)->pmorph->pblock );
 	  if( ((pblk->pos[i].plnk)->neigh_blk == (pb->pos[k].plnk)->pmorph->pblock->block_name) &&
@@ -984,62 +968,6 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_s
   return cnt;
 }
 
-#if 0 // *****
-static BLK_LINKAGE_PTR _linking ( BLK_LINKAGE_PTR pbra, CBTC_BLOCK_PTR pblks, const int nblks ) {
-  assert( pbra );
-  assert( pblks );
-  assert( nblks >= 0 );
-  int i;
-  
-  pbra->pln_neigh = NULL;
-  for( i = 0; i < nblks; i++ ) {    
-    int j;
-    assert( pblks[i].shape.num_morphs < 3 );
-    for( j = 0; j < pblks[i].shape.num_morphs; j++ ) {
-      BLK_MORPH_PTR pmor = &pblks[i].shape.morphs[j];      
-      int k;
-      assert( pmor );
-      assert( pmor->num_links < 3 );
-      for( k = 0; k < pmor->num_links; k++ ) {
-	BLK_LINKAGE_PTR plnk = &pmor->linkages[k];
-	assert( plnk );
-	if( pbra->neigh_blk == plnk->neigh_blk ) {
-	  pbra->pln_neigh = plnk;
-	  return pbra->pln_neigh;
-	}
-      }
-    }
-  }
-  assert( !pbra->pln_neigh );
-  return NULL;
-}
-static void cons_block_linkages ( TRACK_PROF_PTR pprofs ) {
-  assert( pprofs );
-  TRACK_PROF_PTR pprof = pprofs;
-  
-  while( pprof ) {
-    assert( pprof );
-    int i;
-    for( i = 0; i < (pprof->consists_blks.nblks - 1); i++ ) {
-      CBTC_BLOCK_PTR pblk = pprof->consists_blks.pblk_profs[i];
-      int j;
-      assert( pblk );
-      for( j = 0; j < pblk->shape.num_morphs; j++ ) {
-	BLK_MORPH_PTR pmor = &pblk->shape.morphs[j];	
-	int k;
-	assert( pmor );
-	assert( pmor->num_links < 3 );
-	for( k = 0; k < pmor->num_links; k++ ) {	  
-	  _linking( &pmor->linkages[k], pprof->consists_blks.pblk_profs[i + 1], ((pprof->consists_blks.nblks - 1) - i) );
-	  ;
-	}	
-      }
-    }
-    pprof = pprof->pNext;
-  }
-}
-#endif
-
 static void emit_track_dataset_prolog ( FILE *fp_out ) {
   assert( fp_out );
   assert( !ferror( fp_out ) );
@@ -1380,11 +1308,6 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
     ROUTE_PROF_PTR pr_prof = tracks_routes_prof.routes.profs.pcrnt_ixl;
     while( pr_prof < tracks_routes_prof.routes.pavail ) {
       assert( pr_prof );
-#if 0 // *****
-      if(  strcmp( pr_prof->route_name, "S801A_S807A" ) == 0 ) {
-	printf( "HIT" );
-      }
-#endif
       TRACK_PROF_PTR pahd_tr = NULL;
       pahd_tr = pick_ahead_track( pr_prof );
       if( pahd_tr ) {
@@ -1913,11 +1836,6 @@ static void creat_ctrl_tracks ( void ) {
   
   while( pprof < tracks_routes_prof.routes.pavail ) {
     assert( pprof );
-#if 0 // *****
-    if( strcmp( pprof->route_name, "S803B_VS801B" ) == 0 ) {
-      printf( "HIT." );
-    }
-#endif
     struct frontier front = { -1 };
     struct frontier ahead = { -1 };
     int i;
@@ -1958,27 +1876,26 @@ static void creat_ctrl_tracks ( void ) {
       trylnk_ahead_blk( pahd, pfro );
     }
 #if 1 // *****
-    //if( strcmp( pprof->route_name, "S807B_S803H" ) == 0 ) {
     {
+      assert( pprof );
+      const int ro_blk_maxnum = 256;
+      CBTC_BLOCK_PTR ro_blks[ro_blk_maxnum] = {};
+      int n = -1;
+      n = trace_ctrl_tracks( ro_blks, pprof, ro_blk_maxnum );
+      assert( n > -1 );      
+      {
 	assert( pprof );
-	const int ro_blk_maxnum = 256;
-	CBTC_BLOCK_PTR ro_blks[ro_blk_maxnum] = {};
-	int n = -1;
-	n = trace_ctrl_tracks( ro_blks, pprof, ro_blk_maxnum );
-	assert( n > -1 );      
-	{
-	  assert( pprof );
-	  int i;
-	  printf( "(route, [blocks]): (%s, [", pprof->route_name );
-	  for( i = 0; i < n; i++ ) {
-	    assert( ro_blks[i] );
-	    if( i > 0 )
-	      printf( ", " );
-	    printf( "%s", ro_blks[i]->virt_blkname_str );
-	  }
-	  printf( "])\n" );
-	  //assert( FALSE );
+	int i;
+	printf( "(route, [blocks]): (%s, [", pprof->route_name );
+	for( i = 0; i < n; i++ ) {
+	  assert( ro_blks[i] );
+	  if( i > 0 )
+	    printf( ", " );
+	  printf( "%s", ro_blks[i]->virt_blkname_str );
 	}
+	printf( "])\n" );
+	//assert( FALSE );
+      }
     }
 #endif
     pprof++;
