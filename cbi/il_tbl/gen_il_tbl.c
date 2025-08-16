@@ -73,11 +73,11 @@ typedef struct track_prof {
   char track_name[CBI_STAT_IDENT_LEN + 1];
   CBI_STAT_ATTR_PTR ptr_attr;
   struct {
-    int nblks;
+    int num_blocks;
     CBTC_BLOCK_PTR pblk_profs[MAX_TRACK_BLOCKS];
   } consists_blks;
   struct {
-    int nblks;
+    int num_blocks;
     struct fixed_pos pblk_fixes[MAX_TRACK_BLOCKS];
   } hardbonds;
   struct {
@@ -87,7 +87,7 @@ typedef struct track_prof {
     struct track_sr kTLSR, kTRSR;
   } sr;
   struct {
-    int npts;
+    int num_points;
     struct {
       char pt_name[CBI_STAT_IDENT_LEN + 1];
       CBI_STAT_ATTR_PTR ppt_attr;
@@ -122,15 +122,17 @@ typedef struct route_prof {
     } dst;
   } orgdst;
   struct {
-    int ntrs;
+    int num_tracks;
     struct route_tr tr[ROUTE_MAX_APPTRACKS];
   } apps;
   struct {
-    int ntrs;
+    int num_points;    
+    struct route_sw pt[ROUTE_MAX_POINTS];
+  } points;
+  struct {
+    int num_tracks;
     struct route_tr tr[ROUTE_MAX_CTRLTRACKS];
     struct route_tr ahead, *pahead;
-    int npts;
-    struct route_sw pt[ROUTE_MAX_POINTS];
   } ctrl;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
 
@@ -143,7 +145,7 @@ static struct {
   struct {
     struct {
       ROUTE_PROF_PTR pwhole;
-      int nixls;
+      int num_ixls;
       ROUTE_PROF_PTR pprevs[END_OF_OCs];
       ROUTE_PROF_PTR pcrnt_ixl;
     } profs;
@@ -160,7 +162,7 @@ static void print_track_prof ( TRACK_PROF_PTR ptr_prof ) {
   printf( "(tr_name, bound, {points}, {route_locks}, [consist_blks]): (%s, %s, {", ptr_prof->track_name, cnv2str_trbound(ptr_prof->tr_bound) );
   {
     int i;
-    for( i = 0; i < ptr_prof->turnout.npts; i++ ) {
+    for( i = 0; i < ptr_prof->turnout.num_points; i++ ) {
       if( i > 0 )
 	printf( ", " );
       printf( "%s", ptr_prof->turnout.point[i].pt_name );
@@ -231,7 +233,7 @@ static void print_track_prof ( TRACK_PROF_PTR ptr_prof ) {
   
   {
     int i;
-    for( i = 0; i < ptr_prof->consists_blks.nblks; i++ ) {
+    for( i = 0; i < ptr_prof->consists_blks.num_blocks; i++ ) {
       CBTC_BLOCK_PTR pblk = ptr_prof->consists_blks.pblk_profs[i];
       assert( pblk );
       if( i > 0 )
@@ -263,7 +265,7 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
   printf( "points, " );
   printf( "(ahead_track, [ctrl_tracks]))): " );
   printf( "(%s (%s, %s), [", pro_prof->route_name, pro_prof->orgdst.org.signame_org, pro_prof->orgdst.dst.signame_dst );
-  for( i = 0; i < pro_prof->apps.ntrs; i++ ) {
+  for( i = 0; i < pro_prof->apps.num_tracks; i++ ) {
     if( i > 0 )
       printf( ", " );
     printf( "%s", pro_prof->apps.tr[i].tr_name );
@@ -276,24 +278,24 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
     printf( "%s), ", pro_prof->orgdst.dst.pdst_tr ? pro_prof->orgdst.dst.pdst_tr->tr_name : "none_destin" );
   {
     int i;
-    for( i = 0; i < pro_prof->ctrl.npts; i++ ) {
+    for( i = 0; i < pro_prof->points.num_points; i++ ) {
       if( i > 0 )
 	printf( ", " );
-      printf( "%s:", pro_prof->ctrl.pt[i].pt_name );
-      if( pro_prof->ctrl.pt[i].stat.normal )
+      printf( "%s:", pro_prof->points.pt[i].pt_name );
+      if( pro_prof->points.pt[i].stat.normal )
 	printf( "NKR" );
-      if( pro_prof->ctrl.pt[i].stat.reverse ) {
-	if( pro_prof->ctrl.pt[i].stat.normal )
+      if( pro_prof->points.pt[i].stat.reverse ) {
+	if( pro_prof->points.pt[i].stat.normal )
 	  printf( "&" );
 	printf( "RKR" );
       }
-      if( !(pro_prof->ctrl.pt[i].stat.normal || pro_prof->ctrl.pt[i].stat.reverse) )
+      if( !(pro_prof->points.pt[i].stat.normal || pro_prof->points.pt[i].stat.reverse) )
 	printf( "none" );
     }
     printf( ", " );
   }
   printf( "(%s, [", pro_prof->ctrl.ahead.tr_name );
-  for( i = 0; i < pro_prof->ctrl.ntrs; i++ ) {
+  for( i = 0; i < pro_prof->ctrl.num_tracks; i++ ) {
     if( i > 0 )
       printf( ", " );
     printf( "%s", pro_prof->ctrl.tr[i].tr_name );
@@ -483,7 +485,7 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
     int j;
     if( ! app_trs[i].tr_prof )
       continue;
-    for( j = 0; j < app_trs[i].tr_prof->hardbonds.nblks; j++ ) {
+    for( j = 0; j < app_trs[i].tr_prof->hardbonds.num_blocks; j++ ) {
       int k;
       pps[0] = &app_trs[i].tr_prof->hardbonds.pblk_fixes[j];
       for( k = 0; k < nahd_blks; k++ ) {
@@ -494,7 +496,7 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
 	  if( n == 1 ) {
 	    BOOL found = FALSE;
 	    int l;	      
-	    for( l = 0; l < app_trs[i].tr_prof->consists_blks.nblks; l++ ) {
+	    for( l = 0; l < app_trs[i].tr_prof->consists_blks.num_blocks; l++ ) {
 	      if( app_trs[i].tr_prof->consists_blks.pblk_profs[l] == pps[0]->pprof ) {
 		found = TRUE;
 		break;
@@ -520,12 +522,12 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
   assert( pahd_tr );
   struct route_tr *porg_tr = NULL;
   
-  porg_tr = trylnk_orgahd( app_trs, napps, pahd_tr->hardbonds.pblk_fixes, pahd_tr->hardbonds.nblks );
+  porg_tr = trylnk_orgahd( app_trs, napps, pahd_tr->hardbonds.pblk_fixes, pahd_tr->hardbonds.num_blocks );
   if( !porg_tr ) {
-    assert( pahd_tr->hardbonds.nblks < MAX_TRACK_BLOCKS );
-    struct fixed_pos *pahd_added = &pahd_tr->hardbonds.pblk_fixes[pahd_tr->hardbonds.nblks];    
+    assert( pahd_tr->hardbonds.num_blocks < MAX_TRACK_BLOCKS );
+    struct fixed_pos *pahd_added = &pahd_tr->hardbonds.pblk_fixes[pahd_tr->hardbonds.num_blocks];
     int i;
-    for( i = 0; i < pahd_tr->consists_blks.nblks; i++ ) {
+    for( i = 0; i < pahd_tr->consists_blks.num_blocks; i++ ) {
       CBTC_BLOCK_PTR pblk = pahd_tr->consists_blks.pblk_profs[i];
       assert( pblk );
       int j;
@@ -551,7 +553,7 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
 	    assert( pahd_added->pos[0].bond );
 	    BOOL found = FALSE;
 	    int l;
-	    for( l = 0; l < pahd_tr->hardbonds.nblks; l++ ) {
+	    for( l = 0; l < pahd_tr->hardbonds.num_blocks; l++ ) {
 	      struct fixed_pos *p = &pahd_tr->hardbonds.pblk_fixes[l];
 	      assert( p->pprof );
 	      if( p->pprof == pahd_added->pprof ) {
@@ -570,7 +572,7 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
 	      }
 	    }
 	    if( !found ) 
-	      pahd_tr->hardbonds.nblks++;
+	      pahd_tr->hardbonds.num_blocks++;
 	    return porg_tr;
 	  }
 	}
@@ -600,9 +602,9 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
   fprintf( fp_out, "{" );
   {
     int i;
-    fprintf( fp_out, "%d", pprof->consists_blks.nblks );
+    fprintf( fp_out, "%d", pprof->consists_blks.num_blocks );
     fprintf( fp_out, ", {" );
-    for( i = 0; i < pprof->consists_blks.nblks; i++ ) {
+    for( i = 0; i < pprof->consists_blks.num_blocks; i++ ) {
       if( i > 0 )
 	fprintf( fp_out, ", " );
       fprintf( fp_out, "%s", pprof->consists_blks.pblk_profs[i]->virt_blkname_str );
@@ -779,10 +781,10 @@ static int read_iltbl_point ( FILE *fp_src ) {
 	    strncat( tr_name, "_TR", TRACK_NAME_MAXLEN );
 	    ptr_prof = lkup_track_prof( tr_name );
 	    if( ptr_prof ) {
-	      const int idx = ptr_prof->turnout.npts;
+	      const int idx = ptr_prof->turnout.num_points;
 	      assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
 	      strncpy( ptr_prof->turnout.point[idx].pt_name, sw_name, POINT_NAME_NAXLEN );
-	      ptr_prof->turnout.npts++;
+	      ptr_prof->turnout.num_points++;
 	      cnt++;
 	    } else {
 	      cnt *= -1;
@@ -904,11 +906,11 @@ static void consist_blks_and_linking ( TRACK_PROF_PTR ptr_prof ) {
       nblks = track_prof_blks( &pblk_prof, (ptr_prof->ptr_attr)->ident );
     else
       nblks = track_prof_blks( &pblk_prof, ptr_prof->track_name );
-    ptr_prof->consists_blks.nblks = nblks;
+    ptr_prof->consists_blks.num_blocks = nblks;
   }
-  if( ptr_prof->consists_blks.nblks > 0 ) {
+  if( ptr_prof->consists_blks.num_blocks > 0 ) {
     assert( pblk_prof );
-    int n = ptr_prof->consists_blks.nblks;
+    int n = ptr_prof->consists_blks.num_blocks;
     int i = 0;
     do {
       assert( n > 0 );
@@ -917,8 +919,8 @@ static void consist_blks_and_linking ( TRACK_PROF_PTR ptr_prof ) {
       pblk_prof = pblk_prof->belonging_tr.pNext;
     } while( pblk_prof );
     assert( n == 0 );
-    assert( i == ptr_prof->consists_blks.nblks );
-    ptr_prof->hardbonds.nblks = link_internal_blks( ptr_prof->consists_blks.pblk_profs, ptr_prof->hardbonds.pblk_fixes, ptr_prof->consists_blks.nblks );
+    assert( i == ptr_prof->consists_blks.num_blocks );
+    ptr_prof->hardbonds.num_blocks = link_internal_blks( ptr_prof->consists_blks.pblk_profs, ptr_prof->hardbonds.pblk_fixes, ptr_prof->consists_blks.num_blocks );
   } else {
     printf( "warning: track %s has no blocks.\n", (ptr_prof->ptr_attr ? (ptr_prof->ptr_attr)->ident : ptr_prof->track_name) );
   }
@@ -1112,16 +1114,16 @@ static int read_iltbl_signal ( FILE *fp_src ) {
 	  if( pprof->route_name[sep] == '_' )
 	    strncpy( pprof->orgdst.dst.signame_dst, &pprof->route_name[sep+1], ROUTE_NAME_MAXLEN );
 	}
-	pprof->ctrl.ntrs = 0;
+	pprof->ctrl.num_tracks = 0;
 	strcpy( pprof->ctrl.ahead.tr_name, "" );
 	pprof->ctrl.ahead.tr_prof = NULL;
 	pprof->ctrl.pahead = NULL;
-	pprof->ctrl.npts = 0;
+	pprof->points.num_points = 0;
 	cnt++;
       }
       assert( pprof );
       if( strnlen( ctrl_tr, TRACK_NAME_MAXLEN ) > 1 ) {
-	const int i = pprof->ctrl.ntrs;
+	const int i = pprof->ctrl.num_tracks;
 	assert( strnlen( ctrl_tr, TRACK_NAME_MAXLEN ) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
 	strncat( ctrl_tr, "_TR", TRACK_NAME_MAXLEN );
 	assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
@@ -1130,21 +1132,21 @@ static int read_iltbl_signal ( FILE *fp_src ) {
 	if( ! pprof->ctrl.tr[i].tr_prof ) {
 	  printf( "warning: unknown control-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->ctrl.tr[i].tr_name, pprof->route_name );
 	}
-	pprof->ctrl.ntrs++;
+	pprof->ctrl.num_tracks++;
       }
       assert( nor_sw[0] == 'P' );
       if( (strnlen(&nor_sw[1], (POINT_NAME_NAXLEN - 1)) > 1) && strncmp(&nor_sw[1], "Nil", (POINT_NAME_NAXLEN - 1)) ) {
 	assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
-	strncpy( pprof->ctrl.pt[pprof->ctrl.npts].pt_name, nor_sw, POINT_NAME_NAXLEN );
-	pprof->ctrl.pt[pprof->ctrl.npts].stat.normal = TRUE;
-	pprof->ctrl.npts++;
+	strncpy( pprof->points.pt[pprof->points.num_points].pt_name, nor_sw, POINT_NAME_NAXLEN );
+	pprof->points.pt[pprof->points.num_points].stat.normal = TRUE;
+	pprof->points.num_points++;
       }
       assert( rev_sw[0] == 'P' );
       if( (strnlen(&rev_sw[1], (POINT_NAME_NAXLEN - 1)) > 1) && strncmp(&rev_sw[1], "Nil", (POINT_NAME_NAXLEN - 1)) ) {
 	assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
-	strncpy( pprof->ctrl.pt[pprof->ctrl.npts].pt_name, rev_sw, POINT_NAME_NAXLEN );
-	pprof->ctrl.pt[pprof->ctrl.npts].stat.reverse = TRUE;
-	pprof->ctrl.npts++;
+	strncpy( pprof->points.pt[pprof->points.num_points].pt_name, rev_sw, POINT_NAME_NAXLEN );
+	pprof->points.pt[pprof->points.num_points].stat.reverse = TRUE;
+	pprof->points.num_points++;
       }
     }
     skip_chr( fp_src );
@@ -1199,7 +1201,7 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
       if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
 	cnt++;
 	pprof = lkup_route_prof( ro_name );
-	assert( pprof->apps.ntrs == 0 );
+	assert( pprof->apps.num_tracks == 0 );
       }
       if( pprof ) {
 	assert( cnt > -1 );
@@ -1208,12 +1210,12 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 	  assert( strnlen(&app_tr[1], (TRACK_NAME_MAXLEN - 1)) < ((TRACK_NAME_MAXLEN - 1) - strlen("_TR")) );
 	  strncat( app_tr, "_TR", TRACK_NAME_MAXLEN );
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
-	  strncpy( pprof->apps.tr[pprof->apps.ntrs].tr_name, app_tr, TRACK_NAME_MAXLEN );
-	  pprof->apps.tr[pprof->apps.ntrs].tr_prof = lkup_track_prof( pprof->apps.tr[pprof->apps.ntrs].tr_name );
-	  if( !pprof->apps.tr[pprof->apps.ntrs].tr_prof ) {
-	    printf( "warning: unknown approach-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->apps.tr[pprof->apps.ntrs].tr_name, pprof->route_name );
+	  strncpy( pprof->apps.tr[pprof->apps.num_tracks].tr_name, app_tr, TRACK_NAME_MAXLEN );
+	  pprof->apps.tr[pprof->apps.num_tracks].tr_prof = lkup_track_prof( pprof->apps.tr[pprof->apps.num_tracks].tr_name );
+	  if( !pprof->apps.tr[pprof->apps.num_tracks].tr_prof ) {
+	    printf( "warning: unknown approach-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->apps.tr[pprof->apps.num_tracks].tr_name, pprof->route_name );
 	  }
-	  pprof->apps.ntrs++;
+	  pprof->apps.num_tracks++;
 	}
 	assert( ahd_tr[0] == 'T' );
 	if( (strnlen(&ahd_tr[1], (TRACK_NAME_MAXLEN - 1)) > 1) && strncmp(&ahd_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
@@ -1240,8 +1242,8 @@ static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
   
   if( (strnlen(pro_prof->ctrl.ahead.tr_name, CBI_STAT_IDENT_LEN) > 1) && pro_prof->ctrl.ahead.tr_prof ) {
     int i;
-    assert( pro_prof->ctrl.ntrs >= 0 );
-    for( i = 0; i < pro_prof->ctrl.ntrs; i++ ) {
+    assert( pro_prof->ctrl.num_tracks >= 0 );
+    for( i = 0; i < pro_prof->ctrl.num_tracks; i++ ) {
       if( !strncmp( pro_prof->ctrl.tr[i].tr_name, pro_prof->ctrl.ahead.tr_name, CBI_STAT_IDENT_LEN ) ) {
 	assert( pro_prof->ctrl.tr[i].tr_prof == pro_prof->ctrl.ahead.tr_prof );
 	pro_prof->ctrl.pahead = &pro_prof->ctrl.tr[i];
@@ -1265,7 +1267,7 @@ static struct route_tr *pick_dest_track ( const char *sig_dst, const int kickdn 
   } ro_org = {};
   
   if( kickdn >= 0 ) {
-    ROUTE_PROF_PTR pr_prof = (kickdn == tracks_routes_prof.routes.profs.nixls) ? tracks_routes_prof.routes.profs.pcrnt_ixl : tracks_routes_prof.routes.profs.pprevs[kickdn];
+    ROUTE_PROF_PTR pr_prof = (kickdn == tracks_routes_prof.routes.profs.num_ixls) ? tracks_routes_prof.routes.profs.pcrnt_ixl : tracks_routes_prof.routes.profs.pprevs[kickdn];
     while( pr_prof < tracks_routes_prof.routes.pavail ) {
       assert( pr_prof );
       if( strncmp( pr_prof->orgdst.org.signame_org, sig_dst, CBI_STAT_IDENT_LEN ) == 0 ) {
@@ -1311,7 +1313,7 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
       TRACK_PROF_PTR pahd_tr = NULL;
       pahd_tr = pick_ahead_track( pr_prof );
       if( pahd_tr ) {
-	pr_prof->orgdst.org.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.ntrs, pahd_tr );
+	pr_prof->orgdst.org.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.num_tracks, pahd_tr );
       } else {	
 	printf( "warning: missing ahead-track of %s.\n", pr_prof->route_name );
       }
@@ -1333,7 +1335,7 @@ static int fill_dest_tracks ( void ) {
   assert( pprof );
   while( pprof < tracks_routes_prof.routes.pavail ) {
     assert( pprof );
-    pprof->orgdst.dst.pdst_tr = pick_dest_track( pprof->orgdst.dst.signame_dst, tracks_routes_prof.routes.profs.nixls );
+    pprof->orgdst.dst.pdst_tr = pick_dest_track( pprof->orgdst.dst.signame_dst, tracks_routes_prof.routes.profs.num_ixls );
     if( ! pprof->orgdst.dst.pdst_tr ) {
       if( pbkp_dst ) {
 	assert( tracks_routes_prof.routes.bkpatches.pdestin );
@@ -1360,7 +1362,7 @@ static int bkpat_destin ( void ) {
   while( *pprof ) {
     assert( *pprof );
     assert( ! (*pprof)->orgdst.dst.pdst_tr );
-    (*pprof)->orgdst.dst.pdst_tr = pick_dest_track( (*pprof)->orgdst.dst.signame_dst, tracks_routes_prof.routes.profs.nixls );
+    (*pprof)->orgdst.dst.pdst_tr = pick_dest_track( (*pprof)->orgdst.dst.signame_dst, tracks_routes_prof.routes.profs.num_ixls );
     if( (*pprof)->orgdst.dst.pdst_tr )
       *pprof = (*pprof)->orgdst.dst.pNext;
     else
@@ -1451,11 +1453,11 @@ static BOOL reachout ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   BOOL r = FALSE;
   
-  if( pro_prof->ctrl.ntrs > 0 ) {
-    struct route_tr *ptr = &pro_prof->ctrl.tr[pro_prof->ctrl.ntrs - 1];
+  if( pro_prof->ctrl.num_tracks > 0 ) {
+    struct route_tr *ptr = &pro_prof->ctrl.tr[pro_prof->ctrl.num_tracks - 1];
     r = (strncmp( cnv2str_il_sym(pblk->belonging_tr.track), ptr->tr_name, CBI_STAT_IDENT_LEN ) == 0);
   } else {
-    assert( pro_prof->ctrl.ntrs == 0 );
+    assert( pro_prof->ctrl.num_tracks == 0 );
     r = TRUE;
   }
   return r;
@@ -1505,19 +1507,19 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
 	  int j;	
 	  for( j = 0; j < pmor->num_points; j++ ) {
 	    int k;	 
-	    for( found = FALSE, k = 0; k < pro_prof->ctrl.npts; k++ ) {
+	    for( found = FALSE, k = 0; k < pro_prof->points.num_points; k++ ) {
 	      char pt_kr[CBI_STAT_IDENT_LEN + 1] = "";
 	      pt_kr[CBI_STAT_IDENT_LEN] = 0;
-	      strncpy( pt_kr, pro_prof->ctrl.pt[k].pt_name, CBI_STAT_IDENT_LEN );
-	      if( pro_prof->ctrl.pt[k].stat.normal ) {
+	      strncpy( pt_kr, pro_prof->points.pt[k].pt_name, CBI_STAT_IDENT_LEN );
+	      if( pro_prof->points.pt[k].stat.normal ) {
 		strncat( pt_kr, "_NKR", CBI_STAT_IDENT_LEN );
 		if( strncmp( cnv2str_il_sym(pmor->points[j]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
 		  found = TRUE;
 		  break;
 		}
 	      }
-	      strncpy( pt_kr, pro_prof->ctrl.pt[k].pt_name, CBI_STAT_IDENT_LEN );
-	      if( pro_prof->ctrl.pt[k].stat.reverse ) {	      
+	      strncpy( pt_kr, pro_prof->points.pt[k].pt_name, CBI_STAT_IDENT_LEN );
+	      if( pro_prof->points.pt[k].stat.reverse ) {	      
 		strncat( pt_kr, "_RKR", CBI_STAT_IDENT_LEN );
 		if( strncmp( cnv2str_il_sym(pmor->points[j]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
 		  found = TRUE;
@@ -1558,18 +1560,18 @@ static int trace_ctrl_tracks ( CBTC_BLOCK_PTR pro_blks[], ROUTE_PROF_PTR pro_pro
   
   CBTC_BLOCK_PTR porg_blk = NULL;
   int i;
-  book.ntrs = pro_prof->ctrl.ntrs;
+  book.ntrs = pro_prof->ctrl.num_tracks;
   for( i = 0; i < book.ntrs; i++ )
     book.ctrl_trax[i].ptr = &pro_prof->ctrl.tr[i];
-  assert( i == pro_prof->ctrl.ntrs );
-  assert( pro_prof->ctrl.ntrs < ROUTE_MAX_CTRLTRACKS );
+  assert( i == pro_prof->ctrl.num_tracks );
+  assert( pro_prof->ctrl.num_tracks < ROUTE_MAX_CTRLTRACKS );
   if( pro_prof->orgdst.org.porg_tr ) {
     book.ctrl_trax[i].ptr = pro_prof->orgdst.org.porg_tr;
     book.ntrs++;
     {
       TRACK_PROF_PTR ptr_org = (pro_prof->orgdst.org.porg_tr)->tr_prof;
       if( ptr_org ) {
-	if( ptr_org->consists_blks.nblks > 0 )
+	if( ptr_org->consists_blks.num_blocks > 0 )
 	  porg_blk = ptr_org->consists_blks.pblk_profs[0];
       }
     }
@@ -1578,11 +1580,11 @@ static int trace_ctrl_tracks ( CBTC_BLOCK_PTR pro_blks[], ROUTE_PROF_PTR pro_pro
   while( !porg_blk ) {
     assert( pro_prof );
     TRACK_PROF_PTR ptr_org = NULL;
-    if( i >= pro_prof->ctrl.ntrs )
+    if( i >= pro_prof->ctrl.num_tracks )
       break;
     ptr_org = pro_prof->ctrl.tr[i].tr_prof;
     if( ptr_org ) {
-      if( ptr_org->consists_blks.nblks > 0 )
+      if( ptr_org->consists_blks.num_blocks > 0 )
 	porg_blk = ptr_org->consists_blks.pblk_profs[0];
     }
     i++;
@@ -1603,13 +1605,13 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
   if( ptr_ahd ) {
     struct route_sw *ppts[TURNOUT_MAX_POINTS] = {};
     int nps = 0;
-    if( ptr_ahd->turnout.npts > 0 ) {
+    if( ptr_ahd->turnout.num_points > 0 ) {
       int i;
-      for( i = 0; i < ptr_ahd->turnout.npts; i++ ) {
+      for( i = 0; i < ptr_ahd->turnout.num_points; i++ ) {
 	int j;
-	for( j = 0; j < pro_prof->ctrl.npts; j++ ) {
-	  if( strncmp( ptr_ahd->turnout.point[i].pt_name, pro_prof->ctrl.pt[j].pt_name, CBI_STAT_IDENT_LEN ) == 0 ) {
-	    ppts[nps] = &pro_prof->ctrl.pt[j];
+	for( j = 0; j < pro_prof->points.num_points; j++ ) {
+	  if( strncmp( ptr_ahd->turnout.point[i].pt_name, pro_prof->points.pt[j].pt_name, CBI_STAT_IDENT_LEN ) == 0 ) {
+	    ppts[nps] = &pro_prof->points.pt[j];
 	    nps++;
 	  }
 	}
@@ -1617,7 +1619,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
     panic:
       { 
 	int i;    
-	for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
+	for( i = 0; i < ptr_ahd->consists_blks.num_blocks; i++ ) {
 	  CBTC_BLOCK_PTR pblk = ptr_ahd->consists_blks.pblk_profs[i];
 	  if( pblk ) {
 	    int j;
@@ -1666,9 +1668,9 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	}
       }
     } else {
-      assert( ptr_ahd->turnout.npts == 0 );
+      assert( ptr_ahd->turnout.num_points == 0 );
       int i;
-      for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
+      for( i = 0; i < ptr_ahd->consists_blks.num_blocks; i++ ) {
 	assert( ptr_ahd );
 	CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
 	if( pbs_ahd ) {	
@@ -1678,34 +1680,34 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	    if( pbs_ahd->shape.morphs[j].num_points > 0 ) {
 	      int k;
 	    failed:
-	      for( k = 0; k < pro_prof->ctrl.npts; k++ ) {
-		ppts[nps] = &pro_prof->ctrl.pt[k];
+	      for( k = 0; k < pro_prof->points.num_points; k++ ) {
+		ppts[nps] = &pro_prof->points.pt[k];
 		nps++;
 	      }
-	      assert( nps == pro_prof->ctrl.npts );
+	      assert( nps == pro_prof->points.num_points );
 	      goto panic;
 	    }
 	  }
 	}
       }
-      if( ptr_ahd->hardbonds.nblks >= ptr_ahd->consists_blks.nblks ) {
+      if( ptr_ahd->hardbonds.num_blocks >= ptr_ahd->consists_blks.num_blocks ) {
 	struct {	
 	  struct fixed_pos *plnks;
 	  BOOL chk;
 	} blk_lnks[MAX_TRACK_BLOCKS] = {};
-	for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
+	for( i = 0; i < ptr_ahd->hardbonds.num_blocks; i++ ) {
 	  blk_lnks[i].plnks = &ptr_ahd->hardbonds.pblk_fixes[i];
 	  blk_lnks[i].chk = FALSE;
 	}
-	assert( i == ptr_ahd->hardbonds.nblks );
-	for( i = 0; i < ptr_ahd->consists_blks.nblks; i++ ) {
+	assert( i == ptr_ahd->hardbonds.num_blocks );
+	for( i = 0; i < ptr_ahd->consists_blks.num_blocks; i++ ) {
 	  assert( ptr_ahd );
 	  CBTC_BLOCK_PTR pbs_ahd = ptr_ahd->consists_blks.pblk_profs[i];
 	  if( pbs_ahd ) {
 	    if( (pbs_ahd->shape.num_morphs == 1) && (pbs_ahd->shape.morphs[0].num_links == 2) ) {
 	      BOOL found = FALSE;
 	      int j;
-	      for( j = 0; j < ptr_ahd->hardbonds.nblks; j++ ) {
+	      for( j = 0; j < ptr_ahd->hardbonds.num_blocks; j++ ) {
 		assert( ptr_ahd );
 		assert( blk_lnks[j].plnks );
 		if( (blk_lnks[j].plnks)->pprof == pbs_ahd ) {
@@ -1746,7 +1748,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	      goto failed;
 	  }
 	}
-	for( i = 0; i < ptr_ahd->hardbonds.nblks; i++ ) {
+	for( i = 0; i < ptr_ahd->hardbonds.num_blocks; i++ ) {
 	  assert( ptr_ahd );
 	  assert( blk_lnks[i].plnks );
 	  assert( (blk_lnks[i].plnks)->pprof );
@@ -1839,7 +1841,7 @@ static void cons_blks_circuit ( void ) {
     struct frontier front = { -1 };
     struct frontier ahead = { -1 };
     int i;
-    for( i = 0; i < pprof->ctrl.ntrs; i++ ) {
+    for( i = 0; i < pprof->ctrl.num_tracks; i++ ) {
       assert( pprof );
       struct frontier *pfro = NULL;
       struct frontier *pahd = NULL;
@@ -1973,11 +1975,11 @@ static int gen_route_dataset ( FILE *fp_out ) {
   
   emit_route_dataset_prolog( fp_out );
   
-  assert( tracks_routes_prof.routes.profs.nixls == 0 );
+  assert( tracks_routes_prof.routes.profs.num_ixls == 0 );
   tracks_routes_prof.routes.profs.pcrnt_ixl = tracks_routes_prof.routes.pavail;
   r = cons_route_profs( "BCGN" );
   
-  tracks_routes_prof.routes.profs.pprevs[tracks_routes_prof.routes.profs.nixls++] = tracks_routes_prof.routes.profs.pcrnt_ixl;
+  tracks_routes_prof.routes.profs.pprevs[tracks_routes_prof.routes.profs.num_ixls++] = tracks_routes_prof.routes.profs.pcrnt_ixl;
   tracks_routes_prof.routes.profs.pcrnt_ixl = tracks_routes_prof.routes.pavail;
   r = cons_route_profs( "JLA" );
   
@@ -1996,7 +1998,7 @@ static int init_gen_il_dataset ( void ) {
     return r;
   else
     tracks_routes_prof.tracks.pavail = tracks_routes_prof.tracks.track_profs;
-  tracks_routes_prof.routes.profs.nixls = 0;
+  tracks_routes_prof.routes.profs.num_ixls = 0;
   tracks_routes_prof.routes.profs.pwhole = calloc( ROUTE_PROF_DECL_MAXNUM, sizeof(ROUTE_PROF) );
   if( !tracks_routes_prof.routes.profs.pwhole )
     return r;
