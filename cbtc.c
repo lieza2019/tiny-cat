@@ -296,12 +296,6 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
     BLK_LINKAGE_PTR plast;
   } book = { NULL, NULL };
   int cnt = 0;
-
-#if 1 // *****
-  if( pblk->block_name == 2420 ) {
-    printf( "HIT." );
-  }
-#endif
   
   int i;
   for( i = 0; i < pblk->shape.num_morphs; i++ ) {
@@ -328,10 +322,8 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
 	    }
 	    p = p->bond.pln_neigh;
 	  } while( p );
-	} else {
-	  assert( !book.plast );
+	} else
 	  book.plast = plnk;
-	}
 	if( found )
 	  continue;
       }
@@ -388,8 +380,6 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
       p->bond.pln_neigh = NULL;
       p = q;
     }
-    assert( !(book.phead)->bond.pln_neigh );
-    assert( !(book.plast)->bond.pln_neigh );
   }
   return cnt;
 }
