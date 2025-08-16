@@ -1567,7 +1567,7 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
     if( reachout( pblk, pro_prof ) )
       r = REACHOUT;
     else
-      if( pblk->shape.num_morphs == 1 ) {      
+      if( pblk->shape.num_morphs == 1 ) {
 	r = stepin_next( &pblk->shape.morphs[0], 0, pro_prof, pacc, pbok ); 
 	if( r != REACHOUT ) {
 	  r = stepin_next( &pblk->shape.morphs[0], 1, pro_prof, pacc, pbok );
@@ -1805,7 +1805,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 		      const int snd = (fst == 0) ? 1 : 0;
 		      if( (blk_lnks[j].plnks)->pos[snd].plnk == &pbs_ahd->shape.morphs[0].linkages[1] ) {
 			if( blk_lnks[j].chk ) {
-			  printf( "fatal: ill-formed linkage found in (block, morpt_num, link_num) = (%s, %d, %d), such linkage seems to belong other blocks/morphs also.\n",
+			  printf( "fatal: ill-formed linkage found in (block, morpt_num, link_num) = (%s, %d, %d), such linkage seems to belong other blocks/morphs.\n",
 				  pbs_ahd->virt_blkname_str, 0, 0 );				
 			  goto failed;
 			}		      
@@ -1958,8 +1958,8 @@ static void creat_ctrl_tracks ( void ) {
       trylnk_ahead_blk( pahd, pfro );
     }
 #if 1 // *****
-    //if( strcmp( pprof->route_name, "S808A_VS802A" ) == 0 ) {
-    {
+    if( strcmp( pprof->route_name, "S807B_S803H" ) == 0 ) {
+    //{
 	assert( pprof );
 	const int ro_blk_maxnum = 256;
 	CBTC_BLOCK_PTR ro_blks[ro_blk_maxnum] = {};
