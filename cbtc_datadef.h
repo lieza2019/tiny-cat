@@ -129,5 +129,9 @@ typedef enum cbtc_block_id {
   VB363DA,
   VB363UA,
   VB363UB,
+  
+  VB303L9,
+  VB304L9,
+  VB306L9,
   END_OF_CBTC_BLOCKs
 } CBTC_BLOCK_ID;
