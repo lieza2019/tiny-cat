@@ -131,7 +131,7 @@ typedef struct route_prof {
     struct route_tr ahead, *pahead;
     int npts;
     struct route_sw pt[ROUTE_MAX_POINTS];
-  } body;
+  } ctrl;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
 
 static struct {
@@ -276,27 +276,27 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
     printf( "%s), ", pro_prof->orgdst.dst.pdst_tr ? pro_prof->orgdst.dst.pdst_tr->tr_name : "none_destin" );
   {
     int i;
-    for( i = 0; i < pro_prof->body.npts; i++ ) {
+    for( i = 0; i < pro_prof->ctrl.npts; i++ ) {
       if( i > 0 )
 	printf( ", " );
-      printf( "%s:", pro_prof->body.pt[i].pt_name );
-      if( pro_prof->body.pt[i].stat.normal )
+      printf( "%s:", pro_prof->ctrl.pt[i].pt_name );
+      if( pro_prof->ctrl.pt[i].stat.normal )
 	printf( "NKR" );
-      if( pro_prof->body.pt[i].stat.reverse ) {
-	if( pro_prof->body.pt[i].stat.normal )
+      if( pro_prof->ctrl.pt[i].stat.reverse ) {
+	if( pro_prof->ctrl.pt[i].stat.normal )
 	  printf( "&" );
 	printf( "RKR" );
       }
-      if( !(pro_prof->body.pt[i].stat.normal || pro_prof->body.pt[i].stat.reverse) )
+      if( !(pro_prof->ctrl.pt[i].stat.normal || pro_prof->ctrl.pt[i].stat.reverse) )
 	printf( "none" );
     }
     printf( ", " );
   }
-  printf( "(%s, [", pro_prof->body.ahead.tr_name );
-  for( i = 0; i < pro_prof->body.ntrs; i++ ) {
+  printf( "(%s, [", pro_prof->ctrl.ahead.tr_name );
+  for( i = 0; i < pro_prof->ctrl.ntrs; i++ ) {
     if( i > 0 )
       printf( ", " );
-    printf( "%s", pro_prof->body.tr[i].tr_name );
+    printf( "%s", pro_prof->ctrl.tr[i].tr_name );
   }
   printf( "])))\n" );
   prn_rtprof_lv1 = FALSE;
@@ -1112,39 +1112,39 @@ static int read_iltbl_signal ( FILE *fp_src ) {
 	  if( pprof->route_name[sep] == '_' )
 	    strncpy( pprof->orgdst.dst.signame_dst, &pprof->route_name[sep+1], ROUTE_NAME_MAXLEN );
 	}
-	pprof->body.ntrs = 0;
-	strcpy( pprof->body.ahead.tr_name, "" );
-	pprof->body.ahead.tr_prof = NULL;
-	pprof->body.pahead = NULL;
-	pprof->body.npts = 0;
+	pprof->ctrl.ntrs = 0;
+	strcpy( pprof->ctrl.ahead.tr_name, "" );
+	pprof->ctrl.ahead.tr_prof = NULL;
+	pprof->ctrl.pahead = NULL;
+	pprof->ctrl.npts = 0;
 	cnt++;
       }
       assert( pprof );
       if( strnlen( ctrl_tr, TRACK_NAME_MAXLEN ) > 1 ) {
-	const int i = pprof->body.ntrs;
+	const int i = pprof->ctrl.ntrs;
 	assert( strnlen( ctrl_tr, TRACK_NAME_MAXLEN ) < (TRACK_NAME_MAXLEN - strlen("_TR")) );
 	strncat( ctrl_tr, "_TR", TRACK_NAME_MAXLEN );
 	assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
-	strncpy( pprof->body.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
-	pprof->body.tr[i].tr_prof = lkup_track_prof( pprof->body.tr[i].tr_name );
-	if( ! pprof->body.tr[i].tr_prof ) {
-	  printf( "warning: unknown control-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->body.tr[i].tr_name, pprof->route_name );
+	strncpy( pprof->ctrl.tr[i].tr_name, ctrl_tr, TRACK_NAME_MAXLEN );
+	pprof->ctrl.tr[i].tr_prof = lkup_track_prof( pprof->ctrl.tr[i].tr_name );
+	if( ! pprof->ctrl.tr[i].tr_prof ) {
+	  printf( "warning: unknown control-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->ctrl.tr[i].tr_name, pprof->route_name );
 	}
-	pprof->body.ntrs++;
+	pprof->ctrl.ntrs++;
       }
       assert( nor_sw[0] == 'P' );
       if( (strnlen(&nor_sw[1], (POINT_NAME_NAXLEN - 1)) > 1) && strncmp(&nor_sw[1], "Nil", (POINT_NAME_NAXLEN - 1)) ) {
 	assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
-	strncpy( pprof->body.pt[pprof->body.npts].pt_name, nor_sw, POINT_NAME_NAXLEN );
-	pprof->body.pt[pprof->body.npts].stat.normal = TRUE;
-	pprof->body.npts++;
+	strncpy( pprof->ctrl.pt[pprof->ctrl.npts].pt_name, nor_sw, POINT_NAME_NAXLEN );
+	pprof->ctrl.pt[pprof->ctrl.npts].stat.normal = TRUE;
+	pprof->ctrl.npts++;
       }
       assert( rev_sw[0] == 'P' );
       if( (strnlen(&rev_sw[1], (POINT_NAME_NAXLEN - 1)) > 1) && strncmp(&rev_sw[1], "Nil", (POINT_NAME_NAXLEN - 1)) ) {
 	assert( POINT_NAME_NAXLEN <= CBI_STAT_IDENT_LEN );
-	strncpy( pprof->body.pt[pprof->body.npts].pt_name, rev_sw, POINT_NAME_NAXLEN );
-	pprof->body.pt[pprof->body.npts].stat.reverse = TRUE;
-	pprof->body.npts++;
+	strncpy( pprof->ctrl.pt[pprof->ctrl.npts].pt_name, rev_sw, POINT_NAME_NAXLEN );
+	pprof->ctrl.pt[pprof->ctrl.npts].stat.reverse = TRUE;
+	pprof->ctrl.npts++;
       }
     }
     skip_chr( fp_src );
@@ -1220,10 +1220,10 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 	  assert( strnlen(&ahd_tr[1], (TRACK_NAME_MAXLEN - 1)) < ((TRACK_NAME_MAXLEN - 1) - strlen("_TR")) );
 	  strncat( ahd_tr, "_TR", TRACK_NAME_MAXLEN );
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
-	  strncpy( pprof->body.ahead.tr_name, ahd_tr, TRACK_NAME_MAXLEN );
-	  pprof->body.ahead.tr_prof = lkup_track_prof( pprof->body.ahead.tr_name );
-	  if( !pprof->body.ahead.tr_prof ) {
-	    printf( "warning: unknown ahead-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->body.ahead.tr_name, pprof->route_name );
+	  strncpy( pprof->ctrl.ahead.tr_name, ahd_tr, TRACK_NAME_MAXLEN );
+	  pprof->ctrl.ahead.tr_prof = lkup_track_prof( pprof->ctrl.ahead.tr_name );
+	  if( !pprof->ctrl.ahead.tr_prof ) {
+	    printf( "warning: unknown ahead-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->ctrl.ahead.tr_name, pprof->route_name );
 	  }
 	}
       }
@@ -1235,22 +1235,22 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 
 static TRACK_PROF_PTR pick_ahead_track ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
-  assert( ! pro_prof->body.pahead );
+  assert( ! pro_prof->ctrl.pahead );
   TRACK_PROF_PTR r = NULL;
   
-  if( (strnlen(pro_prof->body.ahead.tr_name, CBI_STAT_IDENT_LEN) > 1) && pro_prof->body.ahead.tr_prof ) {
+  if( (strnlen(pro_prof->ctrl.ahead.tr_name, CBI_STAT_IDENT_LEN) > 1) && pro_prof->ctrl.ahead.tr_prof ) {
     int i;
-    assert( pro_prof->body.ntrs >= 0 );
-    for( i = 0; i < pro_prof->body.ntrs; i++ ) {
-      if( !strncmp( pro_prof->body.tr[i].tr_name, pro_prof->body.ahead.tr_name, CBI_STAT_IDENT_LEN ) ) {
-	assert( pro_prof->body.tr[i].tr_prof == pro_prof->body.ahead.tr_prof );
-	pro_prof->body.pahead = &pro_prof->body.tr[i];
-	r = pro_prof->body.ahead.tr_prof;
+    assert( pro_prof->ctrl.ntrs >= 0 );
+    for( i = 0; i < pro_prof->ctrl.ntrs; i++ ) {
+      if( !strncmp( pro_prof->ctrl.tr[i].tr_name, pro_prof->ctrl.ahead.tr_name, CBI_STAT_IDENT_LEN ) ) {
+	assert( pro_prof->ctrl.tr[i].tr_prof == pro_prof->ctrl.ahead.tr_prof );
+	pro_prof->ctrl.pahead = &pro_prof->ctrl.tr[i];
+	r = pro_prof->ctrl.ahead.tr_prof;
 	break;
       }
     }
-    if( !pro_prof->body.pahead ) {
-      printf( "warning: ahead-track %s is not found in control-ones of %s.\n", pro_prof->body.ahead.tr_name, pro_prof->route_name );
+    if( !pro_prof->ctrl.pahead ) {
+      printf( "warning: ahead-track %s is not found in control-ones of %s.\n", pro_prof->ctrl.ahead.tr_name, pro_prof->route_name );
     }
   }
   return r;
@@ -1451,11 +1451,11 @@ static BOOL reachout ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   BOOL r = FALSE;
   
-  if( pro_prof->body.ntrs > 0 ) {
-    struct route_tr *ptr = &pro_prof->body.tr[pro_prof->body.ntrs - 1];
+  if( pro_prof->ctrl.ntrs > 0 ) {
+    struct route_tr *ptr = &pro_prof->ctrl.tr[pro_prof->ctrl.ntrs - 1];
     r = (strncmp( cnv2str_il_sym(pblk->belonging_tr.track), ptr->tr_name, CBI_STAT_IDENT_LEN ) == 0);
   } else {
-    assert( pro_prof->body.ntrs == 0 );
+    assert( pro_prof->ctrl.ntrs == 0 );
     r = TRUE;
   }
   return r;
@@ -1505,19 +1505,19 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
 	  int j;	
 	  for( j = 0; j < pmor->num_points; j++ ) {
 	    int k;	 
-	    for( found = FALSE, k = 0; k < pro_prof->body.npts; k++ ) {
+	    for( found = FALSE, k = 0; k < pro_prof->ctrl.npts; k++ ) {
 	      char pt_kr[CBI_STAT_IDENT_LEN + 1] = "";
 	      pt_kr[CBI_STAT_IDENT_LEN] = 0;
-	      strncpy( pt_kr, pro_prof->body.pt[k].pt_name, CBI_STAT_IDENT_LEN );
-	      if( pro_prof->body.pt[k].stat.normal ) {
+	      strncpy( pt_kr, pro_prof->ctrl.pt[k].pt_name, CBI_STAT_IDENT_LEN );
+	      if( pro_prof->ctrl.pt[k].stat.normal ) {
 		strncat( pt_kr, "_NKR", CBI_STAT_IDENT_LEN );
 		if( strncmp( cnv2str_il_sym(pmor->points[j]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
 		  found = TRUE;
 		  break;
 		}
 	      }
-	      strncpy( pt_kr, pro_prof->body.pt[k].pt_name, CBI_STAT_IDENT_LEN );
-	      if( pro_prof->body.pt[k].stat.reverse ) {	      
+	      strncpy( pt_kr, pro_prof->ctrl.pt[k].pt_name, CBI_STAT_IDENT_LEN );
+	      if( pro_prof->ctrl.pt[k].stat.reverse ) {	      
 		strncat( pt_kr, "_RKR", CBI_STAT_IDENT_LEN );
 		if( strncmp( cnv2str_il_sym(pmor->points[j]), pt_kr, CBI_STAT_IDENT_LEN ) == 0 ) {
 		  found = TRUE;
@@ -1558,11 +1558,11 @@ static int trace_ctrl_tracks ( CBTC_BLOCK_PTR pro_blks[], ROUTE_PROF_PTR pro_pro
   
   CBTC_BLOCK_PTR porg_blk = NULL;
   int i;
-  book.ntrs = pro_prof->body.ntrs;
+  book.ntrs = pro_prof->ctrl.ntrs;
   for( i = 0; i < book.ntrs; i++ )
-    book.ctrl_trax[i].ptr = &pro_prof->body.tr[i];
-  assert( i == pro_prof->body.ntrs );
-  assert( pro_prof->body.ntrs < ROUTE_MAX_CTRLTRACKS );
+    book.ctrl_trax[i].ptr = &pro_prof->ctrl.tr[i];
+  assert( i == pro_prof->ctrl.ntrs );
+  assert( pro_prof->ctrl.ntrs < ROUTE_MAX_CTRLTRACKS );
   if( pro_prof->orgdst.org.porg_tr ) {
     book.ctrl_trax[i].ptr = pro_prof->orgdst.org.porg_tr;
     book.ntrs++;
@@ -1578,9 +1578,9 @@ static int trace_ctrl_tracks ( CBTC_BLOCK_PTR pro_blks[], ROUTE_PROF_PTR pro_pro
   while( !porg_blk ) {
     assert( pro_prof );
     TRACK_PROF_PTR ptr_org = NULL;
-    if( i >= pro_prof->body.ntrs )
+    if( i >= pro_prof->ctrl.ntrs )
       break;
-    ptr_org = pro_prof->body.tr[i].tr_prof;
+    ptr_org = pro_prof->ctrl.tr[i].tr_prof;
     if( ptr_org ) {
       if( ptr_org->consists_blks.nblks > 0 )
 	porg_blk = ptr_org->consists_blks.pblk_profs[0];
@@ -1607,9 +1607,9 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
       int i;
       for( i = 0; i < ptr_ahd->turnout.npts; i++ ) {
 	int j;
-	for( j = 0; j < pro_prof->body.npts; j++ ) {
-	  if( strncmp( ptr_ahd->turnout.point[i].pt_name, pro_prof->body.pt[j].pt_name, CBI_STAT_IDENT_LEN ) == 0 ) {
-	    ppts[nps] = &pro_prof->body.pt[j];
+	for( j = 0; j < pro_prof->ctrl.npts; j++ ) {
+	  if( strncmp( ptr_ahd->turnout.point[i].pt_name, pro_prof->ctrl.pt[j].pt_name, CBI_STAT_IDENT_LEN ) == 0 ) {
+	    ppts[nps] = &pro_prof->ctrl.pt[j];
 	    nps++;
 	  }
 	}
@@ -1678,11 +1678,11 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	    if( pbs_ahd->shape.morphs[j].num_points > 0 ) {
 	      int k;
 	    failed:
-	      for( k = 0; k < pro_prof->body.npts; k++ ) {
-		ppts[nps] = &pro_prof->body.pt[k];
+	      for( k = 0; k < pro_prof->ctrl.npts; k++ ) {
+		ppts[nps] = &pro_prof->ctrl.pt[k];
 		nps++;
 	      }
-	      assert( nps == pro_prof->body.npts );
+	      assert( nps == pro_prof->ctrl.npts );
 	      goto panic;
 	    }
 	  }
@@ -1831,7 +1831,7 @@ static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront )
   return r;
 }
 
-static void creat_ctrl_tracks ( void ) {
+static void cons_blks_circuit ( void ) {
   ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
   
   while( pprof < tracks_routes_prof.routes.pavail ) {
@@ -1839,7 +1839,7 @@ static void creat_ctrl_tracks ( void ) {
     struct frontier front = { -1 };
     struct frontier ahead = { -1 };
     int i;
-    for( i = 0; i < pprof->body.ntrs; i++ ) {
+    for( i = 0; i < pprof->ctrl.ntrs; i++ ) {
       assert( pprof );
       struct frontier *pfro = NULL;
       struct frontier *pahd = NULL;
@@ -1854,15 +1854,15 @@ static void creat_ctrl_tracks ( void ) {
 	  pfro = &front;
 	} else
 	  pfro = NULL;
-	if( pprof->body.pahead ) {
-	  ahead.pt_fro = (pprof->body.pahead)->tr_prof;
+	if( pprof->ctrl.pahead ) {
+	  ahead.pt_fro = (pprof->ctrl.pahead)->tr_prof;
 	  pahd = &ahead;
 	} else
 	  pahd = NULL;
       } else {
 	assert( i > 0 );
 	front = ahead;
-	ahead.pt_fro = pprof->body.tr[i].tr_prof;
+	ahead.pt_fro = pprof->ctrl.tr[i].tr_prof;
 	pfro = (front.nms > -1 ? &front : NULL);
 	pahd = &ahead;
       }
@@ -1910,7 +1910,7 @@ static int profile_routes ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   n = read_route_iltbls( fp_src_sig, fp_src_rel );
   bkpat_destin();
   fill_dest_tracks();
-  creat_ctrl_tracks();
+  cons_blks_circuit();
   
   return n;  
 }
