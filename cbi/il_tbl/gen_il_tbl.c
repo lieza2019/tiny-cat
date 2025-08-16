@@ -56,7 +56,7 @@ const char *cnv2str_trbound ( TRACK_BOUND bound ) {
   return cnv2str_lkup( trbound2_str, bound );
 }
 
-struct fixed_pos {
+struct bondings {
   CBTC_BLOCK_PTR pprof;
   int npos;
   struct {
@@ -78,7 +78,7 @@ typedef struct track_prof {
   } consists_blks;
   struct {
     int num_blocks;
-    struct fixed_pos pblk_fixes[MAX_TRACK_BLOCKS];
+    struct bondings pblks_massiv[MAX_TRACK_BLOCKS];
   } hardbonds;
   struct {
     struct track_sr TLSR, TRSR;
@@ -371,13 +371,13 @@ static void skip_chr ( FILE *fp_src ) {
   }
 }
 
-static int linking_core ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
+static int linking_core ( struct bondings *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
   assert( pblks );
   assert( nblks <= MAX_TRACK_BLOCKS );
   int cnt = 0;
   
   if( nblks > 1 ) {
-    struct fixed_pos *pblk = pblks[0];
+    struct bondings *pblk = pblks[0];
     int i;
     for( i = 0; i < pblk->npos; i++ ) {
       assert( pblk->pos[i].plnk );
@@ -387,7 +387,7 @@ static int linking_core ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIN
       assert( (pblk->pos[i].plnk)->pmorph );
       assert( (pblk->pos[i].plnk)->pmorph->pblock );
       for( j = 1; j < nblks; j++ ) {
-	struct fixed_pos *pb = pblks[j];
+	struct bondings *pb = pblks[j];
 	BOOL found = FALSE;	
 	int k;	
 	for( k = 0; k < pb->npos; k++ ) {
@@ -426,7 +426,7 @@ static int linking_core ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIN
   }
   return cnt;
 }
-static int linking_blks ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
+static int linking_blks ( struct bondings *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
   assert( pblks );
   assert( nblks <= MAX_TRACK_BLOCKS );
   int r = -1;
@@ -442,11 +442,11 @@ static int linking_blks ( struct fixed_pos *pblks[], int nblks, LINX_BONDAGE_KIN
   return r;
 }
 
-static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[], const int nblks ) {
+static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct bondings fixes[], const int nblks ) {
   assert( profs );
   assert( fixes );
   assert( nblks <= MAX_TRACK_BLOCKS );
-  struct fixed_pos *pps[MAX_TRACK_BLOCKS] = {};
+  struct bondings *pps[MAX_TRACK_BLOCKS] = {};
   int cnt = 0;
   
   int i;
@@ -472,12 +472,12 @@ static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct fixed_pos fixes[]
   return cnt;
 }
 
-static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int napp_trs, struct fixed_pos pahd_blks[], const int nahd_blks ) {
+static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int napp_trs, struct bondings pahd_blks[], const int nahd_blks ) {
   assert( app_trs );
   assert( napp_trs <= ROUTE_MAX_APPTRACKS );
   assert( pahd_blks );
   assert( nahd_blks <= MAX_TRACK_BLOCKS );
-  struct fixed_pos *pps[2] = {};
+  struct bondings *pps[2] = {};
   
   int i;
   for( i = 0; i < napp_trs; i++ ) {
@@ -487,7 +487,7 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
       continue;
     for( j = 0; j < app_trs[i].tr_prof->hardbonds.num_blocks; j++ ) {
       int k;
-      pps[0] = &app_trs[i].tr_prof->hardbonds.pblk_fixes[j];
+      pps[0] = &app_trs[i].tr_prof->hardbonds.pblks_massiv[j];
       for( k = 0; k < nahd_blks; k++ ) {
 	int n = -1;
 	pps[1] = &pahd_blks[k];
@@ -522,10 +522,10 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
   assert( pahd_tr );
   struct route_tr *porg_tr = NULL;
   
-  porg_tr = trylnk_orgahd( app_trs, napps, pahd_tr->hardbonds.pblk_fixes, pahd_tr->hardbonds.num_blocks );
+  porg_tr = trylnk_orgahd( app_trs, napps, pahd_tr->hardbonds.pblks_massiv, pahd_tr->hardbonds.num_blocks );
   if( !porg_tr ) {
     assert( pahd_tr->hardbonds.num_blocks < MAX_TRACK_BLOCKS );
-    struct fixed_pos *pahd_added = &pahd_tr->hardbonds.pblk_fixes[pahd_tr->hardbonds.num_blocks];
+    struct bondings *pahd_added = &pahd_tr->hardbonds.pblks_massiv[pahd_tr->hardbonds.num_blocks];
     int i;
     for( i = 0; i < pahd_tr->consists_blks.num_blocks; i++ ) {
       CBTC_BLOCK_PTR pblk = pahd_tr->consists_blks.pblk_profs[i];
@@ -554,7 +554,7 @@ static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int 
 	    BOOL found = FALSE;
 	    int l;
 	    for( l = 0; l < pahd_tr->hardbonds.num_blocks; l++ ) {
-	      struct fixed_pos *p = &pahd_tr->hardbonds.pblk_fixes[l];
+	      struct bondings *p = &pahd_tr->hardbonds.pblks_massiv[l];
 	      assert( p->pprof );
 	      if( p->pprof == pahd_added->pprof ) {
 		{
@@ -920,7 +920,7 @@ static void consist_blks_and_linking ( TRACK_PROF_PTR ptr_prof ) {
     } while( pblk_prof );
     assert( n == 0 );
     assert( i == ptr_prof->consists_blks.num_blocks );
-    ptr_prof->hardbonds.num_blocks = link_internal_blks( ptr_prof->consists_blks.pblk_profs, ptr_prof->hardbonds.pblk_fixes, ptr_prof->consists_blks.num_blocks );
+    ptr_prof->hardbonds.num_blocks = link_internal_blks( ptr_prof->consists_blks.pblk_profs, ptr_prof->hardbonds.pblks_massiv, ptr_prof->consists_blks.num_blocks );
   } else {
     printf( "warning: track %s has no blocks.\n", (ptr_prof->ptr_attr ? (ptr_prof->ptr_attr)->ident : ptr_prof->track_name) );
   }
@@ -1692,11 +1692,11 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
       }
       if( ptr_ahd->hardbonds.num_blocks >= ptr_ahd->consists_blks.num_blocks ) {
 	struct {	
-	  struct fixed_pos *plnks;
+	  struct bondings *plnks;
 	  BOOL chk;
 	} blk_lnks[MAX_TRACK_BLOCKS] = {};
 	for( i = 0; i < ptr_ahd->hardbonds.num_blocks; i++ ) {
-	  blk_lnks[i].plnks = &ptr_ahd->hardbonds.pblk_fixes[i];
+	  blk_lnks[i].plnks = &ptr_ahd->hardbonds.pblks_massiv[i];
 	  blk_lnks[i].chk = FALSE;
 	}
 	assert( i == ptr_ahd->hardbonds.num_blocks );
@@ -1793,7 +1793,7 @@ struct frontier {
   BLK_MORPH_PTR pm_fro[MAX_TRACK_BLOCKS];
 };
 static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront ) {
-  struct fixed_pos ln_blks[MAX_TRACK_BLOCKS * 2] = {};
+  struct bondings ln_blks[MAX_TRACK_BLOCKS * 2] = {};
   int r = -1;
   
   int cnt = 0;
@@ -1825,7 +1825,7 @@ static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront )
     assert( cnt <= (MAX_TRACK_BLOCKS * 2) );
   }
   {
-    struct fixed_pos *pps[MAX_TRACK_BLOCKS * 2] = {};
+    struct bondings *pps[MAX_TRACK_BLOCKS * 2] = {};
     for( i = 0; i < cnt; i++ )
       pps[i] = &ln_blks[i];
     r = linking_blks( pps, cnt, LINK_SOFT );
