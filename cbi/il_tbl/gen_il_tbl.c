@@ -31,12 +31,7 @@
 #define TRACK_BOUNDALIGN_MAXLEN 8
 
 #define ROUTE_NAME_MAXLEN 32
-#define ROUTE_MAX_CTRLTRACKS 32
-#define ROUTE_MAX_APPTRACKS 32
-
 #define POINT_NAME_NAXLEN 32
-#define TURNOUT_MAX_POINTS 16
-#define ROUTE_MAX_POINTS 16
 
 extern int par_csv_iltbl ( char *bufs[], const int nbufs, FILE *fp_src );
 
@@ -91,7 +86,7 @@ typedef struct track_prof {
     struct {
       char pt_name[CBI_STAT_IDENT_LEN + 1];
       CBI_STAT_ATTR_PTR ppt_attr;
-    } point[TURNOUT_MAX_POINTS];
+    } point[MAX_TURNOUT_POINTS];
   } turnout;
   TRACK_BOUND tr_bound;
   struct track_prof *pNext;
@@ -123,20 +118,24 @@ typedef struct route_prof {
   } orgdst;
   struct {
     int num_tracks;
-    struct route_tr tr[ROUTE_MAX_APPTRACKS];
+    struct route_tr tr[MAX_ROUTE_APPTRACKS];
   } apps;
   struct {
     int num_points;    
-    struct route_sw pt[ROUTE_MAX_POINTS];
+    struct route_sw pt[MAX_ROUTE_POINTS];
   } points;
   struct {
     int num_tracks;
-    struct route_tr tr[ROUTE_MAX_CTRLTRACKS];
+    struct route_tr tr[MAX_ROUTE_TRACKS];
     struct route_tr ahead, *pahead;
   } ctrl;
   struct {
+    struct {
+      int num_blocks;
+      CBTC_BLOCK_PTR blk[MAX_TRACK_BLOCKS * MAX_ROUTE_TRACKS];
+    } blocks;
     int num_tracks;
-    TRACK_PROF_PTR ptr[ROUTE_MAX_CTRLTRACKS];
+    TRACK_PROF_PTR ptr[MAX_ROUTE_TRACKS];
   } body;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
 
@@ -258,7 +257,7 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   assert( strlen( pro_prof->route_name ) > 1 );
   int i;
-  printf( "(route, (org_sig, dst_sig), [app_tracks], (" );
+  printf( "(route, (org_sig, dst_sig), [blocks], [app_tracks], (" );
   if( prn_rtprof_lv1 )
     printf( "(" );
   printf( "origin_track, " );
@@ -269,6 +268,12 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
   printf( "points, " );
   printf( "(ahead_track, [ctrl_tracks]), [body_tracks])): " );
   printf( "(%s (%s, %s), [", pro_prof->route_name, pro_prof->orgdst.org.signame_org, pro_prof->orgdst.dst.signame_dst );
+  for( i = 0; i < pro_prof->body.blocks.num_blocks; i++ ) {
+    if( i > 0 )
+      printf( ", " );
+    printf( "%s", pro_prof->body.blocks.blk[i]->virt_blkname_str );
+  }
+  printf( "], [" );
   for( i = 0; i < pro_prof->apps.num_tracks; i++ ) {
     if( i > 0 )
       printf( ", " );
@@ -466,7 +471,7 @@ static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct bondings fixes[],
     assert( i < MAX_TRACK_BLOCKS );
     BLK_LINKAGE_PTR plnks[MAX_ADJACENT_BLKS] = {};
     int n = -1;
-    n = enum_fixed_branches( profs[i], plnks, MAX_ADJACENT_BLKS );
+    n = enum_fixed_edges( profs[i], plnks, MAX_ADJACENT_BLKS );
     if( n > 0 ) {
       int j;
       fixes[cnt].pprof = profs[i];
@@ -486,7 +491,7 @@ static int link_internal_blks ( CBTC_BLOCK_PTR profs[], struct bondings fixes[],
 
 static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int napp_trs, struct bondings pahd_blks[], const int nahd_blks ) {
   assert( app_trs );
-  assert( napp_trs <= ROUTE_MAX_APPTRACKS );
+  assert( napp_trs <= MAX_ROUTE_APPTRACKS );
   assert( pahd_blks );
   assert( nahd_blks <= MAX_TRACK_BLOCKS );
   struct bondings *pps[2] = {};
@@ -530,7 +535,7 @@ static struct route_tr *trylnk_orgahd ( struct route_tr app_trs[], const int nap
 
 static struct route_tr *link_orgahd_blks ( struct route_tr app_trs[], const int napps, TRACK_PROF_PTR pahd_tr ) {
   assert( app_trs );
-  assert( napps <= ROUTE_MAX_APPTRACKS );
+  assert( napps <= MAX_ROUTE_APPTRACKS);
   assert( pahd_tr );
   struct route_tr *porg_tr = NULL;
   
@@ -1392,14 +1397,14 @@ static int bkpat_destin ( void ) {
 
 typedef struct blk_tracer {
   int sp;
-  CBTC_BLOCK_PTR stack[MAX_TRACK_BLOCKS * ROUTE_MAX_CTRLTRACKS];
+  CBTC_BLOCK_PTR stack[MAX_TRACK_BLOCKS * MAX_ROUTE_TRACKS];
 } BLK_TRACER, *BLK_TRACER_PTR;
 static CBTC_BLOCK_PTR push_blk ( BLK_TRACER_PTR pstk, CBTC_BLOCK_PTR pblk ) {
   assert( pstk );
   assert( pblk );
   CBTC_BLOCK_PTR r = NULL;
   
-  assert( pstk->sp < (MAX_TRACK_BLOCKS * ROUTE_MAX_CTRLTRACKS) );
+  assert( pstk->sp < (MAX_TRACK_BLOCKS * MAX_ROUTE_TRACKS) );
   pstk->stack[pstk->sp] = pblk;
   r = pstk->stack[pstk->sp];
   pstk->sp++;
@@ -1425,7 +1430,7 @@ typedef struct book {
   int ntrs;
   struct {
     struct route_tr *ptr;
-  } ctrl_trax[ROUTE_MAX_CTRLTRACKS];
+  } ctrl_trax[MAX_ROUTE_TRACKS];
 } BOOK, *BOOK_PTR;
 static BOOL route_out( WALK *preason, CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
   assert( preason );
@@ -1576,7 +1581,7 @@ static int trace_ctrl_tracks ( CBTC_BLOCK_PTR pro_blks[], ROUTE_PROF_PTR pro_pro
   for( i = 0; i < book.ntrs; i++ )
     book.ctrl_trax[i].ptr = &pro_prof->ctrl.tr[i];
   assert( i == pro_prof->ctrl.num_tracks );
-  assert( pro_prof->ctrl.num_tracks < ROUTE_MAX_CTRLTRACKS );
+  assert( pro_prof->ctrl.num_tracks < MAX_ROUTE_TRACKS );
   if( pro_prof->orgdst.org.porg_tr ) {
     book.ctrl_trax[i].ptr = pro_prof->orgdst.org.porg_tr;
     book.ntrs++;
@@ -1615,7 +1620,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
   assert( pro_prof );
   int nms = 0;
   if( ptr_ahd ) {
-    struct route_sw *ppts[TURNOUT_MAX_POINTS] = {};
+    struct route_sw *ppts[MAX_TURNOUT_POINTS] = {};
     int nps = 0;
     if( ptr_ahd->turnout.num_points > 0 ) {
       int i;
@@ -1845,7 +1850,12 @@ static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront )
   return r;
 }
 
-static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[], const int ntrs_body, const int nblks_body ) {
+static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[], const int ntrs_body, const int nblks_body, ROUTE_PROF_PTR pro_prof ) {
+  assert( ptrs_body );
+  assert( pblks_body );
+  assert( ntrs_body >= MAX_ROUTE_TRACKS );
+  assert( nblks_body <= (MAX_TRACK_BLOCKS * MAX_ROUTE_TRACKS) );
+  assert( pro_prof );
   int cnt = -1;
   
   int i;
@@ -1854,14 +1864,19 @@ static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[],
     assert( pblks_body[i] );
     const char *tr_name = cnv2str_il_sym( pblks_body[i]->belonging_tr.track );
     if( tr_name ) {
-      TRACK_PROF_PTR pprof = lkup_track_prof( tr_name );
-      if( pprof ) {
+      TRACK_PROF_PTR ptr_prof = lkup_track_prof( tr_name );
+      if( ptr_prof ) {
 	if( cnt > -1 ) {
-	  if( ptrs_body[cnt] == pprof )
+	  if( ptrs_body[cnt] == ptr_prof )
 	    continue;
 	}
 	cnt++;
-	ptrs_body[cnt] = pprof;	
+	ptrs_body[cnt] = ptr_prof;
+	if( pro_prof->orgdst.dst.pdst_tr ) {
+	  TRACK_PROF_PTR pdst_prof = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;
+	  if( pdst_prof == ptr_prof )
+	    break;
+	}
       }
     }
   }
@@ -1914,38 +1929,31 @@ static void cons_routes_circuit ( void ) {
     }
     {
       assert( pprof );
-      const int ro_blk_maxnum = 256;
-      CBTC_BLOCK_PTR ro_blks[ro_blk_maxnum] = {};
-      int n = -1;
-      n = trace_ctrl_tracks( ro_blks, pprof, ro_blk_maxnum );
-      assert( n > -1 );
-#if 0 // *****
+      const int ro_ctrl_maxblks = MAX_TRACK_BLOCKS * MAX_ROUTE_TRACKS;
+      const int ro_body_maxtrs = MAX_ROUTE_TRACKS;
+      struct {
+	int nblks;
+	CBTC_BLOCK_PTR ro_blks[ro_ctrl_maxblks];
+	int ntrs;
+	TRACK_PROF_PTR ro_body[ro_body_maxtrs];
+      } ctrlblks_bodytrs = { -1, {}, -1, {} };
+      ctrlblks_bodytrs.nblks = trace_ctrl_tracks( ctrlblks_bodytrs.ro_blks, pprof, ro_ctrl_maxblks );
+      assert( ctrlblks_bodytrs.nblks > -1 );
       {
-	assert( pprof );
 	int i;
-	printf( "(route, [blocks]): (%s, [", pprof->route_name );
-	for( i = 0; i < n; i++ ) {
-	  assert( ro_blks[i] );
-	  if( i > 0 )
-	    printf( ", " );
-	  printf( "%s", ro_blks[i]->virt_blkname_str );
-	}
-	printf( "])\n" );
-      }
-#endif
-      {
-	const int ro_body_maxtrs = 64;
-	TRACK_PROF_PTR ro_body[ro_body_maxtrs] = {};
-	int m = -1;
-	int i;	
-	m = route_body( ro_body, ro_blks, ro_body_maxtrs, n );
-	assert( m > -1 );
-	for( i = 0; i < m; i++ ) {
+	for( i = 0; i < ctrlblks_bodytrs.nblks; i++ )
+	  pprof->body.blocks.blk[i] = ctrlblks_bodytrs.ro_blks[i];
+	assert( i == ctrlblks_bodytrs.nblks );
+	pprof->body.blocks.num_blocks = i;
+	
+	ctrlblks_bodytrs.ntrs = route_body( ctrlblks_bodytrs.ro_body, ctrlblks_bodytrs.ro_blks, ro_body_maxtrs, ctrlblks_bodytrs.nblks, pprof );
+	assert( ctrlblks_bodytrs.ntrs > -1 );
+	for( i = 0; i < ctrlblks_bodytrs.ntrs; i++ ) {
 	  assert( pprof );
-	  pprof->body.ptr[i] = ro_body[i];
+	  pprof->body.ptr[i] = ctrlblks_bodytrs.ro_body[i];
 	}
-	assert( i == m );
-	pprof->body.num_tracks = m;
+	assert( i == ctrlblks_bodytrs.ntrs );
+	pprof->body.num_tracks = ctrlblks_bodytrs.ntrs;
       }
     }
     pprof++;

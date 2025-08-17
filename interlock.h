@@ -14,7 +14,8 @@ typedef struct route_lock {
   IL_SYM id;
 } ROUTE_LOCK, *ROUTE_LOCK_PTR;
 
-#define MAX_TRACK_BLOCKS 21
+#define MAX_TRACK_BLOCKS 64
+#define MAX_TURNOUT_POINTS 16
 typedef struct track {
   const IL_SYM_KIND kind;
   const char id_chr[CBI_STAT_IDENT_LEN + 1];
@@ -46,8 +47,10 @@ typedef enum route_kind {
   END_OF_ROUTE_KINDS
 } ROUTE_KIND;
 
-#define MAX_ROUTE_TRACKS 21
-#define MAX_ROUTE_TRG_BLOCKS 21
+#define MAX_ROUTE_TRACKS 32
+#define MAX_ROUTE_APPTRACKS 32
+#define MAX_ROUTE_POINTS 16
+#define MAX_ROUTE_TRG_BLOCKS 32
 typedef struct route {
   const IL_SYM_KIND kind;
   const ROUTE_KIND route_kind;

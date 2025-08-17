@@ -212,41 +212,7 @@ void cons_block_state ( void ) {
   assert( block_state[i].block_name == 0 );
 }
 
-#if 0
-static BLK_LINKAGE_PTR fixed_pos ( BLK_MORPH_PTR pms[], const int nms, BLK_LINKAGE_PTR plnk ) {
-  assert( pms );
-  assert( nms <= MAX_BLOCK_MORPHS );
-  assert( plnk );
-  BLK_LINKAGE_PTR r = NULL;
-  
-  BOOL found = FALSE;
-  int i;
-  for( i = 0; i < nms; i++ ) {
-    BLK_MORPH_PTR pmor = pms[i];
-    int j;
-    found = FALSE;
-    assert( pmor );    
-    for( j = 0; j < pmor->num_links; j++ ) {
-      BLK_LINKAGE_PTR pl = &pmor->linkages[j];
-      if( pl->edge_pos == plnk->edge_pos ) {
-	if( r )
-	  r->pln_neigh = p;
-	r = p;
-	p->pln_neigh = NULL;
-	found = TRUE;
-	break;
-      }
-    }
-    if( !found ) {
-      r = NULL;
-      break;
-    }
-  }
-  assert( j >= pmor->num_links ? (found && r) : (!found && !r) );
-  return r;
-}
-#else
-static BOOL fixed_pos ( BLK_MORPH_PTR pms[], const int nms, BLK_LINKAGE_PTR plnk ) {
+static BOOL fixed_edge ( BLK_MORPH_PTR pms[], const int nms, BLK_LINKAGE_PTR plnk ) {
   assert( pms );
   assert( nms <= MAX_BLOCK_MORPHS );
   assert( plnk );
@@ -270,7 +236,6 @@ static BOOL fixed_pos ( BLK_MORPH_PTR pms[], const int nms, BLK_LINKAGE_PTR plnk
   assert( res >= 0 );
   return (res == 0);
 }
-#endif
 static BLK_LINKAGE_PTR ln_equ ( BLK_LINKAGE_PTR peqs, BLK_LINKAGE_PTR pln ) {
   assert( peqs );
   assert( pln );
@@ -287,7 +252,7 @@ static BLK_LINKAGE_PTR ln_equ ( BLK_LINKAGE_PTR peqs, BLK_LINKAGE_PTR pln ) {
   } while( p != peqs );
   return r;
 }
-int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int len ) {
+int enum_fixed_edges ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const int len ) {
   assert( pblk );
   assert( fixes );
   assert( len <= MAX_ADJACENT_BLKS );
@@ -334,7 +299,7 @@ int enum_fixed_branches ( CBTC_BLOCK_PTR pblk, BLK_LINKAGE_PTR fixes[], const in
 	  pms[k] = &pblk->shape.morphs[k];
 	assert( k == pblk->shape.num_morphs );
       }
-      if( fixed_pos( pms, pblk->shape.num_morphs, plnk ) ) {
+      if( fixed_edge( pms, pblk->shape.num_morphs, plnk ) ) {
 	BLK_LINKAGE_PTR p = NULL;
 #ifdef CHK_STRICT_CONSISTENCY
 	p = book.phead;
