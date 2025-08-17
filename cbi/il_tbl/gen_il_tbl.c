@@ -388,7 +388,7 @@ static void skip_chr ( FILE *fp_src ) {
   }
 }
 
-static int linking_core ( struct bondings *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
+static int bonding_edges ( struct bondings *pblks[], int nblks, LINX_BONDAGE_KIND bind ) {
   assert( pblks );
   assert( nblks <= MAX_TRACK_BLOCKS );
   int cnt = 0;
@@ -439,7 +439,7 @@ static int linking_core ( struct bondings *pblks[], int nblks, LINX_BONDAGE_KIND
 	  break;
       }
     }
-    cnt += linking_core( &pblks[1], (nblks - 1), bind );
+    cnt += bonding_edges( &pblks[1], (nblks - 1), bind );
   }
   return cnt;
 }
@@ -455,7 +455,7 @@ static int linking_blks ( struct bondings *pblks[], int nblks, LINX_BONDAGE_KIND
       pblks[i]->pos[k].bond = FALSE;
     }
   }
-  r = linking_core( pblks, nblks, bind );
+  r = bonding_edges( pblks, nblks, bind );
   return r;
 }
 
