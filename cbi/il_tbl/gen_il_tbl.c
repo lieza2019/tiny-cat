@@ -450,9 +450,15 @@ static int linking_blks ( struct bondings *pblks[], int nblks, LINX_BONDAGE_KIND
   
   int i;
   for( i = 0; i < nblks; i++ ) {
+    assert( pblks[i] );
     int k;
-    for( k = 0; k < MAX_ADJACENT_BLKS; k++ ) {
-      pblks[i]->pos[k].bond = FALSE;
+    for( k = 0; k < pblks[i]->npos; k++ ) {
+      assert( pblks[i]->pos[k].plnk );
+      if( (pblks[i]->pos[k].plnk)->bond.kind == LINK_HARD ) {
+	assert( (pblks[i]->pos[k].plnk)->bond.pln_neigh );
+	pblks[i]->pos[k].bond = TRUE;
+      } else
+	pblks[i]->pos[k].bond = FALSE;      
     }
   }
   r = bonding_edges( pblks, nblks, bind );
@@ -1633,6 +1639,7 @@ static int morph_ahead_blks ( BLK_MORPH_PTR pmphs_ahd[], TRACK_PROF_PTR ptr_ahd,
 	  }
 	}
       }
+      // fall thru.
     panic:
       { 
 	int i;    
@@ -1907,14 +1914,15 @@ static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[],
       }
     }
   }
-  assert( i == nblks_body );
   r = cnt + 1;
+#if 0
   if( !found_dst ) {
     int n = -1;
     n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), pblks_body[nblks_body - 1], pro_prof );
     assert( n > -1 );
     r += n;
   }
+#endif
   return r;
 }
 
