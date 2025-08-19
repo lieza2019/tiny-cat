@@ -610,7 +610,7 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
   assert( pprof );
   assert( fp_out );
   assert( !ferror( fp_out ) );
-  char *ptr_name = pprof->track_name;
+9  char *ptr_name = pprof->track_name;
   
   fprintf( fp_out, "{ _TRACK, " );
   if( pprof->ptr_attr ) {
@@ -1438,24 +1438,27 @@ typedef struct book {
     struct route_tr *ptr;
   } ctrl_trax[MAX_ROUTE_TRACKS];
 } BOOK, *BOOK_PTR;
-static BOOL route_out( WALK *preason, CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
+static BOOL route_out ( WALK *preason, CBTC_BLOCK_PTR pblk, BLK_TRACER_PTR pacc, BOOK_PTR pbok ) {
   assert( preason );
   assert( pblk );
   assert( pacc );
-  assert( pbok );
   BOOL r = FALSE;
   
-  BOOL found = FALSE;
-  int i;
-  for( i = 0; i < pbok->ntrs; i++ ) {
-    assert( pblk );    
-    assert( pbok );
-    assert( pbok->ctrl_trax[i].ptr );
-    if( strncmp( pbok->ctrl_trax[i].ptr->tr_name, cnv2str_il_sym(pblk->belonging_tr.track), CBI_STAT_IDENT_LEN ) == 0 ) {
-      found = TRUE;
-      break;
+  BOOL found = TRUE;
+  if( pbok ) {
+    found = FALSE;
+    int i;
+    for( i = 0; i < pbok->ntrs; i++ ) {
+      assert( pblk );    
+      assert( pbok );
+      assert( pbok->ctrl_trax[i].ptr );
+      if( strncmp( pbok->ctrl_trax[i].ptr->tr_name, cnv2str_il_sym(pblk->belonging_tr.track), CBI_STAT_IDENT_LEN ) == 0 ) {
+	found = TRUE;
+	break;
+      }
     }
-  }  if( !found ) {
+  }
+  if( !found ) {
     *preason = ROUTEOUT;
     r = TRUE;
   } else {
@@ -1865,21 +1868,40 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
   int cnt = 0;
 
   if( pblk_edge ) {
-    CBTC_BLOCK_PTR pblk_ovr = pblk_edge;
+    CBTC_BLOCK_PTR pblk_far = NULL;
     BLK_TRACER blkstk = { 0 };
-    blkstk.stack[0] = pblk_ovr;
-    blkstk.sp = 1;
-    while( pblk_ovr ) {
-      assert( pblk_ovr );
-      if( pblk_ovr->shape.num_morphs > 1 )
+    pblk_far = push_blk( &blkstk, pblk_edge );
+    do {
+      assert( pblk_far );
+      assert( blkstk.sp > 0 );
+      assert( blkstk.stack[blkstk.sp] == blkstk.sp );
+      WALK r = DEADEND;
+      if( pblk_far->shape.num_morphs > 1 )
 	break;
-      else {
-	;
+      if( pblk_far->morph.morphs[0].num_links > 2 )
+	break;
+      {
+	CBTC_BLOCK_PTR pblk_ahd = NULL;
+	BOOL found = FALSE;
+	int i;
+	for( i = 0; i < 2; i++ ) {
+	  pblk_ahd = pblk_far.morph.morphs[0].linkages[i].bond.pln_neigh;
+	  if( pblk_ahd )
+	    if( ! route_out( &r, pblk_ahd, &blkstk, NULL ) ) {
+	      push_blk( &blkstk, pblk_far );
+	      found = TRUE;
+	      break;
+	    }
+	}
+	if( !found )
+	  break;
+	pblk_far = pblk_ahd;
       }
-    }
+    } while( pblk_far );
   }
   return cnt;
 }
+
 static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[], const int ntrs_body, const int nblks_body, ROUTE_PROF_PTR pro_prof ) {
   assert( ptrs_body );
   assert( pblks_body );
