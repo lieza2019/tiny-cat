@@ -1954,14 +1954,12 @@ static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[],
     }
   }
   r = cnt + 1;
-#if 0
-  if( !found_dst ) {
+  if( !(found_dst && (nblks_body <= 0)) ) {
     int n = -1;
     n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), pblks_body[nblks_body - 1], pro_prof );
     assert( n > -1 );
     r += n;
   }
-#endif
   return r;
 }
 
