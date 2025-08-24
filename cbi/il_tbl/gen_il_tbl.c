@@ -610,7 +610,7 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
   assert( pprof );
   assert( fp_out );
   assert( !ferror( fp_out ) );
-9  char *ptr_name = pprof->track_name;
+  char *ptr_name = pprof->track_name;
   
   fprintf( fp_out, "{ _TRACK, " );
   if( pprof->ptr_attr ) {
@@ -1863,14 +1863,15 @@ static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront )
 #define MAX_OVERTRACKS2_ROUTEDEST 16
 static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_BLOCK_PTR pblk_edge, ROUTE_PROF_PTR pro_prof ) {
   assert( ptrs_body );
-  assert( ntrs_body > 0 );  
+  assert( ntrs_body > 0 );
+  assert( pblk_edge );
   assert( pro_prof );
   BOOL dst_found = FALSE;
   int cnt = 0;
   
   if( pro_prof->orgdst.dst.pdst_tr ) {
-    TRACK_PROF_PTR tr_dst = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;    
-    if( pblk_edge ) {
+    TRACK_PROF_PTR tr_dst = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;
+    if( tr_dst ) {
       CBTC_BLOCK_PTR pblk_far = NULL;
       BLK_TRACER blkstk = { 0 };
       pblk_far = push_blk( &blkstk, pblk_edge );
@@ -1881,33 +1882,37 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 	WALK r = DEADEND;
 	if( pblk_far->shape.num_morphs > 1 )
 	  break;
-	if( pblk_far->morph.morphs[0].num_links > 2 )
+	if( pblk_far->shape.morphs[0].num_links > 2 )
 	  break;
 	{
 	  CBTC_BLOCK_PTR pblk_ahd = NULL;
-	  assert( pblk_far->morph.morphs[0].num_links == 2 );
+	  assert( pblk_far->shape.morphs[0].num_links == 2 );
 	  int i;
-	  for( i = 0; i < pblk_far->morph.morphs[0].num_links; i++ ) {
-	    assert( pblk_far );
+	  for( i = 0; i < pblk_far->shape.morphs[0].num_links; i++ ) {
 	    assert( tr_dst );
-	    pblk_ahd = pblk_far->morph.morphs[0].linkages[i].bond.pln_neigh;
-	    if( pblk_ahd ) {
-	      if( route_out( &r, pblk_ahd, &blkstk, NULL ) ) {
-		dst_found = FALSE;
-		break;
-	      }
-	      push_blk( &blkstk, pblk_ahd );
-	      cnt++;
-	      if() {
-		dst_found = TRUE;
-		break;
+	    assert( pblk_far );	    
+	    if( pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh ) {
+	      assert( (pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh)->pmorph );
+	      assert( ((pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh)->pmorph)->pblock );
+	      pblk_ahd = ((pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh)->pmorph)->pblock;
+	      if( pblk_ahd ) {
+		if( route_out( &r, pblk_ahd, &blkstk, NULL ) ) {
+		  dst_found = FALSE;
+		  break;
+		}
+		push_blk( &blkstk, pblk_ahd );
+		cnt++;
+		if( strncmp( cnv2str_il_sym(pblk_ahd->belonging_tr.track), tr_dst->track_name, CBI_STAT_IDENT_LEN ) == 0 ) {
+		  dst_found = TRUE;
+		  break;
+		}
 	      }
 	    }
 	  }
 	  if( !dst_found )
 	    break;
+	  pblk_far = pblk_ahd;
 	}
-	pblk_far = pblk_ahd;	
       } while( pblk_far );
     }
   }
