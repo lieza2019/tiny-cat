@@ -1865,41 +1865,53 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
   assert( ptrs_body );
   assert( ntrs_body > 0 );  
   assert( pro_prof );
+  BOOL dst_found = FALSE;
   int cnt = 0;
-
-  if( pblk_edge ) {
-    CBTC_BLOCK_PTR pblk_far = NULL;
-    BLK_TRACER blkstk = { 0 };
-    pblk_far = push_blk( &blkstk, pblk_edge );
-    do {
-      assert( pblk_far );
-      assert( blkstk.sp > 0 );
-      assert( blkstk.stack[blkstk.sp] == blkstk.sp );
-      WALK r = DEADEND;
-      if( pblk_far->shape.num_morphs > 1 )
-	break;
-      if( pblk_far->morph.morphs[0].num_links > 2 )
-	break;
-      {
-	CBTC_BLOCK_PTR pblk_ahd = NULL;
-	BOOL found = FALSE;
-	int i;
-	for( i = 0; i < 2; i++ ) {
-	  pblk_ahd = pblk_far.morph.morphs[0].linkages[i].bond.pln_neigh;
-	  if( pblk_ahd )
-	    if( ! route_out( &r, pblk_ahd, &blkstk, NULL ) ) {
-	      push_blk( &blkstk, pblk_far );
-	      found = TRUE;
-	      break;
-	    }
-	}
-	if( !found )
+  
+  if( pro_prof->orgdst.dst.pdst_tr ) {
+    TRACK_PROF_PTR tr_dst = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;    
+    if( pblk_edge ) {
+      CBTC_BLOCK_PTR pblk_far = NULL;
+      BLK_TRACER blkstk = { 0 };
+      pblk_far = push_blk( &blkstk, pblk_edge );
+      do {
+	assert( pblk_far );
+	assert( blkstk.sp > 0 );
+	assert( blkstk.stack[blkstk.sp] == pblk_far );
+	WALK r = DEADEND;
+	if( pblk_far->shape.num_morphs > 1 )
 	  break;
-	pblk_far = pblk_ahd;
-      }
-    } while( pblk_far );
+	if( pblk_far->morph.morphs[0].num_links > 2 )
+	  break;
+	{
+	  CBTC_BLOCK_PTR pblk_ahd = NULL;
+	  assert( pblk_far->morph.morphs[0].num_links == 2 );
+	  int i;
+	  for( i = 0; i < pblk_far->morph.morphs[0].num_links; i++ ) {
+	    assert( pblk_far );
+	    assert( tr_dst );
+	    pblk_ahd = pblk_far->morph.morphs[0].linkages[i].bond.pln_neigh;
+	    if( pblk_ahd ) {
+	      if( route_out( &r, pblk_ahd, &blkstk, NULL ) ) {
+		dst_found = FALSE;
+		break;
+	      }
+	      push_blk( &blkstk, pblk_ahd );
+	      cnt++;
+	      if() {
+		dst_found = TRUE;
+		break;
+	      }
+	    }
+	  }
+	  if( !dst_found )
+	    break;
+	}
+	pblk_far = pblk_ahd;	
+      } while( pblk_far );
+    }
   }
-  return cnt;
+  return (cnt * (dst_found ? 1 : -1));
 }
 
 static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[], const int ntrs_body, const int nblks_body, ROUTE_PROF_PTR pro_prof ) {
