@@ -1860,7 +1860,6 @@ static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront )
   return r;
 }
 
-#define MAX_OVERTRACKS2_ROUTEDEST 16
 static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_BLOCK_PTR pblk_edge, ROUTE_PROF_PTR pro_prof ) {
   assert( ptrs_body );
   assert( ntrs_body > 0 );
@@ -1878,7 +1877,6 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
       do {
 	assert( pblk_far );
 	assert( blkstk.sp > 0 );
-	assert( blkstk.stack[blkstk.sp] == pblk_far );
 	WALK r = DEADEND;
 	if( pblk_far->shape.num_morphs > 1 )
 	  break;
@@ -1905,7 +1903,11 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 		if( strncmp( cnv2str_il_sym(pblk_ahd->belonging_tr.track), tr_dst->track_name, CBI_STAT_IDENT_LEN ) == 0 ) {
 		  dst_found = TRUE;
 		  break;
-		}
+		} else
+		  if( cnt >= MAX_OVERBLKS2_ROUTEDEST ) {
+		    assert( !dst_found );
+		    break;
+		  }
 	      }
 	    }
 	  }
@@ -1954,12 +1956,15 @@ static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[],
     }
   }
   r = cnt + 1;
-  if( !(found_dst && (nblks_body <= 0)) ) {
-    int n = -1;
-    n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), pblks_body[nblks_body - 1], pro_prof );
-    assert( n > -1 );
-    r += n;
-  }
+  if( !found_dst ) {    
+    if( nblks_body > 0 ) {
+      int n = -1;
+      n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), pblks_body[nblks_body - 1], pro_prof );
+      r += abs( n );
+      r *= (n < 0 ? -1 : 1);
+    } else
+      r *= -1;
+  }    
   return r;
 }
 
@@ -2022,15 +2027,12 @@ static void cons_routes_circuit ( void ) {
 	for( i = 0; i < ctrlblks_bodytrs.nblks; i++ )
 	  pprof->body.blocks.blk[i] = ctrlblks_bodytrs.ro_blks[i];
 	assert( i == ctrlblks_bodytrs.nblks );
-	pprof->body.blocks.num_blocks = i;
-	
+	pprof->body.blocks.num_blocks = i;	
 	ctrlblks_bodytrs.ntrs = route_body( ctrlblks_bodytrs.ro_body, ctrlblks_bodytrs.ro_blks, MAX_ROUTE_TRACKS, ctrlblks_bodytrs.nblks, pprof );
-	assert( ctrlblks_bodytrs.ntrs > -1 );
 	for( i = 0; i < ctrlblks_bodytrs.ntrs; i++ ) {
 	  assert( pprof );
 	  pprof->body.ptr[i] = ctrlblks_bodytrs.ro_body[i];
-	}
-	assert( i == ctrlblks_bodytrs.ntrs );
+	}	
 	pprof->body.num_tracks = ctrlblks_bodytrs.ntrs;
       }
     }

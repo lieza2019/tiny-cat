@@ -47,6 +47,7 @@ typedef enum route_kind {
   END_OF_ROUTE_KINDS
 } ROUTE_KIND;
 
+#define MAX_OVERBLKS2_ROUTEDEST 16
 #define MAX_ROUTE_TRACKS 32
 #define MAX_ROUTE_APPTRACKS 32
 #define MAX_ROUTE_POINTS 16
