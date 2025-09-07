@@ -1419,9 +1419,10 @@ static CBTC_BLOCK_PTR push_blk ( BLK_TRACER_PTR pstk, CBTC_BLOCK_PTR pblk ) {
 static CBTC_BLOCK_PTR pop_blk ( BLK_TRACER_PTR pstk ) {
   assert( pstk );
   CBTC_BLOCK_PTR r = NULL;
-  
-  r = pstk->stack[pstk->sp];
-  pstk->sp--;
+  if( pstk->sp > 0 ) {
+    pstk->sp--;
+    r = pstk->stack[pstk->sp];    
+  }
   return r;
 }
 
@@ -1878,10 +1879,12 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 	assert( pblk_far );
 	assert( blkstk.sp > 0 );
 	WALK r = DEADEND;
-	if( pblk_far->shape.num_morphs > 1 )
-	  break;
-	if( pblk_far->shape.morphs[0].num_links > 2 )
-	  break;
+	if( pblk_far != pblk_edge ) {
+	  if( pblk_far->shape.num_morphs > 1 )
+	    break;
+	  if( pblk_far->shape.morphs[0].num_links > 2 )
+	    break;
+	}
 	{
 	  CBTC_BLOCK_PTR pblk_ahd = NULL;
 	  assert( pblk_far->shape.morphs[0].num_links == 2 );
@@ -1916,6 +1919,23 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 	  pblk_far = pblk_ahd;
 	}
       } while( pblk_far );
+      {
+	int i = 0;
+	CBTC_BLOCK_PTR pb = pop_blk( &blkstk );
+	while( pb ) {
+	  const char *tr_name = cnv2str_il_sym( pb->belonging_tr.track );
+	  TRACK_PROF_PTR ptr = NULL;
+	  ptr = lkup_track_prof( tr_name );
+	  if( ptr ) {
+	    if( i >= ntrs_body )
+	      break;
+	    ptrs_body[i] = ptr;
+	    i++;
+	  }
+	  pb = pop_blk( &blkstk );
+	}
+	assert( i <= cnt );
+      }
     }
   }
   return (cnt * (dst_found ? 1 : -1));
@@ -1956,7 +1976,7 @@ static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[],
     }
   }
   r = cnt + 1;
-  if( !found_dst ) {    
+  if( !found_dst ) {
     if( nblks_body > 0 ) {
       int n = -1;
       n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), pblks_body[nblks_body - 1], pro_prof );
@@ -1972,6 +1992,13 @@ static void cons_routes_circuit ( void ) {
   ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
   
   while( pprof < tracks_routes_prof.routes.pavail ) {
+#if 1 // *****
+    {
+      if( strncmp( pprof->route_name, "S804A_VS822A", CBI_STAT_IDENT_LEN ) == 0 ) {
+	printf( "HIT." );
+      }
+    }
+#endif
     assert( pprof );
     struct frontier front = { -1 };
     struct frontier ahead = { -1 };
