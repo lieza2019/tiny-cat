@@ -1421,9 +1421,13 @@ static CBTC_BLOCK_PTR pop_blk ( BLK_TRACER_PTR pstk ) {
   CBTC_BLOCK_PTR r = NULL;
   if( pstk->sp > 0 ) {
     pstk->sp--;
-    r = pstk->stack[pstk->sp];    
+    r = pstk->stack[pstk->sp];
   }
   return r;
+}
+static CBTC_BLOCK_PTR top_blk ( BLK_TRACER_PTR pstk ) {
+  assert( pstk );
+  return pstk->stack[pstk->sp];
 }
 
 typedef enum WALK {
@@ -1878,12 +1882,14 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
       do {
 	assert( pblk_far );
 	assert( blkstk.sp > 0 );
-	WALK r = DEADEND;
+	//WALK r = DEADEND;
 	if( pblk_far != pblk_edge ) {
 	  if( pblk_far->shape.num_morphs > 1 )
 	    break;
+#if 0 // *****
 	  if( pblk_far->shape.morphs[0].num_links > 2 )
 	    break;
+#endif
 	}
 	{
 	  CBTC_BLOCK_PTR pblk_ahd = NULL;
@@ -1897,10 +1903,17 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 	      assert( ((pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh)->pmorph)->pblock );
 	      pblk_ahd = ((pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh)->pmorph)->pblock;
 	      if( pblk_ahd ) {
+#if 0 // *****
 		if( route_out( &r, pblk_ahd, &blkstk, NULL ) ) {
 		  dst_found = FALSE;
 		  break;
 		}
+#else
+		if( top_blk( &blkstk ) == pblk_ahd ) {
+		  assert( !dst_found );
+		  continue;
+		}
+#endif
 		push_blk( &blkstk, pblk_ahd );
 		cnt++;
 		if( strncmp( cnv2str_il_sym(pblk_ahd->belonging_tr.track), tr_dst->track_name, CBI_STAT_IDENT_LEN ) == 0 ) {
@@ -1934,7 +1947,7 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 	  }
 	  pb = pop_blk( &blkstk );
 	}
-	assert( i <= cnt );
+	//assert( i <= cnt );
       }
     }
   }
@@ -1979,7 +1992,7 @@ static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[],
   if( !found_dst ) {
     if( nblks_body > 0 ) {
       int n = -1;
-      n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), pblks_body[nblks_body - 1], pro_prof );
+      n = go_on2_dest( &ptrs_body[], (ntrs_body - r), pblks_body[nblks_body - 1], pro_prof );
       r += abs( n );
       r *= (n < 0 ? -1 : 1);
     } else
