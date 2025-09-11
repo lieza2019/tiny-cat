@@ -1425,6 +1425,13 @@ static CBTC_BLOCK_PTR pop_blk ( BLK_TRACER_PTR pstk ) {
   }
   return r;
 }
+static CBTC_BLOCK_PTR peek_stk ( BLK_TRACER_PTR pstk, const int pos ) {
+  assert( pstk );
+  CBTC_BLOCK_PTR r = NULL;
+  if( (pos > -1) && (pos < pstk->sp) )
+    r = pstk->stack[pos];
+  return r;
+}
 static CBTC_BLOCK_PTR top_blk ( BLK_TRACER_PTR pstk ) {
   assert( pstk );
   return pstk->stack[pstk->sp];
@@ -1924,6 +1931,7 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 		    assert( !dst_found );
 		    break;
 		  }
+		pblk_far = pblk_ahd;
 	      }
 	    }
 	  }
@@ -1934,18 +1942,33 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
       } while( pblk_far );
       {
 	int i = 0;
+#if 1 // *****
 	CBTC_BLOCK_PTR pb = pop_blk( &blkstk );
+#else
+	CBTC_BLOCK_PTR pb = peek_stk( &blkstk, i );
+#endif
 	while( pb ) {
+#if 0 // *****
+	  if( pb == pblk_edge ) {
+	    assert( i == 0 );
+	    i++;
+	    continue;
+	  }
+#endif
 	  const char *tr_name = cnv2str_il_sym( pb->belonging_tr.track );
 	  TRACK_PROF_PTR ptr = NULL;
 	  ptr = lkup_track_prof( tr_name );
 	  if( ptr ) {
 	    if( i >= ntrs_body )
 	      break;
-	    ptrs_body[i] = ptr;
-	    i++;
+	    ptrs_body[i] = ptr;	    
 	  }
+	  i++;
+#if 1 // *****
 	  pb = pop_blk( &blkstk );
+#else
+	  pb = peek_stk( &blkstk, i );
+#endif
 	}
 	//assert( i <= cnt );
       }
@@ -1992,7 +2015,7 @@ static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[],
   if( !found_dst ) {
     if( nblks_body > 0 ) {
       int n = -1;
-      n = go_on2_dest( &ptrs_body[], (ntrs_body - r), pblks_body[nblks_body - 1], pro_prof );
+      n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), pblks_body[nblks_body - 1], pro_prof );
       r += abs( n );
       r *= (n < 0 ? -1 : 1);
     } else
