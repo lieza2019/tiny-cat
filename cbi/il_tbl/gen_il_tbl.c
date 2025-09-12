@@ -1872,23 +1872,24 @@ static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront )
   return r;
 }
 
-static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_BLOCK_PTR pblk_edge, ROUTE_PROF_PTR pro_prof ) {
+static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_BLOCK_PTR pblk_edge, CBTC_BLOCK_PTR pblk_prev, ROUTE_PROF_PTR pro_prof ) {
   assert( ptrs_body );
   assert( ntrs_body > 0 );
   assert( pblk_edge );
   assert( pro_prof );
-  BOOL dst_found = FALSE;
-  int cnt = 0;
+  int r = 0;
   
+  BOOL dst_found = FALSE;
+  int cnt_blk = 0;
   if( pro_prof->orgdst.dst.pdst_tr ) {
     TRACK_PROF_PTR tr_dst = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;
     if( tr_dst ) {
-      CBTC_BLOCK_PTR pblk_far = NULL;
       BLK_TRACER blkstk = { 0 };
-      pblk_far = push_blk( &blkstk, pblk_edge );
+      //CBTC_BLOCK_PTR pblk_far = NULL;
+      //pblk_far = push_blk( &blkstk, pblk_edge );
+      CBTC_BLOCK_PTR pblk_far = pblk_edge;
       do {
 	assert( pblk_far );
-	assert( blkstk.sp > 0 );
 	//WALK r = DEADEND;
 	if( pblk_far != pblk_edge ) {
 	  if( pblk_far->shape.num_morphs > 1 )
@@ -1901,10 +1902,10 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 	{
 	  CBTC_BLOCK_PTR pblk_ahd = NULL;
 	  assert( pblk_far->shape.morphs[0].num_links == 2 );
-	  int i;
+	  int i = 0;
 	  for( i = 0; i < pblk_far->shape.morphs[0].num_links; i++ ) {
 	    assert( tr_dst );
-	    assert( pblk_far );	    
+	    assert( pblk_far );
 	    if( pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh ) {
 	      assert( (pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh)->pmorph );
 	      assert( ((pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh)->pmorph)->pblock );
@@ -1916,33 +1917,39 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 		  break;
 		}
 #else
-		if( top_blk( &blkstk ) == pblk_ahd ) {
+		if( pblk_far == pblk_prev ) {
 		  assert( !dst_found );
+		  i++;
 		  continue;
 		}
 #endif
+		pblk_prev = pblk_far;
 		push_blk( &blkstk, pblk_ahd );
-		cnt++;
+		cnt_blk++;
 		if( strncmp( cnv2str_il_sym(pblk_ahd->belonging_tr.track), tr_dst->track_name, CBI_STAT_IDENT_LEN ) == 0 ) {
 		  dst_found = TRUE;
-		  break;
+		  //break;
 		} else
-		  if( cnt >= MAX_OVERBLKS2_ROUTEDEST ) {
+		  if( cnt_blk >= MAX_OVERBLKS2_ROUTEDEST ) {
 		    assert( !dst_found );
-		    break;
+		    dst_found = TRUE;
+		    //break;
 		  }
-		pblk_far = pblk_ahd;
+		//pblk_far = pblk_ahd;
+		//i = 0;
+		break;
 	      }
 	    }
 	  }
-	  if( !dst_found )
+	  if( dst_found )
 	    break;
 	  pblk_far = pblk_ahd;
 	}
       } while( pblk_far );
       {
+	int cnt_tr = 0;
 	int i = 0;
-#if 1 // *****
+#if 0 // *****
 	CBTC_BLOCK_PTR pb = pop_blk( &blkstk );
 #else
 	CBTC_BLOCK_PTR pb = peek_stk( &blkstk, i );
@@ -1954,27 +1961,37 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 	    i++;
 	    continue;
 	  }
-#endif
+#endif	  
 	  const char *tr_name = cnv2str_il_sym( pb->belonging_tr.track );
+	  if( i >= ntrs_body )
+	    break;
 	  TRACK_PROF_PTR ptr = NULL;
 	  ptr = lkup_track_prof( tr_name );
 	  if( ptr ) {
-	    if( i >= ntrs_body )
-	      break;
-	    ptrs_body[i] = ptr;	    
+	    if( !ptrs_body[cnt_tr] ) {
+	      assert( cnt_tr == 0 );
+	      ptrs_body[cnt_tr] = ptr;
+	    } else {
+	      assert( ptrs_body[cnt_tr] );
+	      if( ptrs_body[cnt_tr] != ptr ) {
+		cnt_tr++;
+		ptrs_body[cnt_tr] = ptr;
+	      }
+	    }
 	  }
 	  i++;
-#if 1 // *****
+#if 0 // *****
 	  pb = pop_blk( &blkstk );
 #else
 	  pb = peek_stk( &blkstk, i );
 #endif
 	}
-	//assert( i <= cnt );
+	//assert( i <= cnt_blk );
+	r = (ptrs_body[0] ? (cnt_tr + 1) : 0);
       }
     }
   }
-  return (cnt * (dst_found ? 1 : -1));
+  return (r * (dst_found ? 1 : -1));
 }
 
 static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[], const int ntrs_body, const int nblks_body, ROUTE_PROF_PTR pro_prof ) {
@@ -2014,8 +2031,10 @@ static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[],
   r = cnt + 1;
   if( !found_dst ) {
     if( nblks_body > 0 ) {
+      CBTC_BLOCK_PTR pblk_edge = pblks_body[nblks_body - 1];
+      CBTC_BLOCK_PTR pblk_prev = nblks_body > 1 ? pblks_body[nblks_body - 2] : NULL;
       int n = -1;
-      n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), pblks_body[nblks_body - 1], pro_prof );
+      n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), pblk_edge, pblk_prev, pro_prof );
       r += abs( n );
       r *= (n < 0 ? -1 : 1);
     } else
