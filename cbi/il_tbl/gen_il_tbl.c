@@ -1917,9 +1917,9 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 		  break;
 		}
 #else
-		if( pblk_far == pblk_prev ) {
+		//if( pblk_far == pblk_prev ) {
+		if( pblk_ahd == pblk_prev ) {
 		  assert( !dst_found );
-		  i++;
 		  continue;
 		}
 #endif
@@ -2049,7 +2049,7 @@ static void cons_routes_circuit ( void ) {
   while( pprof < tracks_routes_prof.routes.pavail ) {
 #if 1 // *****
     {
-      if( strncmp( pprof->route_name, "S804A_VS822A", CBI_STAT_IDENT_LEN ) == 0 ) {
+      if( strncmp( pprof->route_name, "S803B_VS831B", CBI_STAT_IDENT_LEN ) == 0 ) {
 	printf( "HIT." );
       }
     }
