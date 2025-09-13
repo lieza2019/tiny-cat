@@ -1872,9 +1872,10 @@ static int trylnk_ahead_blk ( struct frontier *pahead, struct frontier *pfront )
   return r;
 }
 
-static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_BLOCK_PTR pblk_edge, CBTC_BLOCK_PTR pblk_prev, ROUTE_PROF_PTR pro_prof ) {
+static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, TRACK_PROF_PTR ptr_edge, CBTC_BLOCK_PTR pblk_edge, CBTC_BLOCK_PTR pblk_prev, ROUTE_PROF_PTR pro_prof ) {
   assert( ptrs_body );
   assert( ntrs_body > 0 );
+  assert( ptr_edge );
   assert( pblk_edge );
   assert( pro_prof );
   int r = 0;
@@ -1885,58 +1886,37 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
     TRACK_PROF_PTR tr_dst = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;
     if( tr_dst ) {
       BLK_TRACER blkstk = { 0 };
-      //CBTC_BLOCK_PTR pblk_far = NULL;
-      //pblk_far = push_blk( &blkstk, pblk_edge );
       CBTC_BLOCK_PTR pblk_far = pblk_edge;
       do {
+	assert( !dst_found );
 	assert( pblk_far );
-	//WALK r = DEADEND;
 	if( pblk_far != pblk_edge ) {
 	  if( pblk_far->shape.num_morphs > 1 )
 	    break;
-#if 0 // *****
-	  if( pblk_far->shape.morphs[0].num_links > 2 )
-	    break;
-#endif
 	}
 	{
 	  CBTC_BLOCK_PTR pblk_ahd = NULL;
 	  assert( pblk_far->shape.morphs[0].num_links == 2 );
 	  int i = 0;
 	  for( i = 0; i < pblk_far->shape.morphs[0].num_links; i++ ) {
+	    assert( !dst_found );
 	    assert( tr_dst );
-	    assert( pblk_far );
+	    assert( pblk_far );	    
 	    if( pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh ) {
 	      assert( (pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh)->pmorph );
 	      assert( ((pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh)->pmorph)->pblock );
 	      pblk_ahd = ((pblk_far->shape.morphs[0].linkages[i].bond.pln_neigh)->pmorph)->pblock;
 	      if( pblk_ahd ) {
-#if 0 // *****
-		if( route_out( &r, pblk_ahd, &blkstk, NULL ) ) {
-		  dst_found = FALSE;
-		  break;
-		}
-#else
-		//if( pblk_far == pblk_prev ) {
-		if( pblk_ahd == pblk_prev ) {
-		  assert( !dst_found );
+		if( pblk_ahd == pblk_prev )		  
 		  continue;
-		}
-#endif
 		pblk_prev = pblk_far;
 		push_blk( &blkstk, pblk_ahd );
 		cnt_blk++;
-		if( strncmp( cnv2str_il_sym(pblk_ahd->belonging_tr.track), tr_dst->track_name, CBI_STAT_IDENT_LEN ) == 0 ) {
+		if( strncmp( cnv2str_il_sym(pblk_ahd->belonging_tr.track), tr_dst->track_name, CBI_STAT_IDENT_LEN ) == 0 )
 		  dst_found = TRUE;
-		  //break;
-		} else
-		  if( cnt_blk >= MAX_OVERBLKS2_ROUTEDEST ) {
-		    assert( !dst_found );
+		else
+		  if( cnt_blk >= MAX_OVERBLKS2_ROUTEDEST )
 		    dst_found = TRUE;
-		    //break;
-		  }
-		//pblk_far = pblk_ahd;
-		//i = 0;
 		break;
 	      }
 	    }
@@ -1949,19 +1929,8 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
       {
 	int cnt_tr = 0;
 	int i = 0;
-#if 0 // *****
-	CBTC_BLOCK_PTR pb = pop_blk( &blkstk );
-#else
 	CBTC_BLOCK_PTR pb = peek_stk( &blkstk, i );
-#endif
 	while( pb ) {
-#if 0 // *****
-	  if( pb == pblk_edge ) {
-	    assert( i == 0 );
-	    i++;
-	    continue;
-	  }
-#endif	  
 	  const char *tr_name = cnv2str_il_sym( pb->belonging_tr.track );
 	  if( i >= ntrs_body )
 	    break;
@@ -1970,7 +1939,8 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 	  if( ptr ) {
 	    if( !ptrs_body[cnt_tr] ) {
 	      assert( cnt_tr == 0 );
-	      ptrs_body[cnt_tr] = ptr;
+	      if( ptr != ptr_edge )
+		ptrs_body[cnt_tr] = ptr;
 	    } else {
 	      assert( ptrs_body[cnt_tr] );
 	      if( ptrs_body[cnt_tr] != ptr ) {
@@ -1980,13 +1950,8 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, CBTC_B
 	    }
 	  }
 	  i++;
-#if 0 // *****
-	  pb = pop_blk( &blkstk );
-#else
 	  pb = peek_stk( &blkstk, i );
-#endif
 	}
-	//assert( i <= cnt_blk );
 	r = (ptrs_body[0] ? (cnt_tr + 1) : 0);
       }
     }
@@ -2034,7 +1999,7 @@ static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[],
       CBTC_BLOCK_PTR pblk_edge = pblks_body[nblks_body - 1];
       CBTC_BLOCK_PTR pblk_prev = nblks_body > 1 ? pblks_body[nblks_body - 2] : NULL;
       int n = -1;
-      n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), pblk_edge, pblk_prev, pro_prof );
+      n = go_on2_dest( &ptrs_body[r], (ntrs_body - r), ptrs_body[cnt], pblk_edge, pblk_prev, pro_prof );
       r += abs( n );
       r *= (n < 0 ? -1 : 1);
     } else
@@ -2049,7 +2014,7 @@ static void cons_routes_circuit ( void ) {
   while( pprof < tracks_routes_prof.routes.pavail ) {
 #if 1 // *****
     {
-      if( strncmp( pprof->route_name, "S803B_VS831B", CBI_STAT_IDENT_LEN ) == 0 ) {
+      if( strncmp( pprof->route_name, "S803B_S803H", CBI_STAT_IDENT_LEN ) == 0 ) {
 	printf( "HIT." );
       }
     }
