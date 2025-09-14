@@ -1425,16 +1425,12 @@ static CBTC_BLOCK_PTR pop_blk ( BLK_TRACER_PTR pstk ) {
   }
   return r;
 }
-static CBTC_BLOCK_PTR peek_stk ( BLK_TRACER_PTR pstk, const int pos ) {
+static CBTC_BLOCK_PTR peek_blkstk ( BLK_TRACER_PTR pstk, const int pos ) {
   assert( pstk );
   CBTC_BLOCK_PTR r = NULL;
   if( (pos > -1) && (pos < pstk->sp) )
     r = pstk->stack[pos];
   return r;
-}
-static CBTC_BLOCK_PTR top_blk ( BLK_TRACER_PTR pstk ) {
-  assert( pstk );
-  return pstk->stack[pstk->sp];
 }
 
 typedef enum WALK {
@@ -1929,7 +1925,7 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, TRACK_
       {
 	int cnt_tr = 0;
 	int i = 0;
-	CBTC_BLOCK_PTR pb = peek_stk( &blkstk, i );
+	CBTC_BLOCK_PTR pb = peek_blkstk( &blkstk, i );
 	while( pb ) {
 	  const char *tr_name = cnv2str_il_sym( pb->belonging_tr.track );
 	  if( i >= ntrs_body )
@@ -1950,7 +1946,7 @@ static int go_on2_dest ( TRACK_PROF_PTR ptrs_body[], const int ntrs_body, TRACK_
 	    }
 	  }
 	  i++;
-	  pb = peek_stk( &blkstk, i );
+	  pb = peek_blkstk( &blkstk, i );
 	}
 	r = (ptrs_body[0] ? (cnt_tr + 1) : 0);
       }
