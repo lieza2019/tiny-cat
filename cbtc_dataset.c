@@ -24,13 +24,13 @@ SP_PLTB sp_pltb[] = {
 CBTC_BLOCK block_state[] = {
   // S803B_VS801B, S803B_VS803B, S803B_S831B
   //{2418, VB304DB, "VB304DB", -1, {T815B_TR}, {TRUE, SP_73, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL1 // CHECKED.
-  {2418, VB304DB, "VB304DB", SC802, {1, { {2, {{2417, 0}, {2419, 1}}, -1} }}, {T815B_TR}, {TRUE, SP_73, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL1 // CHECKED.  
+  {2418, VB304DB, "VB304DB", SC802, {1, { {2, {{2417, 0}, {2419, 1}}, -1} }}, {T815B_TR}, {TRUE, {SP_73, JLA}, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL1 // CHECKED.  
   //{2419, VB306D, "VB306D", -1, {T817B_TR}, {FALSE}},
   {2419, VB306D, "VB306D", SC802, {2, { {2, {{2420, 0},{2418, 1}}, -1, 1, {P809B_NKR}}, {2, {{2420, 0},{2014, 2}}, -1, 1, {P809B_RKR}} }}, {T817B_TR}, {FALSE}},
   {2420, VB307D, "VB307D", SC802, {6, { {2, {{2419, 0},{2421, 3}}, -1, 3, {P815B_NKR, P811B_NKR, P817B_NKR}}, {2, {{2419, 0},{2015, 4}}, -1, 2, {P815B_NKR, P811B_RKR}}, {2, {{2419, 0},{2435, 2}}, -1, 3, {P815B_NKR, P811B_NKR, P817B_RKR}}, {2, {{2803, 1},{2421, 3}}, -1, 3, {P815B_RKR, P811B_NKR, P817B_NKR}}, {2, {{2803, 1},{2015, 4}}, -1, 2, {P815B_RKR, P811B_RKR}}, {2, {{2803, 1},{2435, 2}}, -1, 3, {P815B_RKR, P811B_NKR, P817B_RKR}} }}, {T819B_TR}, {FALSE}},
   // S807B_VS801B, S807B_VS803B, S807B_S831B
   //{2013, VB305U, "VB305U", -1, {T814B_TR}, {TRUE, SP_74, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL2 // CHECKED.
-  {2013, VB305U,  "VB305U",  SC802, {1, { {2, {{2012, 0},{2014, 1}}, -1} } }, {T814B_TR}, {TRUE, SP_74, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL2 // CHECKED.
+  {2013, VB305U,  "VB305U",  SC802, {1, { {2, {{2012, 0},{2014, 1}}, -1} } }, {T814B_TR}, {TRUE, {SP_74, JLA}, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL2 // CHECKED.
   
   //{2014, VB306U, "VB306U", -1, {T816B_TR}, {FALSE}},
   {2014, VB306U, "VB306U", SC802, { 2, { {2, {{2013, 0},{2015, 1}}, -1, 1, {P810B_NKR}}, {2, {{2013, 0},{2419, 2}}, -1, 1, {P810B_RKR}} } }, {T816B_TR}, {FALSE}},
@@ -51,7 +51,7 @@ CBTC_BLOCK block_state[] = {
   //{2428, VB322D, "VB322D", -1, {T823B_TR}, {FALSE}}, // CHECKED.
   {2428, VB322D, "VB322D", SC802, {1, { {2, {{2427, 0}, {2429, 1}}, -1} }}, {T823B_TR}, {FALSE}}, // CHECKED.
   //{2429, VB324D, "VB324D", -1, {T825B_TR}, {TRUE, SP_77, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL1 // CHECKED.
-  {2429, VB324D, "VB324D", SC802, {1, { {2, {{2428, 0}, {2430, 1}}, -1} }}, {T825B_TR}, {TRUE, SP_77, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL1 // CHECKED.
+  {2429, VB324D, "VB324D", SC802, {1, { {2, {{2428, 0}, {2430, 1}}, -1} }}, {T825B_TR}, {TRUE, {SP_77, KIKJ}, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL1 // CHECKED.
   //{2430, VB326D, "VB326D", -1, {T827B_TR}, {FALSE}},
   {2430, VB326D, "VB326D", SC802, {1, { {2, {{2429, 0}, {2431, 1}}, -1} }}, {T827B_TR}, {FALSE}},
   
@@ -73,7 +73,7 @@ CBTC_BLOCK block_state[] = {
   //{2027, VB326U, "VB326U", -1, {T828B_TR}, {FALSE}}, // CHECKED.
   {2027, VB326U, "VB326U", SC802, {1, { {2, {{2026, 0}, {2028, 1}}, -1} }}, {T828B_TR}, {FALSE}}, // CHECKED.
   //{2026, VB325U, "VB325U", -1, {T826B_TR}, {TRUE, SP_76, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL2 // CHECKED.
-  {2026, VB325U, "VB325U", SC802, {1, { {2, {{2025, 0}, {2027, 1}}, -1} }}, {T826B_TR}, {TRUE, SP_76, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL2 // CHECKED.
+  {2026, VB325U, "VB325U", SC802, {1, { {2, {{2025, 0}, {2027, 1}}, -1} }}, {T826B_TR}, {TRUE, {SP_76, KIKJ}, P0_COUPLING, {VB_NONSENS}}}, // KIKJ_PL2 // CHECKED.
   //{2025, VB324U, "VB324U", -1, {T824B_TR}, {FALSE}},
   {2025, VB324U, "VB324U", SC802, {1, { {2, {{2024, 0}, {2026, 1}}, -1} }}, {T824B_TR}, {FALSE}},
   
@@ -93,7 +93,7 @@ CBTC_BLOCK block_state[] = {
   //{1402, VB339D, "VB339D", -1, {T801A_TR}, {FALSE}}, // CHECKED.
   {1402, VB339D, "VB339D", SC801, {1, { {2, {{1401, 0}, {1403, 1}}, -1} }}, {T801A_TR}, {FALSE}}, // CHECKED.
   //{1403, VB340D, "VB340D", -1, {T803A_TR}, {TRUE, SP_79, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL1 // CHECKED.
-  {1403, VB340D, "VB340D", SC801, {1, { {2, {{1402, 0}, {1404, 1}}, -1} }}, {T803A_TR}, {TRUE, SP_79, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL1 // CHECKE.D
+  {1403, VB340D, "VB340D", SC801, {1, { {2, {{1402, 0}, {1404, 1}}, -1} }}, {T803A_TR}, {TRUE, {SP_79, OKBS}, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL1 // CHECKE.D
   //{1404, VB342DA, "VB342DA", -1, {T805A_TR}, {FALSE}},
   {1404, VB342DA, "VB342DA", SC801, {1, { {2, {{1403, 0}, {1405, 1}}, -1} }}, {T805A_TR}, {FALSE}},
   
@@ -117,7 +117,7 @@ CBTC_BLOCK block_state[] = {
   //{1005, VB342U, "VB342U", -1, {T806A_TR}, {FALSE}}, // CHECKED.
   {1005, VB342U, "VB342U", SC801, {1, { {2, {{1004, 0}, {1006, 1}}, -1} }}, {T806A_TR}, {FALSE}}, // CHECKED.
   //{1004, VB341U, "VB341U", -1, {T804A_TR}, {TRUE, SP_78, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL2 // CHECKED.
-  {1004, VB341U, "VB341U", SC801, {1, { {2, {{1003, 0}, {1005, 1}}, -1} }}, {T804A_TR}, {TRUE, SP_78, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL2 // CHECKED.
+  {1004, VB341U, "VB341U", SC801, {1, { {2, {{1003, 0}, {1005, 1}}, -1} }}, {T804A_TR}, {TRUE, {SP_78, OKBS}, P0_COUPLING, {VB_NONSENS}}}, // OKBS_PL2 // CHECKED.
   //{1003, VB340U, "VB340U", -1, {T802A_TR}, {FALSE}},
   {1003, VB340U, "VB340U", SC801, {1, { {2, {{1002, 0}, {1004, 1}}, -1} }}, {T802A_TR}, {FALSE}},
   
@@ -168,7 +168,7 @@ CBTC_BLOCK block_state[] = {
   
   // S806A_S804A
   //{1418, VB363DB, "VB363DB", -1, {T817A_TR}, {TRUE, SP_D5, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB1 // CHECKED.
-  {1418, VB363DB, "VB363DB", SC801, {1, { {1, {{1419, 0}}, -1} }}, {T817A_TR}, {TRUE, SP_D5, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB1 // CHECKED.
+  {1418, VB363DB, "VB363DB", SC801, {1, { {1, {{1419, 0}}, -1} }}, {T817A_TR}, {TRUE, {SP_D5, BTGD}, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB1 // CHECKED.
   //{1419, VB363DA, "VB363DA", -1, {T815A_TR}, {FALSE}},
   {1419, VB363DA, "VB363DA", SC801, {2, { {2, {{1418, 0},{1417, 1}}, -1, 1, {P805A_NKR}}, {2, {{1418, 0},{1017, 2}}, -1, 1, {P805A_RKR}} }}, {T815A_TR}, {FALSE}},
   //{1017, VB363UA, "VB363UA", -1, {T814A_TR}, {FALSE}},
@@ -176,7 +176,7 @@ CBTC_BLOCK block_state[] = {
   
   // S802A_S804A
   //{1018, VB364U, "VB364U", -1, {T816A_TR}, {TRUE, SP_D0, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB2 // CHECKED.
-  {1018, VB364U, "VB364U", SC801, {1, { {1, {{1019, 0}}, -1} }}, {T816A_TR}, {TRUE, SP_D0, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB2 // CHECKED.
+  {1018, VB364U, "VB364U", SC801, {1, { {1, {{1019, 0}}, -1} }}, {T816A_TR}, {TRUE, {SP_D0, BTGD}, P0_COUPLING, {VB_NONSENS}}}, // BTGD_TB2 // CHECKED.
   //{1019, VB363UB, "VB363UB", -1, {T814A_TR}, {FALSE}},
   {1019, VB363UB, "VB363UB", SC801, {2, { {2, {{1018, 0},{1017, 1}}, -1, 1, {P806A_NKR}}, {2, {{1018, 0},{1417, 2}}, -1, 1, {P806A_RKR}} }}, {T814A_TR}, {FALSE}},
   /* (1017, VB363UA) is registered in the case of S806A_S804A. */
@@ -185,7 +185,7 @@ CBTC_BLOCK block_state[] = {
   /* (1418, VB363DB) in T817A_TR, is registered in the case of S806A_S804A. */
   /* (1018, VB364U) in T816A_TR, is registered in the case of S802A_S804A. */
   //{1016, VB361U, "VB361U", -1, {T812A_TR}, {TRUE, SP_80, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL2 // CHECKED.
-  {1016, VB361U, "VB361U", SC801, {1, { {2, {{1015, 0}, {1017, 1}}, -1} }}, {T812A_TR}, {TRUE, SP_80, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL2 // CHECKED.
+  {1016, VB361U, "VB361U", SC801, {1, { {2, {{1015, 0}, {1017, 1}}, -1} }}, {T812A_TR}, {TRUE, {SP_80, BTGD}, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL2 // CHECKED.
   //{1015, VB360UB, "VB360UB", -1, {T810A_TR}, {FALSE}},
   {1015, VB360UB, "VB360UB", SC801, {2, { {2, {{1016, 0},{1014, 1}}, -1, 1, {P802A_NKR}}, {2, {{1016, 0},{1415, 2}}, -1, 1, {P802A_RKR}} }}, {T810A_TR}, {FALSE}},
   {1014, VB360UA, "VB360UA", SC801, {1, { {2, {{1013, 0}, {1015, 1}}, -1} }}, {T808A_TR}, {FALSE}}, // added for the case of S805A_S807A
@@ -203,7 +203,7 @@ CBTC_BLOCK block_state[] = {
      (1413, VB358D) in T807A_TR
   */
   //{1416, VB360DB, "VB360DB", -1, {T813A_TR}, {TRUE, SP_81, P0_COUPLING, {VB_NONSENS}}}, // BTGD_PL1 // CHECKED.
-  {1416, VB360DB, "VB360DB", SC801, {1, { {2, {{1415, 0}, {1417, 1}}, -1} }}, {T813A_TR}, {TRUE, SP_81, P0_COUPLING, {VB_NONSENS}}}, // BTbGD_PL1 // CHECKED.
+  {1416, VB360DB, "VB360DB", SC801, {1, { {2, {{1415, 0}, {1417, 1}}, -1} }}, {T813A_TR}, {TRUE, {SP_81, BTGD}, P0_COUPLING, {VB_NONSENS}}}, // BTbGD_PL1 // CHECKED.
   //{1417, VB362D, "VB362D", -1, {T815A_TR}, {FALSE}},
   {1417, VB362D, "VB362D", SC801, {2, { {2, {{1416, 0},{1419, 1}}, -1, 1, {P803A_NKR}}, {2, {{1416, 0},{1019, 2}}, -1, 1, {P803A_RKR}} }}, {T815A_TR}, {FALSE}},
 
@@ -214,7 +214,7 @@ CBTC_BLOCK block_state[] = {
 
   // extra blocks ONLY for testing the linkages on the track of T819B
   {2801, VB303L9, "VB303L9", SC802, {1, { {2, {{2416, 0}, {2802, 1}}, -1} }}, {T829B_TR}, {FALSE}},
-  {2802, VB304L9, "VB304L9", SC802, {1, { {2, {{2801, 0}, {2803, 1}}, -1} }}, {T831B_TR}, {TRUE, SP_75, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL3
+  {2802, VB304L9, "VB304L9", SC802, {1, { {2, {{2801, 0}, {2803, 1}}, -1} }}, {T831B_TR}, {TRUE, {SP_75, JLA}, P0_COUPLING, {VB_NONSENS}}}, // JLA_PL3
   {2803, VB306L9, "VB306L9", SC802, {1, { {2, {{2802, 0}, {2420, 1}}, -1} }}, {T833B_TR}, {FALSE}},
   
   {0, END_OF_CBTC_BLOCKs, "END_OF_CBTC_BLOCKs" }

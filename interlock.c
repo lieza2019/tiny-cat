@@ -293,7 +293,7 @@ void cons_route_attrib ( ROUTE_PTR proute ) {
 	    CBTC_BLOCK_C_PTR p = proute->ars_ctrl.trip_info.dep.pblk;
 	    assert( p );
 	    assert( p->sp.has_sp );
-	    assert( p->sp.sp_code == proute->ars_ctrl.trip_info.dep.sp );
+	    assert( p->sp.sp_code.sp == proute->ars_ctrl.trip_info.dep.sp );
 	    assert( p->virt_block_name == proute->ars_ctrl.trip_info.dep.blk );
 	  }
 	  found = i;
@@ -319,7 +319,7 @@ void cons_route_attrib ( ROUTE_PTR proute ) {
 	    CBTC_BLOCK_C_PTR p = proute->ars_ctrl.trip_info.dst.pblk;
 	    assert( p );
 	    assert( p->sp.has_sp );
-	    assert( p->sp.sp_code == proute->ars_ctrl.trip_info.dst.sp );
+	    assert( p->sp.sp_code.sp == proute->ars_ctrl.trip_info.dst.sp );
 	    assert( p->virt_block_name == proute->ars_ctrl.trip_info.dst.blk );
 	  }
 	  found = i;
@@ -371,7 +371,7 @@ void cons_cbtc_block_attrib ( CBTC_BLOCK_PTR pblock ) {
   assert( pblock->belonging_tr.ptrack == &track_dataset_def[found] );
   
   if( pblock->sp.has_sp ) {
-    assert( (pblock->sp.sp_code > 0) && (pblock->sp.sp_code < END_OF_SPs) );
+    assert( (pblock->sp.sp_code.sp > 0) && (pblock->sp.sp_code.sp < END_OF_SPs) );
     assert( (pblock->sp.stop_detect_type >= 0) && (pblock->sp.stop_detect_type < END_OF_STOP_DETECTION_TYPES) );
     pblock->sp.stop_detect_cond.ppaired_blk = NULL;    
     if( pblock->sp.stop_detect_cond.paired_blk != VB_NONSENS ) {
@@ -409,7 +409,7 @@ static void chk_consistency_over_sp_links ( void ) {
 	CBTC_BLOCK_C_PTR pblk_assoc = pblock->sp.stop_detect_cond.ppaired_blk;
 	assert( pblk_assoc );
 	assert( pblk_assoc->sp.has_sp );
-	assert( pblk_assoc->sp.sp_code == pblock->sp.sp_code );
+	assert( pblk_assoc->sp.sp_code.sp == pblock->sp.sp_code.sp );
 	assert( pblk_assoc->sp.stop_detect_type == pblock->sp.stop_detect_type );
 	
 	assert( pblk_assoc->sp.stop_detect_cond.paired_blk == pblock->virt_block_name );

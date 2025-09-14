@@ -49,6 +49,11 @@ typedef enum st_id {
   END_OF_ST_ID
 } ST_ID;
 
+typedef struct sp_st {
+  STOPPING_POINT_CODE sp;
+  ST_ID st;
+} SP_ST;
+
 typedef enum cbtc_block_id {
   VB_NONSENS,
   VB309DA,

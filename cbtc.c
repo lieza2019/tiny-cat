@@ -506,14 +506,14 @@ void cons_lkuptbl_sp2_block ( void ) {
     if( block_state[i].sp.has_sp ) {
       switch( block_state[i].sp.stop_detect_type ) {
       case P0_COUPLING:
-	sp2_block[block_state[i].sp.sp_code] = &block_state[i];
+	sp2_block[block_state[i].sp.sp_code.sp] = &block_state[i];
 	assert( block_state[i].sp.stop_detect_cond.paired_blk == VB_NONSENS );
 	assert( ! block_state[i].sp.stop_detect_cond.ppaired_blk );
 	{
 	  int j = i + 1;
 	  while( block_state[j].virt_block_name < END_OF_CBTC_BLOCKs ) {
 	    if( block_state[j].sp.has_sp )
-	      assert( block_state[j].sp.sp_code != block_state[i].sp.sp_code );
+	      assert( block_state[j].sp.sp_code.sp != block_state[i].sp.sp_code.sp );
 	    j++;
 	  }
 	}

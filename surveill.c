@@ -12,23 +12,23 @@ static STOPPING_POINT_CODE sp_with_p0 ( CBTC_BLOCK_C_PTR pblk_forward, CBTC_BLOC
   STOPPING_POINT_CODE r = SP_NONSENS;
   
   if( pblk_forward->sp.has_sp && !pblk_back->sp.has_sp )
-    r = (pblk_forward->sp.stop_detect_type == P0_COUPLING) ? pblk_forward->sp.sp_code : SP_NONSENS;
+    r = (pblk_forward->sp.stop_detect_type == P0_COUPLING) ? pblk_forward->sp.sp_code.sp : SP_NONSENS;
   else if( !pblk_forward->sp.has_sp && pblk_back->sp.has_sp )    
-    r = (pblk_back->sp.stop_detect_type == P0_COUPLING) ? pblk_back->sp.sp_code : SP_NONSENS;
+    r = (pblk_back->sp.stop_detect_type == P0_COUPLING) ? pblk_back->sp.sp_code.sp : SP_NONSENS;
   else if( pblk_forward->sp.has_sp && pblk_back->sp.has_sp ) {
     if( pblk_forward == pblk_back ) {
-      assert( pblk_forward->sp.sp_code == pblk_back->sp.sp_code );
+      assert( pblk_forward->sp.sp_code.sp == pblk_back->sp.sp_code.sp );
       if( pblk_forward->sp.stop_detect_type == P0_COUPLING ) {
 	assert( pblk_back->sp.stop_detect_type == P0_COUPLING );
-	r = pblk_forward->sp.sp_code;
+	r = pblk_forward->sp.sp_code.sp;
       } else {
 	assert( pblk_back->sp.stop_detect_type != P0_COUPLING );
 	r = SP_NONSENS;
       }
     } else {
-      if( pblk_forward->sp.sp_code == pblk_back->sp.sp_code )	  
+      if( pblk_forward->sp.sp_code.sp == pblk_back->sp.sp_code.sp )
 	if( (pblk_forward->sp.stop_detect_type == P0_COUPLING) || (pblk_back->sp.stop_detect_type == P0_COUPLING) )
-	  r = pblk_forward->sp.sp_code;
+	  r = pblk_forward->sp.sp_code.sp;
 	else {
 	  assert( (pblk_forward->sp.stop_detect_type != P0_COUPLING) && (pblk_back->sp.stop_detect_type != P0_COUPLING) );
 	  r = SP_NONSENS;
@@ -76,28 +76,28 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_SP_EVENTS *pev_sp, DOCK_DETECT_DIR
 	      assert( pT );
 	      pT->misc.prev_blk_forward = pB_forward->block_name;
 	      if( pB_forward->sp.stop_detect_cond.paired_blk == VB_NONSENS )
-		r = pB_forward->sp.sp_code;
+		r = pB_forward->sp.sp_code.sp;
 	    } else if( ! pB_forward->sp.has_sp ) {
 	      assert( pB_back->sp.has_sp );
 	      if( pB_back->sp.stop_detect_cond.paired_blk == VB_NONSENS )
-		r = pB_back->sp.sp_code;
+		r = pB_back->sp.sp_code.sp;
 	    } else {
 	      assert( pB_forward->sp.has_sp && pB_back->sp.has_sp );
 	      if( pB_forward == pB_back ) {
-		assert( pB_forward->sp.sp_code == pB_back->sp.sp_code );
+		assert( pB_forward->sp.sp_code.sp == pB_back->sp.sp_code.sp );
 		assert( pT );
 		pT->misc.prev_blk_forward = pB_forward->block_name;
-		r = pB_forward->sp.sp_code;
+		r = pB_forward->sp.sp_code.sp;
 	      } else {
 		assert( pB_forward != pB_back );
-		if( pB_forward->sp.sp_code == pB_back->sp.sp_code ) {
+		if( pB_forward->sp.sp_code.sp == pB_back->sp.sp_code.sp ) {
 		  CBTC_BLOCK_C_PTR pforward_pairblk = pB_forward->sp.stop_detect_cond.ppaired_blk;
 		  CBTC_BLOCK_C_PTR pback_pairblk = pB_back->sp.stop_detect_cond.ppaired_blk;
 		  if( (pforward_pairblk != NULL) && (pback_pairblk != NULL) )
 		    if( ((pforward_pairblk == pB_back) && (pforward_pairblk->virt_block_name == pB_back->virt_block_name)) &&
 			((pback_pairblk == pB_forward) && (pback_pairblk->virt_block_name == pB_forward->virt_block_name)) ) {
-		      assert( pB_forward->sp.sp_code == pB_back->sp.sp_code );
-		      r = pB_forward->sp.sp_code;
+		      assert( pB_forward->sp.sp_code.sp == pB_back->sp.sp_code.sp );
+		      r = pB_forward->sp.sp_code.sp;
 		    }
 		}
 	      }
@@ -133,12 +133,12 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_SP_EVENTS *pev_sp, DOCK_DETECT_DIR
 	assert( pB_forward->sp.has_sp || pB_back->sp.has_sp );
 	STOPPING_POINT_CODE sp_detected = SP_NONSENS;
 	if( pB_forward->sp.has_sp && !(pB_back->sp.has_sp) )
-	  sp_detected = pB_forward->sp.sp_code;
+	  sp_detected = pB_forward->sp.sp_code.sp;
 	else if( !(pB_forward->sp.has_sp) && pB_back->sp.has_sp )
-	  sp_detected = pB_back->sp.sp_code;
+	  sp_detected = pB_back->sp.sp_code.sp;
 	else {
-	  assert( pB_forward->sp.sp_code == pB_back->sp.sp_code );
-	  sp_detected = pB_forward->sp.sp_code;
+	  assert( pB_forward->sp.sp_code.sp == pB_back->sp.sp_code.sp );
+	  sp_detected = pB_forward->sp.sp_code.sp;
 	}
 	switch( mode ) {
 	case DOCK_DETECT_MAJOR:
@@ -186,7 +186,7 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_SP_EVENTS *pev_sp, DOCK_DETECT_DIR
 	  }
 	case DOCK_DETECT_MINOR:
 	  if( pB_forward && pB_back ) {
-	    if( (pB_forward->sp.sp_code != pT->stop_detected) && (pB_back->sp.sp_code != pT->stop_detected) ) {
+	    if( (pB_forward->sp.sp_code.sp != pT->stop_detected) && (pB_back->sp.sp_code.sp != pT->stop_detected) ) {
 	      r = SP_NONSENS;
 	      *pev_sp = ARS_DETECTS_NONE;
 	      pT->misc.prev_blk_forward = 0;
@@ -216,7 +216,7 @@ STOPPING_POINT_CODE detect_train_docked ( ARS_SP_EVENTS *pev_sp, DOCK_DETECT_DIR
 	    } else {
 	    ATP_RM_etc_leavin:
 	      if( pB_forward && pB_back )
-		if( !((pB_forward->sp.sp_code == pT->stop_detected) && (pB_back->sp.sp_code == pT->stop_detected)) )
+		if( !((pB_forward->sp.sp_code.sp == pT->stop_detected) && (pB_back->sp.sp_code.sp == pT->stop_detected)) )
 		  *pev_sp = ARS_LEAVE_DETECTED;
 	    }
 	    break;
@@ -265,7 +265,7 @@ STOPPING_POINT_CODE detect_train_skip ( ARS_SP_EVENTS *pev_sp, TINY_TRAIN_STATE_
 	CBTC_BLOCK_C_PTR pB_forward_prev = lookup_cbtc_block_prof( pT->misc.prev_blk_forward );
 	assert( pB_forward_prev->sp.has_sp );
 	if( pB_forward_prev->sp.has_sp ) {
-	  const STOPPING_POINT_CODE sp_prev = pB_forward_prev->sp.sp_code;
+	  const STOPPING_POINT_CODE sp_prev = pB_forward_prev->sp.sp_code.sp;
 	  const unsigned short occblk_forward = TRAIN_INFO_OCCUPIED_BLK_FORWARD( *pI );
 	  const unsigned short occblk_back = TRAIN_INFO_OCCUPIED_BLK_BACK( *pI );
 	  CBTC_BLOCK_C_PTR pB_forward = NULL;
@@ -274,12 +274,12 @@ STOPPING_POINT_CODE detect_train_skip ( ARS_SP_EVENTS *pev_sp, TINY_TRAIN_STATE_
 	    pB_forward = lookup_cbtc_block_prof( occblk_forward );
 	    pB_back = lookup_cbtc_block_prof( occblk_back );
 	    if( (pB_forward != NULL) && (pB_back != NULL) ) {
-	      if( pB_back->sp.has_sp && (pB_back->sp.sp_code == sp_prev) ) {
+	      if( pB_back->sp.has_sp && (pB_back->sp.sp_code.sp == sp_prev) ) {
 		if( (pB_forward_prev->block_name != pB_forward->block_name) && !(pB_forward->sp.has_sp) ) {
 		  //printf( "(forward, back) = (%d, %d)\n", pB_forward->block_name, pB_back->block_name ); // ***** for debugging.
 		  assert( pI );
 		  if ( TRAIN_INFO_SKIP_NEXT_STOP( *pI ) ) {
-		    r = pB_back->sp.sp_code;
+		    r = pB_back->sp.sp_code.sp;
 		    *pev_sp = ARS_SKIP_DETECTED;
 		  }
 		  pT->misc.prev_blk_forward = 0;

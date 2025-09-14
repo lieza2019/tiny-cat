@@ -80,9 +80,10 @@ typedef struct block {
     const struct track *ptrack;
     struct block *pNext;
   } belonging_tr;
-  struct {
+  struct {    
     const BOOL has_sp;
-    const STOPPING_POINT_CODE sp_code;
+    //const STOPPING_POINT_CODE sp_code;
+    const SP_ST sp_code;    
     const STOP_DETECTION_TYPE stop_detect_type;
     struct {
       const CBTC_BLOCK_ID paired_blk;
