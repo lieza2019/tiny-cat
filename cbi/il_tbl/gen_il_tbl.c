@@ -1416,6 +1416,7 @@ static CBTC_BLOCK_PTR push_blk ( BLK_TRACER_PTR pstk, CBTC_BLOCK_PTR pblk ) {
   pstk->sp++;
   return r;
 }
+#if 0
 static CBTC_BLOCK_PTR pop_blk ( BLK_TRACER_PTR pstk ) {
   assert( pstk );
   CBTC_BLOCK_PTR r = NULL;
@@ -1425,6 +1426,7 @@ static CBTC_BLOCK_PTR pop_blk ( BLK_TRACER_PTR pstk ) {
   }
   return r;
 }
+#endif
 static CBTC_BLOCK_PTR peek_blkstk ( BLK_TRACER_PTR pstk, const int pos ) {
   assert( pstk );
   CBTC_BLOCK_PTR r = NULL;
@@ -1530,8 +1532,10 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
 	r = stepin_next( &pblk->shape.morphs[0], 0, pro_prof, pacc, pbok ); 
 	if( r != REACHOUT ) {
 	  r = stepin_next( &pblk->shape.morphs[0], 1, pro_prof, pacc, pbok );
+#if 0 // *****
 	  if( r != REACHOUT )
 	    pop_blk( pacc );
+#endif
 	}
       } else {
 	int i;
@@ -1570,10 +1574,12 @@ static WALK wandering ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof, BLK_TRACER
 	    r = stepin_next( pmor, 0, pro_prof, pacc, pbok );
 	    if( r != REACHOUT ) {
 	      r = stepin_next( pmor, 1, pro_prof, pacc, pbok );
+#if 0 // *****
 	      if( r != REACHOUT )
 		pop_blk( pacc );
 	      else
 		break;
+#endif
 	    }
 	    break;
 	  }
