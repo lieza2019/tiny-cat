@@ -39,11 +39,12 @@ typedef const struct track *TRACK_C_PTR;
 #undef TRACK_ATTRIB_DEFINITION
 
 typedef enum route_kind {
-  //DEPT_ROUTE,
-  DEP_ROUTE,
+  ROUTE_UNKNOWN,
+  DEP_ROUTE = 1,
   ENT_ROUTE,
   SHUNT_ROUTE,
   EMERGE_ROUTE,
+  ROUTE_OTHER,
   END_OF_ROUTE_KINDS
 } ROUTE_KIND;
 
@@ -131,6 +132,8 @@ typedef struct il_obj_container const *IL_OBJ_CONTAINER_C_PTR;
 #define ROUTE_ATTRIB_DEFINITION
 #include "interlock_dataset.h"
 #undef ROUTE_ATTRIB_DEFINITION
+
+extern const char *cnv2str_route_kind ( ROUTE_KIND ro_kind );
 
 extern TRACK_C_PTR conslt_track_prof ( IL_SYM track_id );
 extern ROUTE_C_PTR conslt_route_prof ( IL_SYM route_id );

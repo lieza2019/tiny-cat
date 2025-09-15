@@ -20,6 +20,19 @@ pthread_mutex_t cbi_stat_info_mutex;
 
 static IL_OBJ_CONTAINER il_obj_attrib[END_OF_IL_SYMS];
 
+static const char *rokind_2str[] = {
+  "ROUTE_UNKNOWN",
+  "DEP_ROUTE",
+  "ENT_ROUTE",
+  "SHUNT_ROUTE",
+  "EMERGE_ROUTE",
+  "ROUTE_OTHER",
+  NULL
+};
+const char *cnv2str_route_kind ( ROUTE_KIND ro_kind ) {
+  return cnv2str_lkup( rokind_2str, ro_kind );
+}
+
 static void chk_consistency_track_prof ( const int num_tracks ) {
   assert( num_tracks > -1 );
   int cnt = 0;

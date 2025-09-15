@@ -105,6 +105,7 @@ struct route_sw {
 };
 typedef struct route_prof {
   char route_name[CBI_STAT_IDENT_LEN + 1];
+  ROUTE_KIND kind;
   struct {
     struct {
       char signame_org[CBI_STAT_IDENT_LEN + 1];
@@ -137,6 +138,7 @@ typedef struct route_prof {
     int num_tracks;
     TRACK_PROF_PTR ptr[MAX_ROUTE_TRACKS];
   } body;
+  struct route_prof *pNext;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
 
 static struct {
@@ -257,7 +259,10 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   assert( strlen( pro_prof->route_name ) > 1 );
   int i;
-  printf( "(route, (org_sig, dst_sig), [blocks], [app_tracks], (" );
+  printf( "(" );
+  if( prn_rtprof_lv1 )
+    printf( "route_kind, " );
+  printf( "route, (org_sig, dst_sig), [blocks], [app_tracks], (" );
   if( prn_rtprof_lv1 )
     printf( "(" );
   printf( "origin_track, " );
@@ -266,8 +271,12 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
   else
     printf( "origin_track, " );
   printf( "points, " );
-  printf( "(ahead_track, [ctrl_tracks]), [body_tracks])): " );
-  printf( "(%s (%s, %s), [", pro_prof->route_name, pro_prof->orgdst.org.signame_org, pro_prof->orgdst.dst.signame_dst );
+  printf( "(ahead_track, [ctrl_tracks]), [body_tracks])): (" );
+  if( prn_rtprof_lv1 ) {
+    const char *ro_kind = cnv2str_route_kind( pro_prof->kind );
+    printf( "%s, ", (ro_kind ? ro_kind : "ROUTE_UNKNOWN") );
+  }
+  printf( "%s (%s, %s), [", pro_prof->route_name, pro_prof->orgdst.org.signame_org, pro_prof->orgdst.dst.signame_dst );
   for( i = 0; i < pro_prof->body.blocks.num_blocks; i++ ) {
     if( i > 0 )
       printf( ", " );
@@ -338,6 +347,20 @@ static int print_route_prof ( ROUTE_PROF_PTR pro_prof ) {
     pro_prof++;
   }
   return n;
+}
+
+static SP_ST_PTR sp_prof ( TRACK_PROF_PTR ptr ) {
+  assert( ptr );
+  SP_ST_PTR r = NULL;
+  
+  int i;
+  for( i = 0; i < ptr->consists_blks.num_blocks; i++ ) {
+    CBTC_BLOCK_PTR pbr = ptr->consists_blks.pblk_profs[i];
+    assert( pbr );
+    if( pbr->sp.has_sp )
+      r = &pbr->sp.sp_code;
+  }	 
+  return r;
 }
 
 static TRACK_PROF_PTR lkup_track_prof ( const char *ptr_name ) {
@@ -1989,13 +2012,111 @@ static int route_body ( TRACK_PROF_PTR ptrs_body[], CBTC_BLOCK_PTR pblks_body[],
   return r;
 }
 
+static struct {
+  struct {
+    ROUTE_PROF_PTR phead;
+    ROUTE_PROF_PTR ptail;
+  } dep;
+  ROUTE_PROF_PTR nokinds;
+} ro_kind_bkpatch = {};
+static ROUTE_KIND ident_route_kind ( ROUTE_PROF_PTR pprof ) {
+  assert( pprof );
+  ROUTE_KIND r = ROUTE_UNKNOWN;
+  
+  pprof->kind = ROUTE_OTHER;
+  struct route_tr *porg = pprof->orgdst.org.porg_tr;
+  struct route_tr *pdst = pprof->orgdst.dst.pdst_tr;
+  if( porg && pdst ) {
+    TRACK_PROF_PTR ptr_org = porg->tr_prof;
+    TRACK_PROF_PTR ptr_dst = pdst->tr_prof;
+    if( ptr_org && ptr_dst ) {
+      SP_ST_PTR spst_org = sp_prof( ptr_org );
+      SP_ST_PTR spst_dst = sp_prof( ptr_dst );
+      if( spst_org && spst_dst ) {
+	if( ((spst_org->sp != SP_NONSENS) && (spst_org->st != ST_UNKNOWN)) && ((spst_dst->sp != SP_NONSENS) && (spst_dst->st != ST_UNKNOWN)) ) {
+	  if( spst_org->st != spst_dst->st ) {
+	    ROUTE_PROF_PTR *pro_nokind = &ro_kind_bkpatch.nokinds;
+	    pprof->kind = DEP_ROUTE;
+	    r = pprof->kind;
+	    pprof->pNext = NULL;
+	    if( !ro_kind_bkpatch.dep.phead ) {
+	      assert( !ro_kind_bkpatch.dep.ptail );
+	      ro_kind_bkpatch.dep.phead = pprof;
+	    } else {
+	      assert( ro_kind_bkpatch.dep.ptail );
+	      (ro_kind_bkpatch.dep.ptail)->pNext = pprof;
+	    }
+	    ro_kind_bkpatch.dep.ptail = pprof;
+	    while( *pro_nokind ) {
+	      assert( *pro_nokind );
+	      assert( (*pro_nokind)->orgdst.org.porg_tr );
+	      TRACK_PROF_PTR ptr_org_nokind = ((*pro_nokind)->orgdst.org.porg_tr)->tr_prof;
+	      assert( ptr_org_nokind );
+	      {
+		SP_ST_PTR spst = sp_prof( ptr_org_nokind );
+		if( (spst->sp == spst_org->sp) && (spst->st == spst_dst->st) ) {
+		  (*pro_nokind)->kind = ENT_ROUTE;
+		  *pro_nokind = (*pro_nokind)->pNext;
+		} else
+		  pro_nokind = &(*pro_nokind)->pNext;
+	      }
+	    }	    
+	  } else {
+	    BOOL resolv = FALSE;
+	    ROUTE_PROF_PTR pro_dep = ro_kind_bkpatch.dep.phead;
+	    assert( spst_org->st == spst_dst->st );
+	    pprof->kind = SHUNT_ROUTE;
+	    pprof->pNext = NULL;
+	    while( pro_dep ) {
+	      assert( pro_dep );
+	      if( ! pro_dep->pNext )
+		assert( ro_kind_bkpatch.dep.ptail == pro_dep );
+	      assert( pro_dep->kind == DEP_ROUTE );
+	      assert( pro_dep->orgdst.org.porg_tr );
+	      struct route_tr *pdep_dst = pro_dep->orgdst.dst.pdst_tr;
+	      assert( pdep_dst );
+	      assert( (pro_dep->orgdst.org.porg_tr)->tr_prof );
+	      TRACK_PROF_PTR pdep_tr_dst = pdep_dst->tr_prof;
+	      assert( pdep_tr_dst);
+	      SP_ST_PTR spst_dep_org = sp_prof( (pro_dep->orgdst.org.porg_tr)->tr_prof );
+	      SP_ST_PTR spst_dep_dst = sp_prof( pdep_tr_dst );
+	      assert( spst_dep_org );
+	      assert( spst_dep_dst );
+	      assert( ((spst_dep_org->sp != SP_NONSENS) && (spst_dep_org->st != ST_UNKNOWN)) && ((spst_dep_dst->sp != SP_NONSENS) && (spst_dep_dst->st != ST_UNKNOWN)) );
+	      assert( spst_dep_org->st != spst_dep_dst->st );
+	      {
+		SP_ST_PTR spst_sh_org = sp_prof( (pprof->orgdst.org.porg_tr)->tr_prof );
+		assert( spst_sh_org );
+		if( (spst_dep_dst->sp == spst_sh_org->sp) && (spst_dep_dst->st == spst_sh_org->st) ) {
+		  pprof->kind = ENT_ROUTE;
+		  r = pprof->kind;
+		  resolv = TRUE;
+		  break;
+		}
+	      }
+	      pro_dep = pro_dep->pNext;
+	    }
+	    if( !resolv ) {
+	      if( !ro_kind_bkpatch.nokinds )
+		ro_kind_bkpatch.nokinds = pprof;
+	      else
+		(ro_kind_bkpatch.nokinds)->pNext = pprof;
+	    }
+	  }
+	}
+      }
+    }
+  }
+  return r;
+}
+
 static void cons_routes_circuit ( void ) {
   ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
   
   while( pprof < tracks_routes_prof.routes.pavail ) {
 #if 1 // *****
     {
-      if( strncmp( pprof->route_name, "S803B_S803H", CBI_STAT_IDENT_LEN ) == 0 ) {
+      if( strncmp( pprof->route_name, "S803A_S809A", CBI_STAT_IDENT_LEN ) == 0 ) {
 	printf( "HIT." );
       }
     }
@@ -2060,8 +2181,10 @@ static void cons_routes_circuit ( void ) {
 	for( i = 0; i < ctrlblks_bodytrs.ntrs; i++ ) {
 	  assert( pprof );
 	  pprof->body.ptr[i] = ctrlblks_bodytrs.ro_body[i];
-	}	
+	}
 	pprof->body.num_tracks = ctrlblks_bodytrs.ntrs;
+	
+	ident_route_kind( pprof );
       }
     }
     pprof++;

@@ -25,7 +25,7 @@ typedef enum SC_ID {
 
 typedef enum stopping_point_code {
   SP_NONSENS,
-  SP_73, // JLA_PL1
+  SP_73 =1 , // JLA_PL1
   SP_74, // JLA_PL2
   SP_75, // JLA_PL3
   SP_D4, // JLA_TB4
@@ -42,6 +42,7 @@ typedef enum stopping_point_code {
 } STOPPING_POINT_CODE;
 
 typedef enum st_id {
+  ST_UNKNOWN,
   JLA = 1,
   KIKJ,
   OKBS,
@@ -52,7 +53,9 @@ typedef enum st_id {
 typedef struct sp_st {
   STOPPING_POINT_CODE sp;
   ST_ID st;
-} SP_ST;
+  struct sp_st *pNext;
+} SP_ST, *SP_ST_PTR;
+typedef const struct sp_st *SP_ST_C_PTR;
 
 typedef enum cbtc_block_id {
   VB_NONSENS,

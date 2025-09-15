@@ -6,6 +6,7 @@
 #include "misc.h"
 
 typedef enum pltb_id {
+  PL_UHKNOWN,
   PL1 = 1,
   PL2,
   PL3,
@@ -83,7 +84,7 @@ typedef struct block {
   struct {    
     const BOOL has_sp;
     //const STOPPING_POINT_CODE sp_code;
-    const SP_ST sp_code;    
+    SP_ST sp_code;    
     const STOP_DETECTION_TYPE stop_detect_type;
     struct {
       const CBTC_BLOCK_ID paired_blk;

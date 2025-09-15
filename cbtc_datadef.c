@@ -6,7 +6,7 @@
 #include "interlock.h"
 #include "sparcs.h"
 
-static const char *spcode_2_str[] = {
+static const char *spcode_2str[] = {
   "SP_NONSENS",
   "SP_73", // JLA_PL1
   "SP_74", // JLA_PL2
@@ -24,7 +24,7 @@ static const char *spcode_2_str[] = {
   NULL
 };
 const char *cnv2str_sp_code ( STOPPING_POINT_CODE sp_code ) {
-  return cnv2str_lkup( spcode_2_str, sp_code );
+  return cnv2str_lkup( spcode_2str, sp_code );
 }
 
 STOPPING_POINT_CODE str2_sp_code ( const char *sp_str ) {
@@ -32,9 +32,7 @@ STOPPING_POINT_CODE str2_sp_code ( const char *sp_str ) {
   STOPPING_POINT_CODE r = END_OF_SPs;
   
   const int cmpmax = 16;
-  if( ! strncmp( sp_str, "SP_NONSENS", cmpmax ) )
-    r = SP_NONSENS;
-  else if( ! strncmp( sp_str, "SP_73", cmpmax ) ) // JLA_PL1
+  if( ! strncmp( sp_str, "SP_73", cmpmax ) ) // JLA_PL1
     r = SP_73;
   else if( ! strncmp( sp_str, "SP_74", cmpmax ) ) // JLA_PL2
     r = SP_74;
@@ -66,8 +64,8 @@ STOPPING_POINT_CODE str2_sp_code ( const char *sp_str ) {
   return r;
 }
 
-static const char *pltb_2_str[] = {
-  "", // see below line.
+static const char *pltb_2str[] = {
+  "PL_UKKNOWN", // see below line.
   "PL1", // PL1 = 1
   "PL2",
   "PL3",
@@ -78,7 +76,7 @@ static const char *pltb_2_str[] = {
   NULL
 };
 const char *cnv2str_pltb_id ( PLTB_ID pltb_id ) {
-  return cnv2str_lkup( pltb_2_str, pltb_id );
+  return cnv2str_lkup( pltb_2str, pltb_id );
 }
 
 PLTB_ID str2_pltb_id ( const char *pltb_str ) {
@@ -106,8 +104,8 @@ PLTB_ID str2_pltb_id ( const char *pltb_str ) {
   return r;
 }
 
-static const char *stid_2_str[] = {
-  "", // see below line.
+static const char *stid_2str[] = {
+  "ST_UNKNOWN", // see below line.
   "JLA", // JLA = 1
   "KIKJ",
   "OKBS",
@@ -115,7 +113,7 @@ static const char *stid_2_str[] = {
   NULL
 };
 const char *cnv2str_st_id ( ST_ID st_id ) {
-  return cnv2str_lkup( stid_2_str, st_id );
+  return cnv2str_lkup( stid_2str, st_id );
 }
 
 ST_ID str2_st_id ( const char *st_str ) {
