@@ -114,6 +114,7 @@ typedef struct route_prof {
     struct {
       char signame_dst[CBI_STAT_IDENT_LEN + 1];
       struct route_tr *pdst_tr;
+      struct route_tr dst_tr;
       struct route_prof *pNext;
     } dst;
   } orgdst;
@@ -1373,7 +1374,7 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   return n;
 }
 
-static int fill_dest_tracks ( void ) {
+static int fill_dest_tracks_lv0 ( void ) {
   int n = 0;
   
   ROUTE_PROF_PTR pbkp_dst = tracks_routes_prof.routes.bkpatches.pdestin;
@@ -2183,8 +2184,6 @@ static void cons_routes_circuit ( void ) {
 	  pprof->body.ptr[i] = ctrlblks_bodytrs.ro_body[i];
 	}
 	pprof->body.num_tracks = ctrlblks_bodytrs.ntrs;
-	
-	ident_route_kind( pprof );
       }
     }
     pprof++;
@@ -2198,7 +2197,7 @@ static int profile_routes ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   
   n = read_route_iltbls( fp_src_sig, fp_src_rel );
   bkpat_destin();
-  fill_dest_tracks();
+  fill_dest_tracks_lv0();
   cons_routes_circuit();
   
   return n;  
@@ -2238,6 +2237,28 @@ static int emit_route_dataset ( FILE *fp_out ) {
   assert( fp_out );
   return 0;
 }
+
+static int fill_dest_tracks_lv1 ( void ) {
+  int r = 0;
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    if( pprof->body.num_tracks > 0 ) {
+      const int i_dst = pprof->body.num_tracks - 1;
+      if( ! pprof->orgdst.dst.pdst_tr ) {
+	assert( i_dst >= 0 );
+	TRACK_PROF_PTR tr_dst = pprof->body.ptr[i_dst];
+	assert( tr_dst );
+	strncpy( pprof->orgdst.dst.dst_tr.tr_name, tr_dst->track_name, CBI_STAT_IDENT_LEN );
+	pprof->orgdst.dst.dst_tr.tr_prof = tr_dst;
+	pprof->orgdst.dst.pdst_tr = &pprof->orgdst.dst.dst_tr;
+      }
+    }
+    ident_route_kind( pprof );
+    pprof++;
+  }
+  return r;
+}
+
 static int gen_route_dataset ( FILE *fp_out ) {
   assert( fp_out );
   int r = -1;
@@ -2252,9 +2273,10 @@ static int gen_route_dataset ( FILE *fp_out ) {
   tracks_routes_prof.routes.profs.pcrnt_ixl = tracks_routes_prof.routes.pavail;
   r = cons_route_profs( "JLA" );
   
-  emit_route_dataset( fp_out );
+  fill_dest_tracks_lv1();
   print_route_prof( tracks_routes_prof.routes.profs.pwhole );
   
+  emit_route_dataset( fp_out );
   emit_route_dataset_epilog( fp_out );
   return r;
 }
