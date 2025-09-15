@@ -38,6 +38,7 @@ typedef enum stopping_point_code {
   SP_81, // BTGD_PL1
   SP_D5, // BTGD_TB1
   SP_D0, // BTGD_TB2
+  SP_D3, // BTGD_TB3
   END_OF_SPs
 } STOPPING_POINT_CODE;
 

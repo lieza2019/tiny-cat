@@ -1374,7 +1374,7 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   return n;
 }
 
-static int fill_dest_tracks_lv0 ( void ) {
+static int fill_dest_tracks_ph1 ( void ) {
   int n = 0;
   
   ROUTE_PROF_PTR pbkp_dst = tracks_routes_prof.routes.bkpatches.pdestin;
@@ -2197,7 +2197,7 @@ static int profile_routes ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
   
   n = read_route_iltbls( fp_src_sig, fp_src_rel );
   bkpat_destin();
-  fill_dest_tracks_lv0();
+  fill_dest_tracks_ph1();
   cons_routes_circuit();
   
   return n;  
@@ -2238,7 +2238,7 @@ static int emit_route_dataset ( FILE *fp_out ) {
   return 0;
 }
 
-static int fill_dest_tracks_lv1 ( void ) {
+static int fill_dest_tracks_ph2 ( void ) {
   int r = 0;
   ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
   while( pprof < tracks_routes_prof.routes.pavail ) {
@@ -2273,7 +2273,7 @@ static int gen_route_dataset ( FILE *fp_out ) {
   tracks_routes_prof.routes.profs.pcrnt_ixl = tracks_routes_prof.routes.pavail;
   r = cons_route_profs( "JLA" );
   
-  fill_dest_tracks_lv1();
+  fill_dest_tracks_ph2();
   print_route_prof( tracks_routes_prof.routes.profs.pwhole );
   
   emit_route_dataset( fp_out );
