@@ -138,10 +138,13 @@ CBTC_BLOCK block_state[] = {
   //{1411, VB354D, "VB354D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
   {1411, VB354D, "VB354D", SC801, {1, { {2, {{1410, 0}, {1412, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1412, VB356D, "VB356D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
-  //{1412, VB356D, "VB356D", SC801, {1, { {2, {{1411, 0}, {1413, 1}}, -1} }}, {T807A_TR}, {TRUE, {SP_D3, BTGD}, VIRTUAL_P0, {VB358D}}}, // CHECKED.
-  {1412, VB356D, "VB356D", SC801, {1, { {2, {{1411, 0}, {1413, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
+  
+  //*****
+  {1412, VB356D, "VB356D", SC801, {1, { {2, {{1411, 0}, {1413, 1}}, -1} }}, {T807A_TR}, {TRUE, {SP_D3, BTGD}, VIRTUAL_P0, {VB358D}}}, // CHECKED.
+  //{1412, VB356D, "VB356D", SC801, {1, { {2, {{1411, 0}, {1413, 1}}, -1} }}, {T807A_TR}, {FALSE}}, // CHECKED.
   //{1413, VB358D, "VB358D", -1, {T807A_TR}, {FALSE}}, // CHECKED.
   {1413, VB358D, "VB358D", SC801, {1, { {2, {{1412, 0}, {1414, 1}}, -1} }}, {T807A_TR}, {TRUE, {SP_D3, BTGD}, VIRTUAL_P0, {VB356D}}}, // CHECKED.
+  
   //{1414, VB359D, "VB359D", -1, {T809A_TR}, {FALSE}},
   {1414, VB359D, "VB359D", SC801, {1, { {2, {{1413, 0}, {1415, 1}}, -1} }}, {T809A_TR}, {FALSE}},
   //{141, VB360DA, "VB360DA", -1, {T811A_TR}, {FALSE}},

@@ -2115,14 +2115,14 @@ static void cons_routes_circuit ( void ) {
   ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
   
   while( pprof < tracks_routes_prof.routes.pavail ) {
-#if 1 // *****
+    assert( pprof );
+#if 0 // *****
     {
       if( strncmp( pprof->route_name, "S803A_S809A", CBI_STAT_IDENT_LEN ) == 0 ) {
 	printf( "HIT." );
       }
     }
 #endif
-    assert( pprof );
     struct frontier front = { -1 };
     struct frontier ahead = { -1 };
     int i;
@@ -2242,8 +2242,9 @@ static int fill_dest_tracks_ph2 ( void ) {
   int r = 0;
   ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
   while( pprof < tracks_routes_prof.routes.pavail ) {
+    assert( pprof );
     if( pprof->body.num_tracks > 0 ) {
-      const int i_dst = pprof->body.num_tracks - 1;
+     const int i_dst = pprof->body.num_tracks - 1;
       if( ! pprof->orgdst.dst.pdst_tr ) {
 	assert( i_dst >= 0 );
 	TRACK_PROF_PTR tr_dst = pprof->body.ptr[i_dst];
