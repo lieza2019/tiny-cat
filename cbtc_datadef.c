@@ -6,6 +6,23 @@
 #include "interlock.h"
 #include "sparcs.h"
 
+SP_PLTB sp_pltb[] = {
+  {SP_73, JLA, PL1}, // JLA_PL1
+  {SP_74, JLA, PL2}, // JLA_PL2
+  {SP_75, JLA, PL3}, // JLA_PL3
+  {SP_D4, JLA, TB4}, // JLA_TB4
+  {SP_D9, JLA, TB3}, // JLA_TB3
+  {SP_76, KIKJ, PL2}, // KIKJ_PL2
+  {SP_77, KIKJ, PL1}, // KIKJ_PL1
+  {SP_78, OKBS, PL2}, // OKBS_PL2
+  {SP_79, OKBS, PL1}, // OKBS_PL1
+  {SP_80, BTGD, PL2}, // BTGD_PL2
+  {SP_81, BTGD, PL1}, // BTGD_PL1
+  {SP_D5, BTGD, TB1}, // BTGD_TB1
+  {SP_D0, BTGD, TB2}, // BTGD_TB2
+  {SP_D3, BTGD, TB3}, // BTGD_TB3
+};
+
 static const char *spcode_2str[] = {
   "SP_NONSENS",
   "SP_73", // JLA_PL1

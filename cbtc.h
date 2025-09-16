@@ -20,9 +20,20 @@ typedef enum pltb_id {
 typedef struct sp_pltb {
   STOPPING_POINT_CODE sp;
   ST_ID st;
-  PLTB_ID pltb;  
+  PLTB_ID pltb;
+  unsigned short block_name;
+  struct sp_pltb *pNext;
 } SP_PLTB, *SP_PLTB_PTR;
 extern SP_PLTB sp_pltb[];
+
+#if 1 // *****
+typedef struct sp_st {
+  STOPPING_POINT_CODE sp;
+  ST_ID st;
+  struct sp_st *pNext;
+} SP_ST, *SP_ST_PTR;
+typedef const struct sp_st *SP_ST_C_PTR;
+#endif
 
 #define SCID_CNV2_INT( sc_id ) ((sc_id) + 801)
 extern const char *cnv2str_sp_code ( STOPPING_POINT_CODE sp_code );
@@ -84,7 +95,8 @@ typedef struct block {
   struct {    
     const BOOL has_sp;
     //const STOPPING_POINT_CODE sp_code;
-    SP_ST sp_code;    
+    //SP_ST sp_code;
+    SP_PLTB sp_code;
     const STOP_DETECTION_TYPE stop_detect_type;
     struct {
       const CBTC_BLOCK_ID paired_blk;

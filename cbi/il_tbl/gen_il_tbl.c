@@ -350,9 +350,9 @@ static int print_route_prof ( ROUTE_PROF_PTR pro_prof ) {
   return n;
 }
 
-static SP_ST_PTR sp_prof ( TRACK_PROF_PTR ptr ) {
+static SP_PLTB_PTR sp_prof ( TRACK_PROF_PTR ptr ) {
   assert( ptr );
-  SP_ST_PTR r = NULL;
+  SP_PLTB_PTR r = NULL;
   
   int i;
   for( i = 0; i < ptr->consists_blks.num_blocks; i++ ) {
@@ -2031,8 +2031,8 @@ static ROUTE_KIND ident_route_kind ( ROUTE_PROF_PTR pprof ) {
     TRACK_PROF_PTR ptr_org = porg->tr_prof;
     TRACK_PROF_PTR ptr_dst = pdst->tr_prof;
     if( ptr_org && ptr_dst ) {
-      SP_ST_PTR spst_org = sp_prof( ptr_org );
-      SP_ST_PTR spst_dst = sp_prof( ptr_dst );
+      SP_PLTB_PTR spst_org = sp_prof( ptr_org );
+      SP_PLTB_PTR spst_dst = sp_prof( ptr_dst );
       if( spst_org && spst_dst ) {
 	if( ((spst_org->sp != SP_NONSENS) && (spst_org->st != ST_UNKNOWN)) && ((spst_dst->sp != SP_NONSENS) && (spst_dst->st != ST_UNKNOWN)) ) {
 	  if( spst_org->st != spst_dst->st ) {
@@ -2054,7 +2054,7 @@ static ROUTE_KIND ident_route_kind ( ROUTE_PROF_PTR pprof ) {
 	      TRACK_PROF_PTR ptr_org_nokind = ((*pro_nokind)->orgdst.org.porg_tr)->tr_prof;
 	      assert( ptr_org_nokind );
 	      {
-		SP_ST_PTR spst = sp_prof( ptr_org_nokind );
+		SP_PLTB_PTR spst = sp_prof( ptr_org_nokind );
 		if( (spst->sp == spst_org->sp) && (spst->st == spst_dst->st) ) {
 		  (*pro_nokind)->kind = ENT_ROUTE;
 		  *pro_nokind = (*pro_nokind)->pNext;
@@ -2079,14 +2079,14 @@ static ROUTE_KIND ident_route_kind ( ROUTE_PROF_PTR pprof ) {
 	      assert( (pro_dep->orgdst.org.porg_tr)->tr_prof );
 	      TRACK_PROF_PTR pdep_tr_dst = pdep_dst->tr_prof;
 	      assert( pdep_tr_dst);
-	      SP_ST_PTR spst_dep_org = sp_prof( (pro_dep->orgdst.org.porg_tr)->tr_prof );
-	      SP_ST_PTR spst_dep_dst = sp_prof( pdep_tr_dst );
+	      SP_PLTB_PTR spst_dep_org = sp_prof( (pro_dep->orgdst.org.porg_tr)->tr_prof );
+	      SP_PLTB_PTR spst_dep_dst = sp_prof( pdep_tr_dst );
 	      assert( spst_dep_org );
 	      assert( spst_dep_dst );
 	      assert( ((spst_dep_org->sp != SP_NONSENS) && (spst_dep_org->st != ST_UNKNOWN)) && ((spst_dep_dst->sp != SP_NONSENS) && (spst_dep_dst->st != ST_UNKNOWN)) );
 	      assert( spst_dep_org->st != spst_dep_dst->st );
 	      {
-		SP_ST_PTR spst_sh_org = sp_prof( (pprof->orgdst.org.porg_tr)->tr_prof );
+		SP_PLTB_PTR spst_sh_org = sp_prof( (pprof->orgdst.org.porg_tr)->tr_prof );
 		assert( spst_sh_org );
 		if( (spst_dep_dst->sp == spst_sh_org->sp) && (spst_dep_dst->st == spst_sh_org->st) ) {
 		  pprof->kind = ENT_ROUTE;
