@@ -128,7 +128,15 @@ typedef struct route_prof {
   } points;
   struct {
     int num_tracks;
-    struct route_tr tr[MAX_ROUTE_TRACKS];
+    struct route_tr tr[MAX_ROUTE_TRACKS];    
+    struct {
+      int num_tracks;
+      struct route_tr tr[MAX_ROUTE_TRACKS];
+    } il;
+    struct {
+      int num_tracks;
+      struct route_tr tr[MAX_ROUTE_TRACKS];
+    } ars;
     struct route_tr ahead, *pahead;
   } ctrl;
   struct {
