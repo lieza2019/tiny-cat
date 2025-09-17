@@ -2295,6 +2295,18 @@ static TRACK_PROF_PTR fill_dest_tracks_ph2 ( ROUTE_PROF_PTR pro_prof ) {
   return tr_dst;
 }
 
+static int foobar ( TRACK_PROF_PTR ptrs_turnout[], const int ntrs_turnout, TRACK_PROF_Ptr Ptr_org, ROUTE_PROF_PTR pro_prof ) {
+  assert( ptrs_turnout );
+  assert( ptr_org );
+  assert( pro_prof );
+  TRACK_PROF_PTR ptr_ahd = ptrs_turnout[0];
+  assert( ptr_ahd );
+  
+  
+  int n = 0;
+  return n;
+}
+
 static void put_ars_attrs ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   switch( pro_prof->kind ) {      
@@ -2302,8 +2314,13 @@ static void put_ars_attrs ( ROUTE_PROF_PTR pro_prof ) {
     pro_prof->ctrl.ars.num_tracks = 0;
     if( pro_prof->ctrl.pahead ) {
       pro_prof->ctrl.ars.ptr[0] = (pro_prof->ctrl.pahead)->tr_prof;
-      if( pro_prof->ctrl.ars.ptr[0] )
-	pro_prof->ctrl.ars.num_tracks = 1;	
+      if( pro_prof->ctrl.ars.ptr[0] ) {
+	TRACK_PROF_PTR ptr_ahd = pro_prof->ctrl.ars.ptr[0];
+	pro_prof->ctrl.ars.num_tracks = 1;
+	if( ptr_ahd->turnout.num_points > 0 ) {
+	  ;
+	}
+      }
     }
     break;
   case ENT_ROUTE:
