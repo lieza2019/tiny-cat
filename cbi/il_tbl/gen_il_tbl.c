@@ -2309,16 +2309,27 @@ static void put_ars_attrs ( ROUTE_PROF_PTR pro_prof ) {
   case ENT_ROUTE:
   case SHUNT_ROUTE:
   case ROUTE_OTHER:
-    {
+    if( pro_prof->body.num_tracks > 0 ) {
       int idx = 0;
-      int i;
-      for( i = 1; i < pro_prof->body.num_tracks; i++ ) {
+      int i = 0;
+      if( pro_prof->orgdst.org.porg_tr ) {
+	TRACK_PROF_PTR ptr_org = (pro_prof->orgdst.org.porg_tr)->tr_prof;
+	if( ptr_org ) {
+	  assert( strncmp( ptr_org->track_name, (pro_prof->orgdst.org.porg_tr)->tr_name, CBI_STAT_IDENT_LEN ) == 0 );
+	  assert( ptr_org == pro_prof->body.ptr[0] );	  
+	} else {
+	  assert( strncmp( (pro_prof->orgdst.org.porg_tr)->tr_name, (pro_prof->body.ptr[0])->track_name, CBI_STAT_IDENT_LEN ) == 0 );	  
+	}
+	i = 1;
+      }
+      while( i < pro_prof->body.num_tracks ) {
 	TRACK_PROF_PTR ptr = pro_prof->body.ptr[i];
 	assert( ptr );
 	pro_prof->ctrl.ars.ptr[idx++] = ptr;
+	i++;
       }
       pro_prof->ctrl.ars.num_tracks = idx;
-    }      
+    }
     break;
   case EMERGE_ROUTE:
     /* ars has no EMERGENCY routes. */
