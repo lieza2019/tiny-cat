@@ -127,15 +127,12 @@ typedef struct route_prof {
     struct route_sw pt[MAX_ROUTE_POINTS];
   } points;
   struct {
-    //int num_tracks;
-    //struct route_tr tr[MAX_ROUTE_TRACKS];    
     struct {
       int num_tracks;
       struct route_tr tr[MAX_ROUTE_TRACKS];
     } il;
     struct {
       int num_tracks;
-      //struct route_tr tr[MAX_ROUTE_TRACKS];
       TRACK_PROF_PTR ptr[MAX_ROUTE_TRACKS];
     } ars;
     struct route_tr ahead, *pahead;
@@ -2281,66 +2278,71 @@ static int emit_route_dataset ( FILE *fp_out ) {
   return 0;
 }
 
-static int fill_dest_tracks_ph2 ( void ) {
-  int r = 0;
-  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
-  while( pprof < tracks_routes_prof.routes.pavail ) {
-    assert( pprof );
-    if( pprof->body.num_tracks > 0 ) {
-     const int i_dst = pprof->body.num_tracks - 1;
-      if( ! pprof->orgdst.dst.pdst_tr ) {
-	assert( i_dst >= 0 );
-	TRACK_PROF_PTR tr_dst = pprof->body.ptr[i_dst];
-	assert( tr_dst );
-	strncpy( pprof->orgdst.dst.dst_tr.tr_name, tr_dst->track_name, CBI_STAT_IDENT_LEN );
-	pprof->orgdst.dst.dst_tr.tr_prof = tr_dst;
-	pprof->orgdst.dst.pdst_tr = &pprof->orgdst.dst.dst_tr;
-      }
+static TRACK_PROF_PTR fill_dest_tracks_ph2 ( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );
+  TRACK_PROF_PTR tr_dst = NULL;
+  if( pro_prof->body.num_tracks > 0 ) {
+    const int i_dst = pro_prof->body.num_tracks - 1;
+    if( ! pro_prof->orgdst.dst.pdst_tr ) {
+      assert( i_dst >= 0 );
+      tr_dst = pro_prof->body.ptr[i_dst];
+      assert( tr_dst );
+      strncpy( pro_prof->orgdst.dst.dst_tr.tr_name, tr_dst->track_name, CBI_STAT_IDENT_LEN );
+      pro_prof->orgdst.dst.dst_tr.tr_prof = tr_dst;
+      pro_prof->orgdst.dst.pdst_tr = &pro_prof->orgdst.dst.dst_tr;
     }
-    ident_route_kind( pprof );
-    pprof++;
+  }
+  return tr_dst;
+}
+
+static void put_ars_attrs ( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );
+  switch( pro_prof->kind ) {      
+  case DEP_ROUTE:
+    pro_prof->ctrl.ars.num_tracks = 0;
+    if( pro_prof->ctrl.pahead ) {
+      pro_prof->ctrl.ars.ptr[0] = (pro_prof->ctrl.pahead)->tr_prof;
+      if( pro_prof->ctrl.ars.ptr[0] )
+	pro_prof->ctrl.ars.num_tracks = 1;	
+    }
+    break;
+  case ENT_ROUTE:
+  case SHUNT_ROUTE:
+  case ROUTE_OTHER:
+    {
+      int idx = 0;
+      int i;
+      for( i = 1; i < pro_prof->body.num_tracks; i++ ) {
+	TRACK_PROF_PTR ptr = pro_prof->body.ptr[i];
+	assert( ptr );
+	pro_prof->ctrl.ars.ptr[idx++] = ptr;
+      }
+      pro_prof->ctrl.ars.num_tracks = idx;
+    }      
+    break;
+  case EMERGE_ROUTE:
+    /* ars has no EMERGENCY routes. */
+    break;
+  case ROUTE_UNKNOWN:
+    /* fall thru. */
+  default:
+    assert( FALSE );
+  }
+}
+
+static int cons_prc_attrs ( void ) {
+  int r = 0;
+  
+  ROUTE_PROF_PTR pro_prof = tracks_routes_prof.routes.profs.pwhole;
+  while( pro_prof < tracks_routes_prof.routes.pavail ) {
+    assert( pro_prof );
+    fill_dest_tracks_ph2( pro_prof );
+    ident_route_kind( pro_prof );
+    put_ars_attrs( pro_prof );
+    pro_prof++;
     r++;
   }
   return r;
-}
-
-static void put_ars_attrs ( void ) {
-  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
-  while( pprof < tracks_routes_prof.routes.pavail ) {
-    assert( pprof );
-    switch( pprof->kind ) {      
-    case DEP_ROUTE:
-      pprof->ctrl.ars.num_tracks = 0;
-      if( pprof->ctrl.pahead ) {
-	pprof->ctrl.ars.ptr[0] = (pprof->ctrl.pahead)->tr_prof;
-	if( pprof->ctrl.ars.ptr[0] )
-	  pprof->ctrl.ars.num_tracks = 1;	
-      }
-      break;
-    case ENT_ROUTE:
-    case SHUNT_ROUTE:
-    case ROUTE_OTHER:
-      {
-	int idx = 0;
-	int i;
-	for( i = 1; i < pprof->body.num_tracks; i++ ) {
-	  TRACK_PROF_PTR ptr = pprof->body.ptr[i];
-	  assert( ptr );
-	  pprof->ctrl.ars.ptr[idx++] = ptr;
-	}
-	pprof->ctrl.ars.num_tracks = idx;
-      }      
-      break;
-    case EMERGE_ROUTE:
-      /* ars has no EMERGENCY routes. */
-      break;
-    case ROUTE_UNKNOWN:
-      /* fall thru. */
-    default:
-      assert( FALSE );
-    }
-    pprof++;
-  }
 }
 
 static int gen_route_dataset ( FILE *fp_out ) {
@@ -2357,9 +2359,7 @@ static int gen_route_dataset ( FILE *fp_out ) {
   tracks_routes_prof.routes.profs.pcrnt_ixl = tracks_routes_prof.routes.pavail;
   r = cons_route_profs( "JLA" );
   
-  fill_dest_tracks_ph2();
-  put_ars_attrs();
-  
+  cons_prc_attrs();
   print_route_prof( tracks_routes_prof.routes.profs.pwhole );
   
   emit_route_dataset( fp_out );
