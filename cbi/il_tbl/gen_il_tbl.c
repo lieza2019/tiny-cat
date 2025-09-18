@@ -2295,13 +2295,13 @@ static TRACK_PROF_PTR fill_dest_tracks_ph2 ( ROUTE_PROF_PTR pro_prof ) {
   return tr_dst;
 }
 
-static int foobar ( TRACK_PROF_PTR ptrs_turnout[], const int ntrs_turnout, TRACK_PROF_Ptr Ptr_org, ROUTE_PROF_PTR pro_prof ) {
+static int foobar ( TRACK_PROF_PTR ptrs_turnout[], const int ntrs_turnout, TRACK_PROF_PTR ptr_org, ROUTE_PROF_PTR pro_prof ) {
   assert( ptrs_turnout );
   assert( ptr_org );
   assert( pro_prof );
   TRACK_PROF_PTR ptr_ahd = ptrs_turnout[0];
   assert( ptr_ahd );
-  
+  assert( ptr_ahd->turnout.num_points > 0 );
   
   int n = 0;
   return n;
