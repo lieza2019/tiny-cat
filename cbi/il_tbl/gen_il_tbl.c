@@ -1469,6 +1469,15 @@ typedef struct blk_tracer {
   int sp;
   CBTC_BLOCK_PTR stack[MAX_TRACK_BLOCKS * MAX_ROUTE_TRACKS];
 } BLK_TRACER, *BLK_TRACER_PTR;
+static CBTC_BLOCK_PTR pop_blk ( BLK_TRACER_PTR pstk ) {
+  assert( pstk );
+  CBTC_BLOCK_PTR r = NULL;
+  if( pstk->sp > 0 ) {
+    pstk->sp--;
+    r = pstk->stack[pstk->sp];    
+  }
+  return r;
+}
 static CBTC_BLOCK_PTR push_blk ( BLK_TRACER_PTR pstk, CBTC_BLOCK_PTR pblk ) {
   assert( pstk );
   assert( pblk );
@@ -1571,6 +1580,8 @@ static WALK wandering ( BOOL (judge_term)(CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pr
 	r = stepin_adjacent( judge_term, &pblk->shape.morphs[0], 0, pro_prof, pacc, pbok ); 
 	if( r != REACHOUT ) {
 	  r = stepin_adjacent( judge_term, &pblk->shape.morphs[0], 1, pro_prof, pacc, pbok );
+	  if( r != REACHOUT )
+	    pop_blk( pacc );
 	}
       } else {
 	int i;
@@ -1609,6 +1620,8 @@ static WALK wandering ( BOOL (judge_term)(CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pr
 	    r = stepin_adjacent( judge_term, pmor, 0, pro_prof, pacc, pbok );
 	    if( r != REACHOUT ) {
 	      r = stepin_adjacent( judge_term, pmor, 1, pro_prof, pacc, pbok );
+	      if( r != REACHOUT )
+		pop_blk( pacc );
 	    }
 	    break;
 	  }
@@ -2321,13 +2334,6 @@ static BOOL turnout ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
   return r;
 }
 static void put_ars_attrs ( ROUTE_PROF_PTR pro_prof ) {
-#if 1 // *****
-    {
-      if( strncmp( pro_prof->route_name, "S807B_S831B", CBI_STAT_IDENT_LEN ) == 0 ) {
-	printf( "HIT." );
-      }
-    }
-#endif
   assert( pro_prof );
   switch( pro_prof->kind ) {
   case DEP_ROUTE:
