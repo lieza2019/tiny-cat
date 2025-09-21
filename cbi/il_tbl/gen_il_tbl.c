@@ -119,8 +119,14 @@ typedef struct route_prof {
     } dst;
   } orgdst;
   struct {
-    int num_tracks;
-    struct route_tr tr[MAX_ROUTE_APPTRACKS];
+    struct {
+      int num_tracks;
+      struct route_tr tr[MAX_ROUTE_APPTRACKS];
+    } il;
+    struct {
+      int num_tracks;
+      struct route_tr tr[MAX_ROUTE_APPTRACKS];
+    } trigg;
   } apps;
   struct {
     int num_points;    
@@ -295,10 +301,10 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
     printf( "%s", pro_prof->body.blocks.blk[i]->virt_blkname_str );
   }
   printf( "], [" );
-  for( i = 0; i < pro_prof->apps.num_tracks; i++ ) {
+  for( i = 0; i < pro_prof->apps.il.num_tracks; i++ ) {
     if( i > 0 )
       printf( ", " );
-    printf( "%s", pro_prof->apps.tr[i].tr_name );
+    printf( "%s", pro_prof->apps.il.tr[i].tr_name );
   }  
   printf( "], (" );
   if( prn_rtprof_lv1 )
@@ -1288,7 +1294,7 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
       if( strncmp( ro_name, "", ROUTE_NAME_MAXLEN ) ) {	
 	cnt++;
 	pprof = lkup_route_prof( ro_name );
-	assert( pprof->apps.num_tracks == 0 );
+	assert( pprof->apps.il.num_tracks == 0 );
       }
       if( pprof ) {
 	assert( cnt > -1 );
@@ -1297,12 +1303,12 @@ static int read_iltbl_routerel ( FILE *fp_src ) {
 	  assert( strnlen(&app_tr[1], (TRACK_NAME_MAXLEN - 1)) < ((TRACK_NAME_MAXLEN - 1) - strlen("_TR")) );
 	  strncat( app_tr, "_TR", TRACK_NAME_MAXLEN );
 	  assert( TRACK_NAME_MAXLEN <= CBI_STAT_IDENT_LEN );
-	  strncpy( pprof->apps.tr[pprof->apps.num_tracks].tr_name, app_tr, TRACK_NAME_MAXLEN );
-	  pprof->apps.tr[pprof->apps.num_tracks].tr_prof = lkup_track_prof( pprof->apps.tr[pprof->apps.num_tracks].tr_name );
-	  if( !pprof->apps.tr[pprof->apps.num_tracks].tr_prof ) {
-	    printf( "warning: unknown approach-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->apps.tr[pprof->apps.num_tracks].tr_name, pprof->route_name );
+	  strncpy( pprof->apps.il.tr[pprof->apps.il.num_tracks].tr_name, app_tr, TRACK_NAME_MAXLEN );
+	  pprof->apps.il.tr[pprof->apps.il.num_tracks].tr_prof = lkup_track_prof( pprof->apps.il.tr[pprof->apps.il.num_tracks].tr_name );
+	  if( !pprof->apps.il.tr[pprof->apps.il.num_tracks].tr_prof ) {
+	    printf( "warning: unknown approach-track %s of %s detected, not found in TRACK of interlock table.\n", pprof->apps.il.tr[pprof->apps.il.num_tracks].tr_name, pprof->route_name );
 	  }
-	  pprof->apps.num_tracks++;
+	  pprof->apps.il.num_tracks++;
 	}
 	assert( ahd_tr[0] == 'T' );
 	if( (strnlen(&ahd_tr[1], (TRACK_NAME_MAXLEN - 1)) > 1) && strncmp(&ahd_tr[1], "Nil", TRACK_NAME_MAXLEN) ) {
@@ -1400,7 +1406,7 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
       TRACK_PROF_PTR pahd_tr = NULL;
       pahd_tr = pick_ahead_track( pr_prof );
       if( pahd_tr ) {
-	pr_prof->orgdst.org.porg_tr = link_orgahd_blks( pr_prof->apps.tr, pr_prof->apps.num_tracks, pahd_tr );
+	pr_prof->orgdst.org.porg_tr = link_orgahd_blks( pr_prof->apps.il.tr, pr_prof->apps.il.num_tracks, pahd_tr );
       } else {	
 	printf( "warning: missing ahead-track of %s.\n", pr_prof->route_name );
       }
@@ -2333,8 +2339,8 @@ static BOOL turnout ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
   }
   return r;
 }
-static void put_ars_attrs ( ROUTE_PROF_PTR pro_prof ) {
-  assert( pro_prof );
+static int ars_ctrl_tracks ( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );  
   switch( pro_prof->kind ) {
   case DEP_ROUTE:
     pro_prof->ctrl.ars.num_tracks = 0;
@@ -2403,6 +2409,7 @@ static void put_ars_attrs ( ROUTE_PROF_PTR pro_prof ) {
   case ENT_ROUTE:
   case SHUNT_ROUTE:
   case ROUTE_OTHER:
+    pro_prof->ctrl.ars.num_tracks = 0;
     if( pro_prof->body.num_tracks > 0 ) {
       int idx = 0;
       int i = 0;
@@ -2412,7 +2419,7 @@ static void put_ars_attrs ( ROUTE_PROF_PTR pro_prof ) {
 	  assert( strncmp( ptr_org->track_name, (pro_prof->orgdst.org.porg_tr)->tr_name, CBI_STAT_IDENT_LEN ) == 0 );
 	  assert( ptr_org == pro_prof->body.ptr[0] );	  
 	} else {
-	  assert( strncmp( (pro_prof->orgdst.org.porg_tr)->tr_name, (pro_prof->body.ptr[0])->track_name, CBI_STAT_IDENT_LEN ) == 0 );	  
+	  assert( strncmp( (pro_prof->orgdst.org.porg_tr)->tr_name, (pro_prof->body.ptr[0])->track_name, CBI_STAT_IDENT_LEN ) == 0 );
 	}
 	i = 1;
       }
@@ -2427,12 +2434,62 @@ static void put_ars_attrs ( ROUTE_PROF_PTR pro_prof ) {
     break;
   case EMERGE_ROUTE:
     /* ars has no EMERGENCY routes. */
+    pro_prof->ctrl.ars.num_tracks = 0;
     break;
   case ROUTE_UNKNOWN:
     /* fall thru. */
   default:
     assert( FALSE );
   }
+  return pro_prof->ctrl.ars.num_tracks;
+}
+
+static int trigg_tracks ( TRACK_PROF_PTR trigg_trs[], const int max_trg_trs, ROUTE_PROF_PTR pro_prof ) {
+  assert( trigg_trs );
+  assert( max_trg_trs <= MAX_ROUTE_APPTRACKS );
+  assert( pro_prof );
+  int cnt = 0;
+  
+  int i;
+  for( i = 0; i < pro_prof->body.num_tracks; i++ ) {
+    assert( pro_prof );
+    assert( pro_prof->body.ptr[i] );    
+    if( i == 0 ) {
+      if( pro_prof->orgdst.org.porg_tr ) {
+	TRACK_PROF_PTR ptr_org = (pro_prof->orgdst.org.porg_tr)->tr_prof;
+	if( ptr_org )
+	  assert( pro_prof->body.ptr[0] == ptr_org );
+	else
+	  assert( strncmp( (pro_prof->orgdst.org.porg_tr)->tr_name, (pro_prof->body.ptr[0])->track_name, CBI_STAT_IDENT_LEN ) == 0 );
+      }
+      continue;
+    }
+    {
+      assert( i > 0 );
+      BOOL omit = FALSE;
+      int j;
+      for( j = 0; j < pro_prof->ctrl.ars.num_tracks; j++ ) {
+	assert( pro_prof );
+	assert( pro_prof->ctrl.ars.ptr[j] );	
+	if( pro_prof->body.ptr[i] == pro_prof->ctrl.ars.ptr[j] ) {
+	  omit = TRUE;
+	  break;
+	}
+      }
+      if( omit )
+	continue;
+    }
+    assert( cnt < max_trg_trs );
+    trigg_trs[cnt] = pro_prof->body.ptr[i];    
+    cnt++;
+  }
+  return cnt;
+}
+static void ars_trigg_tracks( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );
+  TRACK_PROF_PTR trigg_trs[MAX_ROUTE_APPTRACKS] = {};
+  
+  trigg_tracks( trigg_trs, MAX_ROUTE_APPTRACKS, pro_prof );
 }
 
 static int cons_prc_attrs ( void ) {
@@ -2443,7 +2500,8 @@ static int cons_prc_attrs ( void ) {
     assert( pro_prof );
     fill_dest_tracks_ph2( pro_prof );
     ident_route_kind( pro_prof );
-    put_ars_attrs( pro_prof );
+    ars_ctrl_tracks( pro_prof );
+    ars_trigg_tracks( pro_prof );
     pro_prof++;
     r++;
   }
