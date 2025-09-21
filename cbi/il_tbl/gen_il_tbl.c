@@ -2453,7 +2453,7 @@ static int ars_ctrl_tracks ( ROUTE_PROF_PTR pro_prof ) {
   return pro_prof->ctrl.ars.num_tracks;
 }
 
-static int ars_trigg_tracks( ROUTE_PROF_PTR pro_prof ) {
+static int il_app_tracks ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );  
   if( pro_prof->apps.il.num_tracks > 0 ) {
     TRACK_PROF_PTR *pptr = pro_prof->apps.ars.trigg.tr;
@@ -2468,6 +2468,50 @@ static int ars_trigg_tracks( ROUTE_PROF_PTR pro_prof ) {
       }
     }
     pro_prof->apps.ars.trigg.num_tracks = cnt;
+  }
+  return pro_prof->apps.ars.trigg.num_tracks;
+}
+
+static TRACK_PROF_PTR behind_track ( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );
+  return NULL;
+}
+static int ars_trigg_tracks ( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );
+  int ntrs_trg = -1;
+  
+  ntrs_trg = il_app_tracks( pro_prof );
+  assert( ntrs_trg > -1 );
+  if( ntrs_trg > 0 ) {
+    switch( pro_prof->kind ) {
+    case DEP_ROUTE:
+      {
+	TRACK_PROF_PTR ptr_beh = behind_track( pro_prof );	
+	if( ptr_beh ) {
+	  BOOL found = FALSE;	
+	  int i;
+	  for( i = 0; i < pro_prof->apps.ars.trigg.num_tracks; i++ ) {
+	    assert( ptr_beh );
+	    assert( pro_prof );
+	    assert( pro_prof->apps.ars.trigg.tr[i] );
+	    if( pro_prof->apps.ars.trigg.tr[i] == ptr_beh ) {
+	      found = TRUE;
+	      break;
+	    }
+	  }
+	  if( !found ) {
+	    const int idx_new = pro_prof->apps.ars.trigg.num_tracks;
+	    assert( idx_new > 0 );
+	    pro_prof->apps.ars.trigg.tr[idx_new] = ptr_beh;
+	    pro_prof->apps.ars.trigg.num_tracks++;
+	  }
+	}
+      }
+      break;
+    default:
+      /* do nothing, */
+      break;
+    }
   }
   return pro_prof->apps.ars.trigg.num_tracks;
 }
