@@ -124,12 +124,18 @@ typedef struct route_prof {
       struct route_tr tr[MAX_ROUTE_APPTRACKS];
     } il;
     struct {
-      int num_tracks;
-      struct route_tr tr[MAX_ROUTE_APPTRACKS];
-    } trigg;
+      struct {
+	int num_trg_ways;
+	struct {
+	  int num_tracks;
+	  //struct route_tr tr[MAX_ROUTE_APPTRACKS];
+	  TRACK_PROF_PTR tr[MAX_ROUTE_APPTRACKS];
+	} ways[MAX_ROUTE_TRIGG_WAYS];
+      } triggs;
+    } ars;
   } apps;
   struct {
-    int num_points;    
+    int num_points;
     struct route_sw pt[MAX_ROUTE_POINTS];
   } points;
   struct {
@@ -149,7 +155,7 @@ typedef struct route_prof {
       CBTC_BLOCK_PTR blk[MAX_TRACK_BLOCKS * MAX_ROUTE_TRACKS];
     } blocks;
     int num_tracks;
-    TRACK_PROF_PTR ptr[MAX_ROUTE_TRACKS];    
+    TRACK_PROF_PTR ptr[MAX_ROUTE_TRACKS];
   } body;
   struct route_prof *pNext;
 } ROUTE_PROF, *ROUTE_PROF_PTR;
@@ -285,10 +291,9 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
   else
     printf( "origin_track, " );
   printf( "points, " );
-  //printf( "(ahead_track, [ctrl_tracks]), [body_tracks])): (" );
   printf( "(ahead_track, [ctrl_tracks]), [body_tracks])" );
   if( prn_rtprof_lv2 )
-    printf( ", ([ars_trig], [ars_ctrl])" );
+    printf( ", ([[ars_trig]], [ars_ctrl])" );
   printf( "): (" );
   if( prn_rtprof_lv1 ) {
     const char *ro_kind = cnv2str_route_kind( pro_prof->kind );
@@ -345,14 +350,29 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
       printf( ", " );
     printf( "%s", pprof->track_name );
   }
-  //printf( "]))\n" );
   printf( "])" );
   if( prn_rtprof_lv2 ) {
     BOOL touch = FALSE;
     int i;
     printf( ", ([" );
-    //for(;;) {
-    //}
+    if( pro_prof->apps.ars.triggs.num_trg_ways > 0 ) {      
+      for( i = 0; i < pro_prof->apps.ars.triggs.num_trg_ways; i++ ) {
+	int j;
+	if( i > 0 )
+	  printf( ", " );
+	printf( "[" );
+	for( j = 0; j < pro_prof->apps.ars.triggs.ways[i].num_tracks; j++ ) {
+	  TRACK_PROF_PTR ptr_trg = pro_prof->apps.ars.triggs.ways[i].tr[j];
+	  if( (j > 0) && (ptr_trg && touch) )
+	    printf( ", " );
+	  if( ptr_trg ){
+	    printf( "%s", ptr_trg->track_name );
+	    touch = TRUE;
+	  }	    
+	}
+	printf( "]" );
+      }
+    }
     printf( "], [" );
     for( touch = FALSE, i = 0; i < pro_prof->ctrl.ars.num_tracks; i++ ) {
       assert( pro_prof );
@@ -2485,12 +2505,124 @@ static int trigg_tracks ( TRACK_PROF_PTR trigg_trs[], const int max_trg_trs, ROU
   }
   return cnt;
 }
-static void ars_trigg_tracks( ROUTE_PROF_PTR pro_prof ) {
+
+static int add_trigg_way ( TRACK_PROF_PTR trigg_trs[], const int ntrg_trs, ROUTE_PROF_PTR pro_prof ) {
+  assert( trigg_trs );
+  assert( ntrg_trs <= MAX_ROUTE_APPTRACKS );
   assert( pro_prof );
-  TRACK_PROF_PTR trigg_trs[MAX_ROUTE_APPTRACKS] = {};
+  BOOL sameone = FALSE;
   
-  trigg_tracks( trigg_trs, MAX_ROUTE_APPTRACKS, pro_prof );
+  int i;
+  for( i = 0; i < pro_prof->apps.ars.triggs.num_trg_ways; i++ ) {
+    const int way_trs = pro_prof->apps.ars.triggs.ways[i].num_tracks;
+    assert( way_trs > 0 );
+    if( ntrg_trs == way_trs ) {
+      int j;
+      for( j = 0; j < ntrg_trs; j++ ) {
+	if( trigg_trs[j] != pro_prof->apps.ars.triggs.ways[i].tr[j] )
+	  break;
+      }
+      if( j >= ntrg_trs ) {
+	assert( j == ntrg_trs );
+	sameone = TRUE;
+	break;
+      }
+    }
+  }
+  if( !sameone ) {
+    const int idx_neway = pro_prof->apps.ars.triggs.num_trg_ways;
+    int k;
+    for( k = 0; k < ntrg_trs; k++ ) {
+      assert( pro_prof );      
+      TRACK_PROF_PTR *pptr = pro_prof->apps.ars.triggs.ways[idx_neway].tr;
+      *pptr = trigg_trs[k];
+      pptr++;
+    }
+    assert( k == ntrg_trs );
+    pro_prof->apps.ars.triggs.ways[idx_neway].num_tracks = k;
+    pro_prof->apps.ars.triggs.num_trg_ways++;
+  }
+  return pro_prof->apps.ars.triggs.num_trg_ways;
 }
+#if 0
+static int ars_trigg_tracks( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );
+  int cnt = 0;
+  
+  TRACK_PROF_PTR trigg_trs[MAX_ROUTE_APPTRACKS] = {};
+  int ntrs = -1;
+  ntrs = trigg_tracks( trigg_trs, MAX_ROUTE_APPTRACKS, pro_prof );
+  {
+    assert( ntrs >= 0 );
+    ROUTE_PROF_PTR pro_prof = tracks_routes_prof.routes.profs.pwhole;
+    while( pro_prof < tracks_routes_prof.routes.pavail ) {
+      assert( pro_prof );
+      assert( pro_prof->apps.ars.triggs.num_trg_ways < MAX_ROUTE_TRIGG_WAYS );
+      if( pro_prof->body.num_tracks > 0 )
+	if( pro_prof->orgdst.org.porg_tr ) {
+	  int i;
+	  TRACK_PROF_PTR ptr_org = (pro_prof->orgdst.org.porg_tr)->tr_prof;
+	  if( ptr_org )
+	    assert( pro_prof->body.ptr[0] == ptr_org );
+	  else
+	    assert( strncmp( (pro_prof->orgdst.org.porg_tr)->tr_name, (pro_prof->body.ptr[0])->track_name, CBI_STAT_IDENT_LEN ) == 0 );
+	  for( i = 0; i < ntrs; i++ )
+	    if( trigg_trs[i] == pro_prof->body.ptr[0] ) {
+	      add_trigg_way( trigg_trs, ntrs, pro_prof );
+	      break;
+	    }
+	}
+      pro_prof++;
+    }
+  }
+  return cnt;
+}
+#else
+static int ars_trigg_tracks( ROUTE_PROF_PTR pro_prof ) {
+  assert( pro_prof );
+  int cnt = 0;
+  
+  if( pro_prof->body.num_tracks > 0 ) {
+    if( pro_prof->orgdst.org.porg_tr ) {
+      TRACK_PROF_PTR ptr_org = (pro_prof->orgdst.org.porg_tr)->tr_prof;
+      if( ptr_org )
+	assert( pro_prof->body.ptr[0] == ptr_org );
+      else
+	assert( strncmp( (pro_prof->orgdst.org.porg_tr)->tr_name, (pro_prof->body.ptr[0])->track_name, CBI_STAT_IDENT_LEN ) == 0 );
+      add_trigg_way( &pro_prof->body.ptr[0], 1, pro_prof );
+      {
+	TRACK_PROF_PTR trigg_trs[MAX_ROUTE_APPTRACKS] = {};
+	int ntrs = -1;
+	ntrs = trigg_tracks( trigg_trs, MAX_ROUTE_APPTRACKS, pro_prof );
+	{
+	  assert( ntrs >= 0 );
+	  ROUTE_PROF_PTR pro_prof = tracks_routes_prof.routes.profs.pwhole;
+	  while( pro_prof < tracks_routes_prof.routes.pavail ) {
+	    assert( pro_prof );
+	    assert( pro_prof->apps.ars.triggs.num_trg_ways < MAX_ROUTE_TRIGG_WAYS );
+	    int i;
+	    for( i = 0; i < ntrs; i++ ) {
+	      assert( pro_prof );
+	      if( trigg_trs[i] == pro_prof->body.ptr[0] ) {
+		const int nways = pro_prof->apps.ars.triggs.num_trg_ways;
+		int n;
+		n = add_trigg_way( trigg_trs, ntrs, pro_prof );
+		if( n > nways ) {
+		  assert( n == (nways + 1) );
+		  cnt++;
+		}
+		break;
+	      }
+	    }
+	    pro_prof++;
+	  }
+	}
+      }
+    }
+  }
+  return cnt;
+}
+#endif
 
 static int cons_prc_attrs ( void ) {
   int r = 0;
