@@ -2472,9 +2472,68 @@ static int il_app_tracks ( ROUTE_PROF_PTR pro_prof ) {
   return pro_prof->apps.ars.trigg.num_tracks;
 }
 
+static BOOL dest_block ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
+  assert( pblk );
+  assert( pro_prof );
+  BOOL r = FALSE;
+  
+  TRACK_PROF_PTR ptr_dst = NULL;
+  if( pro_prof->orgdst.dst.pdst_tr ) {
+    ptr_dst = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;
+    if( ptr_dst ) {
+      int i;
+    cmp:
+      for( i = 0; i < ptr_dst->consists_blks.num_blocks; i++ ) {
+	assert( ptr_dst->consists_blks.pblk_profs[i] );
+	if( pblk == ptr_dst->consists_blks.pblk_profs[i] ) {
+	  r = TRUE;
+	  break;
+	}
+      }
+    } else {
+      ptr_dst = lkup_track_prof( (pro_prof->orgdst.dst.pdst_tr)->tr_name );
+      if( ptr_dst )
+	goto cmp;
+      else
+	goto lkup;
+    }
+  } else {
+  lkup:
+    ptr_dst = lkup_track_prof( pro_prof->orgdst.dst.signame_dst );
+    if( ptr_dst )
+      goto cmp;
+  }
+  return r;
+}
+
 static TRACK_PROF_PTR behind_track ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
-  return NULL;
+  assert( pro_prof->orgdst.org.signame_org );
+  TRACK_PROF_PTR ptr_beh = NULL;
+  
+  ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
+  while( pprof < tracks_routes_prof.routes.pavail ) {
+    assert( pro_prof );
+    if( strncmp( pprof->orgdst.dst.signame_dst, pro_prof->orgdst.org.signame_org, CBI_STAT_IDENT_LEN ) == 0 ) {
+      CBTC_BLOCK_PTR pblk_org = NULL;
+      if( pprof->body.num_tracks > 0 ) {
+	TRACK_PROF_PTR ptr_org = pprof->body.ptr[0];
+	assert( ptr_org );
+	if( pprof->orgdst.org.porg_tr ) {
+	  if( (pprof->orgdst.org.porg_tr)->tr_prof != ptr_org )
+	    assert( ptr_org == lkup_track_prof( (pprof->orgdst.org.porg_tr)->tr_name ) );
+	} else
+	  assert( ptr_org == lkup_track_prof( pprof->orgdst.org.signame_org ) );
+	if( ptr_org->consists_blks.num_blocks > 0 ) {
+	  pblk_org = ptr_org->consists_blks.pblk_profs[0];
+	  assert( pblk_org );
+	  ;
+	}
+      }
+    }
+    pprof++;
+  }
+  return ptr_beh;
 }
 static int ars_trigg_tracks ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );

@@ -52,7 +52,6 @@ typedef enum route_kind {
 #define MAX_ROUTE_TRACKS 32
 #define MAX_ROUTE_APPTRACKS 32
 #define MAX_ROUTE_POINTS 16
-#define MAX_ROUTE_TRIGG_WAYS 8
 #define MAX_ROUTE_TRG_BLOCKS 32
 typedef struct route {
   const IL_SYM_KIND kind;
