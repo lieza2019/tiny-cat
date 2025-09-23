@@ -2505,10 +2505,10 @@ static BOOL dest_block ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
   }
   return r;
 }
-static TRACK_PROF_PTR behind_track ( ROUTE_PROF_PTR pro_prof ) {
+static ROUTE_PROF_PTR enter_route ( BLK_TRACER *pblkstk, ROUTE_PROF_PTR pro_prof ) {
+  assert( pblkstk );
   assert( pro_prof );
   assert( pro_prof->orgdst.org.signame_org );
-  TRACK_PROF_PTR ptr_beh = NULL;
   
   ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
   while( pprof < tracks_routes_prof.routes.pavail ) {
@@ -2524,13 +2524,12 @@ static TRACK_PROF_PTR behind_track ( ROUTE_PROF_PTR pro_prof ) {
 	} else
 	  assert( ptr_org == lkup_track_prof( pprof->orgdst.org.signame_org ) );
 	if( ptr_org->consists_blks.num_blocks > 0 ) {
-	  BLK_TRACER blkstk = {};
 	  struct route_tr b_tr[MAX_ROUTE_TRACKS];
 	  BOOK book = {};
 	  pblk_org = ptr_org->consists_blks.pblk_profs[0];
 	  assert( pblk_org );
 	  {
-	    int i;	    
+	    int i;
 	    book.ntrs = pprof->body.num_tracks;
 	    for( i = 0; i < book.ntrs; i++ ) {
 	      assert( pprof->body.ptr[i] );
@@ -2539,26 +2538,21 @@ static TRACK_PROF_PTR behind_track ( ROUTE_PROF_PTR pro_prof ) {
 	      book.ctrl_trax[i].ptr = &b_tr[i];
 	    }
 	  }
-	  wandering( dest_block, pblk_org, pprof, &blkstk, &book );
-	  assert( blkstk.sp > 0 );
-	  if( blkstk.sp >= 3 ) {
-	    CBTC_BLOCK_PTR pblk_beh = blkstk.stack[blkstk.sp - 2];
-	    assert( pblk_beh );
-	    ptr_beh = lkup_track_prof( cnv2str_il_sym(pblk_beh->belonging_tr.track) );
-	    if( ptr_beh )
-	      break;
-	  }	  
+	  wandering( dest_block, pblk_org, pprof, pblkstk, &book );
+	  assert( pblkstk->sp > 0 );
+	  return pprof;	  
 	}
       }
     }
     pprof++;
   }
-  return ptr_beh;
+  return NULL;
 }
+
 static int ars_trigg_tracks ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   int ntrs_trg = -1;
-#if 0 // *****
+#if 1 // *****
   {
     if( strncmp( pro_prof->route_name, "S821A_S801A", CBI_STAT_IDENT_LEN ) == 0 ) {
       printf( "HIT." );
@@ -2571,24 +2565,31 @@ static int ars_trigg_tracks ( ROUTE_PROF_PTR pro_prof ) {
     switch( pro_prof->kind ) {
     case DEP_ROUTE:
       {
-	TRACK_PROF_PTR ptr_beh = behind_track( pro_prof );	
-	if( ptr_beh ) {
-	  BOOL found = FALSE;	
-	  int i;
-	  for( i = 0; i < pro_prof->apps.ars.trigg.num_tracks; i++ ) {
-	    assert( ptr_beh );
-	    assert( pro_prof );
-	    assert( pro_prof->apps.ars.trigg.tr[i] );
-	    if( pro_prof->apps.ars.trigg.tr[i] == ptr_beh ) {
-	      found = TRUE;
-	      break;
+	TRACK_PROF_PTR ptr_beh = NULL;
+	BLK_TRACER blkstk = {};	
+	enter_route( &blkstk, pro_prof );
+	if( blkstk.sp >= 3 ) {
+	  CBTC_BLOCK_PTR pblk_beh = blkstk.stack[blkstk.sp - 2];
+	  assert( pblk_beh );
+	  ptr_beh = lkup_track_prof( cnv2str_il_sym(pblk_beh->belonging_tr.track) );
+	  if( ptr_beh ) {
+	    BOOL found = FALSE;	
+	    int i;
+	    for( i = 0; i < pro_prof->apps.ars.trigg.num_tracks; i++ ) {
+	      assert( ptr_beh );
+	      assert( pro_prof );
+	      assert( pro_prof->apps.ars.trigg.tr[i] );
+	      if( pro_prof->apps.ars.trigg.tr[i] == ptr_beh ) {
+		found = TRUE;
+		break;
+	      }
 	    }
-	  }
-	  if( !found ) {
-	    const int idx_new = pro_prof->apps.ars.trigg.num_tracks;
-	    assert( idx_new > 0 );
-	    pro_prof->apps.ars.trigg.tr[idx_new] = ptr_beh;
-	    pro_prof->apps.ars.trigg.num_tracks++;
+	    if( !found ) {
+	      const int idx_new = pro_prof->apps.ars.trigg.num_tracks;
+	      assert( idx_new > 0 );
+	      pro_prof->apps.ars.trigg.tr[idx_new] = ptr_beh;
+	      pro_prof->apps.ars.trigg.num_tracks++;
+	    }
 	  }
 	}
       }
