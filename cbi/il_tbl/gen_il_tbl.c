@@ -2509,6 +2509,7 @@ static ROUTE_PROF_PTR enter_route ( BLK_TRACER *pblkstk, ROUTE_PROF_PTR pro_prof
   assert( pblkstk );
   assert( pro_prof );
   assert( pro_prof->orgdst.org.signame_org );
+  ROUTE_PROF_PTR r = NULL;
   
   ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pwhole;
   while( pprof < tracks_routes_prof.routes.pavail ) {
@@ -2518,11 +2519,14 @@ static ROUTE_PROF_PTR enter_route ( BLK_TRACER *pblkstk, ROUTE_PROF_PTR pro_prof
       if( pprof->body.num_tracks > 0 ) {
 	TRACK_PROF_PTR ptr_org = pprof->body.ptr[0];
 	assert( ptr_org );
-	if( pprof->orgdst.org.porg_tr ) {
-	  if( (pprof->orgdst.org.porg_tr)->tr_prof != ptr_org )
-	    assert( ptr_org == lkup_track_prof( (pprof->orgdst.org.porg_tr)->tr_name ) );
-	} else
-	  assert( ptr_org == lkup_track_prof( pprof->orgdst.org.signame_org ) );
+	if( !((pprof->orgdst.org.porg_tr) && (pprof->orgdst.dst.pdst_tr)) ) {
+	  pprof++;
+	  continue;
+	}
+	if( (pprof->orgdst.org.porg_tr)->tr_prof )
+	  assert((pprof->orgdst.org.porg_tr)->tr_prof == ptr_org );
+	else
+	  assert( strncmp( (pprof->orgdst.org.porg_tr)->tr_name, ptr_org->track_name, CBI_STAT_IDENT_LEN ) == 0 );
 	if( ptr_org->consists_blks.num_blocks > 0 ) {
 	  struct route_tr b_tr[MAX_ROUTE_TRACKS];
 	  BOOK book = {};
@@ -2540,25 +2544,19 @@ static ROUTE_PROF_PTR enter_route ( BLK_TRACER *pblkstk, ROUTE_PROF_PTR pro_prof
 	  }
 	  wandering( dest_block, pblk_org, pprof, pblkstk, &book );
 	  assert( pblkstk->sp > 0 );
-	  return pprof;	  
+	  r = pprof;
 	}
       }
     }
     pprof++;
   }
-  return NULL;
+  return r;
 }
 
 static int ars_trigg_tracks ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   int ntrs_trg = -1;
-#if 1 // *****
-  {
-    if( strncmp( pro_prof->route_name, "S821A_S801A", CBI_STAT_IDENT_LEN ) == 0 ) {
-      printf( "HIT." );
-    }
-  }
-#endif
+  
   ntrs_trg = il_app_tracks( pro_prof );
   assert( ntrs_trg > -1 );
   if( ntrs_trg > 0 ) {
