@@ -2505,7 +2505,6 @@ static BOOL dest_block ( CBTC_BLOCK_PTR pblk, ROUTE_PROF_PTR pro_prof ) {
   }
   return r;
 }
-
 static TRACK_PROF_PTR behind_track ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   assert( pro_prof->orgdst.org.signame_org );
@@ -2525,9 +2524,30 @@ static TRACK_PROF_PTR behind_track ( ROUTE_PROF_PTR pro_prof ) {
 	} else
 	  assert( ptr_org == lkup_track_prof( pprof->orgdst.org.signame_org ) );
 	if( ptr_org->consists_blks.num_blocks > 0 ) {
+	  BLK_TRACER blkstk = {};
+	  struct route_tr b_tr[MAX_ROUTE_TRACKS];
+	  BOOK book = {};
 	  pblk_org = ptr_org->consists_blks.pblk_profs[0];
 	  assert( pblk_org );
-	  ;
+	  {
+	    int i;	    
+	    book.ntrs = pprof->body.num_tracks;
+	    for( i = 0; i < book.ntrs; i++ ) {
+	      assert( pprof->body.ptr[i] );
+	      strncpy( b_tr[i].tr_name, (pprof->body.ptr[i])->track_name, CBI_STAT_IDENT_LEN );
+	      b_tr[i].tr_prof = pprof->body.ptr[i];
+	      book.ctrl_trax[i].ptr = &b_tr[i];
+	    }
+	  }
+	  wandering( dest_block, pblk_org, pprof, &blkstk, &book );
+	  assert( blkstk.sp > 0 );
+	  if( blkstk.sp >= 3 ) {
+	    CBTC_BLOCK_PTR pblk_beh = blkstk.stack[blkstk.sp - 2];
+	    assert( pblk_beh );
+	    ptr_beh = lkup_track_prof( cnv2str_il_sym(pblk_beh->belonging_tr.track) );
+	    if( ptr_beh )
+	      break;
+	  }	  
 	}
       }
     }
@@ -2538,7 +2558,13 @@ static TRACK_PROF_PTR behind_track ( ROUTE_PROF_PTR pro_prof ) {
 static int ars_trigg_tracks ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   int ntrs_trg = -1;
-  
+#if 0 // *****
+  {
+    if( strncmp( pro_prof->route_name, "S821A_S801A", CBI_STAT_IDENT_LEN ) == 0 ) {
+      printf( "HIT." );
+    }
+  }
+#endif
   ntrs_trg = il_app_tracks( pro_prof );
   assert( ntrs_trg > -1 );
   if( ntrs_trg > 0 ) {
