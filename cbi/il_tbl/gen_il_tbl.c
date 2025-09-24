@@ -2543,8 +2543,9 @@ static ROUTE_PROF_PTR enter_route ( BLK_TRACER *pblkstk, ROUTE_PROF_PTR pro_prof
 	    }
 	  }
 	  wandering( dest_block, pblk_org, pprof, pblkstk, &book );
-	  assert( pblkstk->sp > 0 );
-	  r = pprof;
+	  if( pblkstk->sp > 0 )
+	    if( pblkstk->stack[pblkstk->sp - 1] == pblk_org )
+	      r = pprof;
 	}
       }
     }
