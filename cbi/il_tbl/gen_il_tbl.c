@@ -106,6 +106,7 @@ struct route_sw {
 typedef struct route_prof {
   char route_name[CBI_STAT_IDENT_LEN + 1];
   ROUTE_KIND kind;
+  BOOL ars_route;
   struct {
     struct {
       char signame_org[CBI_STAT_IDENT_LEN + 1];
@@ -2302,9 +2303,86 @@ static int cons_route_profs ( const char *ixl ) {
   return r;
 }
 
+#define APP_BLKS_EMITSTRBUF_MAXLEN 1024
+static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) {
+  assert( fp_out );
+  assert( pro_prof );
+  
+  fprintf( fp_out, "  { _ROUTE, " );
+  fprintf( fp_out, "%s, ", cnv2str_route_kind(pro_prof->kind) );
+  fprintf( fp_out, "\"%s\", ", pro_prof->route_name );
+  fprintf( fp_out, "%s, ", pro_prof->route_name );
+  
+  {
+    char str_p[CBI_STAT_IDENT_LEN + 1] = "P_";
+    str_p[CBI_STAT_IDENT_LEN] = 0;
+    strncat( str_p, pro_prof->route_name, CBI_STAT_IDENT_LEN );
+    fprintf( fp_out, "%s, ", str_p );
+  }
+  
+  fprintf( fp_out, "{%d, {", pro_prof->body.num_tracks );
+  {
+    int i;
+    for( i = 0; i < pro_prof->body.num_tracks; i++ ) {
+      assert( pro_prof );
+      assert( pro_prof->body.ptr[i] );
+      if( i > 0 )	
+	fprintf( fp_out, ", " );
+      fprintf( fp_out, "%s", (pro_prof->body.ptr[i])->track_name );
+    }
+    fprintf( fp_out, "}}, " );
+  }
+  
+  fprintf( fp_out, "{{" );
+  fprintf( fp_out, "%s}, {", pro_prof->orgdst.org.signame_org );
+  fprintf( fp_out, "%s}}, ", pro_prof->orgdst.dst.signame_dst );
+  
+  fprintf( fp_out, "{%s", (pro_prof->ars_route ? "TRUE" : "FALSE") );
+  if( pro_prof->ars_route ) {
+    char app_blks_emitbuf[APP_BLKS_EMITSTRBUF_MAXLEN + 1] = "";
+    int cnt_app_blks = 0;
+    int i;
+  b:
+    app_blks_emitbuf[APP_BLKS_EMITSTRBUF_MAXLEN] = 0;
+    fprintf( fp_out, ", " );
+    snprintf( app_blks_emitbuf, "{", APP_BLKS_EMITSTRBUF_MAXLEN );
+    for( i = 0; i < pro_prof->apps.ars.trigg.num_tracks; i++ ) {
+      TRACK_PROF_PTR ptr_app = pro_prof->apps.ars.trigg.tr[i];
+      assert( ptr_app );
+      int j;
+      if( i > 0 )
+	snprintf( app_blks_emitbuf, ", ", APP_BLKS_EMITSTRBUF_MAXLEN );
+      for( j = 0; j < ptr_app->consists_blks.num_blocks; j++ ) {
+	assert( ptr_app );
+	CBTC_BLOCK_PTR pblk_app = ptr_app->consists_blks.pblk_profs[j];
+	assert( pblk_app );
+	if( j > 0 )
+	  snprintf( app_blks_emitbuf, ", ", APP_BLKS_EMITSTRBUF_MAXLEN );
+	snprintf( app_blks_emitbuf, "%s", pblk_app->virt_blkname_str, APP_BLKS_EMITSTRBUF_MAXLEN );
+	cnt_app_blks++;
+      }
+    }
+    snprintf( app_blks_emitbuf, "}", APP_BLKS_EMITSTRBUF_MAXLEN );
+    ;    
+  }
+  else goto b; // *****, must be eliminated JUST AFTER the implemetation of pro_prof->ars_route!
+  
+  fprintf( fp_out, "}, " );
+  
+  fprintf( fp_out, " },\n" );
+  return 0;
+}
 static int emit_route_dataset ( FILE *fp_out ) {
   assert( fp_out );
-  return 0;
+  int cnt = 0;
+  
+  ROUTE_PROF_PTR pro_prof = tracks_routes_prof.routes.profs.pwhole;
+  while( pro_prof < tracks_routes_prof.routes.pavail ) {
+    emit_route_prof( fp_out, pro_prof );
+    cnt++;
+    pro_prof++;
+  }
+  return cnt;
 }
 
 static TRACK_PROF_PTR fill_dest_tracks_ph2 ( ROUTE_PROF_PTR pro_prof ) {
@@ -2566,31 +2644,31 @@ static int ars_trigg_tracks ( ROUTE_PROF_PTR pro_prof ) {
       {
 	TRACK_PROF_PTR ptr_beh = NULL;
 	BLK_TRACER blkstk = {};	
-	enter_route( &blkstk, pro_prof );
-	if( blkstk.sp >= 3 ) {
-	  CBTC_BLOCK_PTR pblk_beh = blkstk.stack[blkstk.sp - 2];
-	  assert( pblk_beh );
-	  ptr_beh = lkup_track_prof( cnv2str_il_sym(pblk_beh->belonging_tr.track) );
-	  if( ptr_beh ) {
-	    BOOL found = FALSE;	
-	    int i;
-	    for( i = 0; i < pro_prof->apps.ars.trigg.num_tracks; i++ ) {
-	      assert( ptr_beh );
-	      assert( pro_prof );
-	      assert( pro_prof->apps.ars.trigg.tr[i] );
-	      if( pro_prof->apps.ars.trigg.tr[i] == ptr_beh ) {
-		found = TRUE;
-		break;
+	if( enter_route( &blkstk, pro_prof ) )
+	  if( blkstk.sp >= 3 ) {
+	    CBTC_BLOCK_PTR pblk_beh = blkstk.stack[blkstk.sp - 2];
+	    assert( pblk_beh );
+	    ptr_beh = lkup_track_prof( cnv2str_il_sym(pblk_beh->belonging_tr.track) );
+	    if( ptr_beh ) {
+	      BOOL found = FALSE;	
+	      int i;
+	      for( i = 0; i < pro_prof->apps.ars.trigg.num_tracks; i++ ) {
+		assert( ptr_beh );
+		assert( pro_prof );
+		assert( pro_prof->apps.ars.trigg.tr[i] );
+		if( pro_prof->apps.ars.trigg.tr[i] == ptr_beh ) {
+		  found = TRUE;
+		  break;
+		}
+	      }
+	      if( !found ) {
+		const int idx_new = pro_prof->apps.ars.trigg.num_tracks;
+		assert( idx_new > 0 );
+		pro_prof->apps.ars.trigg.tr[idx_new] = ptr_beh;
+		pro_prof->apps.ars.trigg.num_tracks++;
 	      }
 	    }
-	    if( !found ) {
-	      const int idx_new = pro_prof->apps.ars.trigg.num_tracks;
-	      assert( idx_new > 0 );
-	      pro_prof->apps.ars.trigg.tr[idx_new] = ptr_beh;
-	      pro_prof->apps.ars.trigg.num_tracks++;
-	    }
 	  }
-	}
       }
       break;
     default:

@@ -78,7 +78,7 @@ typedef struct route {
       const STOPPING_POINT_CODE sp; // data not implemented yet.
     } dst;
   } sig_pair;
-  struct {
+  struct { 
     const BOOL app;
     struct {
       const int num_blocks;
