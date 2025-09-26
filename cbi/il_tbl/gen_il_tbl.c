@@ -2336,35 +2336,73 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
   fprintf( fp_out, "{{" );
   fprintf( fp_out, "%s}, {", pro_prof->orgdst.org.signame_org );
   fprintf( fp_out, "%s}}, ", pro_prof->orgdst.dst.signame_dst );
-  
+
   fprintf( fp_out, "{%s", (pro_prof->ars_route ? "TRUE" : "FALSE") );
+
   if( pro_prof->ars_route ) {
-    char app_blks_emitbuf[APP_BLKS_EMITSTRBUF_MAXLEN + 1] = "";
+    char app_blks_stracc[APP_BLKS_EMITSTRBUF_MAXLEN + 1] = "";
     int cnt_app_blks = 0;
+    BOOL matured = FALSE;
     int i;
   b:
-    app_blks_emitbuf[APP_BLKS_EMITSTRBUF_MAXLEN] = 0;
+    app_blks_stracc[APP_BLKS_EMITSTRBUF_MAXLEN] = 0;
     fprintf( fp_out, ", " );
-    snprintf( app_blks_emitbuf, "{", APP_BLKS_EMITSTRBUF_MAXLEN );
+    snprintf( app_blks_stracc, APP_BLKS_EMITSTRBUF_MAXLEN, "{" );
+    cnt_app_blks = 0;
+    matured = FALSE;
     for( i = 0; i < pro_prof->apps.ars.trigg.num_tracks; i++ ) {
       TRACK_PROF_PTR ptr_app = pro_prof->apps.ars.trigg.tr[i];
       assert( ptr_app );
       int j;
-      if( i > 0 )
-	snprintf( app_blks_emitbuf, ", ", APP_BLKS_EMITSTRBUF_MAXLEN );
+      if( (i > 0) && matured ) {
+	assert( (strlen(app_blks_stracc) + strlen(", ")) < APP_BLKS_EMITSTRBUF_MAXLEN );
+	strcat( app_blks_stracc, ", " );
+      }
+      matured = FALSE;
       for( j = 0; j < ptr_app->consists_blks.num_blocks; j++ ) {
 	assert( ptr_app );
 	CBTC_BLOCK_PTR pblk_app = ptr_app->consists_blks.pblk_profs[j];
 	assert( pblk_app );
-	if( j > 0 )
-	  snprintf( app_blks_emitbuf, ", ", APP_BLKS_EMITSTRBUF_MAXLEN );
-	snprintf( app_blks_emitbuf, "%s", pblk_app->virt_blkname_str, APP_BLKS_EMITSTRBUF_MAXLEN );
-	cnt_app_blks++;
+	if( (j > 0) && matured ) {
+	  assert( (strlen(app_blks_stracc) + strlen(", ")) < APP_BLKS_EMITSTRBUF_MAXLEN );
+	  strcat( app_blks_stracc, ", " );
+	}	
+	matured = FALSE;
+	if( pblk_app->virt_blkname_str > 0 ) {
+	  assert( (strlen(app_blks_stracc) + strnlen(pblk_app->virt_blkname_str, APP_BLKS_EMITSTRBUF_MAXLEN)) < APP_BLKS_EMITSTRBUF_MAXLEN );
+	  strcat( app_blks_stracc, pblk_app->virt_blkname_str );
+	  cnt_app_blks++;
+	  matured = TRUE;
+	}
       }
     }
-    snprintf( app_blks_emitbuf, "}", APP_BLKS_EMITSTRBUF_MAXLEN );
-    ;    
+    if( !matured ) {
+      const int l = strlen( app_blks_stracc );
+      assert( l < APP_BLKS_EMITSTRBUF_MAXLEN );
+      if( l > 2 ) {
+	assert( app_blks_stracc[l - 1] == ' ' );
+	assert( app_blks_stracc[l - 2] == ',' );
+	app_blks_stracc[l - 2] = 0;
+      }
+    }
+    assert( (strlen(app_blks_stracc) + strlen("}")) < APP_BLKS_EMITSTRBUF_MAXLEN );
+    strcat( app_blks_stracc, "}" );
+    {
+      char app_blks_emitbuf[APP_BLKS_EMITSTRBUF_MAXLEN + 1] = "";
+      char num_blks[5] = "";
+      num_blks[4] = 0;      
+      snprintf( num_blks, 4, "%d", cnt_app_blks );
+      assert( ((strlen("{") + strlen(num_blks) + strlen(", ")) + strlen(app_blks_stracc) + strlen("}, ")) < APP_BLKS_EMITSTRBUF_MAXLEN );
+      strcpy( app_blks_emitbuf, "{" );      
+      strcat( app_blks_emitbuf, num_blks );
+      strcat( app_blks_emitbuf, ", " );
+      strcat( app_blks_emitbuf, app_blks_stracc );
+      strcat( app_blks_emitbuf, "}, " );
+      fprintf( fp_out, app_blks_emitbuf );
+    }
+
   }
+  
   else goto b; // *****, must be eliminated JUST AFTER the implemetation of pro_prof->ars_route!
   
   fprintf( fp_out, "}, " );
