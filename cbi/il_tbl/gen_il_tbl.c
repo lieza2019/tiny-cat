@@ -2327,7 +2327,7 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
       assert( pro_prof );
       assert( pro_prof->body.ptr[i] );
       if( i > 0 )	
-	fprintf( fp_out, ", " );
+	fprintf( fp_out, ", " ); 
       fprintf( fp_out, "%s", (pro_prof->body.ptr[i])->track_name );
     }
     fprintf( fp_out, "}}, " );
@@ -2398,12 +2398,36 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
       strcat( app_blks_emitbuf, ", " );
       strcat( app_blks_emitbuf, app_blks_stracc );
       strcat( app_blks_emitbuf, "}, " );
-      fprintf( fp_out, app_blks_emitbuf );
+      fprintf( fp_out, "%s", app_blks_emitbuf );
     }
-
   }
+  else goto b; // *****, must be eliminated JUST AFTER the implemetation of pro_prof->ars_route!-
   
-  else goto b; // *****, must be eliminated JUST AFTER the implemetation of pro_prof->ars_route!
+  fprintf( fp_out, "{" );
+  if( pro_prof->ctrl.ars.num_tracks > 1 ) {
+    const int ntrs_ctrl = pro_prof->ctrl.ars.num_tracks;
+    int i = 0;
+    fprintf( fp_out, "%d, %d, {", ntrs_ctrl, ntrs_ctrl );
+    do {
+      TRACK_PROF_PTR ptr_ctrl = pro_prof->ctrl.ars.ptr[i];
+      assert( ptr_ctrl );
+      if( i > 0 )
+	fprintf( fp_out, ", " );
+      fprintf( fp_out, "%s", ptr_ctrl->track_name );
+      i++;
+    } while( i < pro_prof->ctrl.ars.num_tracks );
+    fprintf( fp_out, "}" );
+    
+    if( pro_prof->ctrl.pahead )
+      if( (pro_prof->ctrl.pahead)->tr_prof ) {
+	TRACK_PROF_PTR ptr_ahd = (pro_prof->ctrl.pahead)->tr_prof;
+	assert( ptr_ahd );
+	fprintf( fp_out, ", 1, {" );
+	fprintf( fp_out, "%s", ptr_ahd->track_name );
+	fprintf( fp_out, "}" );
+      }
+  }
+  fprintf( fp_out, "}, " );
   
   fprintf( fp_out, "}, " );
   
