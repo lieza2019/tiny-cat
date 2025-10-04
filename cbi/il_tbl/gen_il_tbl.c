@@ -2338,7 +2338,7 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
   fprintf( fp_out, "%s}}, ", pro_prof->orgdst.dst.signame_dst );
 
   fprintf( fp_out, "{%s", (pro_prof->ars_route ? "TRUE" : "FALSE") );
-
+  
   if( pro_prof->ars_route ) {
     char app_blks_stracc[APP_BLKS_EMITSTRBUF_MAXLEN + 1] = "";
     int cnt_app_blks = 0;
@@ -2402,9 +2402,14 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
     }
   }
   else goto b; // *****, must be eliminated JUST AFTER the implemetation of pro_prof->ars_route!-
-  
+
+#if 0 // ****
+  if( strncmp( pro_prof->route_name, "S821A_S801A", CBI_STAT_IDENT_LEN ) == 0 ) {
+    printf( "HIT!\n" );
+  }
+#endif
   fprintf( fp_out, "{" );
-  if( pro_prof->ctrl.ars.num_tracks > 1 ) {
+  if( pro_prof->ctrl.ars.num_tracks >= 1 ) {
     const int ntrs_ctrl = pro_prof->ctrl.ars.num_tracks;
     int i = 0;
     fprintf( fp_out, "%d, %d, {", ntrs_ctrl, ntrs_ctrl );
@@ -2429,8 +2434,49 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
   }
   fprintf( fp_out, "}, " );
   
-  fprintf( fp_out, "}, " );
+  fprintf( fp_out, "{{" );
+  if( pro_prof->orgdst.org.porg_tr ) {
+    TRACK_PROF_PTR ptr_org = (pro_prof->orgdst.org.porg_tr)->tr_prof;
+    if( ptr_org ) {
+      BOOL found = FALSE;
+      int i;
+      for( i = 0; i < ptr_org->consists_blks.num_blocks; i++ ) {
+	assert( ptr_org );
+	CBTC_BLOCK_PTR pblk = ptr_org->consists_blks.pblk_profs[i];
+	if( found )
+	  continue;
+	if( pblk ) {
+	  fprintf( fp_out, "%s", pblk->virt_blkname_str );
+	  fprintf( fp_out, ", " );
+	  fprintf( fp_out, "%s", cnv2str_sp_code(pblk->sp.sp_code.sp) );
+	  found = TRUE;
+	}
+      }      
+    }
+  }
+  fprintf( fp_out, "}, {" );
+  if( pro_prof->orgdst.dst.pdst_tr ) {
+    TRACK_PROF_PTR ptr_dst = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;
+    if( ptr_dst ) {
+      BOOL found = FALSE;
+      int i;
+      for( i = 0; i < ptr_dst->consists_blks.num_blocks; i++ ) {
+	assert( ptr_dst );
+	CBTC_BLOCK_PTR pblk = ptr_dst->consists_blks.pblk_profs[i];
+	if( found )
+	  continue;
+	if( pblk ) {
+	  fprintf( fp_out, "%s", pblk->virt_blkname_str );
+	  fprintf( fp_out, ", " );
+	  fprintf( fp_out, "%s", cnv2str_sp_code(pblk->sp.sp_code.sp) );
+	  found = TRUE;
+	}
+      }
+    }
+  }
+  fprintf( fp_out, "}}" );
   
+  fprintf( fp_out, "}" );
   fprintf( fp_out, " },\n" );
   return 0;
 }
