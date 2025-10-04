@@ -2347,16 +2347,16 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
       }
       i++;
     }    
-    fprintf( fp_out, "{%s", (pro_prof->ars_route ? "TRUE" : "FALSE") );
+    fprintf( fp_out, "{%s, ", (pro_prof->ars_route ? "TRUE" : "FALSE") );
   }
-  
+
+  fprintf( fp_out, "{" );
   if( pro_prof->ars_route ) {
     char app_blks_stracc[APP_BLKS_EMITSTRBUF_MAXLEN + 1] = "";
     int cnt_app_blks = 0;
     BOOL matured = FALSE;
     int i;
     app_blks_stracc[APP_BLKS_EMITSTRBUF_MAXLEN] = 0;
-    fprintf( fp_out, ", " );
     snprintf( app_blks_stracc, APP_BLKS_EMITSTRBUF_MAXLEN, "{" );
     cnt_app_blks = 0;
     matured = FALSE;
@@ -2402,21 +2402,15 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
       char num_blks[5] = "";
       num_blks[4] = 0;      
       snprintf( num_blks, 4, "%d", cnt_app_blks );
-      assert( ((strlen("{") + strlen(num_blks) + strlen(", ")) + strlen(app_blks_stracc) + strlen("}, ")) < APP_BLKS_EMITSTRBUF_MAXLEN );
-      strcpy( app_blks_emitbuf, "{" );      
+      assert( (strlen(num_blks) + strlen(", ") + strlen(app_blks_stracc)) < APP_BLKS_EMITSTRBUF_MAXLEN );
       strcat( app_blks_emitbuf, num_blks );
       strcat( app_blks_emitbuf, ", " );
       strcat( app_blks_emitbuf, app_blks_stracc );
-      strcat( app_blks_emitbuf, "}, " );
       fprintf( fp_out, "%s", app_blks_emitbuf );
     }
   }
+  fprintf( fp_out, "}, " );
   
-#if 0 // ****
-  if( strncmp( pro_prof->route_name, "S821A_S801A", CBI_STAT_IDENT_LEN ) == 0 ) {
-    printf( "HIT!\n" );
-  }
-#endif
   fprintf( fp_out, "{" );
   if( pro_prof->ctrl.ars.num_tracks >= 1 ) {
     const int ntrs_ctrl = pro_prof->ctrl.ars.num_tracks;
@@ -2496,7 +2490,9 @@ static int emit_route_dataset ( FILE *fp_out ) {
   ROUTE_PROF_PTR pro_prof = tracks_routes_prof.routes.profs.pwhole;
   while( pro_prof < tracks_routes_prof.routes.pavail ) {
     assert( pro_prof );
-    if( conslt_il_sym_lexicon( pro_prof->route_name ) != END_OF_IL_SYMS ) {
+    if( (conslt_il_sym_lexicon( pro_prof->route_name ) != END_OF_IL_SYMS) &&
+	(conslt_il_sym_lexicon( pro_prof->orgdst.org.signame_org ) != END_OF_IL_SYMS) &&
+	(conslt_il_sym_lexicon( pro_prof->orgdst.dst.signame_dst ) != END_OF_IL_SYMS) ) {
       emit_route_prof( fp_out, pro_prof );
       cnt++;
     }
