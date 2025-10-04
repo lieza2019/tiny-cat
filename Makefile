@@ -13,6 +13,7 @@ MAKE = make
 TINY_LIB_NAME = libtiny.a
 TINY_EXE_NAME = tiny-cat
 GEN_IL_DEF_BIN = gen_il_def
+GEN_IL_DATA_BIN = gen_il_data
 
 $(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/ttcreat.o ./timetable/ttcreat_cmd.o $(TINY_LIB_NAME)
 	$(LD) $(LDFLAGS) -o $@ $^
@@ -42,7 +43,11 @@ train_ctrl.h : generic.h misc.h cbtc.h
 	$(TOUCH) $@
 cbi.h: generic.h misc.h network.h ./cbi/memmap/cbi_stat_kind.def ./cbi/memmap/il_obj_instance_decl.h
 	$(TOUCH) $@
-interlock.h : generic.h misc.h cbi.h cbtc.h interlock_dataset.h
+./cbi/il_tbl/interlock_dataset.h : ./cbi/il_tbl/BCGN_TRACK.csv ./cbi/il_tbl/BCGN_ROUTEREL.csv ./cbi/il_tbl/BCGN_POINT.csv ./cbi/il_tbl/BCGN_SIGNAL.csv ./cbi/il_tbl/JLA_TRACK.csv ./cbi/il_tbl/JLA_ROUTEREL.csv ./cbi/il_tbl/JLA_POINT.csv ./cbi/il_tbl/JLA_SIGNAL.csv
+	$(CD) ./cbi/il_tbl; \
+	$(MAKE); \
+	./$(GEN_IL_DATA_BIN)
+interlock.h : generic.h misc.h cbi.h cbtc.h ./cbi/il_tbl/interlock_dataset.h
 	$(TOUCH) $@
 surveill.h : generic.h misc.h
 	$(TOUCH) $@

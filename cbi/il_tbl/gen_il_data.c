@@ -397,7 +397,6 @@ static int print_route_prof ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   int n = 0;
   
-  //ROUTE_PROF_PTR pprof = tracks_routes_prof.routes.profs.pcrnt_ixl;
   while( pro_prof < tracks_routes_prof.routes.pavail ) {
     prn_route_prof_lv2( pro_prof );
     n++;
@@ -2186,13 +2185,6 @@ static void cons_routes_circuit ( void ) {
   
   while( pprof < tracks_routes_prof.routes.pavail ) {
     assert( pprof );
-#if 0 // *****
-    {
-      if( strncmp( pprof->route_name, "S803A_S809A", CBI_STAT_IDENT_LEN ) == 0 ) {
-	printf( "HIT." );
-      }
-    }
-#endif
     struct frontier front = { -1 };
     struct frontier ahead = { -1 };
     int i;
@@ -2867,7 +2859,7 @@ int main ( void ) {
   cons_block_state();
   
   init_gen_il_dataset();
-  fp_out = fopen( "interlock_dataset0.h", "w" );
+  fp_out = fopen( "interlock_dataset.h", "w" );
   if( fp_out ) {
     if( !ferror( fp_out ) ) {
       r = gen_track_dataset( fp_out );

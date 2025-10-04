@@ -7,12 +7,12 @@ CC = /usr/bin/gcc
 CFLAGS = -Wall -Wno-unused-value  -g -DCHK_STRICT_CONSISTENCY -DIN_CBI_RESOURCEDIR
 
 TINY_LIB_NAME = libtiny.a
-GEN_IL_TBL_BIN = gen_il_tbl
+GEN_IL_DATA_BIN = gen_il_data
 
-$(GEN_IL_TBL_BIN) : par_il_tbl.o gen_il_tbl.o ../../$(TINY_LIB_NAME)
+$(GEN_IL_DATA_BIN) : par_il_tbl.o gen_il_data.o ../../$(TINY_LIB_NAME)
 	$(CC) $(CFLAGS) -o $@ $^
 
-gen_il_tbl.o : ../../cbi.h gen_il_tbl.c
+gen_il_data.o : ../../cbi.h gen_il_data.c
 par_il_tbl.o : ./par_il_tbl.c
 
 ../../$(TINY_LIB_NAME) :
@@ -25,4 +25,4 @@ clean:
 	$(RM) -f ./*~
 	$(RM) -f ./#*#
 	$(RM) -f ./*.stackdump
-	$(RM) -f $(GEN_IL_TBL_BIN)
+	$(RM) -f $(GEN_IL_DATA_BIN)
