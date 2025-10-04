@@ -2337,14 +2337,24 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
   fprintf( fp_out, "%s}, {", pro_prof->orgdst.org.signame_org );
   fprintf( fp_out, "%s}}, ", pro_prof->orgdst.dst.signame_dst );
 
-  fprintf( fp_out, "{%s", (pro_prof->ars_route ? "TRUE" : "FALSE") );
+  assert( ! pro_prof->ars_route );
+  {
+    int i = 0;
+    while( ars_ctrl_routes[i] != END_OF_IL_SYMS ) {
+      if( strncmp( pro_prof->route_name, cnv2str_il_sym(ars_ctrl_routes[i]), CBI_STAT_NAME_LEN ) == 0 ) {
+	pro_prof->ars_route = TRUE;
+	break;
+      }
+      i++;
+    }    
+    fprintf( fp_out, "{%s", (pro_prof->ars_route ? "TRUE" : "FALSE") );
+  }
   
   if( pro_prof->ars_route ) {
     char app_blks_stracc[APP_BLKS_EMITSTRBUF_MAXLEN + 1] = "";
     int cnt_app_blks = 0;
     BOOL matured = FALSE;
     int i;
-  b:
     app_blks_stracc[APP_BLKS_EMITSTRBUF_MAXLEN] = 0;
     fprintf( fp_out, ", " );
     snprintf( app_blks_stracc, APP_BLKS_EMITSTRBUF_MAXLEN, "{" );
@@ -2401,8 +2411,7 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
       fprintf( fp_out, "%s", app_blks_emitbuf );
     }
   }
-  else goto b; // *****, must be eliminated JUST AFTER the implemetation of pro_prof->ars_route!-
-
+  
 #if 0 // ****
   if( strncmp( pro_prof->route_name, "S821A_S801A", CBI_STAT_IDENT_LEN ) == 0 ) {
     printf( "HIT!\n" );
@@ -2486,8 +2495,11 @@ static int emit_route_dataset ( FILE *fp_out ) {
   
   ROUTE_PROF_PTR pro_prof = tracks_routes_prof.routes.profs.pwhole;
   while( pro_prof < tracks_routes_prof.routes.pavail ) {
-    emit_route_prof( fp_out, pro_prof );
-    cnt++;
+    assert( pro_prof );
+    if( conslt_il_sym_lexicon( pro_prof->route_name ) != END_OF_IL_SYMS ) {
+      emit_route_prof( fp_out, pro_prof );
+      cnt++;
+    }
     pro_prof++;
   }
   return cnt;

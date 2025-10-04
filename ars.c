@@ -11,6 +11,30 @@
 #include "timetable.h"
 #include "./timetable/ttcreat.h"
 
+const IL_SYM ars_ctrl_routes[] = {
+  S803B_S831B,
+  S831B_S821A,
+  S821A_S801A,
+  S801A_S803A,
+  S801A_S807A,
+  S803A_S809A,
+  S806A_S804A,
+  S803A_S811A,
+  S802A_S804A,
+  S804A_S822A,
+  S822A_S832B,
+  S832B_S802B,
+  S802B_S810B,
+  S802B_S804B,
+  S807B_S831B,
+  S803B_VS801B,
+  S806B_S804B,
+  S803B_VS803B,
+  S807B_VS801B,
+  S806B_S810B,
+  S807B_VS803B,
+  END_OF_IL_SYMS
+};
 const char *cnv2str_crew_id[] = {
   "CREW_ID0000",
   "CREW_ID0001",

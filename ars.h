@@ -102,6 +102,7 @@ typedef enum ars_reasons {
 } ARS_REASONS;
 extern const char *cnv2str_ars_reasons[];
 
+extern const IL_SYM ars_ctrl_routes[];
 extern SYSTEM_PARAMS tiny_system_params;
 
 #endif // ARS_H
