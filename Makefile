@@ -15,10 +15,9 @@ TINY_EXE_NAME = tiny-cat
 GEN_IL_DEF_BIN = gen_il_def
 GEN_IL_DATA_BIN = gen_il_data
 
-#$(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/ttcreat.o ./timetable/ttcreat_cmd.o $(TINY_LIB_NAME)
-#	$(LD) $(LDFLAGS) -o $@ $^
 $(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/ttcreat.o ./timetable/ttcreat_cmd.o $(TINY_LIB_NAME)
-	for oname in `$(AR) -t $(TINY_LIB_NAME)`; do if [ -f $${oname} ]; then $(RM) $${oname}; fi; done
+	for oname in `$(AR) -t $(TINY_LIB_NAME)`; do if [ -f $${oname} ]; then $(RM) $${oname}; fi; done; \
+	$(RM) ./cbi/il_tbl/interlock_dataset.h
 	$(MAKE) $(TINY_LIB_NAME)
 	$(LD) $(LDFLAGS) -o $@ $^
 
@@ -47,9 +46,8 @@ train_ctrl.h : generic.h misc.h cbtc.h
 	$(TOUCH) $@
 cbi.h: generic.h misc.h network.h ./cbi/memmap/cbi_stat_kind.def ./cbi/memmap/il_obj_instance_decl.h
 	$(TOUCH) $@
-#./cbi/il_tbl/interlock_dataset.h : ./cbi/il_tbl/BCGN_TRACK.csv ./cbi/il_tbl/BCGN_ROUTEREL.csv ./cbi/il_tbl/BCGN_POINT.csv ./cbi/il_tbl/BCGN_SIGNAL.csv ./cbi/il_tbl/JLA_TRACK.csv ./cbi/il_tbl/JLA_ROUTEREL.csv ./cbi/il_tbl/JLA_POINT.csv ./cbi/il_tbl/JLA_SIGNAL.csv $(TINY_LIB_NAME)
 ./cbi/il_tbl/interlock_dataset.h : ./cbi/il_tbl/BCGN_TRACK.csv ./cbi/il_tbl/BCGN_ROUTEREL.csv ./cbi/il_tbl/BCGN_POINT.csv ./cbi/il_tbl/BCGN_SIGNAL.csv ./cbi/il_tbl/JLA_TRACK.csv ./cbi/il_tbl/JLA_ROUTEREL.csv ./cbi/il_tbl/JLA_POINT.csv ./cbi/il_tbl/JLA_SIGNAL.csv
-	if [ ! -f $@ ]; then ($(CD) ./cbi/il_tbl; $(MAKE) phony); else ($(CD) ./cbi/il_tbl; $(MAKE) interlock_dataset.h); fi
+	if [ ! -f $(TINY_LIB_NAME) ]; then ($(CD) ./cbi/il_tbl; $(MAKE) phony); else ($(CD) ./cbi/il_tbl; $(MAKE) interlock_dataset.h); fi
 interlock_datadef.h : ./cbi/il_tbl/interlock_dataset.h
 	$(TOUCH) $@
 interlock.h : generic.h misc.h cbi.h cbtc.h interlock_datadef.h
@@ -97,6 +95,7 @@ main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h surveill.h timeta
 .PHONY : clean
 clean:
 	$(CD) ./cbi/memmap; $(MAKE) clean
+	$(CD) ./cbi/il_tbl; $(MAKE) clean
 	$(CD) ./timetable; $(MAKE) clean
 	$(RM) -f ./a.out
 	$(RM) -f ./*.o
