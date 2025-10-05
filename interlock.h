@@ -35,7 +35,7 @@ typedef struct track {
 typedef const struct track *TRACK_C_PTR;
 
 #define TRACK_ATTRIB_DEFINITION
-#include "interlock_dataset.h"
+#include "interlock_datadef.h"
 #undef TRACK_ATTRIB_DEFINITION
 
 typedef enum route_kind {
@@ -130,7 +130,7 @@ typedef struct il_obj_container {
 typedef struct il_obj_container const *IL_OBJ_CONTAINER_C_PTR;
 
 #define ROUTE_ATTRIB_DEFINITION
-#include "interlock_dataset.h"
+#include "interlock_datadef.h"
 #undef ROUTE_ATTRIB_DEFINITION
 
 extern const char *cnv2str_route_kind ( ROUTE_KIND ro_kind );

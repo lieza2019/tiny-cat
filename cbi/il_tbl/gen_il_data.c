@@ -20,6 +20,7 @@
 #undef CBTC_C
 #include "../../interlock.h"
 
+#define IL_DATASET_H_PROTO_NAME "interlock_dataset0.h"
 #define ERR_FAILED_ALLOC_WORKMEM 3
 #define ERR_FAILED_CONS_ILSYM_DATABASE 1
 #define ERR_FAILED_OPEN_ILTBL_TRACKS 2
@@ -32,6 +33,8 @@
 
 #define ROUTE_NAME_MAXLEN 32
 #define POINT_NAME_NAXLEN 32
+
+#define APP_BLKS_EMITSTRBUF_MAXLEN 1024
 
 extern int par_csv_iltbl ( char *bufs[], const int nbufs, FILE *fp_src );
 
@@ -1076,7 +1079,7 @@ static void emit_track_dataset_prolog ( FILE *fp_out ) {
   assert( fp_out );
   assert( !ferror( fp_out ) );
   fprintf( fp_out, "#ifdef TRACK_ATTRIB_DEFINITION\n" );
-  fprintf( fp_out, "#ifdef INTERLOCK_C\n" );
+  //fprintf( fp_out, "#ifdef INTERLOCK_C\n" );
   fprintf( fp_out, "TRACK track_dataset_def[] = {\n" );
 }
 static void emit_track_dataset_epilog ( FILE *fp_out ) {
@@ -1085,9 +1088,9 @@ static void emit_track_dataset_epilog ( FILE *fp_out ) {
   GEN_INDENT( fp_out, 1, 2 );
   fprintf( fp_out, "{ END_OF_CBI_STAT_KIND }\n" );
   fprintf( fp_out, "};\n" );
-  fprintf( fp_out, "#else\n" );
-  fprintf( fp_out, "extern TRACK track_dataset_def[];\n" );
-  fprintf( fp_out, "#endif\n" );
+  //fprintf( fp_out, "#else\n" );
+  //fprintf( fp_out, "extern TRACK track_dataset_def[];\n" );
+  //fprintf( fp_out, "#endif\n" );
   fprintf( fp_out, "#endif // TRACK_ATTRIB_DEFINITION\n" );
 }
 
@@ -1130,7 +1133,7 @@ static void emit_route_dataset_prolog ( FILE *fp_out ) {
   assert( fp_out );
   assert( !ferror( fp_out ) );
   fprintf( fp_out, "#ifdef ROUTE_ATTRIB_DEFINITION\n" );
-  fprintf( fp_out, "#ifdef INTERLOCK_C\n" );
+  //fprintf( fp_out, "#ifdef INTERLOCK_C\n" );
   fprintf( fp_out, "ROUTE route_dataset_def[] = {\n" );
 }
 static void emit_route_dataset_epilog ( FILE *fp_out ) {
@@ -1139,9 +1142,9 @@ static void emit_route_dataset_epilog ( FILE *fp_out ) {
   GEN_INDENT( fp_out, 1, 2 );
   fprintf( fp_out, "{ END_OF_CBI_STAT_KIND, END_OF_ROUTE_KINDS }\n" );
   fprintf( fp_out, "};\n" );
-  fprintf( fp_out, "#else\n" );
-  fprintf( fp_out, "extern ROUTE route_dataset_def[];\n" );
-  fprintf( fp_out, "#endif\n" );
+  //fprintf( fp_out, "#else\n" );
+  //fprintf( fp_out, "extern ROUTE route_dataset_def[];\n" );
+  //fprintf( fp_out, "#endif\n" );
   fprintf( fp_out, "#endif // ROUTE_ATTRIB_DEFINITION\n" );
 }
 
@@ -2295,7 +2298,6 @@ static int cons_route_profs ( const char *ixl ) {
   return r;
 }
 
-#define APP_BLKS_EMITSTRBUF_MAXLEN 1024
 static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) {
   assert( fp_out );
   assert( pro_prof );
@@ -2859,12 +2861,13 @@ int main ( void ) {
   cons_block_state();
   
   init_gen_il_dataset();
-  fp_out = fopen( "interlock_dataset.h", "w" );
+  fp_out = fopen( IL_DATASET_H_PROTO_NAME, "w" );
   if( fp_out ) {
     if( !ferror( fp_out ) ) {
       r = gen_track_dataset( fp_out );
       fprintf( fp_out, "\n" );
       r = gen_route_dataset( fp_out );
+      r = 0;
     }
   }
   return r;

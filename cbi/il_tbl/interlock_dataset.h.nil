@@ -1,0 +1,7 @@
+#ifdef TRACK_ATTRIB_DEFINITION
+TRACK track_dataset_def[] = {};
+#endif
+
+#ifdef ROUTE_ATTRIB_DEFINITION
+ROUTE route_dataset_def[] = {};
+#endif // ROUTE_ATTRIB_DEFINITION
