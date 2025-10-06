@@ -19,6 +19,8 @@ $(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/t
 	for oname in `$(AR) -t $(TINY_LIB_NAME)`; do if [ -f $${oname} ]; then $(RM) $${oname}; fi; done; \
 	$(RM) ./cbi/il_tbl/interlock_dataset.h
 	$(MAKE) $(TINY_LIB_NAME)
+	$(RM) main.o
+	$(MAKE) main.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(TINY_LIB_NAME) : misc.o network.o sparcs.o train_cmd.o cbtc_datadef.o cbtc.o train_ctrl.o cbi.o interlock.o surveill.o ars.o timetable.o cbtc_dataset.o
