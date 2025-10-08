@@ -19,8 +19,12 @@ $(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/t
 	for oname in `$(AR) -t $(TINY_LIB_NAME)`; do if [ -f $${oname} ]; then $(RM) $${oname}; fi; done; \
 	$(RM) ./cbi/il_tbl/interlock_dataset.h
 	$(MAKE) $(TINY_LIB_NAME)
-	$(RM) main.o
+#	$(RM) main.o
 	$(MAKE) main.o
+	$(MAKE) ./timetable/y.tab.o
+	$(MAKE) ./timetable/lex.yy.o
+	$(MAKE) ./timetable/ttcreat.o
+	$(MAKE) ./timetable/ttcreat_cmd.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(TINY_LIB_NAME) : misc.o network.o sparcs.o train_cmd.o cbtc_datadef.o cbtc.o train_ctrl.o cbi.o interlock.o surveill.o ars.o timetable.o cbtc_dataset.o
@@ -80,6 +84,9 @@ timetable.o : generic.h misc.h timetable.h ./timetable/ttcreat.h timetable.c
 cbtc_dataset.o : generic.h misc.h cbtc.h cbtc_dataset.c
 
 main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h surveill.h timetable.h ./timetable/ttcreat.h srv.h main.c
+
+./timetable/ttcreat.h : generic.h cbtc.h interlock.h timetable.h
+	$(TOUCH) $@
 
 ./timetable/ttcreat.o : generic.h ./timetable/ttcreat.h ./timetable/ttcreat.c
 	$(CD) ./timetable; \

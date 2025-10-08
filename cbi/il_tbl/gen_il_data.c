@@ -2324,16 +2324,16 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
 	fprintf( fp_out, ", " ); 
       fprintf( fp_out, "%s", (pro_prof->body.ptr[i])->track_name );
     }
-    fprintf( fp_out, "}}, " );
   }
+  fprintf( fp_out, "}}, " );
   
   fprintf( fp_out, "{{" );
   fprintf( fp_out, "%s}, {", pro_prof->orgdst.org.signame_org );
   fprintf( fp_out, "%s}}, ", pro_prof->orgdst.dst.signame_dst );
 
-  assert( ! pro_prof->ars_route );
   {
     int i = 0;
+    assert( ! pro_prof->ars_route );
     while( ars_ctrl_routes[i] != END_OF_IL_SYMS ) {
       if( strncmp( pro_prof->route_name, cnv2str_il_sym(ars_ctrl_routes[i]), CBI_STAT_NAME_LEN ) == 0 ) {
 	pro_prof->ars_route = TRUE;
@@ -2343,7 +2343,7 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
     }    
     fprintf( fp_out, "{%s, ", (pro_prof->ars_route ? "TRUE" : "FALSE") );
   }
-
+  
   fprintf( fp_out, "{" );
   if( pro_prof->ars_route ) {
     char app_blks_stracc[APP_BLKS_EMITSTRBUF_MAXLEN + 1] = "";
