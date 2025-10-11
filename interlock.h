@@ -74,18 +74,14 @@ typedef struct route {
   struct {
     struct {
       const IL_SYM sig;
-      const CBTC_BLOCK_ID blk;  // data not implemented yet.
-      CBTC_BLOCK_C_PTR pblk; // data not implemented yet.
-      const STOPPING_POINT_CODE sp; // data not implemented yet.
+      IL_SYM ptr_org;
     } org;
     struct {
       const IL_SYM sig;
-      const CBTC_BLOCK_ID blk; // data not implemented yet.
-      CBTC_BLOCK_C_PTR pblk; // data not implemented yet.
-      const STOPPING_POINT_CODE sp; // data not implemented yet.
+      IL_SYM ptr_dst;
     } dst;
   } sig_pair;
-  struct { 
+  struct {
     const BOOL app;
     struct {
       const int num_blocks;

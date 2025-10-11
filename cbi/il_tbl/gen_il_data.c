@@ -267,6 +267,7 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
   assert( pro_prof );
   assert( strlen( pro_prof->route_name ) > 1 );
   int i;
+  
   printf( "(" );
   if( prn_rtprof_lv1 )
     printf( "route_kind, " );
@@ -281,7 +282,7 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
   printf( "points, " );
   printf( "(ahead_track, [ctrl_tracks]), [body_tracks])" );
   if( prn_rtprof_lv2 )
-    printf( ", ([ars_trig], [ars_ctrl])" );
+    printf( ", (is_ars, [ars_trig], [ars_ctrl])" );
   printf( "): (" );
   if( prn_rtprof_lv1 ) {
     const char *ro_kind = cnv2str_route_kind( pro_prof->kind );
@@ -321,7 +322,8 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
       if( !(pro_prof->points.pt[i].stat.normal || pro_prof->points.pt[i].stat.reverse) )
 	printf( "none" );
     }
-    printf( ", " );
+    if( i > 0 )
+      printf( ", " );
   }
   printf( "(%s, [", pro_prof->ctrl.ahead.tr_name );
   for( i = 0; i < pro_prof->ctrl.il.num_tracks; i++ ) {
@@ -342,7 +344,7 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
   if( prn_rtprof_lv2 ) {
     BOOL touch = FALSE;
     int i;
-    printf( ", ([" );
+    printf( ", (%s, [", (pro_prof->ars_route ? "TRUE" : "FALSE") );
     if( pro_prof->apps.ars.trigg.num_tracks > 0 ) {
       for( i = 0; i < pro_prof->apps.ars.trigg.num_tracks; i++ ) {
 	TRACK_PROF_PTR ptr_trg = pro_prof->apps.ars.trigg.tr[i];
@@ -2324,22 +2326,28 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
   }
   fprintf( fp_out, "}}, " );
   
-  fprintf( fp_out, "{{" );
-  fprintf( fp_out, "%s}, {", pro_prof->orgdst.org.signame_org );
-  fprintf( fp_out, "%s}}, ", pro_prof->orgdst.dst.signame_dst );
-
-  {
-    int i = 0;
-    assert( ! pro_prof->ars_route );
-    while( ars_ctrl_routes[i] != END_OF_IL_SYMS ) {
-      if( strncmp( pro_prof->route_name, cnv2str_il_sym(ars_ctrl_routes[i]), CBI_STAT_NAME_LEN ) == 0 ) {
-	pro_prof->ars_route = TRUE;
-	break;
-      }
-      i++;
-    }    
-    fprintf( fp_out, "{%s, ", (pro_prof->ars_route ? "TRUE" : "FALSE") );
+  fprintf( fp_out, "{{%s", pro_prof->orgdst.org.signame_org );
+  if( pro_prof->orgdst.org.porg_tr ) {
+    TRACK_PROF_PTR ptr_org = (pro_prof->orgdst.org.porg_tr)->tr_prof;
+    if( ptr_org )
+      fprintf( fp_out, ", %s", ptr_org->track_name );
+    else
+      goto failed_org_tr;
   }
+ failed_org_tr:
+  fprintf( fp_out, "}, {" );
+  fprintf( fp_out, "%s", pro_prof->orgdst.dst.signame_dst );
+  if( pro_prof->orgdst.dst.pdst_tr ) {
+    TRACK_PROF_PTR ptr_dst = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;
+    if( ptr_dst )
+      fprintf( fp_out, ", %s", ptr_dst->track_name );
+    else
+      goto failed_dst_tr;
+  }
+ failed_dst_tr:
+  fprintf( fp_out, "}}, " );
+  
+  fprintf( fp_out, "{%s, ", (pro_prof->ars_route ? "TRUE" : "FALSE") );
   
   fprintf( fp_out, "{" );
   if( pro_prof->ars_route ) {
@@ -2796,6 +2804,17 @@ static int cons_prc_attrs ( void ) {
     ident_route_kind( pro_prof );
     ars_ctrl_tracks( pro_prof );
     ars_trigg_tracks( pro_prof );
+    {
+      int i = 0;
+      assert( ! pro_prof->ars_route );
+      while( ars_ctrl_routes[i] != END_OF_IL_SYMS ) {
+	if( strncmp( pro_prof->route_name, cnv2str_il_sym(ars_ctrl_routes[i]), CBI_STAT_NAME_LEN ) == 0 ) {
+	  pro_prof->ars_route = TRUE;
+	  break;
+	}
+	i++;
+      }
+    }
     pro_prof++;
     r++;
   }
