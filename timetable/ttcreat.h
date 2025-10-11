@@ -174,7 +174,7 @@ typedef struct timetable_dataset {
 } TIMETABLE_DATASET, *TIMETABLE_DATASET_PTR;
 extern TIMETABLE_DATASET_PTR timetbl_dataset;
 
-#include "ttcreat_par.h"
+#include "ttc_par.h"
 
 static const int nspc_indent = 2;
 #define TTC_DIAG_INDENT( n ) {int i; for(i = 0; i < (n); i++){ int b; for(b = 0; b < nspc_indent; b++ ) printf(" "); }}

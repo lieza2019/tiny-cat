@@ -50,7 +50,7 @@ ttcreat.o : ttcreat.c ttcreat.h
 ttc_main.o : ttc_main.c ttcreat.h
 	$(CC) $(CFLAGS) $<
 
-ttcreat.h : ttcreat_par.h ../timetable.h ../$(TINY_LIB_NAME)
+ttcreat.h : ttc_par.h ../timetable.h ../$(TINY_LIB_NAME)
 	$(TOUCH) $@
 
 .PHONY : clean
