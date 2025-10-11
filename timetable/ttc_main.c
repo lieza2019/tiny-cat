@@ -19,17 +19,17 @@ int main ( int argc, char **ppargv ) {
      * prints the dump of ttc (TimeTable Creation): state ttcreat -dttc
      * prints both dumps of above: ttcreat -dpar -dttc
      */
-    assert( ppargv );
+    assert( ppargv[1] );
     int n = 1;
     do {
+      assert( ppargv[n] );
       char *popt = ppargv[n];
-      assert( popt );
-      if( strncmp( popt, "-dpar", TTC_CMDOPT_MAXLEN ) == 0 ) {	
+      if( strncmp( popt, "-dpar", TTC_CMDOPT_MAXLEN ) == 0 ) {
 	if( !dump_par )
 	  dump_par = TRUE;
 	else
 	cmdopt_nonsens:
-	  printf( "NOTICE: redundant %d th command-line option: %s.\n", n, popt );
+	  printf( "NOTICE: redundant %d th command-line option, omitted.: %s.\n", n, popt );
       } else if( strncmp( popt, "-dttc", TTC_CMDOPT_MAXLEN ) == 0 ) {
 	if( !dump_ttc )	  
 	   dump_ttc = TRUE;
@@ -42,7 +42,7 @@ int main ( int argc, char **ppargv ) {
 	  if( strncmp( pext, TTC_SOURCEFILE_EXT, strlen(TTC_SOURCEFILE_EXT) ) == 0 )
 	    psrc_fname = popt;
 	} else
-	  printf( "NOTICE: invalid %d th command-line option: %s.\n", n, popt );
+	  printf( "FATAL: invalid %d th command-line option: %s.\n", n, popt );
       }	  
       n++;
     } while( n < argc );

@@ -20,6 +20,8 @@
 #undef CBTC_C
 #include "../../interlock.h"
 
+#define ILGEN_CMDOPT_MAXLEN 32
+
 #define IL_DATASET_H_PROTO_NAME "interlock_dataset0.h"
 #define ERR_FAILED_ALLOC_WORKMEM 3
 #define ERR_FAILED_CONS_ILSYM_DATABASE 1
@@ -2855,6 +2857,7 @@ static int init_gen_il_dataset ( void ) {
   return r;
 }
 
+#if 0
 int main ( void ) {
   FILE *fp_out = NULL;
   int r = -1;
@@ -2872,3 +2875,52 @@ int main ( void ) {
   }
   return r;
 }
+#else
+int main ( int argc, char **ppargv ) {
+  int r = -1;
+  
+  FILE *fp_out = NULL;
+  BOOL dump_tr = FALSE;
+  BOOL dump_ro = FALSE;
+  if( argc > 1 ) {
+    /* gen_il_data -vtr
+     * gen_il_data -vro
+     * gen_il_data -vtr -vro
+     */
+    assert( ppargv[1] );
+    int n = 1;
+    do {
+      assert( ppargv[n] );
+      char *popt = ppargv[n];
+      if( strncmp( popt, "vtr", ILGEN_CMDOPT_MAXLEN ) == 0 ) {
+	if( !dump_tr )
+	  dump_tr = TRUE;
+	else
+	cmdopt_nonsens:
+	  printf( "NOTICE: redundant %d th command-line option, omitted.: %s.\n", n, popt );
+      } else if( strncmp( popt, "-vro", ILGEN_CMDOPT_MAXLEN ) == 0 ) {
+	if( !dump_ro )
+	  dump_ro = TRUE;
+	else
+	  goto cmdopt_nonsens;
+      } else
+	printf( "FATAL: invalid %d th command-line option: %s.\n", n, popt );
+      n++;
+    } while( n < argc );
+  }
+  
+  cons_block_state();
+  
+  init_gen_il_dataset();
+  fp_out = fopen( IL_DATASET_H_PROTO_NAME, "w" );
+  if( fp_out ) {
+    if( !ferror( fp_out ) ) {
+      r = gen_track_dataset( fp_out );
+      fprintf( fp_out, "\n" );
+      r = gen_route_dataset( fp_out );
+      r = 0;
+    }
+  }
+  return r;
+}
+#endif
