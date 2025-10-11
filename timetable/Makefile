@@ -32,7 +32,7 @@ ttcreat : y.tab.o lex.yy.o ttcreat.o ttc_cmd.o ttc_main.o ../$(TINY_LIB_NAME)
 y.tab.o : y.tab.c
 	$(CC) $(CFLAGS) $<
 
-y.tab.c : ttcreat_par.y ttcreat.h
+y.tab.c : ttc_par.y ttcreat.h
 	$(YACC) $(YFLAGS) $<
 
 lex.yy.o : lex.yy.c

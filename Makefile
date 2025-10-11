@@ -94,10 +94,10 @@ main.o : generic.h misc.h network.h sparcs.h cbi.h interlock.h surveill.h timeta
 ./timetable/tcreat_cmd.o : generic.h ./timetable/ttcreat.h
 	$(CD) ./timetable; \
 	$(MAKE) CFLAGS='-DNO_EXEC_BINARY' tcreat_cmd.o
-./timetable/y.tab.o : ./timetable/ttcreat.h ./timetable/ttcreat_par.y
+./timetable/y.tab.o : ./timetable/ttcreat.h ./timetable/ttc_par.y
 	$(CD) ./timetable; \
 	$(MAKE) CFLAGS='-DNO_EXEC_BINARY' y.tab.o
-./timetable/lex.yy.o : ./timetable/ttcreat.h ./timetable/ttcreat_par.y
+./timetable/lex.yy.o : ./timetable/ttcreat.h ./timetable/ttc_par.y
 	$(CD) ./timetable; \
 	$(MAKE) CFLAGS='-DNO_EXEC_BINARY' lex.yy.o
 
