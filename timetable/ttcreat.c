@@ -1175,7 +1175,7 @@ static void ttc_init ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   }
 }
 
-int ttcreat ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
+int ttcreat ( FILE *fp_src, BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   extern int yyparse( void );
   extern FILE *yyin;
   int r = 0;
@@ -1186,7 +1186,9 @@ int ttcreat ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   assert( scheduled_cmds.nodes && scheduled_cmds.plim );
   assert( !TTC_ERRSTAT_PAR( err_stat ) );
   assert( !TTC_ERRSTAT_SEM( err_stat ) );
-  yyin = stdin;
+  if( !fp_src )
+    fp_src = stdin;
+  yyin = fp_src;
   r = yyparse();
   emit_scheduled_cmds();
   
@@ -1198,45 +1200,3 @@ int ttcreat ( BOOL dump_par_symtbl, BOOL dump_ttc_symtbl ) {
   load_online_timetbl();
   return r;
 }
-
-#ifdef NO_EXEC_BINARY
-#undef NO_EXEC_BINARY
-#endif
-
-#ifndef NO_EXEC_BINARY
-#define TTC_CMDOPT_MAXLEN 32
-int main ( int argc, char **ppargv ) {
-  int r = -1;
-  
-  BOOL dump_par = FALSE;
-  BOOL dump_ttc = FALSE;
-  if( argc > 1 ) {
-    /* prints the dump of parsing state: ttcreat -dpar
-     * prints the dump of ttc (TimeTable Creation): state ttcreat -dttc
-     * prints both dumps of above: ttcreat -dpar -dttc
-     */
-    assert( ppargv );
-    int n = 1;
-    do {
-      char *popt = ppargv[n];
-      assert( popt );
-      if( strncmp( popt, "-dpar", TTC_CMDOPT_MAXLEN ) == 0 ) {	
-	if( !dump_par )
-	  dump_par = TRUE;
-	else
-	cmdopt_nonsens:
-	  printf( "NOTICE: redundant %d th command-line option: %s.\n", n, popt );
-      } else if( strncmp( popt, "-dttc", TTC_CMDOPT_MAXLEN ) == 0 ) {
-	if( !dump_ttc )	  
-	   dump_ttc = TRUE;
-	else
-	  goto cmdopt_nonsens;
-      } else
-	printf( "NOTICE: invalid %d th command-line option: %s.\n", n, popt );
-      n++;
-    } while( n < argc );
-  }
-  r = ttcreat( dump_par, dump_ttc );
-  return r;
-}
-#endif // NO_EXEC_BINARY
