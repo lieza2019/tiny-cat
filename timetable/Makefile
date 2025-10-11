@@ -38,7 +38,7 @@ y.tab.c : ttcreat_par.y ttcreat.h
 lex.yy.o : lex.yy.c
 	$(CC) $(CFLAGS) $<
 
-lex.yy.c : ttcreat_lex.l ttcreat.h
+lex.yy.c : ttc_lex.l ttcreat.h
 	$(LEX) $(LFLAGS) $<
 
 ttc_cmd.o : ttc_cmd.c ttcreat.h
