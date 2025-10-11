@@ -8,6 +8,9 @@
 #include "../interlock.h"
 #include "../timetable.h"
 
+#define TTC_CMDOPT_MAXLEN 32
+#define TTC_SOURCEFILE_EXT ".ttb"
+
 #define MAX_STNAME_LEN 8
 #define MAX_PLTB_NAMELEN 8
 #define MAX_SPNAME_LEN 8

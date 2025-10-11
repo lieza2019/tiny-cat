@@ -1279,7 +1279,8 @@ time : TK_TIME {
 /* ((JLA,PL1), SP_73);
  */
 sp_asgns_decl : stpl_sp_asgns {
-  cons_spasgn( $1 );
+  if( $1 )
+    cons_spasgn( $1 );
   $$ = $1;
  }
 ;
