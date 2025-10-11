@@ -40,22 +40,6 @@
 
 extern int par_csv_iltbl ( char *bufs[], const int nbufs, FILE *fp_src );
 
-typedef enum track_bound {
-  BOUND_DOWN = 1,
-  BOUND_UP,
-  BOUND_UNKNOWN
-} TRACK_BOUND;
-static const char *trbound2_str[] = {
-  "HAS_NO_BOUND",
-  "BOUND_DOWN",
-  "BOUND_UP",
-  "BOUND_UNKNOWN",
-  NULL
-};
-const char *cnv2str_trbound ( TRACK_BOUND bound ) {
-  return cnv2str_lkup( trbound2_str, bound );
-}
-
 struct bondings {
   CBTC_BLOCK_PTR pprof;
   int npos;
@@ -705,6 +689,14 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
   } else {
     fprintf( fp_out, "\"%s\", ", ptr_name );
     fprintf( fp_out, "%s, ", ptr_name );
+  }
+  {
+    const char *pbound = cnv2str_trbound( pprof->tr_bound );
+    assert( pbound );
+    if( pbound )
+      fprintf( fp_out, "%s, ", pbound );
+    else
+      fprintf( fp_out, "%s, ", "" );
   }
   
   // cbtc
@@ -2864,25 +2856,6 @@ static int init_gen_il_dataset ( void ) {
   return r;
 }
 
-#if 0
-int main ( void ) {
-  FILE *fp_out = NULL;
-  int r = -1;
-  cons_block_state();
-  
-  init_gen_il_dataset();
-  fp_out = fopen( IL_DATASET_H_PROTO_NAME, "w" );
-  if( fp_out ) {
-    if( !ferror( fp_out ) ) {
-      r = gen_track_dataset( fp_out );
-      fprintf( fp_out, "\n" );
-      r = gen_route_dataset( fp_out );
-      r = 0;
-    }
-  }
-  return r;
-}
-#else
 int main ( int argc, char **ppargv ) {
   int r = -1;
   
@@ -2931,4 +2904,3 @@ int main ( int argc, char **ppargv ) {
   }
   return r;
 }
-#endif

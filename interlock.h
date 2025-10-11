@@ -8,6 +8,12 @@
 
 #define ILTBL_FILENAME_MAXLEN 512
 
+typedef enum track_bound {
+  BOUND_DOWN = 1,
+  BOUND_UP,
+  BOUND_UNKNOWN
+} TRACK_BOUND;
+
 typedef struct route_lock {
   BOOL app;
   IL_SYM_KIND kind;
@@ -20,6 +26,7 @@ typedef struct track {
   const IL_SYM_KIND kind;
   const char id_chr[CBI_STAT_IDENT_LEN + 1];
   const IL_SYM id;
+  TRACK_BOUND bound;
   struct {
     const int num_blocks;
     const CBTC_BLOCK_ID blocks[MAX_TRACK_BLOCKS];
@@ -133,6 +140,7 @@ typedef struct il_obj_container const *IL_OBJ_CONTAINER_C_PTR;
 #include "interlock_datadef.h"
 #undef ROUTE_ATTRIB_DEFINITION
 
+extern const char *cnv2str_trbound ( TRACK_BOUND bound );
 extern const char *cnv2str_route_kind ( ROUTE_KIND ro_kind );
 
 extern TRACK_C_PTR conslt_track_prof ( IL_SYM track_id );
