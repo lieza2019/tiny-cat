@@ -376,6 +376,7 @@ static ATTR_JR_ASGN_PTR reg_journey_rake_asgn ( ATTR_JR_ASGN_PTR pjr_asgn ) {
 %%
 timetable_decl : sp_asgns_decl trips_decl journey_rake_asgnmnts_decl journeys_declaration {
   if( ttc_ctrl_flgs.dump_par_symtbl ) {
+    printf( "\n" );
     print_par_symtbl( $1, $2, $3, $4 );
   }
   $$ = timetable_symtbl;
