@@ -250,12 +250,12 @@ static void print_track_prof ( TRACK_PROF_PTR ptr_prof ) {
       assert( pblk );
       if( i > 0 )
 	printf( ", " );
-#if 0 // *****
+#if 0
       print_block_prof( stdout, pblk );
-#else
+#endif
       assert( pblk->virt_blkname_str );
       printf( "%s", pblk->virt_blkname_str );
-#endif
+
     }
     printf( "])\n" );
   }
@@ -1421,7 +1421,7 @@ static int read_route_iltbls ( FILE *fp_src_sig,  FILE *fp_src_rel ) {
       } else {	
 	printf( "warning: missing ahead-track of %s.\n", pr_prof->route_name );
       }
-#if 0 // *****
+#if 0
       prn_route_prof_lv0( pr_prof );
 #endif
       pr_prof++;
