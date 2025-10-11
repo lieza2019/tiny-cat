@@ -2445,6 +2445,7 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
       for( i = 0; i < ptr_org->consists_blks.num_blocks; i++ ) {
 	assert( ptr_org );
 	CBTC_BLOCK_PTR pblk = ptr_org->consists_blks.pblk_profs[i];
+#if 0	
 	if( found )
 	  continue;
 	if( pblk ) {
@@ -2453,7 +2454,27 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
 	  fprintf( fp_out, "%s", cnv2str_sp_code(pblk->sp.sp_code.sp) );
 	  found = TRUE;
 	}
+#else
+	if( pblk ) {
+	  const char *psp = cnv2str_sp_code( pblk->sp.sp_code.sp );
+	  if( psp )
+	    if( strncmp( psp, "SP_NONSENS", strlen("SP_NONSENS") ) ) {
+	      fprintf( fp_out, "%s", pblk->virt_blkname_str );
+	      fprintf( fp_out, ", " );
+	      fprintf( fp_out, "%s", psp );
+	      found = TRUE;
+	      break;
+	    }
+	}
+#endif
       }      
+      if( !found && (i > 0) ) {
+	assert( (ptr_org->consists_blks.num_blocks > 0) && (i == ptr_org->consists_blks.num_blocks) );
+	CBTC_BLOCK_PTR pblk = ptr_org->consists_blks.pblk_profs[i - 1];
+	fprintf( fp_out, "%s", pblk->virt_blkname_str );
+	fprintf( fp_out, ", " );
+	fprintf( fp_out, "%s", "SP_NONSENS" );
+      }	
     }
   }
   fprintf( fp_out, "}, {" );
@@ -2465,6 +2486,7 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
       for( i = 0; i < ptr_dst->consists_blks.num_blocks; i++ ) {
 	assert( ptr_dst );
 	CBTC_BLOCK_PTR pblk = ptr_dst->consists_blks.pblk_profs[i];
+#if 0
 	if( found )
 	  continue;
 	if( pblk ) {
@@ -2473,6 +2495,26 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
 	  fprintf( fp_out, "%s", cnv2str_sp_code(pblk->sp.sp_code.sp) );
 	  found = TRUE;
 	}
+#else
+	if( pblk ) {
+	  const char *psp = cnv2str_sp_code( pblk->sp.sp_code.sp );
+	  if( psp )
+	    if( strncmp( psp, "SP_NONSENS", strlen("SP_NONSENS") ) ) {
+	      fprintf( fp_out, "%s", pblk->virt_blkname_str );
+	      fprintf( fp_out, ", " );
+	      fprintf( fp_out, "%s", psp );
+	      found = TRUE;
+	      break;
+	    }
+	}
+#endif
+      }
+      if( !found && (i > 0) ) {
+	assert( (ptr_dst->consists_blks.num_blocks > 0) && (i == ptr_dst->consists_blks.num_blocks) );
+	CBTC_BLOCK_PTR pblk = ptr_dst->consists_blks.pblk_profs[i - 1];
+	fprintf( fp_out, "%s", pblk->virt_blkname_str );
+	fprintf( fp_out, ", " );
+	fprintf( fp_out, "%s", "SP_NONSENS" );
       }
     }
   }

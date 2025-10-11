@@ -38,6 +38,7 @@ static const char *spcode_2str[] = {
   "SP_81", // BTGD_PL1
   "SP_D5", // BTGD_TB1
   "SP_D0", // BTGD_TB2
+  "SP_D3", // BTGD_TB3
   NULL
 };
 const char *cnv2str_sp_code ( STOPPING_POINT_CODE sp_code ) {
@@ -75,6 +76,8 @@ STOPPING_POINT_CODE str2_sp_code ( const char *sp_str ) {
     r = SP_D5;
   else if( ! strncmp( sp_str, "SP_D0", cmpmax ) ) // BTGD_TB2
     r = SP_D0;
+  else if( ! strncmp( sp_str, "SP_D3", cmpmax ) ) // BTGD_TB3
+    r = SP_D3;
   else
     assert( FALSE );
   
