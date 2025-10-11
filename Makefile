@@ -15,7 +15,7 @@ TINY_EXE_NAME = tiny-cat
 GEN_IL_DEF_BIN = gen_il_def
 GEN_IL_DATA_BIN = gen_il_data
 
-$(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/ttcreat.o ./timetable/ttcreat_cmd.o $(TINY_LIB_NAME)
+$(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/ttcreat.o ./timetable/ttc_cmd.o $(TINY_LIB_NAME)
 	for oname in `$(AR) -t $(TINY_LIB_NAME)`; do if [ -f $${oname} ]; then $(RM) $${oname}; fi; done; \
 	$(RM) ./cbi/il_tbl/interlock_dataset.h
 	$(MAKE) $(TINY_LIB_NAME)
@@ -24,7 +24,7 @@ $(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/t
 	$(MAKE) ./timetable/y.tab.o
 	$(MAKE) ./timetable/lex.yy.o
 	$(MAKE) ./timetable/ttcreat.o
-	$(MAKE) ./timetable/ttcreat_cmd.o
+	$(MAKE) ./timetable/ttc_cmd.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 $(TINY_LIB_NAME) : misc.o network.o sparcs.o train_cmd.o cbtc_datadef.o cbtc.o train_ctrl.o cbi.o interlock.o surveill.o ars.o timetable.o cbtc_dataset.o
