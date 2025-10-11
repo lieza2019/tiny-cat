@@ -15,22 +15,22 @@ int main ( int argc, char **ppargv ) {
   BOOL dump_ttc = FALSE;
   if( argc > 1 ) {
     /* specifies the source-file of timetable to be read from: ttcreat filename.ttb
-     * prints the dump of parsing state: ttcreat -dpar
-     * prints the dump of ttc (TimeTable Creation): state ttcreat -dttc
-     * prints both dumps of above: ttcreat -dpar -dttc
+     * prints out dump of parsing state: ttcreat -vpar
+     * prints out dump of ttc (TimeTable Creation): state ttcreat -vttc
+     * prints both dumps of above: ttcreat -vpar -vttc
      */
     assert( ppargv[1] );
     int n = 1;
     do {
       assert( ppargv[n] );
       char *popt = ppargv[n];
-      if( strncmp( popt, "-dpar", TTC_CMDOPT_MAXLEN ) == 0 ) {
+      if( strncmp( popt, "-vpar", TTC_CMDOPT_MAXLEN ) == 0 ) {
 	if( !dump_par )
 	  dump_par = TRUE;
 	else
 	cmdopt_nonsens:
 	  printf( "NOTICE: redundant %d th command-line option, omitted.: %s.\n", n, popt );
-      } else if( strncmp( popt, "-dttc", TTC_CMDOPT_MAXLEN ) == 0 ) {
+      } else if( strncmp( popt, "-vttc", TTC_CMDOPT_MAXLEN ) == 0 ) {
 	if( !dump_ttc )	  
 	   dump_ttc = TRUE;
 	else

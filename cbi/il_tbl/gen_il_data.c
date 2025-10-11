@@ -164,23 +164,25 @@ typedef struct route_prof {
 
 static struct {
   struct {
+    BOOL dump_track_prof;
     TRACK_PROF_PTR track_profs;
     TRACK_PROF_PTR pavail;
     TRACK_PROF_PTR pprof_sets[END_OF_ST_ID];
   } tracks;
   struct {
     struct {
-      ROUTE_PROF_PTR pwhole;
-      int num_ixls;
+      BOOL dump_route_prof;
+      int num_ixls;      
       ROUTE_PROF_PTR pprevs[END_OF_OCs];
       ROUTE_PROF_PTR pcrnt_ixl;
+      ROUTE_PROF_PTR pwhole;
     } profs;
     ROUTE_PROF_PTR pavail;
     struct {
       ROUTE_PROF_PTR pdestin;
     } bkpatches;
   } routes;
-} tracks_routes_prof = {};
+} tracks_routes_prof = {{FALSE}, {{FALSE, 0}}};
 
 static void print_track_prof ( TRACK_PROF_PTR ptr_prof ) {
   assert( ptr_prof );
@@ -1055,7 +1057,8 @@ static int emit_track_dataset ( TRACK_PROF_PTR *pprofs, FILE *fp_out, FILE *fp_s
 	      printf( "warning: track %s has no registration in cbi codetable.\n", prof->track_name );
 	    }
 	    consist_blks_and_linking( prof );
-	    print_track_prof( prof );
+	    if( tracks_routes_prof.tracks.dump_track_prof )
+	      print_track_prof( prof );
 	    {
 	      TRACK_PROF_PTR p = NULL;
 	      p = emit_track_prof( fp_out, prof );
@@ -2822,7 +2825,11 @@ static int gen_route_dataset ( FILE *fp_out ) {
   r = cons_route_profs( "JLA" );
   
   cons_prc_attrs();
-  print_route_prof( tracks_routes_prof.routes.profs.pwhole );
+  if( tracks_routes_prof.routes.profs.dump_route_prof ) {
+    if( tracks_routes_prof.tracks.dump_track_prof )
+      printf( "\n" );
+    print_route_prof( tracks_routes_prof.routes.profs.pwhole );
+  }
   
   emit_route_dataset( fp_out );
   emit_route_dataset_epilog( fp_out );
@@ -2883,16 +2890,16 @@ int main ( int argc, char **ppargv ) {
   BOOL dump_tr = FALSE;
   BOOL dump_ro = FALSE;
   if( argc > 1 ) {
-    /* gen_il_data -vtr
-     * gen_il_data -vro
-     * gen_il_data -vtr -vro
+    /* prints out dump of track attributes: gen_il_data -vtr
+     * prints out dump of route attributes: gen_il_data -vro
+     * prints both dumps of above: gen_il_data -vtr -vro
      */
     assert( ppargv[1] );
     int n = 1;
     do {
       assert( ppargv[n] );
       char *popt = ppargv[n];
-      if( strncmp( popt, "vtr", ILGEN_CMDOPT_MAXLEN ) == 0 ) {
+      if( strncmp( popt, "-vtr", ILGEN_CMDOPT_MAXLEN ) == 0 ) {
 	if( !dump_tr )
 	  dump_tr = TRUE;
 	else
@@ -2908,9 +2915,10 @@ int main ( int argc, char **ppargv ) {
       n++;
     } while( n < argc );
   }
+  tracks_routes_prof.tracks.dump_track_prof = dump_tr;
+  tracks_routes_prof.routes.profs.dump_route_prof = dump_ro;
   
   cons_block_state();
-  
   init_gen_il_dataset();
   fp_out = fopen( IL_DATASET_H_PROTO_NAME, "w" );
   if( fp_out ) {
