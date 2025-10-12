@@ -30,8 +30,9 @@
 #define TRACK_PROF_DECL_MAXNUM 1024
 #define ROUTE_PROF_DECL_MAXNUM 256
 
-#define TRACK_NAME_MAXLEN 16
 #define TRACK_BOUNDALIGN_MAXLEN 8
+#define TRACK_NAME_MAXLEN 16
+#define TRACK_ROUTELOK_MAXLEN 16
 
 #define ROUTE_NAME_MAXLEN 32
 #define POINT_NAME_NAXLEN 32
@@ -81,6 +82,13 @@ typedef struct track_prof {
   struct track_prof *pNext;
 } TRACK_PROF, *TRACK_PROF_PTR;
 
+typedef enum route_align {
+  ROUTE_ALIGN_UNKNOWN,
+  ROUTE2_LEFT,
+  ROUTE2_RIGHT,
+  END_OF_ROUTE_ALIGN
+} ROUTE_ALIGN;
+
 struct route_tr {
   char tr_name[CBI_STAT_IDENT_LEN + 1];
   TRACK_PROF_PTR tr_prof;
@@ -95,6 +103,7 @@ struct route_sw {
 typedef struct route_prof {
   char route_name[CBI_STAT_IDENT_LEN + 1];
   ROUTE_KIND kind;
+  ROUTE_ALIGN bound;
   BOOL ars_route;
   struct {
     struct {
@@ -1147,6 +1156,30 @@ static void emit_route_dataset_epilog ( FILE *fp_out ) {
   fprintf( fp_out, "#endif // ROUTE_ATTRIB_DEFINITION\n" );
 }
 
+static ROUTE_ALIGN route_bound ( const char *lok_tr ) {
+  ROUTE_ALIGN r = ROUTE_ALIGN_UNKNOWN;
+  
+  if( lok_tr ) {
+    if( strnlen( lok_tr, TRACK_ROUTELOK_MAXLEN ) > 1 ) {
+      char *psfx = NULL;
+      psfx = strrchr( lok_tr, '_' );
+      if( psfx ) {
+	if( strncmp( psfx, "_L", strlen("_L") ) == 0 )
+	  r = ROUTE2_LEFT;
+	else if( strncmp( psfx, "_R", strlen("_R") ) == 0 )
+	  r = ROUTE2_RIGHT;
+	else if( strncmp( psfx, "_sL", strlen("_sL") ) == 0 )
+	  r = ROUTE2_LEFT;
+	else if( strncmp( psfx, "_sR", strlen("_sR") ) == 0 )
+	  r = ROUTE2_RIGHT;
+	else
+	  assert( r == ROUTE_ALIGN_UNKNOWN );
+      }
+    }
+  }
+  return r;
+}
+
 static int split_orgdst_sigs( const char *route_name, const int name_len ) {
   assert( route_name );
   assert( name_len >= 0 );
@@ -1161,7 +1194,6 @@ static int split_orgdst_sigs( const char *route_name, const int name_len ) {
   assert( (cnt >= name_len) ? route_name[cnt] == 0 : TRUE );
   return cnt;
 }
-
 static int read_iltbl_signal ( FILE *fp_src ) {
   assert( fp_src );
   ROUTE_PROF_PTR pprof = NULL;
@@ -1175,6 +1207,7 @@ static int read_iltbl_signal ( FILE *fp_src ) {
     char nor_sw[POINT_NAME_NAXLEN + 1] = "P";
     char rev_sw[POINT_NAME_NAXLEN + 1] = "P";
     char ctrl_tr[TRACK_NAME_MAXLEN + 1];
+    char lok_tr[TRACK_ROUTELOK_MAXLEN + 1];
     seq[5] = 0;
     ro_name[ROUTE_NAME_MAXLEN] = 0;
     nor_sw[POINT_NAME_NAXLEN] = 0;
@@ -1184,7 +1217,7 @@ static int read_iltbl_signal ( FILE *fp_src ) {
     strcpy( ro_name, "" );
     strcpy( ctrl_tr, "T" );
     {
-      char *strs[11];
+      char *strs[13];
       char dc[256 + 1]; // dont cure.
       dc[256] = 0;
       strs[0] = seq;;
@@ -1198,7 +1231,9 @@ static int read_iltbl_signal ( FILE *fp_src ) {
       strs[8] = dc;
       strs[9] = dc;
       strs[10] = &ctrl_tr[1];
-      n = par_csv_iltbl( strs, 11, fp_src );
+      strs[11] = dc;
+      strs[12] = lok_tr;
+      n = par_csv_iltbl( strs, 13, fp_src );
       assert( ctrl_tr[0] == 'T' );
     }
     if( n > 1 ) {
@@ -1252,6 +1287,8 @@ static int read_iltbl_signal ( FILE *fp_src ) {
 	pprof->points.pt[pprof->points.num_points].stat.reverse = TRUE;
 	pprof->points.num_points++;
       }
+      if( pprof->bound == ROUTE_ALIGN_UNKNOWN )
+	pprof->bound = route_bound( lok_tr );
     }
     skip_chr( fp_src );
   }
