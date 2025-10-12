@@ -70,6 +70,7 @@ typedef enum route_kind {
 typedef struct route {
   const IL_SYM_KIND kind;
   const ROUTE_KIND route_kind;
+  const ROUTE_ALIGN bound;
   const char id_chr[CBI_STAT_IDENT_LEN + 1];
   const IL_SYM id;
   const IL_SYM id_ctrl;
@@ -117,7 +118,7 @@ typedef struct route {
       } dst;
       time_t trip_time; // data not implemented yet.
     } trip_info;
-  } ars_ctrl;
+  } ars_ctrl;  
 } ROUTE, *ROUTE_PTR;
 typedef const struct route *ROUTE_C_PTR;
 

@@ -2334,6 +2334,8 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
   
   fprintf( fp_out, "  { _ROUTE, " );
   fprintf( fp_out, "%s, ", cnv2str_route_kind(pro_prof->kind) );
+  fprintf( fp_out, "%s, ", cnv2str_roalign(pro_prof->bound) );
+  
   fprintf( fp_out, "\"%s\", ", pro_prof->route_name );
   fprintf( fp_out, "%s, ", pro_prof->route_name );
   
