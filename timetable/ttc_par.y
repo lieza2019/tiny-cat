@@ -1356,8 +1356,8 @@ stpl_sp_asgn : '(' st_and_pltb ',' TK_SP ')' ';' {
      (((KIKJ,PL2), (JLA, PL1)), (SP_76, TB_73), {S832B_S802B, S802B_S810B});
 */
 trips_decl : trips_defs {
-  cons_trips( $1 );
   $$ = $1;
+  cons_trips( $$ );
 }
 ;
 trips_defs : TK_KEY_TRIPS ':' trips_definition {
@@ -1389,12 +1389,18 @@ trips_defs : TK_KEY_TRIPS ':' trips_definition {
     printf( "FATAL: syntax-error, no trip declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.par.err_trips_decl = TRUE;
   }
+  timetable_symtbl->trips_regtbl.kind = PAR_TRIPS;
+  $$ = &timetable_symtbl->trips_regtbl;
+  assert( $$->ntrips == 0 );
  }
            | TK_KEY_TRIPS error {
   if( !err_stat.par.err_trips_decl ) {
     printf( "FATAL: syntax-error, incomplete trip declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.par.err_trips_decl = TRUE;
   }
+  timetable_symtbl->trips_regtbl.kind = PAR_TRIPS;
+  $$ = &timetable_symtbl->trips_regtbl;
+  assert( $$->ntrips == 0 );
  }
 /*
   causes following shift/reduce conflicts, 2025/3/12.
@@ -1760,8 +1766,8 @@ route : TK_ROUTE {
      rake_811 := J11; rake_812 := J12; rake_813 := J13; rake_814 := J14;
 */
 journey_rake_asgnmnts_decl : journey_rake_asgnmnts {
-  cons_jrasgn( $1 );
   $$ = $1;
+  cons_jrasgn( $$ );  
 }
 ;
 /* journey_rake_asgnmnts : TK_KEY_ASSIGNMENTS ':' jr_asgnmnts { */
@@ -1797,7 +1803,9 @@ journey_rake_asgnmnts : TK_KEY_ASSIGNMENTS ':' jr_asgnmnts {
     printf( "FATAL: syntax-error, no journey-rake assignments declaration section at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.par.err_journey_rake_asgnmnts = TRUE;
   }
+  timetable_symtbl->jr_asgn_regtbl.kind = PAR_JR_ASGNS;
   $$ = &timetable_symtbl->jr_asgn_regtbl;
+  assert( $$->nasgns == 0 );
   /* yyclearin; */
  }
                            | TK_KEY_ASSIGNMENTS error {
@@ -1805,7 +1813,9 @@ journey_rake_asgnmnts : TK_KEY_ASSIGNMENTS ':' jr_asgnmnts {
     printf( "FATAL: syntax-error, incomplete journey-rake assignment declaration at (LINE, COL) = (%d, %d).\n", @1.first_line, @1.first_column );
     err_stat.par.err_journey_rake_asgnmnts = TRUE;
   }
+  timetable_symtbl->jr_asgn_regtbl.kind = PAR_JR_ASGNS;
   $$ = &timetable_symtbl->jr_asgn_regtbl;
+  assert( $$->nasgns == 0 );
   /* yyclearin; */
  }
 /* reduce/reduce confliction arises with the rule-> | error, of jr_asgn as below.

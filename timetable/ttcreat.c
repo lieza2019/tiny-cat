@@ -110,38 +110,34 @@ char *cnv2str_sp_cond ( char *pstr, ARS_SP_COND sp_cond, const int buflen ) {
 BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 ) {
   assert( p1 );
   assert( p2 );
-  assert( p1->kind == PAR_ST_PLTB );
-  assert( p2->kind == PAR_ST_PLTB );
   BOOL r = FALSE;
   
-  if( ! strncmp( p1->st.name, p2->st.name, MAX_STNAME_LEN ) )
-    if( ! strncmp( p1->pltb.id, p2->pltb.id, MAX_PLTB_NAMELEN ) )
-      r = TRUE;
+  if( (p1->kind == PAR_ST_PLTB) && (p2->kind == PAR_ST_PLTB) )
+    if( ! strncmp( p1->st.name, p2->st.name, MAX_STNAME_LEN ) )
+      if( ! strncmp( p1->pltb.id, p2->pltb.id, MAX_PLTB_NAMELEN ) )
+	r = TRUE;
   return r;
 }
 
 BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_ORGDST_PTR pp1, ATTR_ST_PLTB_ORGDST_PTR pp2 ) {
   assert( pp1 );
   assert( pp2 );
-  assert( pp1->kind == PAR_ST_PLTB_ORGDST );
-  assert( pp2->kind == PAR_ST_PLTB_ORGDST );
   BOOL r = FALSE;
   
-  if( ! eq_st_pltb( &pp1->st_pltb_org, &pp2->st_pltb_org ) )
-    if( ! eq_st_pltb( &pp1->st_pltb_dst, &pp2->st_pltb_dst ) )
-      r = TRUE;
+  if( (pp1->kind == PAR_ST_PLTB_ORGDST) && (pp2->kind == PAR_ST_PLTB_ORGDST) )
+    if( ! eq_st_pltb( &pp1->st_pltb_org, &pp2->st_pltb_org ) )
+      if( ! eq_st_pltb( &pp1->st_pltb_dst, &pp2->st_pltb_dst ) )
+	r = TRUE;
   return r;
 }
 
 static BOOL ident_trips ( ATTR_ST_PLTB_ORGDST_PTR pt1, ATTR_ST_PLTB_ORGDST_PTR pt2 ) {
   assert( pt1 );
-  assert( pt2 );
-  assert( pt1->kind == PAR_ST_PLTB_ORGDST );
-  assert( pt2->kind == PAR_ST_PLTB_ORGDST );
-  
+  assert( pt2 );  
   BOOL r = FALSE;
-  r = eq_st_pltb_pair( pt1, pt2 );
   
+  if( (pt1->kind == PAR_ST_PLTB_ORGDST) && (pt2->kind == PAR_ST_PLTB_ORGDST) )
+    r = eq_st_pltb_pair( pt1, pt2 );  
   return r;
 }
 

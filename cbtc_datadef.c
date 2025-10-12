@@ -79,13 +79,13 @@ STOPPING_POINT_CODE str2_sp_code ( const char *sp_str ) {
   else if( ! strncmp( sp_str, "SP_D3", cmpmax ) ) // BTGD_TB3
     r = SP_D3;
   else
-    assert( FALSE );
+    r = SP_NONSENS;
   
   return r;
 }
 
 static const char *pltb_2str[] = {
-  "PL_UKKNOWN", // see below line.
+  "PL_UNKNOWN", // see below line.
   "PL1", // PL1 = 1
   "PL2",
   "PL3",
@@ -119,7 +119,7 @@ PLTB_ID str2_pltb_id ( const char *pltb_str ) {
   else if( ! strncmp( pltb_str, "TB4", cmpmax ) )
     r = TB4;
   else
-    assert( FALSE );
+    r = PL_UNKNOWN;
   
   return r;
 }
@@ -150,7 +150,7 @@ ST_ID str2_st_id ( const char *st_str ) {
   else if( ! strncmp( st_str, "BTGD", cmpmax ) )
     r = BTGD;
   else
-    assert( FALSE );
+    r = ST_UNKNOWN;
   
   return r;
 }

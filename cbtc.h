@@ -6,7 +6,7 @@
 #include "misc.h"
 
 typedef enum pltb_id {
-  PL_UHKNOWN,
+  PL_UNKNOWN,
   PL1 = 1,
   PL2,
   PL3,
