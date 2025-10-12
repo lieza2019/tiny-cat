@@ -20,7 +20,6 @@ pthread_mutex_t cbi_stat_info_mutex;
 
 static IL_OBJ_CONTAINER il_obj_attrib[END_OF_IL_SYMS];
 
-#if 1
 static const char *trbound2_str[] = {
   "HAS_NO_BOUND",
   "BOUND_DOWN",
@@ -31,7 +30,17 @@ static const char *trbound2_str[] = {
 const char *cnv2str_trbound ( TRACK_BOUND bound ) {
   return cnv2str_lkup( trbound2_str, bound );
 }
-#endif
+
+static const char *roalign2_str[] = {
+  "ROUTE_ALIGN_UNKNOWN",
+  "ROUTE2_LEFT",
+  "ROUTE2_RIGHT",
+  "END_OF_ROUTE_ALIGN",  
+  NULL
+};
+const char *cnv2str_roalign ( ROUTE_ALIGN align ) {
+  return cnv2str_lkup( roalign2_str, align );
+}
 
 static const char *rokind_2str[] = {
   "ROUTE_UNKNOWN",

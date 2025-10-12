@@ -82,13 +82,6 @@ typedef struct track_prof {
   struct track_prof *pNext;
 } TRACK_PROF, *TRACK_PROF_PTR;
 
-typedef enum route_align {
-  ROUTE_ALIGN_UNKNOWN,
-  ROUTE2_LEFT,
-  ROUTE2_RIGHT,
-  END_OF_ROUTE_ALIGN
-} ROUTE_ALIGN;
-
 struct route_tr {
   char tr_name[CBI_STAT_IDENT_LEN + 1];
   TRACK_PROF_PTR tr_prof;

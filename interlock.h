@@ -45,6 +45,13 @@ typedef const struct track *TRACK_C_PTR;
 #include "interlock_datadef.h"
 #undef TRACK_ATTRIB_DEFINITION
 
+typedef enum route_align {
+  ROUTE_ALIGN_UNKNOWN,
+  ROUTE2_LEFT,
+  ROUTE2_RIGHT,
+  END_OF_ROUTE_ALIGN
+} ROUTE_ALIGN;
+
 typedef enum route_kind {
   ROUTE_UNKNOWN,
   DEP_ROUTE = 1,
@@ -137,6 +144,7 @@ typedef struct il_obj_container const *IL_OBJ_CONTAINER_C_PTR;
 #undef ROUTE_ATTRIB_DEFINITION
 
 extern const char *cnv2str_trbound ( TRACK_BOUND bound );
+extern const char *cnv2str_roalign ( ROUTE_ALIGN align );
 extern const char *cnv2str_route_kind ( ROUTE_KIND ro_kind );
 
 extern TRACK_C_PTR conslt_track_prof ( IL_SYM track_id );
