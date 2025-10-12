@@ -56,7 +56,7 @@ struct track_sr {
 };
 typedef struct track_prof {
   char track_name[CBI_STAT_IDENT_LEN + 1];
-  CBI_STAT_ATTR_PTR ptr_attr;
+  TRACK_BOUND bound;
   struct {
     int num_blocks;
     CBTC_BLOCK_PTR pblk_profs[MAX_TRACK_BLOCKS];
@@ -78,7 +78,7 @@ typedef struct track_prof {
       CBI_STAT_ATTR_PTR ppt_attr;
     } point[MAX_TURNOUT_POINTS];
   } turnout;
-  TRACK_BOUND tr_bound;
+  CBI_STAT_ATTR_PTR ptr_attr;
   struct track_prof *pNext;
 } TRACK_PROF, *TRACK_PROF_PTR;
 
@@ -173,7 +173,7 @@ static struct {
 static void print_track_prof ( TRACK_PROF_PTR ptr_prof ) {
   assert( ptr_prof );
   
-  printf( "(tr_name, bound, {points}, {route_locks}, [consist_blks]): (%s, %s, {", ptr_prof->track_name, cnv2str_trbound(ptr_prof->tr_bound) );
+  printf( "(tr_name, bound, {points}, {route_locks}, [consist_blks]): (%s, %s, {", ptr_prof->track_name, cnv2str_trbound(ptr_prof->bound) );
   {
     int i;
     for( i = 0; i < ptr_prof->turnout.num_points; i++ ) {
@@ -696,7 +696,7 @@ static TRACK_PROF_PTR emit_track_prof ( FILE *fp_out, TRACK_PROF_PTR pprof ) {
     fprintf( fp_out, "%s, ", ptr_name );
   }
   {
-    const char *pbound = cnv2str_trbound( pprof->tr_bound );
+    const char *pbound = cnv2str_trbound( pprof->bound );
     assert( pbound );
     if( pbound )
       fprintf( fp_out, "%s, ", pbound );
@@ -825,11 +825,11 @@ static int read_iltbl_track ( TRACK_PROF_PTR *pprofs, FILE *fp_src ) {
 	TRACK_PROF_PTR pprof = tracks_routes_prof.tracks.pavail;
 	snprintf( pprof->track_name, CBI_STAT_IDENT_LEN, "%s_TR", tr_name );
 	if( !strcmp( bounds, "Down" ) )
-	  pprof->tr_bound = BOUND_DOWN;
+	  pprof->bound = BOUND_DOWN;
 	else if( !strcmp( bounds, "Up" ) )
-	  pprof->tr_bound = BOUND_UP;
+	  pprof->bound = BOUND_UP;
 	else
-	  pprof->tr_bound = BOUND_UNKNOWN;
+	  pprof->bound = BOUND_UNKNOWN;
 	cnt++;
 	assert( pprof == tracks_routes_prof.tracks.pavail );
 	if( cnt == 1 ) {
