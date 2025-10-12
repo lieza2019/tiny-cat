@@ -2455,10 +2455,61 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
 		pedge_virtp0 = pblk;
 	      } else {
 		assert( pblk->sp.stop_detect_type == P0_COUPLING );
-	      dst_blk_sp:
+	      org_blk_sp:
 		fprintf( fp_out, "%s", pblk->virt_blkname_str );
 		fprintf( fp_out, ", " );
 		fprintf( fp_out, "%s", psp );		
+		break;
+	      }
+	    } else {
+	      assert( !(pblk->sp.has_sp || psp) );
+	      if( pedge_virtp0 ) {
+	      org_on_edge:
+		assert( found );
+		pblk = pedge_virtp0;
+		psp = cnv2str_sp_code( pblk->sp.sp_code.sp );
+		pedge_virtp0 = NULL;
+		goto org_blk_sp;
+	      }
+	    }
+	  }
+	}
+      }
+      if( !found && (i > 0) ) {
+	assert( (ptr_org->consists_blks.num_blocks > 0) && (i == ptr_org->consists_blks.num_blocks) );
+	CBTC_BLOCK_PTR pblk = ptr_org->consists_blks.pblk_profs[i - 1];
+	fprintf( fp_out, "%s", pblk->virt_blkname_str );
+	fprintf( fp_out, ", " );
+	fprintf( fp_out, "%s", "SP_NONSENS" );
+      } else {
+	if( pedge_virtp0 )
+	  goto org_on_edge;
+      }
+    }
+  }
+  fprintf( fp_out, "}, {" );
+  if( pro_prof->orgdst.dst.pdst_tr ) {
+    TRACK_PROF_PTR ptr_dst = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;
+    if( ptr_dst ) {
+      CBTC_BLOCK_PTR pedge_virtp0 = NULL;
+      BOOL found = FALSE;
+      int i;
+      for( i = 0; i < ptr_dst->consists_blks.num_blocks; i++ ) {
+	assert( ptr_dst );
+	CBTC_BLOCK_PTR pblk = ptr_dst->consists_blks.pblk_profs[i];
+	if( pblk ) {
+	  const char *psp = cnv2str_sp_code( pblk->sp.sp_code.sp );
+	  if( pblk->sp.has_sp && psp ) {
+	    if( strncmp( psp, "SP_NONSENS", strlen("SP_NONSENS") ) ) {
+	      found = TRUE;
+	      if( pblk->sp.stop_detect_type == VIRTUAL_P0 ) {
+		pedge_virtp0 = pblk;
+	      } else {
+		assert( pblk->sp.stop_detect_type == P0_COUPLING );
+	      dst_blk_sp:
+		fprintf( fp_out, "%s", pblk->virt_blkname_str );
+		fprintf( fp_out, ", " );
+		fprintf( fp_out, "%s", psp );	      
 		break;
 	      }
 	    } else {
@@ -2476,47 +2527,14 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
 	}
       }
       if( !found && (i > 0) ) {
-	assert( (ptr_org->consists_blks.num_blocks > 0) && (i == ptr_org->consists_blks.num_blocks) );
-	CBTC_BLOCK_PTR pblk = ptr_org->consists_blks.pblk_profs[i - 1];
+	assert( (ptr_dst->consists_blks.num_blocks > 0) && (i == ptr_dst->consists_blks.num_blocks) );
+	CBTC_BLOCK_PTR pblk = ptr_dst->consists_blks.pblk_profs[i - 1];
 	fprintf( fp_out, "%s", pblk->virt_blkname_str );
 	fprintf( fp_out, ", " );
 	fprintf( fp_out, "%s", "SP_NONSENS" );
       } else {
 	if( pedge_virtp0 )
 	  goto dst_on_edge;
-      }
-    }
-  }
-  fprintf( fp_out, "}, {" );
-  if( pro_prof->orgdst.dst.pdst_tr ) {
-    TRACK_PROF_PTR ptr_dst = (pro_prof->orgdst.dst.pdst_tr)->tr_prof;
-    if( ptr_dst ) {
-      BOOL found = FALSE;
-      int i;
-      for( i = 0; i < ptr_dst->consists_blks.num_blocks; i++ ) {
-	assert( ptr_dst );
-	CBTC_BLOCK_PTR pblk = ptr_dst->consists_blks.pblk_profs[i];
-	if( pblk ) {
-	  const char *psp = cnv2str_sp_code( pblk->sp.sp_code.sp );
-	  if( pblk->sp.has_sp && psp ) {
-	    if( strncmp( psp, "SP_NONSENS", strlen("SP_NONSENS") ) ) {
-	      ;
-	      fprintf( fp_out, "%s", pblk->virt_blkname_str );
-	      fprintf( fp_out, ", " );
-	      fprintf( fp_out, "%s", psp );
-	      found = TRUE;
-	      break;
-	    } else
-	      assert( !(pblk->sp.has_sp || psp) );
-	  }
-	}
-      }
-      if( !found && (i > 0) ) {
-	assert( (ptr_dst->consists_blks.num_blocks > 0) && (i == ptr_dst->consists_blks.num_blocks) );
-	CBTC_BLOCK_PTR pblk = ptr_dst->consists_blks.pblk_profs[i - 1];
-	fprintf( fp_out, "%s", pblk->virt_blkname_str );
-	fprintf( fp_out, ", " );
-	fprintf( fp_out, "%s", "SP_NONSENS" );
       }
     }
   }
