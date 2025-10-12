@@ -273,7 +273,7 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
   printf( "(" );
   if( prn_rtprof_lv1 )
     printf( "route_kind, " );
-  printf( "route, (org_sig, dst_sig), [blocks], [app_tracks], (" );
+  printf( "route, (org_sig, dst_sig), align, [blocks], [app_tracks], (" );
   if( prn_rtprof_lv1 )
     printf( "(" );
   printf( "origin_track, " );
@@ -290,7 +290,8 @@ static void prn_route_prof_lv0 ( ROUTE_PROF_PTR pro_prof ) {
     const char *ro_kind = cnv2str_route_kind( pro_prof->kind );
     printf( "%s, ", (ro_kind ? ro_kind : "ROUTE_UNKNOWN") );
   }
-  printf( "%s (%s, %s), [", pro_prof->route_name, pro_prof->orgdst.org.signame_org, pro_prof->orgdst.dst.signame_dst );
+  printf( "%s (%s, %s), ", pro_prof->route_name, pro_prof->orgdst.org.signame_org, pro_prof->orgdst.dst.signame_dst );
+  printf( "%s, [", cnv2str_roalign( pro_prof->bound ) );
   for( i = 0; i < pro_prof->body.blocks.num_blocks; i++ ) {
     if( i > 0 )
       printf( ", " );
