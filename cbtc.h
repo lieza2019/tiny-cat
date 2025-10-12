@@ -91,8 +91,7 @@ typedef struct block {
       const CBTC_BLOCK_ID paired_blk;
       struct block *ppaired_blk;
     } stop_detect_cond;
-  } sp;
-  
+  } sp;  
   /* the link to the train which FRONT_BLOCK-ID/REAR_BLOCK_ID bite this block, should be accessed with the type of TINY_TRAIN_STATE_PTR,
      via the designated access-methods of,
        TINY_TRAIN_STATE_PTR border_residents_CBTC_BLOCK ( CBTC_BLOCK_PTR pB, TINY_TRAIN_STATE_PTR pT );
