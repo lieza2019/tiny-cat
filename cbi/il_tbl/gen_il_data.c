@@ -2485,7 +2485,12 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
 	    if( strncmp( psp, "SP_NONSENS", strlen("SP_NONSENS") ) ) {
 	      found = TRUE;
 	      if( pblk->sp.stop_detect_type == VIRTUAL_P0 ) {
-		pedge_virtp0 = pblk;
+		if( ((ptr_org->bound == BOUND_DOWN) && (pro_prof->bound == ROUTE2_RIGHT)) || ((ptr_org->bound == BOUND_UP) && (pro_prof->bound == ROUTE2_LEFT)) )
+		  pedge_virtp0 = pblk;
+		else {
+		  assert( !pedge_virtp0 );
+		  goto org_blk_sp;
+		}
 	      } else {
 		assert( pblk->sp.stop_detect_type == P0_COUPLING );
 	      org_blk_sp:
@@ -2536,7 +2541,12 @@ static ROUTE_PROF_PTR emit_route_prof ( FILE *fp_out, ROUTE_PROF_PTR pro_prof ) 
 	    if( strncmp( psp, "SP_NONSENS", strlen("SP_NONSENS") ) ) {
 	      found = TRUE;
 	      if( pblk->sp.stop_detect_type == VIRTUAL_P0 ) {
-		pedge_virtp0 = pblk;
+		if( ((ptr_dst->bound == BOUND_DOWN) && (pro_prof->bound == ROUTE2_RIGHT)) || ((ptr_dst->bound == BOUND_UP) && (pro_prof->bound == ROUTE2_LEFT)) )
+		  pedge_virtp0 = pblk;
+		else {
+		  assert( !pedge_virtp0 );
+		  goto dst_blk_sp;
+		}
 	      } else {
 		assert( pblk->sp.stop_detect_type == P0_COUPLING );
 	      dst_blk_sp:
