@@ -215,6 +215,15 @@ static ATTR_TRIP_PTR raw_journey_trip ( ATTR_TRIP_PTR ptrip ) {
   return ptrip;
 }
 
+static void trip_name ( ATTR_TRIP_PTR ptrip ) {
+  assert( ptrip );
+  
+  printf( "(" );
+  print_st_pltb( &ptrip->attr_st_pltb_orgdst.st_pltb_org );
+  printf( ", " );
+  print_st_pltb( &ptrip->attr_st_pltb_orgdst.st_pltb_dst );
+  printf( ") " );
+}
 static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
   assert( ptrip );
   ATTR_TRIP_PTR r = NULL;
@@ -235,7 +244,9 @@ static ATTR_TRIP_PTR reg_trip ( ATTR_TRIP_PTR ptrip ) {
       if( p != ptrip ) {
 	if( p == &drop ) {
 	  assert( p->kind == PAR_TRIP );
-	  printf( "NOTICE: trip attribute has been overridden with.\n" );
+	  printf( "NOTICE: trip " );
+	  trip_name( p );
+	  printf( "has been overridden with (LINE, COL) = (%d, %d).\n", ptrip->attr_st_pltb_orgdst.st_pltb_org.st.pos.row, ptrip->attr_st_pltb_orgdst.st_pltb_org.st.pos.col );
 	} else {
 	  printf( "INTERNAL-error: on trip definiton & registration detected in %s:%d, giving up.\n", __FILE__, __LINE__  );
 	  exit( 1 );

@@ -21,6 +21,7 @@ trips:
   (((OKBS,PL2), (KIKJ, PL2)), 55, {S822A_S832B});
   (((KIKJ,PL2), (JLA, PL2)), 55, {S832B_S802B, S802B_S804B});
   (((JLA,PL2), (KIKJ, PL1)), 55, {S807B_S831B});
+  
 
 assignments:
   J1 := rake_801; J2 := rake_802; J3 := rake_803; J4 := rake_804;
