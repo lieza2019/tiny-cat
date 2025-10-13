@@ -28,3 +28,5 @@ assignments:
   J5 := rake_805; J6 := rake_806; J7 := rake_807; J8 := rake_808;
 
 journeys:
+  J01:
+    ( ((JLA,PL1), (KIKJ, PL1)), 30, (05:00:00), perfslow, revenue, crew_001 );

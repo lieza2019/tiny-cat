@@ -1112,8 +1112,14 @@ void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	      if( pJ_par->trips.trip_prof[l].crew_id.cid < END_OF_CREWIDs ) {
 		pJ->crew_id = (CREW_ID)pJ_par->trips.trip_prof[l].crew_id.cid;
 	      } else {
+#if 0		
 		printf( "FATAL: undefined route found in journey declaration at (LINE, COL) = (%d, %d).\n",
 			pJ_par->trips.trip_prof[l].crew_id.pos.row, pJ_par->trips.trip_prof[l].crew_id.pos.col );
+#else
+		printf( "FATAL: invalid crew-id in journey declaration at (LINE, COL) = (%d, %d).\n",
+			pJ_par->trips.trip_prof[l].crew_id.pos.row, pJ_par->trips.trip_prof[l].crew_id.pos.col );
+#endif
+			
 		err_stat.sem.invalid_crewid = TRUE;
 		pJ->crew_id = CREW_NO_ID;
 	      }
