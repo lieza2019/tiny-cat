@@ -579,7 +579,7 @@ static int cons_st_pltb_pair ( ST_PLTB_ORGDST_PTR st_pltb_ref[], const int reftb
     BOOL ovrid = FALSE;
     int i;
     assert( timetbl_dataset->trips_decl.num_trips <= MAX_TRIPS_DECL );
-    
+    assert( refs_lim < reftbl_len );
     for( i = 0; i < reftbl_len; i++ ) {
       if( i >= refs_lim ) {
 	assert( (int)(st_pltb_ref[i]->org.st) == 0 );
@@ -590,19 +590,20 @@ static int cons_st_pltb_pair ( ST_PLTB_ORGDST_PTR st_pltb_ref[], const int reftb
 	if( ((st_pltb_ref[i]->org.st == st_org) && (st_pltb_ref[i]->org.pltb == pltb_org)) &&
 	    ((st_pltb_ref[i]->dst.st == st_dst) && (st_pltb_ref[i]->dst.pltb == pltb_dst)) ) {
 	  ovrid = TRUE;
-	  break;
+	  if( ovwt )
+	    break;
 	}
       }
     }
-    if( i < reftbl_len ) {
-      assert( refs_lim < reftbl_len);
+    if( i < reftbl_len ) {      
       r = i;
-      if( ovrid && ovwt ) {
+      if( ovwt && ovrid ) {
 	assert( r < refs_lim );
 	assert( (int)(st_pltb_ref[r]->org.st) > 0 );
 	printf( "NOTICE: trip definition overridden at (LINE, COL) = (%d, %d).\n", pattr_orgdst->st_pltb_org.st.pos.row, pattr_orgdst->st_pltb_org.st.pos.col );
       } else {
-	assert( r == refs_lim );
+	if( ovwt )
+	  assert( r == refs_lim );
 	assert( (int)(st_pltb_ref[r]->org.st) == 0 );
       }
       st_pltb_ref[r]->org.st = st_org;
@@ -1112,14 +1113,8 @@ void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
 	      if( pJ_par->trips.trip_prof[l].crew_id.cid < END_OF_CREWIDs ) {
 		pJ->crew_id = (CREW_ID)pJ_par->trips.trip_prof[l].crew_id.cid;
 	      } else {
-#if 0		
-		printf( "FATAL: undefined route found in journey declaration at (LINE, COL) = (%d, %d).\n",
-			pJ_par->trips.trip_prof[l].crew_id.pos.row, pJ_par->trips.trip_prof[l].crew_id.pos.col );
-#else
 		printf( "FATAL: invalid crew-id in journey declaration at (LINE, COL) = (%d, %d).\n",
 			pJ_par->trips.trip_prof[l].crew_id.pos.row, pJ_par->trips.trip_prof[l].crew_id.pos.col );
-#endif
-			
 		err_stat.sem.invalid_crewid = TRUE;
 		pJ->crew_id = CREW_NO_ID;
 	      }

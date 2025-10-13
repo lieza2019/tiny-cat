@@ -15,18 +15,73 @@ trips:
   (((JLA,PL1), (KIKJ, PL1)), 30, {S803B_S831B});
   (((KIKJ,PL1), (OKBS, PL1)), 30, {S831B_S821A});
   (((OKBS,PL1), (BTGD, PL1)), 30, {S821A_S801A, S801A_S803A});
+  (((OKBS,PL1), (BTGD, PL2)), 30, {S821A_S801A, S801A_S807A});
   (((BTGD,PL1), (BTGD, TB1)), 45, {S803A_S809A});
+  (((BTGD,PL1), (BTGD, TB2)), 45, {S803A_S811A});
   (((BTGD,TB1), (BTGD, PL2)), 45, {S806A_S804A});
+  (((BTGD,TB2), (BTGD, PL2)), 45, {S802A_S804A});
   (((BTGD,PL2), (OKBS, PL2)), 45, {S804A_S822A});
   (((OKBS,PL2), (KIKJ, PL2)), 55, {S822A_S832B});
   (((KIKJ,PL2), (JLA, PL2)), 55, {S832B_S802B, S802B_S804B});
+  (((KIKJ,PL2), (JLA, PL1)), 55, {S832B_S802B, S802B_S810B});
   (((JLA,PL2), (KIKJ, PL1)), 55, {S807B_S831B});
   
-
 assignments:
   J1 := rake_801; J2 := rake_802; J3 := rake_803; J4 := rake_804;
   J5 := rake_805; J6 := rake_806; J7 := rake_807; J8 := rake_808;
 
 journeys:
   J01:
-    ( ((JLA,PL1), (KIKJ, PL1)), 30, (05:00:00), perfslow, revenue, crew_001 );
+    ( ((JLA,PL1), (KIKJ, PL1)), 11, (05:00:00), perfslow, revenue, crew_001 );
+    ( ((KIKJ,PL1), (OKBS, PL1)), 11, perfslow, revenue, crew_001 );
+    ( ((OKBS,PL1), (BTGD, PL1)), 11, perfslow, revenue, crew_001 );
+    ( ((BTGD,PL1), (BTGD, TB1)), 11, perfslow, revenue, crew_001 );
+    ( ((BTGD,TB1), (BTGD, PL2)), 11, perfslow, revenue, crew_001 );
+    ( ((BTGD,PL2), (OKBS, PL2)), 11, perfslow, revenue, crew_001 );
+    ( ((OKBS,PL2), (KIKJ, PL2)), 0, perfslow, revenue, crew_001 );
+    ( ((KIKJ,PL2), (JLA, PL2)), 11, perfslow, revenue, crew_001 );
+    ( ((JLA,PL2), (KIKJ, PL1)), 11, perfslow, revenue, crew_001 );
+    
+    ( ((KIKJ,PL1), (OKBS, PL1)), 0, perfslow, revenue, crew_001 );
+    ( ((OKBS,PL1), (BTGD, PL1)), 11, perfslow, revenue, crew_001 );
+    ( ((BTGD,PL1), (BTGD, TB2)), 11, perfslow, revenue, crew_001 );
+    ( ((BTGD,TB2), (BTGD, PL2)), 11, perfslow, revenue, crew_001 );
+    ( ((BTGD,PL2), (OKBS, PL2)), 11, perfslow, revenue, crew_001 );
+    ( ((OKBS,PL2), (KIKJ, PL2)), 11, perfslow, revenue, crew_001 );
+    ( ((KIKJ,PL2), (JLA, PL1)), 11, perfslow, revenue, crew_001 );
+
+  J02:
+    ( ((JLA,PL1), (KIKJ, PL1)), 11, (05:00:05), perfslow, revenue, crew_002 );
+    ( ((KIKJ,PL1), (OKBS, PL1)), 11, perfslow, revenue, crew_002 );
+    ( ((OKBS,PL1), (BTGD, PL1)), 11, perfslow, revenue, crew_002 );
+    ( ((BTGD,PL1), (BTGD, TB1)), 11, perfslow, revenue, crew_002 );
+    ( ((BTGD,TB1), (BTGD, PL2)), 11, perfslow, revenue, crew_002 );
+    ( ((BTGD,PL2), (OKBS, PL2)), 11, perfslow, revenue, crew_002 );
+    ( ((OKBS,PL2), (KIKJ, PL2)), 0, perfslow, revenue, crew_002 );
+    ( ((KIKJ,PL2), (JLA, PL2)), 11, perfslow, revenue, crew_002 );
+    ( ((JLA,PL2), (KIKJ, PL1)), 11, perfslow, revenue, crew_002 );
+    
+    ( ((KIKJ,PL1), (OKBS, PL1)), 0, perfslow, revenue, crew_002 );
+    ( ((OKBS,PL1), (BTGD, PL1)), 11, perfslow, revenue, crew_002 );
+    ( ((BTGD,PL1), (BTGD, TB2)), 11, perfslow, revenue, crew_002 );
+    ( ((BTGD,TB2), (BTGD, PL2)), 11, perfslow, revenue, crew_002 );
+    ( ((BTGD,PL2), (OKBS, PL2)), 11, perfslow, revenue, crew_002 );
+    ( ((OKBS,PL2), (KIKJ, PL2)), 11, perfslow, revenue, crew_002 );
+    ( ((KIKJ,PL2), (JLA, PL2)), 11, perfslow, revenue, crew_002 );
+
+  J03:
+    ( ((JLA,PL1), (KIKJ, PL1)), 11, (05:00:13), perfslow, revenue, crew_003 );
+    ( ((KIKJ,PL1), (OKBS, PL1)), 11, perfslow, revenue, crew_003 );
+    ( ((OKBS,PL1), (BTGD, PL2)), 11, perfslow, revenue, crew_003 );
+    ( ((BTGD,PL2), (OKBS, PL2)), 11, perfslow, revenue, crew_003 );
+    ( ((OKBS,PL2), (KIKJ, PL2)), 0, perfslow, revenue, crew_003 );
+    ( ((KIKJ,PL2), (JLA, PL2)), 11, perfslow, revenue, crew_003 );
+    ( ((JLA,PL2), (KIKJ, PL1)), 11, perfslow, revenue, crew_003 );
+    
+    ( ((KIKJ,PL1), (OKBS, PL1)), 0, perfslow, revenue, crew_003 );
+    ( ((OKBS,PL1), (BTGD, PL1)), 11, perfslow, revenue, crew_003 );
+    ( ((BTGD,PL1), (BTGD, TB2)), 11, perfslow, revenue, crew_003 );
+    ( ((BTGD,TB2), (BTGD, PL2)), 11, perfslow, revenue, crew_003 );
+    ( ((BTGD,PL2), (OKBS, PL2)), 11, perfslow, revenue, crew_003 );
+    ( ((OKBS,PL2), (KIKJ, PL2)), 11, perfslow, revenue, crew_003 );
+    ( ((KIKJ,PL2), (JLA, PL1)), 11, perfslow, revenue, crew_003 );
