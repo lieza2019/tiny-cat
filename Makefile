@@ -19,7 +19,6 @@ $(TINY_EXE_NAME) : main.o ./timetable/y.tab.o ./timetable/lex.yy.o ./timetable/t
 	for oname in `$(AR) -t $(TINY_LIB_NAME)`; do if [ -f $${oname} ]; then $(RM) $${oname}; fi; done; \
 	$(RM) ./cbi/il_tbl/interlock_dataset.h
 	$(MAKE) $(TINY_LIB_NAME)
-#	$(RM) main.o
 	$(MAKE) main.o
 	$(MAKE) ./timetable/y.tab.o
 	$(MAKE) ./timetable/lex.yy.o
