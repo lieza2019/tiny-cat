@@ -6,7 +6,6 @@
 #include "../generic.h"
 #include "ttcreat.h"
 
-
 static DWELL_ID dwell_seq( STOPPING_POINT_CODE sp ) {
   static DWELL_ID book[END_OF_SPs];
   assert( sp < END_OF_SPs );
@@ -477,4 +476,33 @@ int load_online_timetbl ( void ) {
   r = jcnt;
   online_timetbl.num_journeys = r;
   return r;
+}
+
+static int asgned_rakeid ( JOURNEY_ID jid ) {
+  assert( timetbl_dataset );
+  int r = -1;
+  
+  int i;
+  for( i = 0; i < timetbl_dataset->jr_asgns.num_asgns; i++ ) {
+    if( timetbl_dataset->jr_asgns.jrasgns[i].jid == jid ) {
+      r = timetbl_dataset->jr_asgns.jrasgns[i].rake_id;
+      break;
+    }
+  }
+  return r;
+}
+int cons_online_timetbl ( void ) {
+  assert( timetbl_dataset );
+  int i;
+  
+  online_timetbl.num_journeys = timetbl_dataset->j.num_journeys;
+  for( i = 0; i < timetbl_dataset->j.num_journeys; i++ ) {
+    online_timetbl.journeys[i].journey.valid = timetbl_dataset->j.journeys[i].valid;
+    online_timetbl.journeys[i].journey.jid = timetbl_dataset->j.journeys[i].jid;
+    online_timetbl.journeys[i].journey.start_time = timetbl_dataset->j.journeys[i].start_time;
+    online_timetbl.journeys[i].journey.scheduled_commands.pcmds = timetbl_dataset->j.journeys[i].pschcmds_journey;
+    online_timetbl.journeys[i].journey.scheduled_commands.pNext = &timetbl_dataset->j.journeys[i].pschcmds_journey[0];
+    online_timetbl.journeys[i].rake_id = asgned_rakeid( timetbl_dataset->j.journeys[i].jid );
+  }
+  return i;
 }

@@ -361,6 +361,7 @@ BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_
   return r;
 }
 
+#define TIMETABLE_SRC_FILENAME "./timetable/JLA-BTGD_loop.ttb"
 int main ( void ) {
 #if 0
   {
@@ -398,7 +399,12 @@ int main ( void ) {
 #endif
 #if 1
   {
+#if 0
     online_timetbl = trial_timetable;
+#else
+    ttcreat( TIMETABLE_SRC_FILENAME, FALSE, TRUE );
+    cons_online_timetbl();
+#endif
     makeup_online_timetable();
   }
 #endif

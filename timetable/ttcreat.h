@@ -151,9 +151,11 @@ typedef struct journey_trip {
 } JOURNEY_TRIP, *JOURNEY_TRIP_PTR;
 
 typedef struct journey_desc {
-  JOURNEY_TRIP trips[MAX_JOURNEY_TRIPS];
   JOURNEY_ID jid;
+  BOOL valid; // !!!!!
+  ARS_ASSOC_TIME start_time; // !!!!!
   int num_trips;
+  JOURNEY_TRIP trips[MAX_JOURNEY_TRIPS];  
   SCHEDULED_COMMAND_PTR pschcmds_journey;
 } JOURNEY_DESC, *JOURNEY_DESC_PTR;
 
@@ -199,5 +201,5 @@ extern void cons_trips ( ATTR_TRIPS_PTR ptrips );
 extern void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys );
 
 extern int ttcreat ( FILE *fp_src, BOOL dump_par_symtbl, BOOL dump_ttc_symtbl );
-
+extern int cons_online_timetbl ( void );
 #endif // TTCREAT_H
