@@ -1346,14 +1346,15 @@ stpl_sp_asgn : '(' st_and_pltb ',' TK_SP ')' ';' {
 
 /* e.g.
    trips:
-     (((JLA,PL1), (KIKJ, PL1)), (SP_73, SP_77), {S803B_S831B});
-     (((KIKJ,PL1), (OKBS, PL1)), (SP_77, SP_79), {S831B_S821A});
-     (((OKBS,PL1), (BTGD, PL1)), (SP_79, SP_81), {S821A_S801A, S801A_S803A});
-     (((BTGD,PL1), (BTGD, TB1)), (SP_81, TB_D5), {S803A_S809A});
-     (((BTGD,TB1), (BTGD, PL2)), (SP_D5, TB_80), {S806A_S804A});
-     (((BTGD,PL2), (OKBS, PL2)), (SP_80, TB_78), {S804A_S822A});
-     (((OKBS,PL2), (KIKJ, PL2)), (SP_78, TB_76), {S822A_S832B});
-     (((KIKJ,PL2), (JLA, PL1)), (SP_76, TB_73), {S832B_S802B, S802B_S810B});
+     (((JLA,PL1), (KIKJ, PL1)), 30, {S803B_S831B});
+     (((KIKJ,PL1), (OKBS, PL1)), 30, {S831B_S821A});
+     (((OKBS,PL1), (BTGD, PL1)), 30, {S821A_S801A, S801A_S803A});
+     (((BTGD,PL1), (BTGD, TB1)), 45, {S803A_S809A});
+     (((BTGD,TB1), (BTGD, PL2)), 45, {S806A_S804A});
+     (((BTGD,PL2), (OKBS, PL2)), 45, {S804A_S822A});
+     (((OKBS,PL2), (KIKJ, PL2)), 55, {S822A_S832B});
+     (((KIKJ,PL2), (JLA, PL2)), 55, {S832B_S802B, S802B_S804B});
+     (((JLA,PL2), (KIKJ, PL1)), 55, {S807B_S831B});
 */
 trips_decl : trips_defs {
   $$ = $1;
@@ -1432,7 +1433,7 @@ trips_definition : /* empty journies */ {
   timetable_symtbl->trips_regtbl.kind = PAR_TRIPS;
   $$ = &timetable_symtbl->trips_regtbl;
   assert( $$->ntrips == 0 );
-}
+ }
                  | trips_definition trip_def ';'{
   assert( $1->kind == PAR_TRIPS );
   if( $2.kind == PAR_TRIP ) {
@@ -1902,4 +1903,3 @@ jr_asgn : TK_JOURNEY_ID TK_ASGN TK_RAKE_ID {
 int yyerror ( const char *s ) {
   return 1;
 }
-

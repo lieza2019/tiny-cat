@@ -113,8 +113,8 @@ BOOL eq_st_pltb ( ATTR_ST_PLTB_PTR p1, ATTR_ST_PLTB_PTR p2 ) {
   BOOL r = FALSE;
   
   if( (p1->kind == PAR_ST_PLTB) && (p2->kind == PAR_ST_PLTB) )
-    if( ! strncmp( p1->st.name, p2->st.name, MAX_STNAME_LEN ) )
-      if( ! strncmp( p1->pltb.id, p2->pltb.id, MAX_PLTB_NAMELEN ) )
+    if( strncmp( p1->st.name, p2->st.name, MAX_STNAME_LEN ) == 0 )
+      if( strncmp( p1->pltb.id, p2->pltb.id, MAX_PLTB_NAMELEN ) == 0 )
 	r = TRUE;
   return r;
 }
@@ -125,8 +125,8 @@ BOOL eq_st_pltb_pair ( ATTR_ST_PLTB_ORGDST_PTR pp1, ATTR_ST_PLTB_ORGDST_PTR pp2 
   BOOL r = FALSE;
   
   if( (pp1->kind == PAR_ST_PLTB_ORGDST) && (pp2->kind == PAR_ST_PLTB_ORGDST) )
-    if( ! eq_st_pltb( &pp1->st_pltb_org, &pp2->st_pltb_org ) )
-      if( ! eq_st_pltb( &pp1->st_pltb_dst, &pp2->st_pltb_dst ) )
+    if( eq_st_pltb( &pp1->st_pltb_org, &pp2->st_pltb_org ) )
+      if( eq_st_pltb( &pp1->st_pltb_dst, &pp2->st_pltb_dst ) )
 	r = TRUE;
   return r;
 }
@@ -185,12 +185,12 @@ ATTR_TRIP_PTR reg_trip_def ( ATTR_TRIPS_PTR preg_tbl, ATTR_TRIP_PTR pobsolete, A
   BOOL ovw = FALSE;
   ATTR_TRIP_PTR r = NULL;
   
-  int i;  
+  int i;
   for( i = 0; i < preg_tbl->ntrips; i++ ) {
     assert( i < preg_tbl->ntrips );
     ATTR_TRIP_PTR pprof = &preg_tbl->trip_prof[i];
     assert( pprof->attr_st_pltb_orgdst.kind == PAR_ST_PLTB_ORGDST );
-    if( ! ident_trips( &pprof->attr_st_pltb_orgdst, &ptrip->attr_st_pltb_orgdst ) ) {
+    if( ident_trips( &pprof->attr_st_pltb_orgdst, &ptrip->attr_st_pltb_orgdst ) ) {
       if( pobsolete ) {
 	*pobsolete = *pprof;	
 	r = pobsolete;
