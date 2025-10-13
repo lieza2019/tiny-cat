@@ -328,7 +328,11 @@ void emit_scheduled_cmds ( void ) {
 	}
       }
       assert( k == pjd->num_trips );
+      pjd->valid = TRUE;
       pjd->pschcmds_journey = sch_cmds.phead;
+      if( pjd->num_trips > 0 )
+	pjd->start_time = pjd->trips[0].time_arrdep.time_arr;
+#if 0
       if( pjd ) {
 	assert( sch_cmds.phead && sch_cmds.ptail );
 	SCHEDULED_COMMAND_PTR psc_fin = NULL;
@@ -340,6 +344,19 @@ void emit_scheduled_cmds ( void ) {
 	sch_cmds.ptail->ln.journey.planned.pNext = psc_fin;
 	assert( (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_ARRIVAL) || (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_SKIP) );
       }
+#else
+      {
+	assert( sch_cmds.phead && sch_cmds.ptail );
+	SCHEDULED_COMMAND_PTR psc_fin = NULL;
+	psc_fin = newnode_schedulecmd();
+	assert( psc_fin );
+	psc_fin->ln.journey.planned.pNext = NULL;
+	psc_fin->jid = pjd->jid;
+	psc_fin->cmd = END_OF_SCHEDULED_CMDS;
+	sch_cmds.ptail->ln.journey.planned.pNext = psc_fin;
+	assert( (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_ARRIVAL) || (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_SKIP) );
+      }
+#endif
       jcnt++;
     }
   }
@@ -478,6 +495,68 @@ int load_online_timetbl ( void ) {
   return r;
 }
 
+static SCHEDULED_COMMAND_PTR make_it_today ( SCHEDULED_COMMAND_PTR pschcmd ) {
+  assert( pschcmd );
+  struct tm *pT_crnt = NULL;
+  time_t crnt_time = 0;
+  tzset();
+  crnt_time = time( NULL );
+  pT_crnt = localtime( &crnt_time );
+  
+  if( pT_crnt ) {
+    const int this_year = pT_crnt->tm_year + 1900;
+    const int this_month = pT_crnt->tm_mon + 1;
+    const int today = pT_crnt->tm_mday;
+    switch( pschcmd->cmd ) {
+    case ARS_SCHEDULED_ROUTESET:
+      pschcmd->attr.sch_roset.dep_time.year = this_year;
+      pschcmd->attr.sch_roset.dep_time.month = this_month;
+      pschcmd->attr.sch_roset.dep_time.day = today;
+      break;
+    case ARS_SCHEDULED_ROUTEREL:
+      pschcmd->attr.sch_rorel.dep_time.year = this_year;
+      pschcmd->attr.sch_rorel.dep_time.month = this_month;
+      pschcmd->attr.sch_rorel.dep_time.day = today;
+      break;
+    case ARS_SCHEDULED_ARRIVAL:
+      pschcmd->attr.sch_arriv.arr_time.year = this_year;
+      pschcmd->attr.sch_arriv.arr_time.month = this_month;
+      pschcmd->attr.sch_arriv.arr_time.day = today;
+      break;
+    case ARS_SCHEDULED_DEPT:
+      pschcmd->attr.sch_dept.dep_time.year = this_year;
+      pschcmd->attr.sch_dept.dep_time.month = this_month;
+      pschcmd->attr.sch_dept.dep_time.day = today;
+      break;
+    case ARS_SCHEDULED_SKIP:
+      pschcmd->attr.sch_skip.pass_time.year = this_year;
+      pschcmd->attr.sch_skip.pass_time.month = this_month;
+      pschcmd->attr.sch_skip.pass_time.day = today;
+      break;
+    case END_OF_SCHEDULED_CMDS:
+      /* fail thru.*/
+    case ARS_CMD_NOP:
+      break;
+    default:
+      assert( FALSE );
+      break;
+    }
+  }
+  return pschcmd;
+}
+static int make_cmds_today ( SCHEDULED_COMMAND_PTR pschcmds ) {
+  assert( pschcmds );
+  int cnt = 0;
+  
+  SCHEDULED_COMMAND_PTR pcmd = pschcmds;
+  while( pcmd ) {
+    make_it_today( pcmd );
+    cnt++;
+    pcmd = pcmd->ln.journey.planned.pNext;
+  }
+  return cnt;
+}
+
 static int asgned_rakeid ( JOURNEY_ID jid ) {
   assert( timetbl_dataset );
   int r = -1;
@@ -497,9 +576,10 @@ int cons_online_timetbl ( void ) {
   
   online_timetbl.num_journeys = timetbl_dataset->j.num_journeys;
   for( i = 0; i < timetbl_dataset->j.num_journeys; i++ ) {
+    make_cmds_today( timetbl_dataset->j.journeys[i].pschcmds_journey );
     online_timetbl.journeys[i].journey.valid = timetbl_dataset->j.journeys[i].valid;
     online_timetbl.journeys[i].journey.jid = timetbl_dataset->j.journeys[i].jid;
-    online_timetbl.journeys[i].journey.start_time = timetbl_dataset->j.journeys[i].start_time;
+    online_timetbl.journeys[i].journey.start_time = (ARS_ASSOC_TIME)timetbl_dataset->j.journeys[i].start_time;
     online_timetbl.journeys[i].journey.scheduled_commands.pcmds = timetbl_dataset->j.journeys[i].pschcmds_journey;
     online_timetbl.journeys[i].journey.scheduled_commands.pNext = &timetbl_dataset->j.journeys[i].pschcmds_journey[0];
     online_timetbl.journeys[i].rake_id = asgned_rakeid( timetbl_dataset->j.journeys[i].jid );

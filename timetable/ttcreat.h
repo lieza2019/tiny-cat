@@ -152,8 +152,8 @@ typedef struct journey_trip {
 
 typedef struct journey_desc {
   JOURNEY_ID jid;
-  BOOL valid; // !!!!!
-  ARS_ASSOC_TIME start_time; // !!!!!
+  BOOL valid;
+  TINY_TIME_DESC start_time;
   int num_trips;
   JOURNEY_TRIP trips[MAX_JOURNEY_TRIPS];  
   SCHEDULED_COMMAND_PTR pschcmds_journey;

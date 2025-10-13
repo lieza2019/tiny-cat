@@ -1,5 +1,5 @@
 /*
- * handling the setting value for psc_dep->attr.sch_dept.depdir. 
+ * Handling the setting value for psc_dep->attr.sch_dept.depdir. 
  */
 #include <stdio.h>
 #include <stdlib.h>
