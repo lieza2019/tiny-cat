@@ -570,20 +570,47 @@ static int asgned_rakeid ( JOURNEY_ID jid ) {
   }
   return r;
 }
+
+static struct {
+  SCHEDULED_COMMAND_PTR pfrontier;
+  SCHEDULED_COMMAND_PTR pfree;
+  SCHEDULED_COMMAND nodebuf[SCHEDULED_CMDS_NODEBUF_SIZE * MAX_JOURNEYS_IN_TIMETABLE];
+} schcmds_buf = { NULL, NULL };
 int cons_online_timetbl ( void ) {
   assert( timetbl_dataset );
-  int i = 0;
   int cnt = 0;
   
+  int i = 0;
+  schcmds_buf.pfrontier = &schcmds_buf.nodebuf[0];
   online_timetbl.num_journeys = timetbl_dataset->j.num_journeys;
   while( i < MAX_JOURNEYS ) {
     if( timetbl_dataset->j.journeys[i].jid > 0  ) {
-      make_cmds_today( timetbl_dataset->j.journeys[i].pschcmds_journey );
-      online_timetbl.journeys[cnt].journey.valid = timetbl_dataset->j.journeys[i].valid;
       online_timetbl.journeys[cnt].journey.jid = timetbl_dataset->j.journeys[i].jid;
+      online_timetbl.journeys[cnt].journey.valid = timetbl_dataset->j.journeys[i].valid;
+      make_cmds_today( timetbl_dataset->j.journeys[i].pschcmds_journey );
       online_timetbl.journeys[cnt].journey.start_time = (ARS_ASSOC_TIME)timetbl_dataset->j.journeys[i].start_time;
+#if 0
       online_timetbl.journeys[cnt].journey.scheduled_commands.pcmds = timetbl_dataset->j.journeys[i].pschcmds_journey;
       online_timetbl.journeys[cnt].journey.scheduled_commands.pNext = &timetbl_dataset->j.journeys[i].pschcmds_journey[0];
+      online_timetbl.journeys[cnt].rake_id = asgned_rakeid( timetbl_dataset->j.journeys[i].jid );
+#else
+      {
+	assert( schcmds_buf.pfrontier < &schcmds_buf.nodebuf[SCHEDULED_CMDS_NODEBUF_SIZE * MAX_JOURNEYS_IN_TIMETABLE] );
+	SCHEDULED_COMMAND_PTR pnode = schcmds_buf.pfrontier;
+	assert( pnode );
+	SCHEDULED_COMMAND_PTR pcmd = timetbl_dataset->j.journeys[i].pschcmds_journey;
+	while( pcmd ) {
+	  assert( pcmd );
+	  assert( pnode < &schcmds_buf.nodebuf[SCHEDULED_CMDS_NODEBUF_SIZE * MAX_JOURNEYS_IN_TIMETABLE] );
+	  *pnode = *pcmd;
+	  pnode++;
+	  pcmd = pcmd->ln.journey.planned.pNext;
+	}
+	online_timetbl.journeys[cnt].journey.scheduled_commands.pcmds = schcmds_buf.pfrontier;
+	online_timetbl.journeys[cnt].journey.scheduled_commands.pNext = &schcmds_buf.pfrontier[0];	
+	schcmds_buf.pfrontier = pnode;
+      }
+#endif
       online_timetbl.journeys[cnt].rake_id = asgned_rakeid( timetbl_dataset->j.journeys[i].jid );
       cnt++;
     }

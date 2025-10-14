@@ -8,7 +8,7 @@
 #include "cbtc.h"
 #include "interlock.h"
 
-#define MAX_JOURNEYS_IN_TIMETABLE 1024
+#define MAX_JOURNEYS_IN_TIMETABLE 512
 #define SCHEDULED_CMDS_NODEBUF_SIZE 1024
 #define SCHEDULED_CMDS_SORTBUF_SIZE 65536
 
