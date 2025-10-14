@@ -495,8 +495,10 @@ int load_online_timetbl ( void ) {
   return r;
 }
 
-static SCHEDULED_COMMAND_PTR make_it_today ( SCHEDULED_COMMAND_PTR pschcmd ) {
+static ARS_ASSOC_TIME_PTR make_it_today ( SCHEDULED_COMMAND_PTR pschcmd ) {
   assert( pschcmd );
+  ARS_ASSOC_TIME_PTR ptime = NULL;
+  
   struct tm *pT_crnt = NULL;
   time_t crnt_time = 0;
   tzset();
@@ -512,26 +514,31 @@ static SCHEDULED_COMMAND_PTR make_it_today ( SCHEDULED_COMMAND_PTR pschcmd ) {
       pschcmd->attr.sch_roset.dep_time.year = this_year;
       pschcmd->attr.sch_roset.dep_time.month = this_month;
       pschcmd->attr.sch_roset.dep_time.day = today;
+      ptime = &pschcmd->attr.sch_roset.dep_time;
       break;
     case ARS_SCHEDULED_ROUTEREL:
       pschcmd->attr.sch_rorel.dep_time.year = this_year;
       pschcmd->attr.sch_rorel.dep_time.month = this_month;
       pschcmd->attr.sch_rorel.dep_time.day = today;
+      ptime = &pschcmd->attr.sch_rorel.dep_time;
       break;
     case ARS_SCHEDULED_ARRIVAL:
       pschcmd->attr.sch_arriv.arr_time.year = this_year;
       pschcmd->attr.sch_arriv.arr_time.month = this_month;
       pschcmd->attr.sch_arriv.arr_time.day = today;
+      ptime = &pschcmd->attr.sch_arriv.arr_time;
       break;
     case ARS_SCHEDULED_DEPT:
       pschcmd->attr.sch_dept.dep_time.year = this_year;
       pschcmd->attr.sch_dept.dep_time.month = this_month;
       pschcmd->attr.sch_dept.dep_time.day = today;
+      ptime = &pschcmd->attr.sch_dept.dep_time;
       break;
     case ARS_SCHEDULED_SKIP:
       pschcmd->attr.sch_skip.pass_time.year = this_year;
       pschcmd->attr.sch_skip.pass_time.month = this_month;
       pschcmd->attr.sch_skip.pass_time.day = today;
+      ptime = &pschcmd->attr.sch_skip.pass_time;
       break;
     case END_OF_SCHEDULED_CMDS:
       /* fail thru.*/
@@ -542,15 +549,19 @@ static SCHEDULED_COMMAND_PTR make_it_today ( SCHEDULED_COMMAND_PTR pschcmd ) {
       break;
     }
   }
-  return pschcmd;
+  return ptime;
 }
-static int make_cmds_today ( SCHEDULED_COMMAND_PTR pschcmds ) {
+static int make_cmds_today ( ARS_ASSOC_TIME_PTR start_time, SCHEDULED_COMMAND_PTR pschcmds ) {
+  assert( start_time );
   assert( pschcmds );
   int cnt = 0;
   
   SCHEDULED_COMMAND_PTR pcmd = pschcmds;
   while( pcmd ) {
-    make_it_today( pcmd );
+    ARS_ASSOC_TIME_PTR ptime = NULL;
+    ptime = make_it_today( pcmd );
+    if( pcmd == pschcmds )
+      *start_time = *ptime;
     cnt++;
     pcmd = pcmd->ln.journey.planned.pNext;
   }
@@ -587,13 +598,14 @@ int cons_online_timetbl ( void ) {
     if( timetbl_dataset->j.journeys[i].jid > 0  ) {
       online_timetbl.journeys[cnt].journey.jid = timetbl_dataset->j.journeys[i].jid;
       online_timetbl.journeys[cnt].journey.valid = timetbl_dataset->j.journeys[i].valid;
+#if 0
       make_cmds_today( timetbl_dataset->j.journeys[i].pschcmds_journey );
       online_timetbl.journeys[cnt].journey.start_time = (ARS_ASSOC_TIME)timetbl_dataset->j.journeys[i].start_time;
-#if 0
       online_timetbl.journeys[cnt].journey.scheduled_commands.pcmds = timetbl_dataset->j.journeys[i].pschcmds_journey;
       online_timetbl.journeys[cnt].journey.scheduled_commands.pNext = &timetbl_dataset->j.journeys[i].pschcmds_journey[0];
       online_timetbl.journeys[cnt].rake_id = asgned_rakeid( timetbl_dataset->j.journeys[i].jid );
 #else
+      make_cmds_today( &online_timetbl.journeys[cnt].journey.start_time, timetbl_dataset->j.journeys[i].pschcmds_journey );
       {
 	assert( schcmds_buf.pfrontier < &schcmds_buf.nodebuf[SCHEDULED_CMDS_NODEBUF_SIZE * MAX_JOURNEYS_IN_TIMETABLE] );
 	SCHEDULED_COMMAND_PTR pnode = schcmds_buf.pfrontier;

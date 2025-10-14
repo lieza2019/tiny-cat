@@ -363,8 +363,6 @@ BOOL launch_msg_srv_stat ( TINY_SOCK_PTR pS, TINY_SOCK_DESC *pd_beat, TINY_SOCK_
 
 #define TIMETABLE_SRC_FILENAME "./timetable/JLA-BTGD_loop.ttb"
 int main ( void ) {
-  printf( "(sizeof(SCHEDULED_COMMAND) * SCHEDULED_CMDS_NODEBUF_SIZE): %d\n", (sizeof(SCHEDULED_COMMAND) * SCHEDULED_CMDS_NODEBUF_SIZE) );
-  exit( 0 );
 #if 0
   {
     extern int ars_chk_depschedule ( SCHEDULE_AT_SP sch_dep[END_OF_SPs], SCHEDULED_COMMAND_C_PTR pC );
