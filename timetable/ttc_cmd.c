@@ -572,17 +572,22 @@ static int asgned_rakeid ( JOURNEY_ID jid ) {
 }
 int cons_online_timetbl ( void ) {
   assert( timetbl_dataset );
-  int i;
+  int i = 0;
+  int cnt = 0;
   
   online_timetbl.num_journeys = timetbl_dataset->j.num_journeys;
-  for( i = 0; i < timetbl_dataset->j.num_journeys; i++ ) {
-    make_cmds_today( timetbl_dataset->j.journeys[i].pschcmds_journey );
-    online_timetbl.journeys[i].journey.valid = timetbl_dataset->j.journeys[i].valid;
-    online_timetbl.journeys[i].journey.jid = timetbl_dataset->j.journeys[i].jid;
-    online_timetbl.journeys[i].journey.start_time = (ARS_ASSOC_TIME)timetbl_dataset->j.journeys[i].start_time;
-    online_timetbl.journeys[i].journey.scheduled_commands.pcmds = timetbl_dataset->j.journeys[i].pschcmds_journey;
-    online_timetbl.journeys[i].journey.scheduled_commands.pNext = &timetbl_dataset->j.journeys[i].pschcmds_journey[0];
-    online_timetbl.journeys[i].rake_id = asgned_rakeid( timetbl_dataset->j.journeys[i].jid );
+  while( i < MAX_JOURNEYS ) {
+    if( timetbl_dataset->j.journeys[i].jid > 0  ) {
+      make_cmds_today( timetbl_dataset->j.journeys[i].pschcmds_journey );
+      online_timetbl.journeys[cnt].journey.valid = timetbl_dataset->j.journeys[i].valid;
+      online_timetbl.journeys[cnt].journey.jid = timetbl_dataset->j.journeys[i].jid;
+      online_timetbl.journeys[cnt].journey.start_time = (ARS_ASSOC_TIME)timetbl_dataset->j.journeys[i].start_time;
+      online_timetbl.journeys[cnt].journey.scheduled_commands.pcmds = timetbl_dataset->j.journeys[i].pschcmds_journey;
+      online_timetbl.journeys[cnt].journey.scheduled_commands.pNext = &timetbl_dataset->j.journeys[i].pschcmds_journey[0];
+      online_timetbl.journeys[cnt].rake_id = asgned_rakeid( timetbl_dataset->j.journeys[i].jid );
+      cnt++;
+    }
+    i++;
   }
-  return i;
+  return cnt;
 }
