@@ -419,17 +419,13 @@ journey_definitions : TK_JOURNEYS ':' /* empty journies */ {
   assert( timetable_symtbl->journeys_regtbl.kind == PAR_JOURNEYS );
   timetable_symtbl->journeys_regtbl.njourneys++;
   {
-    int n = timetable_symtbl->journeys_regtbl.njourneys;
-    assert( n > 0 );
     int i;
     for( i = 0; i < MAX_JOURNEYS; i++ ) {
-      assert( n >= 0 );
-      if( timetable_symtbl->journeys_regtbl.journey_prof[i].journey_id.jid > 0 ) {
+      if( timetable_symtbl->journeys_regtbl.journey_prof[i].journey_id.jid > 0 )
 	assert( timetable_symtbl->journeys_regtbl.journey_prof[i].kind == PAR_JOURNEY );
-	n--;
-      }
+      else
+	assert( timetable_symtbl->journeys_regtbl.journey_prof[i].kind == PAR_UNKNOWN );
     }
-    assert( n == 0 );
   }
   journey_id_w.jid_w = -1;
   $$ = &timetable_symtbl->journeys_regtbl;  

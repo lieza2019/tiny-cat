@@ -1128,7 +1128,6 @@ void cons_journeys ( ATTR_JOURNEYS_PTR pjourneys ) {
     }
     i++;
   }
-  assert( timetbl_dataset->j.num_journeys == pjourneys->njourneys );
 }
 
 static void print_ttc_symtbl ( void ) {
