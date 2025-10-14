@@ -402,8 +402,14 @@ int main ( void ) {
 #if 0
     online_timetbl = trial_timetable;
 #else
-    ttcreat( TIMETABLE_SRC_FILENAME, FALSE, TRUE );
-    cons_online_timetbl();
+    FILE *fp_ttbl_src = NULL;
+    fp_ttbl_src = fopen( TIMETABLE_SRC_FILENAME, "r" );
+    if( !ferror( fp_ttbl_src ) ) {
+      ttcreat( fp_ttbl_src, FALSE, TRUE );
+      cons_online_timetbl();
+    } else {
+      exit( 0 );
+    }
 #endif
     makeup_online_timetable();
   }
