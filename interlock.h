@@ -123,7 +123,7 @@ typedef struct route {
 typedef const struct route *ROUTE_C_PTR;
 
 #define MAX_ROUTE_DIVERGENCE 16
-#define MAX_ROUTE_CONN_LEN 5
+#define MAX_ROUTE_CONN_LEN 16
 typedef struct il_obj_container {
   IL_SYM_KIND kind;
   IL_SYM sym;
