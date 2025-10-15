@@ -448,7 +448,7 @@ static void chk_consistency_over_sp_links ( void ) {
 	assert( pblk_assoc->sp.stop_detect_type == pblock->sp.stop_detect_type );
 	
 	assert( pblk_assoc->sp.stop_detect_cond.paired_blk == pblock->virt_block_name );
-	assert( ! pblk_assoc->sp.stop_detect_cond.ppaired_blk );
+	assert( pblk_assoc->sp.stop_detect_cond.ppaired_blk );
 	assert( pblk_assoc->sp.stop_detect_cond.ppaired_blk == pblock );
       } else {
 	assert( pblock->sp.stop_detect_cond.paired_blk == VB_NONSENS );
