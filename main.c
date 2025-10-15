@@ -275,8 +275,8 @@ static void load_il_status_geometry ( void ) {
       char fname[CBI_CODE_FILENAME_MAXLEN];
       fname[511] = 0;
 #ifndef IN_CBI_RESOURCEDIR
-      assert( (int)sizeof(fname) > (strlen("./cbi/") + strlen(il_status_geometry_resources[oc_id].csv_fname)) );
-      strcat( strcpy(fname, "./cbi/"), il_status_geometry_resources[oc_id].csv_fname );
+      assert( (int)sizeof(fname) > (strlen("./cbi/memmap/") + strlen(il_status_geometry_resources[oc_id].csv_fname)) );
+      strcat( strcpy(fname, "./cbi/memmap/"), il_status_geometry_resources[oc_id].csv_fname );
 #else
       strcpy( fname, il_status_geometry_resources[oc_id].csv_fname );
 #endif // IN_CBI_RESOURCEDIR
