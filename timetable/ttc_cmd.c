@@ -192,6 +192,22 @@ static SCHEDULED_COMMAND_PTR cons_rosetrel_cmds ( JOURNEY_ID jid, JOURNEY_TRIP_P
 	  psc_dep->attr.sch_dept.perf_lev = pjprof->perfreg;
 	  psc_dep->attr.sch_dept.crew_id = pjprof->crew_id;
 	  psc_dep->attr.sch_dept.dep_route = psc_roset->attr.sch_roset.route_id;
+	  psc_dep->attr.sch_dept.dep_dir.L = FALSE;
+	  psc_dep->attr.sch_dept.dep_dir.R = FALSE;
+	  if( psc_roset->attr.sch_roset.proute_prof ) {
+	    switch( (psc_roset->attr.sch_roset.proute_prof)->bound ) {
+	    case ROUTE2_LEFT:
+	      psc_dep->attr.sch_dept.dep_dir.L = TRUE;
+	      break;
+	    case ROUTE2_RIGHT:
+	      psc_dep->attr.sch_dept.dep_dir.R = TRUE;
+	      break;
+	    case ROUTE_ALIGN_UNKNOWN:
+	      /* fail thru. */
+	    default:
+	      break;
+	    }	    
+	  }
 	  psc_dep->attr.sch_dept.proute_prof = psc_roset->attr.sch_roset.proute_prof;
 	  assert( psc_dep->attr.sch_dept.proute_prof );
 	  //psc_dep->attr.sch_dept.depdir = ;

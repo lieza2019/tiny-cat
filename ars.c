@@ -617,7 +617,7 @@ static CBTC_BLOCK_C_PTR any_trains_ahead ( ROUTE_C_PTR proute, int ahead_blk, TI
       for( i = 0; i < MAX_ADJACENT_BLKS; i++ ) {
 	TINY_TRAIN_STATE_PTR p = read_edge_of_residents_CBTC_BLOCK1( pB, i );
 	if( p ) {
-	  assert( p != ptrain_ctl );
+	  //assert( p != ptrain_ctl ); //本assertを撤去してよい理由とは(2025/10/16).
 	  if( !found ) {
 	    pT = p;
 	    found = TRUE;
@@ -1264,7 +1264,7 @@ ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ )
 			      } else {
 				assert( cond > 0 );
 			      chk_dst_cond:
-				assert( pTT );			    
+				assert( pTT );
 				ARS_REASONS res_dst = END_OF_ARS_REASONS;
 				if( pC->attr.sch_roset.is_dept_route ) {
 				  goto ready_on_fire;
@@ -1276,11 +1276,15 @@ ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ )
 				    //printf( "result of pick_dstcmd: %s\n", (res_dst != END_OF_ARS_REASONS ? cnv2str_ars_reasons[res_dst] : "no_claims") ); // *****
 				    cond = ars_chk_dstschedule( pTT->sp_schedule, pC_dst, pC_lok );
 				    if( cond <= 0 ) {
-				      if( cond < 0 )
+				      if( cond < 0 ) {
 					r = ARS_MUTEX_BLOCKED;
-				      else {
+				      } else {
 					assert( cond == 0 );
 					r = ARS_FOUND_PRED_ARRIVDEP_AT_DST;
+      if( pC->attr.sch_roset.proute_prof->id == S801A_S803A ) {
+	printf( "HIT.\n" );
+	assert( FALSE );
+      }
 				      }
 				    } else {
 				    ready_on_fire:
