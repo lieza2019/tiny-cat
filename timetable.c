@@ -256,9 +256,19 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
     SCHEDULED_COMMAND_PTR pC_sp = events_at_sp[i].pcmds;
     while( pC_sp ) {
       assert( cnt < SCHEDULED_CMDS_SORTBUF_SIZE );
+#if 1 // *****
+      {
+	char cmd_name[6] = "";
+	printf( "(SP:%s, ", cnv2str_sp_code( (STOPPING_POINT_CODE)i ) );
+	cnv2abb_ars_command( cmd_name, pC_sp->cmd );
+	printf( "jid:%d, cmd:%s), ", (int)pC_sp->jid, cmd_name );
+      }
+      printf( "\n" );
+#endif
       sortbuf_at_sp[cnt++] = pC_sp;
-      pC_sp = pC_sp->ln.sp_sch.pNext;
+      pC_sp = pC_sp->ln.sp_sch.pNext;      
     }
+    printf( "\n" ); // *****, belonging to the temporal printings above.
     assert( (cnt >= 0) && (cnt < SCHEDULED_CMDS_SORTBUF_SIZE) );
 #ifdef CHK_STRICT_CONSISTENCY
     {

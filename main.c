@@ -412,6 +412,7 @@ int main ( void ) {
     }
 #endif
     makeup_online_timetable();
+#if 0
     {
       int i;
       for( i = 0; i < END_OF_SPs; i++ ) {
@@ -432,7 +433,9 @@ int main ( void ) {
 	printf( "\n" );
       }
     }
+#endif
   }
+  exit( 1 );
 #endif
   TINY_SOCK socks_srvstat;
   TINY_SOCK_DESC sd_send_srvbeat = -1;
