@@ -205,6 +205,7 @@ static SCHEDULED_COMMAND_PTR cons_rosetrel_cmds ( JOURNEY_ID jid, JOURNEY_TRIP_P
 	    case ROUTE_ALIGN_UNKNOWN:
 	      /* fail thru. */
 	    default:
+	      assert( FALSE );
 	      break;
 	    }	    
 	  }
