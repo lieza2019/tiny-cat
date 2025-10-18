@@ -209,6 +209,11 @@ static SCHEDULED_COMMAND_PTR cons_rosetrel_cmds ( JOURNEY_ID jid, JOURNEY_TRIP_P
 	      break;
 	    }	    
 	  }
+#if 1 // *****
+	  if( psc_dep->attr.sch_dept.dep_route == S806A_S804A ) {
+	    assert( !psc_dep->attr.sch_dept.dep_dir.L && psc_dep->attr.sch_dept.dep_dir.R );
+	  }
+#endif
 	  psc_dep->attr.sch_dept.proute_prof = psc_roset->attr.sch_roset.proute_prof;
 	  assert( psc_dep->attr.sch_dept.proute_prof );
 	  //psc_dep->attr.sch_dept.depdir = ;
