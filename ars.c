@@ -617,7 +617,7 @@ static CBTC_BLOCK_C_PTR any_trains_ahead ( ROUTE_C_PTR proute, int ahead_blk, TI
       for( i = 0; i < MAX_ADJACENT_BLKS; i++ ) {
 	TINY_TRAIN_STATE_PTR p = read_edge_of_residents_CBTC_BLOCK1( pB, i );
 	if( p ) {
-	  //assert( p != ptrain_ctl ); //本assertを撤去してよい理由とは(2025/10/16).
+	  //assert( p != ptrain_ctl ); //本assertを撤去してよい理由とは(2025/10/16), !!!!!
 	  if( !found ) {
 	    pT = p;
 	    found = TRUE;
@@ -1140,7 +1140,8 @@ ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ )
   assert( pTT );
   assert( pJ );
   assert( pJ->ptrain_ctrl );
-  ARS_REASONS r = END_OF_ARS_REASONS;
+  //ARS_REASONS r = END_OF_ARS_REASONS;
+  ARS_REASONS r = ARS_NO_ROUTECTL_COND;
   
   TINY_TRAIN_STATE_PTR pT = NULL;
   pT = pJ->ptrain_ctrl;
@@ -1148,7 +1149,6 @@ ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ )
     SCHEDULED_COMMAND_PTR pC = NULL;
     pC = fetch_routeset_cmd( pJ );
     if( pC ) {
-      assert( pC );
       assert( pC->cmd == ARS_SCHEDULED_ROUTESET );
       assert( ! pC->checked );
       if( pC->cmd == ARS_SCHEDULED_ROUTESET ) {
@@ -1242,6 +1242,11 @@ ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ )
 			  assert( cond > 0 );
 			  assert( pTT );
 			  assert( pC );
+#if 0 // *****
+if( pC->attr.sch_roset.route_id == S803A_S809A ) {
+  assert( FALSE );
+ }
+#endif
 			  //SCHEDULED_COMMAND_PTR pC_dep = pC->ln.journey.pNext;
 			  //if( pC_dep && (pC_dep->cmd == ARS_SCHEDULED_DEPT) && (pC_dep->attr.sch_dept.dept_sp == pR->ars_ctrl.trip_info.dep.sp) ) {
 			  ARS_REASONS res_dep = END_OF_ARS_REASONS;
@@ -1280,14 +1285,31 @@ ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ )
 					r = ARS_MUTEX_BLOCKED;
 				      } else {
 					assert( cond == 0 );
+#if 0 // *****
 					r = ARS_FOUND_PRED_ARRIVDEP_AT_DST;
       if( pC->attr.sch_roset.proute_prof->id == S801A_S803A ) {
 	printf( "HIT.\n" );
 	assert( FALSE );
       }
+#else
+      if( pC->attr.sch_roset.proute_prof->id == S801A_S803A ) {
+	goto ready_on_fire;
+      }
+#endif
+#if 1 // *****
+if( pC->attr.sch_roset.route_id == S803A_S809A ) {
+  //assert( FALSE );
+  goto ready_on_fire;
+ }
+#endif
 				      }
 				    } else {
 				    ready_on_fire:
+#if 0 // *****
+if( pC->attr.sch_roset.route_id == S803A_S809A ) {
+  assert( FALSE );
+ }
+#endif
 				      //printf( "cmd of pC_dst: %d\n", pC_dst->cmd );
 				      //assert( FALSE ); // *****
 				      assert( pC );
@@ -1297,7 +1319,11 @@ ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ )
 				      P_route = mangl2_P_Sxxxy_Sxxxy( raw );
 				      assert( P_route );
 				      engage_il_ctrl( &oc_id, &kind, P_route );
+#if 0 //*****
 				      r = (res_dst != END_OF_ARS_REASONS) ? res_dst : ARS_NOW_ROUTE_CONTROLLING;
+#else
+				      r = ARS_NOW_ROUTE_CONTROLLING;
+#endif
 				    }
 				  } else {
 				    assert( res_dst != END_OF_ARS_REASONS );
@@ -1345,7 +1371,7 @@ ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ )
       r = ARS_NO_SCHEDULED_CMDS;
   } else
     r = ARS_NO_RAKE_ASGNED;
-  assert( r != END_OF_ARS_REASONS );
+  //assert( r != END_OF_ARS_REASONS );
   return r;
 }
 

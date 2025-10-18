@@ -69,6 +69,7 @@ typedef enum _crew_id {
 extern const char *cnv2str_crew_id[];
 
 typedef enum ars_reasons {
+  ARS_NO_ROUTECTL_COND,
   ARS_NO_RAKE_ASGNED,
   ARS_NO_ROUTESET_CMD,
   ARS_NO_TRIGGERED,

@@ -412,6 +412,26 @@ int main ( void ) {
     }
 #endif
     makeup_online_timetable();
+    {
+      int i;
+      for( i = 0; i < END_OF_SPs; i++ ) {
+	if( online_timetbl.sp_schedule[i].num_events <= 0 )
+	  continue;
+	assert( online_timetbl.sp_schedule[i].num_events > 0 );
+	assert( online_timetbl.sp_schedule[i].pFirst );
+	SCHEDULED_COMMAND_PTR psch_sp = online_timetbl.sp_schedule[i].pFirst;
+	printf( "SP:%s\n", cnv2str_sp_code( (STOPPING_POINT_CODE)i ) );
+	do {
+	  if( psch_sp != online_timetbl.sp_schedule[i].pFirst )
+	    printf( ", " );
+	  char cmd_name[6] = "";
+	  cnv2abb_ars_command( cmd_name, psch_sp->cmd );
+	  printf( "(jid:%d, cmd:%s)", (int)psch_sp->jid, cmd_name );
+	  psch_sp = psch_sp->ln.sp_sch.pNext;
+	} while( psch_sp );
+	printf( "\n" );
+      }
+    }
   }
 #endif
   TINY_SOCK socks_srvstat;
