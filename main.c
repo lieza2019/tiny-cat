@@ -432,10 +432,10 @@ int main ( void ) {
 	} while( psch_sp );
 	printf( "\n" );
       }
+      exit( 1 );
     }
 #endif
-  }
-  exit( 1 );
+  }  
 #endif
   TINY_SOCK socks_srvstat;
   TINY_SOCK_DESC sd_send_srvbeat = -1;

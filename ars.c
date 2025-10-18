@@ -1285,21 +1285,17 @@ if( pC->attr.sch_roset.route_id == S803A_S809A ) {
 					r = ARS_MUTEX_BLOCKED;
 				      } else {
 					assert( cond == 0 );
-#if 0 // *****
 					r = ARS_FOUND_PRED_ARRIVDEP_AT_DST;
+#if 0 // *****
       if( pC->attr.sch_roset.proute_prof->id == S801A_S803A ) {
 	printf( "HIT.\n" );
 	assert( FALSE );
       }
-#else
-      if( pC->attr.sch_roset.proute_prof->id == S801A_S803A ) {
-	goto ready_on_fire;
-      }
 #endif
-#if 1 // *****
+#if 0 // *****
 if( pC->attr.sch_roset.route_id == S803A_S809A ) {
-  //assert( FALSE );
-  goto ready_on_fire;
+  assert( FALSE );
+  //goto ready_on_fire;
  }
 #endif
 				      }
@@ -1320,7 +1316,7 @@ if( pC->attr.sch_roset.route_id == S803A_S809A ) {
 				      assert( P_route );
 				      engage_il_ctrl( &oc_id, &kind, P_route );
 #if 0 //*****
-				      r = (res_dst != END_OF_ARS_REASONS) ? res_dst : ARS_NOW_ROUTE_CONTROLLING;
+				      r = (res_dst != ARS_NO_ROUTECTL_COND) ? res_dst : ARS_NOW_ROUTE_CONTROLLING;
 #else
 				      r = ARS_NOW_ROUTE_CONTROLLING;
 #endif

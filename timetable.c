@@ -72,24 +72,22 @@ static void scattr_over_sp_schedule ( JOURNEY_C_PTR pJ ) { // well tested, 2025/
 
 static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID_PTR pdw_seq2, SCHEDULED_COMMAND_PTR pC2 ) {
   assert( pC2 );
+  assert( pdw_seq2 );
   int r = 0;
   struct tm T2 = {};
   time_t time_c2 = 0;
   
   switch( pC2->cmd ) {
   case ARS_SCHEDULED_ARRIVAL:
-    if( pdw_seq2 )
-      *pdw_seq2 = pC2->attr.sch_arriv.dw_seq;
+    *pdw_seq2 = pC2->attr.sch_arriv.dw_seq;
     time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_arriv.arr_time );
     break;
   case ARS_SCHEDULED_DEPT:
-    if( pdw_seq2 )
-      *pdw_seq2 = pC2->attr.sch_dept.dw_seq;
+    *pdw_seq2 = pC2->attr.sch_dept.dw_seq;
     time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_dept.dep_time );
     break;
-  case ARS_SCHEDULED_SKIP:
-    if( pdw_seq2 )
-      *pdw_seq2 = pC2->attr.sch_skip.dw_seq;
+  case ARS_SCHEDULED_SKIP:    
+    *pdw_seq2 = pC2->attr.sch_skip.dw_seq;
     time_c2 = mktime_of_cmd( &T2, &pC2->attr.sch_skip.pass_time );
     break;
   case ARS_SCHEDULED_ROUTESET:
@@ -101,8 +99,9 @@ static int cmp_with_cmd2 ( time_t time_c1, DWELL_ID_PTR pdw_seq2, SCHEDULED_COMM
   default:
     assert( FALSE );
   }
-  if( pdw_seq2 ) {
-    assert( *pdw_seq2 > -1 );
+  assert( *pdw_seq2 > -1 );
+  
+  {    
     double d;
     d = difftime( time_c1, time_c2 );
     if( d < 0 )
@@ -153,9 +152,9 @@ static int cmp_over_sp_cmds ( const void *pC1, const void *pC2 ) {
   default:
     assert( FALSE );
   }
-  
-  r = cmp_with_cmd2( t1, pdw_seq2, *(SCHEDULED_COMMAND_PTR *)pC2 );
+
   if( pdw_seq2 ) {
+    r = cmp_with_cmd2( t1, pdw_seq2, *(SCHEDULED_COMMAND_PTR *)pC2 );    
     assert( dw_seq2 > -1 );
     if( r == 0 ) {
       JOURNEY_ID jid1 = (*(SCHEDULED_COMMAND_PTR *)pC1)->jid;
@@ -235,6 +234,22 @@ static BOOL coincide ( ARS_ASSOC_TIME_PTR pT1, ARS_ASSOC_TIME_PTR pT2 ) {
   return r;
 }
 
+#if 0 // *****
+static void foo ( STOPPING_POINT_CODE sp, const int nelems ) {
+  assert( nelems > -1 );
+  int i;
+  for( i = 0; i < nelems; i++ ) {
+    assert( sortbuf_at_sp[i] );
+    SCHEDULED_COMMAND_PTR pC_sp = sortbuf_at_sp[i];
+    char cmd_name[6] = "";
+    cnv2abb_ars_command( cmd_name, pC_sp->cmd );
+    printf( "(SP:%s, ", cnv2str_sp_code( sp ) );
+    printf( "jid:%d, cmd:%s), ", (int)pC_sp->jid, cmd_name );
+    printf( "\n" );
+  }
+  printf( "\n" );
+}
+#endif
 void cons_sp_schedule ( void ) { // well tested, 2025/01/04
   int i;
   
@@ -256,7 +271,7 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
     SCHEDULED_COMMAND_PTR pC_sp = events_at_sp[i].pcmds;
     while( pC_sp ) {
       assert( cnt < SCHEDULED_CMDS_SORTBUF_SIZE );
-#if 1 // *****
+#if 0 // *****
       {
 	char cmd_name[6] = "";
 	printf( "(SP:%s, ", cnv2str_sp_code( (STOPPING_POINT_CODE)i ) );
@@ -266,9 +281,9 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
       printf( "\n" );
 #endif
       sortbuf_at_sp[cnt++] = pC_sp;
-      pC_sp = pC_sp->ln.sp_sch.pNext;      
+      pC_sp = pC_sp->ln.sp_sch.pNext;
     }
-    printf( "\n" ); // *****, belonging to the temporal printings above.
+    //printf( "\n" ); // *****, belonging to the temporal printings above.
     assert( (cnt >= 0) && (cnt < SCHEDULED_CMDS_SORTBUF_SIZE) );
 #ifdef CHK_STRICT_CONSISTENCY
     {
