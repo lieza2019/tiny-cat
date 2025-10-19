@@ -21,7 +21,32 @@ SP_PLTB sp_pltb[] = {
   {SP_D5, BTGD, TB1}, // BTGD_TB1
   {SP_D0, BTGD, TB2}, // BTGD_TB2
   {SP_D3, BTGD, TB3}, // BTGD_TB3
+  {END_OF_SPs, END_OF_ST_ID, END_OF_PLTB_ID}
 };
+
+BOOL lkup_st_pltb ( ST_ID *pst, PLTB_ID *ppltb, STOPPING_POINT_CODE sp ) {
+  assert( pst );
+  assert( ppltb );
+  BOOL found = FALSE;
+  
+  int i = 0;
+  while( sp_pltb[i].sp != END_OF_SPs ) {
+    if( sp_pltb[i].sp == sp ) {
+      *pst = sp_pltb[i].st;
+      *ppltb = sp_pltb[i].pltb;
+      found = TRUE;
+      break;
+    }
+    i++;
+  }
+  if( !found ) {
+    assert( sp_pltb[i].st == END_OF_ST_ID );
+    *pst = END_OF_ST_ID;
+    assert( sp_pltb[i].pltb == END_OF_PLTB_ID );
+    *ppltb = END_OF_PLTB_ID;
+  }
+  return found;
+}
 
 static const char *spcode_2str[] = {
   "SP_NONSENS",

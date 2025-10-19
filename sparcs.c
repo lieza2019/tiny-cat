@@ -99,19 +99,10 @@ int which_SC_from_train_info ( SC_STAT_INFOSET_PTR pstats[], TRAIN_INFO_ENTRY_PT
 
 static int which_SC_zones ( SC_ID zones[], int front_blk, int back_blk ) {  
   assert( zones );
-  //assert( front_blk > 0 );
-  //assert( back_blk > 0 );
   int r = -1;
-#if 0 // *****
-  //zones[0] = SC817; zones[1] = SC818;
-  zones[0] = SC802;
-  zones[1] = SC802;
-  r = 1;
-#else
+  
   CBTC_BLOCK_PTR pBf = lookup_cbtc_block_prof( front_blk );
   CBTC_BLOCK_PTR pBb = lookup_cbtc_block_prof( back_blk );
-  //assert( pBf );
-  //assert( pBb );
   zones[0] = END_OF_SCs;
   zones[1] = END_OF_SCs;
   if( pBf ) {
@@ -129,8 +120,7 @@ static int which_SC_zones ( SC_ID zones[], int front_blk, int back_blk ) {
   } else {
     r = 0;
   }
-  printf( "(r, (pBf, pBb), (%d, %d), (zone[0], zone[1])): (%d, (%d, %d))\n", r, (pBf != NULL), (pBb != NULL), SCID_CNV2_INT(zones[0]), SCID_CNV2_INT(zones[1]) ); // *****
-#endif  
+  printf( "(zone_front, zone_rear):(%d, %d)\n", SCID_CNV2_INT(zones[0]), SCID_CNV2_INT(zones[1]) );
   return r;
 }
 

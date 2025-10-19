@@ -124,8 +124,8 @@ extern ONLINE_TIMETABLE online_timetbl;
 
 extern SCHEDULED_COMMAND_PTR newnode_schedulecmd ( void );
 
-extern void cons_sp_schedule ( void );
-extern void makeup_online_timetable ( void );
+extern void cons_sp_schedule ( BOOL dump_sp_sch );
+extern void makeup_online_timetable ( BOOL dump_sp_sch );
 
 extern SCHEDULED_COMMAND_PTR sch_cmd_newnode ( void );
 extern time_t mktime_of_cmd ( struct tm *pT, ARS_ASSOC_TIME_C_PTR ptime_cmd );
@@ -133,6 +133,6 @@ extern STOPPING_POINT_CODE ars_judge_arriv_dept_skip ( ARS_EVENT_ON_SP_PTR pdete
 extern ARS_REASONS ars_atodept_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp );
 extern ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ );
 extern SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EVENT_ON_SP *pev_sp );
-
+extern void print_journey_schcmds ( JOURNEY_PTR pjourney, ARS_REASONN_EMISSION_PTR preasons );
 #include "./timetable/ttcreat.h"
 #endif // TIMETABLE_H

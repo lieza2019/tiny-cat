@@ -71,6 +71,7 @@ static void print_ARS_SCHEDULED_DEPT ( SCHEDULED_COMMAND_PTR pcmd ) {
     const char *str = cnv2str_crew_id[pcmd->attr.sch_dept.crew_id];
     printf( "crew_id: %s, ", (str ? str : "unknown") ); // for CREW_ID crew_id;
   }
+  printf( "dep_dir: (%c, %c), ", (pcmd->attr.sch_dept.dep_dir.L ? '1' : '0'), (pcmd->attr.sch_dept.dep_dir.R ? '1' : '0') );
   printf( "dep_route: %s", cnv2str_il_sym( pcmd->attr.sch_dept.dep_route ) ); // for IL_SYM dep_route;
 }
 static void print_ARS_SCHEDULED_ROUTEREL ( SCHEDULED_COMMAND_PTR pcmd ) {
@@ -209,11 +210,6 @@ static SCHEDULED_COMMAND_PTR cons_rosetrel_cmds ( JOURNEY_ID jid, JOURNEY_TRIP_P
 	      break;
 	    }	    
 	  }
-#if 1 // *****
-	  if( psc_dep->attr.sch_dept.dep_route == S806A_S804A ) {
-	    assert( psc_dep->attr.sch_dept.dep_dir.L && !psc_dep->attr.sch_dept.dep_dir.R );
-	  }
-#endif
 	  psc_dep->attr.sch_dept.proute_prof = psc_roset->attr.sch_roset.proute_prof;
 	  assert( psc_dep->attr.sch_dept.proute_prof );
 	  //psc_dep->attr.sch_dept.depdir = ;

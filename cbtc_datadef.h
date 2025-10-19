@@ -42,6 +42,18 @@ typedef enum stopping_point_code {
   END_OF_SPs
 } STOPPING_POINT_CODE;
 
+typedef enum pltb_id {
+  PL_UNKNOWN,
+  PL1 = 1,
+  PL2,
+  PL3,
+  TB1,
+  TB2,
+  TB3,
+  TB4,
+  END_OF_PLTB_ID
+} PLTB_ID;
+
 typedef enum st_id {
   ST_UNKNOWN,
   JLA = 1,

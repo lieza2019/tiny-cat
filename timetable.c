@@ -224,18 +224,7 @@ static int cmp_over_journeys ( const void *pJ1, const void *pJ2 ) {
   return r;
 }
 
-static BOOL coincide ( ARS_ASSOC_TIME_PTR pT1, ARS_ASSOC_TIME_PTR pT2 ) {
-  assert( pT1 );
-  assert( pT2 );
-  BOOL r = FALSE;
-  
-  r = (pT1->year == pT2->year) && (pT1->month == pT2->month) && (pT1->day == pT2->day) &&
-    (pT1->hour == pT2->hour) && (pT1->minute == pT2->minute) && (pT1->second == pT2->second);
-  return r;
-}
-
-#if 0 // *****
-static void foo ( STOPPING_POINT_CODE sp, const int nelems ) {
+static void dump_sp_events ( STOPPING_POINT_CODE sp, const int nelems ) {
   assert( nelems > -1 );
   int i;
   for( i = 0; i < nelems; i++ ) {
@@ -247,10 +236,20 @@ static void foo ( STOPPING_POINT_CODE sp, const int nelems ) {
     printf( "jid:%d, cmd:%s), ", (int)pC_sp->jid, cmd_name );
     printf( "\n" );
   }
-  printf( "\n" );
+  if( i > 0 )
+    printf( "\n" );
 }
-#endif
-void cons_sp_schedule ( void ) { // well tested, 2025/01/04
+
+static BOOL coincide ( ARS_ASSOC_TIME_PTR pT1, ARS_ASSOC_TIME_PTR pT2 ) {
+  assert( pT1 );
+  assert( pT2 );
+  BOOL r = FALSE;
+  
+  r = (pT1->year == pT2->year) && (pT1->month == pT2->month) && (pT1->day == pT2->day) &&
+    (pT1->hour == pT2->hour) && (pT1->minute == pT2->minute) && (pT1->second == pT2->second);
+  return r;
+}
+void cons_sp_schedule ( BOOL dump_sp_sch ) { // well tested, 2025/01/04
   int i;
   
   assert( (online_timetbl.num_journeys >= 0) && (online_timetbl.num_journeys < MAX_JOURNEYS_IN_TIMETABLE) );
@@ -271,19 +270,9 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
     SCHEDULED_COMMAND_PTR pC_sp = events_at_sp[i].pcmds;
     while( pC_sp ) {
       assert( cnt < SCHEDULED_CMDS_SORTBUF_SIZE );
-#if 0 // *****
-      {
-	char cmd_name[6] = "";
-	printf( "(SP:%s, ", cnv2str_sp_code( (STOPPING_POINT_CODE)i ) );
-	cnv2abb_ars_command( cmd_name, pC_sp->cmd );
-	printf( "jid:%d, cmd:%s), ", (int)pC_sp->jid, cmd_name );
-      }
-      printf( "\n" );
-#endif
       sortbuf_at_sp[cnt++] = pC_sp;
       pC_sp = pC_sp->ln.sp_sch.pNext;
     }
-    //printf( "\n" ); // *****, belonging to the temporal printings above.
     assert( (cnt >= 0) && (cnt < SCHEDULED_CMDS_SORTBUF_SIZE) );
 #ifdef CHK_STRICT_CONSISTENCY
     {
@@ -297,6 +286,7 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
 #endif // CHK_STRICT_CONSISTENCY
     
     qsort( sortbuf_at_sp, cnt, sizeof(SCHEDULED_COMMAND_PTR), cmp_over_sp_cmds );
+    dump_sp_events( (STOPPING_POINT_CODE)i, cnt );
 #ifdef CHK_STRICT_CONSISTENCY
     { 
       int k = 0;
@@ -434,7 +424,7 @@ void cons_sp_schedule ( void ) { // well tested, 2025/01/04
   assert( i == END_OF_SPs );
 }
 
-void makeup_online_timetable ( void ) { // well tested, 2025/01/04
+void makeup_online_timetable ( BOOL dump_sp_sch ) { // well tested, 2025/01/04
   int cnt = 0;
   
   qsort( online_timetbl.journeys, online_timetbl.num_journeys, sizeof(struct journeys), cmp_over_journeys );
@@ -488,5 +478,97 @@ void makeup_online_timetable ( void ) { // well tested, 2025/01/04
       }
     }
   }
-  cons_sp_schedule();
+  cons_sp_schedule( dump_sp_sch );
 }
+
+static void cmd_attrib ( SCHEDULED_COMMAND_PTR pcmd ) {
+  assert( pcmd );
+  switch( pcmd->cmd ) {
+  case ARS_SCHEDULED_ROUTESET:
+    printf( ":%s", cnv2str_il_sym( pcmd->attr.sch_roset.route_id ) );	      
+    break;
+  case ARS_SCHEDULED_ROUTEREL:
+    printf( ":%s", cnv2str_il_sym( pcmd->attr.sch_rorel.route_id ) );
+    break;
+  case ARS_SCHEDULED_ARRIVAL:
+    printf( ":" );
+    {
+      ST_ID st;
+      PLTB_ID pltb;
+      lkup_st_pltb( &st, &pltb, pcmd->attr.sch_arriv.arr_sp );
+      printf( "(%s, ", cnv2str_st_id( st ) );
+      printf( "%s, ", cnv2str_pltb_id( pltb ) );
+      printf( "%s)", cnv2str_sp_code( pcmd->attr.sch_arriv.arr_sp ) );
+    }
+    break;
+  case ARS_SCHEDULED_DEPT:
+    printf( ":" );
+    {
+      ST_ID st;
+      PLTB_ID pltb;
+      lkup_st_pltb( &st, &pltb, pcmd->attr.sch_dept.dep_sp );
+      printf( "(%s, ", cnv2str_st_id( st ) );
+      printf( "%s, ", cnv2str_pltb_id( pltb ) );
+      printf( "%s)", cnv2str_sp_code( pcmd->attr.sch_dept.dep_sp ) );
+    }
+    break;
+  case ARS_SCHEDULED_SKIP:
+    printf( ":" );
+    {
+      ST_ID st;
+      PLTB_ID pltb;
+      lkup_st_pltb( &st, &pltb, pcmd->attr.sch_skip.pass_sp );
+      printf( "(%s, ", cnv2str_st_id( st ) );
+      printf( "%s, ", cnv2str_pltb_id( pltb ) );
+      printf( "%s)", cnv2str_sp_code( pcmd->attr.sch_skip.pass_sp ) );
+    }
+    break;
+  case ARS_CMD_NOP:
+    // fall thru.
+  case END_OF_SCHEDULED_CMDS:
+    // fall thru.
+  default:
+    break;      
+  }
+}
+void print_journey_schcmds ( JOURNEY_PTR pjourney, ARS_REASONN_EMISSION_PTR preasons ) {
+  assert( pjourney );
+  assert( preasons );
+  char cmd_name[6] = "";
+  char *s = NULL;
+    
+  if( pjourney->scheduled_commands.pNext ){
+    SCHEDULED_COMMAND_PTR pcmd = pjourney->scheduled_commands.pNext;
+    printf( "(jid, next_cmd, past_cmds): (%d, ", pjourney->jid );
+    s = cnv2abb_ars_command( cmd_name, pcmd->cmd );
+    if( !s )
+      strncpy( cmd_name, "???", 5 );
+    printf( "%s", cmd_name );
+    if( s )
+      cmd_attrib( pcmd );
+  }
+  
+  printf( ", {" );
+  {
+    SCHEDULED_COMMAND_PTR p = pjourney->past_commands.phead;
+    while( p ) {
+      assert( p );
+      if( p != pjourney->past_commands.phead )
+	printf( ", " );
+      s = cnv2abb_ars_command( cmd_name,p->cmd );
+      if( !s )
+	strncpy( cmd_name, "???", 5 );
+      printf( "%s", cmd_name );
+      if( s )	
+	cmd_attrib( p );
+      p = p->ln.journey.past.pNext;
+    }
+  }
+  printf( "})\n" );
+#if 1
+  printf( "(ars_reason_routectl, ars_reason_routerel, ars_reasons_atodept):" );
+  printf( "(%s, ", cnv2str_ars_reasons[preasons->routectl] );
+  printf( "%s, ", cnv2str_ars_reasons[preasons->routerel] );
+  printf( "%s)\n", cnv2str_ars_reasons[preasons->atodept] );
+#endif
+ }

@@ -64,8 +64,8 @@ char *cnv2abb_ars_command ( char *abb, ARS_SCHEDULED_CMD cmd ) {
     {ARS_SCHEDULED_ARRIVAL, "Arr"},
     {ARS_SCHEDULED_DEPT, "Dep"},
     {ARS_SCHEDULED_SKIP, "SS"},
-    {END_OF_SCHEDULED_CMDS, "Fin"},
-    {ARS_CMD_NOP, "Nop"},    
+    {ARS_CMD_NOP, "Nop"},
+    {END_OF_SCHEDULED_CMDS, "Fin"}    
   };
   for( i = 0; i <= ARS_CMD_NOP; i++ ) {
     if( cmd == lkup[i].cmd ) {
@@ -78,6 +78,9 @@ char *cnv2abb_ars_command ( char *abb, ARS_SCHEDULED_CMD cmd ) {
 }
 
 const char *cnv2str_ars_reasons[] = {
+  "ARS_NO_ROUTECTL_COND",
+  "ARS_NO_ROUTEREL_COND",
+  "ARS_NO_ATODEPT_COND",
   "ARS_NO_RAKE_ASGNED",
   "ARS_NO_ROUTESET_CMD",
   "ARS_NO_TRIGGERED",
@@ -90,6 +93,7 @@ const char *cnv2str_ars_reasons[] = {
   "ARS_NO_ROUTE_OPEN",
   "ARS_NOW_ROUTE_CONTROLLING",
   "ARS_NOW_ATODEPT_EMISSION",
+  "ARS_ROUTEREL_CHECKING",
   "ARS_ROUTE_CONTROLLED_NORMALLY",
   "ARS_MUTEX_BLOCKED",
   "ARS_NO_SCHEDULED_CMDS",
@@ -290,7 +294,7 @@ ARS_REASONS ars_atodept_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ, A
   assert( pTT );
   assert( pJ );
   assert( pev_sp );
-  ARS_REASONS r = END_OF_ARS_REASONS;
+  ARS_REASONS r = ARS_NO_ATODEPT_COND;
   TINY_TRAIN_STATE_PTR pT = NULL;
   
   pT = pJ->ptrain_ctrl;
@@ -394,7 +398,6 @@ ARS_REASONS ars_atodept_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ, A
       r = ARS_NO_TRIGGERED;
   } else
     r = ARS_NO_RAKE_ASGNED;
-  assert( r != END_OF_ARS_REASONS );  
   return r;
 }
 
@@ -1140,7 +1143,6 @@ ARS_REASONS ars_routectl_on_journey ( ONLINE_TIMETABLE_PTR pTT, JOURNEY_PTR pJ )
   assert( pTT );
   assert( pJ );
   assert( pJ->ptrain_ctrl );
-  //ARS_REASONS r = END_OF_ARS_REASONS;
   ARS_REASONS r = ARS_NO_ROUTECTL_COND;
   
   TINY_TRAIN_STATE_PTR pT = NULL;
@@ -1396,7 +1398,8 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
   assert( pJ );
   assert( pev_sp );
   SCHEDULED_COMMAND_PTR r = NULL;
-  
+
+  *pres = ARS_NO_ROUTEREL_COND;
   TINY_TRAIN_STATE_PTR pT = NULL;
   pT = pJ->ptrain_ctrl;
   if( pT ) {
@@ -1435,6 +1438,7 @@ SCHEDULED_COMMAND_PTR ars_schcmd_ack ( ARS_REASONS *pres, JOURNEY_PTR pJ, ARS_EV
 		timestamp( &pC->attr.sch_rorel.dep_time );
 	      acc_and_chk_rorel:
 		pC->checked = TRUE;
+		*pres = ARS_ROUTEREL_CHECKING;
 		make_it_past( pJ, pC );
 		r = pC->ln.journey.planned.pNext;
 	      }

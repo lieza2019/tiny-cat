@@ -5,17 +5,6 @@
 #include "generic.h"
 #include "misc.h"
 
-typedef enum pltb_id {
-  PL_UNKNOWN,
-  PL1 = 1,
-  PL2,
-  PL3,
-  TB1,
-  TB2,
-  TB3,
-  TB4,
-  END_OF_PLTB_ID
-} PLTB_ID;
 #include "cbtc_datadef.h"
 typedef struct sp_pltb {
   STOPPING_POINT_CODE sp;
@@ -27,6 +16,7 @@ typedef struct sp_pltb {
 extern SP_PLTB sp_pltb[];
 
 #define SCID_CNV2_INT( sc_id ) ((sc_id) + 801)
+extern BOOL lkup_st_pltb ( ST_ID *pst, PLTB_ID *ppltb, STOPPING_POINT_CODE sp );
 extern const char *cnv2str_sp_code ( STOPPING_POINT_CODE sp_code );
 extern STOPPING_POINT_CODE str2_sp_code ( const char *sp_str );
 extern const char *cnv2str_pltb_id ( PLTB_ID pltb_id );

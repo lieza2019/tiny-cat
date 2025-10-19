@@ -411,7 +411,7 @@ int main ( void ) {
       exit( 0 );
     }
 #endif
-    makeup_online_timetable();
+    makeup_online_timetable( TRUE );
 #if 0
     {
       int i;
@@ -676,47 +676,18 @@ int main ( void ) {
 #endif
 #if 1
 	      {
-		ARS_REASONS r = END_OF_ARS_REASONS;
 		JOURNEY_PTR pJ = &online_timetbl.lkup[jid]->journey;
 		ARS_REASONS res = END_OF_ARS_REASONS;
 		ARS_EVENT_ON_SP ev;
+		ARS_REASONN_EMISSION ars_reason = {END_OF_ARS_REASONS, END_OF_ARS_REASONS, END_OF_ARS_REASONS};
 		pJ->ptrain_ctrl = pT;
 		ars_judge_arriv_dept_skip( &ev, pT );		
-		r = ars_atodept_on_journey( &online_timetbl, pJ, &ev );
+		ars_reason.atodept = ars_atodept_on_journey( &online_timetbl, pJ, &ev );
 		//assert( r != ARS_ROUTE_CONTROLLED_NORMALLY ); // *****
-		r = ars_routectl_on_journey( &online_timetbl, pJ );
+		ars_reason.routectl = ars_routectl_on_journey( &online_timetbl, pJ );
 		//assert( r != ARS_ROUTE_CONTROLLED_NORMALLY ); // *****
-		ars_schcmd_ack( &res, pJ, &ev );
-		{
-		  char cmd_name[6] = "";
-		  char *s = NULL;
-		  s = cnv2abb_ars_command( cmd_name, pJ->scheduled_commands.pNext->cmd );
-		  if( !s ) {
-		    strncpy( cmd_name, "???", 5 );
-		    s = cmd_name;
-		  }
-		  printf( "(jid, next_cmd, past_cmds): (%d, %s, ", pJ->jid, s );
-		  printf( "{" );
-		  {
-		    BOOL first = TRUE;
-		    SCHEDULED_COMMAND_PTR p = pJ->past_commands.phead;
-		    while( p ) {
-		      assert( p );
-		      if( !first )
-			printf( ", " );
-		      s = cnv2abb_ars_command(cmd_name,p->cmd);
-		      if( !s ) {
-			strncpy( cmd_name, "???", 5 );
-			s = cmd_name;
-		      }
-		      printf( "%s", s );
-		      p = p->ln.journey.past.pNext;
-		      first = FALSE;
-		    }
-		  }
-		  printf( "})\n" );
-		  //assert( FALSE ); // *****
-		}
+		ars_schcmd_ack( &ars_reason.routerel, pJ, &ev );
+		print_journey_schcmds( pJ, &ars_reason );
 	      }
 #endif
 #if 0

@@ -27,8 +27,8 @@ typedef enum ars_scheduled_cmd {
   ARS_SCHEDULED_ARRIVAL,
   ARS_SCHEDULED_DEPT,
   ARS_SCHEDULED_SKIP,
-  END_OF_SCHEDULED_CMDS,
-  ARS_CMD_NOP
+  ARS_CMD_NOP,
+  END_OF_SCHEDULED_CMDS
 } ARS_SCHEDULED_CMD;
 extern char *cnv2abb_ars_command ( char *abb, ARS_SCHEDULED_CMD cmd );
 
@@ -70,6 +70,8 @@ extern const char *cnv2str_crew_id[];
 
 typedef enum ars_reasons {
   ARS_NO_ROUTECTL_COND,
+  ARS_NO_ROUTEREL_COND,
+  ARS_NO_ATODEPT_COND,
   ARS_NO_RAKE_ASGNED,
   ARS_NO_ROUTESET_CMD,
   ARS_NO_TRIGGERED,
@@ -82,6 +84,7 @@ typedef enum ars_reasons {
   ARS_NO_ROUTE_OPEN,
   ARS_NOW_ROUTE_CONTROLLING,
   ARS_NOW_ATODEPT_EMISSION,
+  ARS_ROUTEREL_CHECKING,
   ARS_ROUTE_CONTROLLED_NORMALLY,
   ARS_MUTEX_BLOCKED,
   ARS_NO_SCHEDULED_CMDS,
@@ -102,6 +105,11 @@ typedef enum ars_reasons {
   END_OF_ARS_REASONS
 } ARS_REASONS;
 extern const char *cnv2str_ars_reasons[];
+typedef struct ars_reason_emission {
+  ARS_REASONS routectl;
+  ARS_REASONS routerel;
+  ARS_REASONS atodept;
+} ARS_REASONN_EMISSION, *ARS_REASONN_EMISSION_PTR;
 
 extern const IL_SYM ars_ctrl_routes[];
 extern SYSTEM_PARAMS tiny_system_params;
