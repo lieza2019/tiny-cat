@@ -32,7 +32,7 @@ assignments:
 
 journeys:
   J01:
-    ( ((JLA,PL1), (KIKJ, PL1)), 11, (00:00:00), perfslow, revenue, crew_001 );
+    ( ((JLA,PL1), (KIKJ, PL1)), 11, (05:00:00), perfslow, revenue, crew_001 );
     ( ((KIKJ,PL1), (OKBS, PL1)), 11, perfslow, revenue, crew_001 );
     ( ((OKBS,PL1), (BTGD, PL1)), 11, perfslow, revenue, crew_001 );
     ( ((BTGD,PL1), (BTGD, TB1)), 11, perfslow, revenue, crew_001 );
@@ -49,9 +49,9 @@ journeys:
     ( ((BTGD,PL2), (OKBS, PL2)), 11, perfslow, revenue, crew_001 );
     ( ((OKBS,PL2), (KIKJ, PL2)), 11, perfslow, revenue, crew_001 );
     ( ((KIKJ,PL2), (JLA, PL1)), 11, perfslow, revenue, crew_001 );
-
+    
   J02:
-    ( ((JLA,PL1), (KIKJ, PL1)), 11, (00:01:00), perfslow, revenue, crew_002 );
+    ( ((JLA,PL1), (KIKJ, PL1)), 11, (05:05:00), perfslow, revenue, crew_002 );
     ( ((KIKJ,PL1), (OKBS, PL1)), 11, perfslow, revenue, crew_002 );
     ( ((OKBS,PL1), (BTGD, PL1)), 11, perfslow, revenue, crew_002 );
     ( ((BTGD,PL1), (BTGD, TB1)), 11, perfslow, revenue, crew_002 );
@@ -70,7 +70,7 @@ journeys:
     ( ((KIKJ,PL2), (JLA, PL2)), 11, perfslow, revenue, crew_002 );
 
   J03:
-    ( ((JLA,PL1), (KIKJ, PL1)), 11, (00:02:00), perfslow, revenue, crew_003 );
+    ( ((JLA,PL1), (KIKJ, PL1)), 11, (05:10:00), perfslow, revenue, crew_003 );
     ( ((KIKJ,PL1), (OKBS, PL1)), 11, perfslow, revenue, crew_003 );
     ( ((OKBS,PL1), (BTGD, PL2)), 11, perfslow, revenue, crew_003 );
     ( ((BTGD,PL2), (OKBS, PL2)), 11, perfslow, revenue, crew_003 );

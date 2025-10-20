@@ -62,8 +62,6 @@ static void print_trip ( ATTR_TRIP_PTR ptrip, BOOL is_journey ) {
   char buf[PRINT_STRBUF_MAXLEN + 1] = "";
   
   printf( "(%s, ", cnv2str_kind(buf, ptrip->kind, PRINT_STRBUF_MAXLEN) );
-  if( ptrip->deadend )
-    printf( "deadend, " );
   printf( "(" );
   print_st_pltb( &ptrip->attr_st_pltb_orgdst.st_pltb_org );
   printf( ", " );
