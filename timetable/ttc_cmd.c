@@ -350,19 +350,6 @@ void emit_scheduled_cmds ( void ) {
       pjd->pschcmds_journey = sch_cmds.phead;
       if( pjd->num_trips > 0 )
 	pjd->start_time = pjd->trips[0].time_arrdep.time_arr;
-#if 0
-      if( pjd ) {
-	assert( sch_cmds.phead && sch_cmds.ptail );
-	SCHEDULED_COMMAND_PTR psc_fin = NULL;
-	psc_fin = newnode_schedulecmd();
-	assert( psc_fin );
-	psc_fin->ln.journey.planned.pNext = NULL;
-	psc_fin->jid = pjd->jid;
-	psc_fin->cmd = END_OF_SCHEDULED_CMDS;
-	sch_cmds.ptail->ln.journey.planned.pNext = psc_fin;
-	assert( (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_ARRIVAL) || (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_SKIP) );
-      }
-#else
       {
 	assert( sch_cmds.phead && sch_cmds.ptail );
 	SCHEDULED_COMMAND_PTR psc_fin = NULL;
@@ -374,7 +361,6 @@ void emit_scheduled_cmds ( void ) {
 	sch_cmds.ptail->ln.journey.planned.pNext = psc_fin;
 	assert( (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_ARRIVAL) || (pjd->pschcmds_journey->cmd == ARS_SCHEDULED_SKIP) );
       }
-#endif
       jcnt++;
     }
   }
@@ -616,13 +602,6 @@ int cons_online_timetbl ( void ) {
     if( timetbl_dataset->j.journeys[i].jid > 0  ) {
       online_timetbl.journeys[cnt].journey.jid = timetbl_dataset->j.journeys[i].jid;
       online_timetbl.journeys[cnt].journey.valid = timetbl_dataset->j.journeys[i].valid;
-#if 0
-      make_cmds_today( timetbl_dataset->j.journeys[i].pschcmds_journey );
-      online_timetbl.journeys[cnt].journey.start_time = (ARS_ASSOC_TIME)timetbl_dataset->j.journeys[i].start_time;
-      online_timetbl.journeys[cnt].journey.scheduled_commands.pcmds = timetbl_dataset->j.journeys[i].pschcmds_journey;
-      online_timetbl.journeys[cnt].journey.scheduled_commands.pNext = &timetbl_dataset->j.journeys[i].pschcmds_journey[0];
-      online_timetbl.journeys[cnt].rake_id = asgned_rakeid( timetbl_dataset->j.journeys[i].jid );
-#else
       make_cmds_today( &online_timetbl.journeys[cnt].journey.start_time, timetbl_dataset->j.journeys[i].pschcmds_journey );
       {
 	assert( schcmds_buf.pfrontier < &schcmds_buf.nodebuf[SCHEDULED_CMDS_NODEBUF_SIZE * MAX_JOURNEYS_IN_TIMETABLE] );
@@ -640,7 +619,6 @@ int cons_online_timetbl ( void ) {
 	online_timetbl.journeys[cnt].journey.scheduled_commands.pNext = &schcmds_buf.pfrontier[0];	
 	schcmds_buf.pfrontier = pnode;
       }
-#endif
       online_timetbl.journeys[cnt].rake_id = asgned_rakeid( timetbl_dataset->j.journeys[i].jid );
       cnt++;
     }
